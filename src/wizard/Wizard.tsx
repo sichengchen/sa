@@ -7,6 +7,7 @@ import { Identity } from "./steps/Identity.js";
 import { ModelSetup, type ModelSetupData } from "./steps/ModelSetup.js";
 import { TelegramSetup } from "./steps/TelegramSetup.js";
 import { Confirm, type WizardData } from "./steps/Confirm.js";
+import { saveSecrets } from "../config/secrets.js";
 
 type Step = "welcome" | "identity" | "model" | "telegram" | "confirm" | "done";
 
@@ -70,6 +71,12 @@ export function Wizard({ homeDir, onComplete }: WizardProps) {
 
       // Write empty MEMORY.md
       await writeFile(join(homeDir, "memory", "MEMORY.md"), "");
+
+      // Persist secrets (API key + bot token) in encrypted file
+      await saveSecrets(homeDir, {
+        apiKeys: data.apiKey ? { [data.apiKeyEnvVar]: data.apiKey } : {},
+        botToken: data.botToken || undefined,
+      });
 
       setStep("done");
       // Brief delay then transition to main app
