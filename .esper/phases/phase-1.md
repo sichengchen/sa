@@ -49,3 +49,4 @@ Deliver a working personal AI agent that can be configured via an onboarding wiz
 - #9 — Onboarding wizard (TUI): Detect first run and launch step-by-step setup wizard. Files: Wizard.tsx, Welcome.tsx, Identity.tsx, ModelSetup.tsx, TelegramSetup.tsx, Confirm.tsx
 - #10 — Integration and E2E tests: Agent integration test with tool chain, config+router, memory persistence, and smoke test. Files: agent-flow.test.ts, config-router.test.ts, tool-chain.test.ts, memory-persistence.test.ts, smoke.test.ts
 - #11 — README and documentation: Write `README.md` at repo root — concise overview with quickstart and links to `docs/`. Files: README.md, configuration.md, tools.md, architecture.md, development.md
+- #12 — Model setup wizard — provider picker + model list: Replace ModelSetup.tsx with 4-substep flow: provider picker → credentials → async model fetch → scrollable model chooser with manual fallback. Files: ModelSetup.tsx, Confirm.tsx, Wizard.tsx, types.ts, router.ts
