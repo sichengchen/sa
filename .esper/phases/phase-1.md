@@ -45,3 +45,4 @@ Deliver a working personal AI agent that can be configured via an onboarding wiz
 - #4 — Built-in tools (Read, Write, Edit, Bash): Implement each tool with validation and error handling. Files: read.ts, write.ts, edit.ts, bash.ts, index.ts, tools.test.ts
 - #6 — Long-term memory system: Define memory structure with `~/.sa/memory/` directory. Files: types.ts, manager.ts, index.ts, remember.ts, memory.test.ts
 - #7 — TUI interface with Ink: Create the main `App` component that orchestrates the TUI. Files: App.tsx, ChatView.tsx, Input.tsx, StatusBar.tsx, ModelPicker.tsx, index.ts
+- #8 — Telegram bot integration: Choose library `grammy` and implement `TelegramTransport` class. Files: transport.ts, formatter.ts, index.ts, telegram.test.ts
