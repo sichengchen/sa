@@ -2,8 +2,9 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
-import type { Identity, RuntimeConfig, SAConfig } from "./types.js";
+import type { Identity, RuntimeConfig, SAConfig, SecretsFile } from "./types.js";
 import { DEFAULT_IDENTITY_MD, DEFAULT_CONFIG, DEFAULT_MODELS } from "./defaults.js";
+import { loadSecrets as _loadSecrets, saveSecrets as _saveSecrets } from "./secrets.js";
 
 export class ConfigManager {
   readonly homeDir: string;
@@ -73,6 +74,14 @@ export class ConfigManager {
 
   getModelsPath(): string {
     return join(this.homeDir, "models.json");
+  }
+
+  async loadSecrets(): Promise<SecretsFile | null> {
+    return _loadSecrets(this.homeDir);
+  }
+
+  async saveSecrets(secrets: SecretsFile): Promise<void> {
+    return _saveSecrets(this.homeDir, secrets);
   }
 }
 
