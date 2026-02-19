@@ -1,0 +1,10 @@
+{
+  "backlog_mode": "local",
+  "current_phase": "phase-1",
+  "commands": {
+    "test": "bun test",
+    "lint": "bun run lint",
+    "typecheck": "bun run typecheck",
+    "dev": ""
+  }
+}
