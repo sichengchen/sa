@@ -42,3 +42,4 @@ Deliver a working personal AI agent that can be configured via an onboarding wiz
 - #2 — Model router with PI-mono integration: Define a `ModelConfig` type and implement `ModelRouter` class wrapping PI-mono. Files: types.ts, router.ts, index.ts, router.test.ts
 - #5 — Identity & configuration system: Define the config directory structure with `~/.sa/`. Files: types.ts, manager.ts, defaults.ts, index.ts, config.test.ts
 - #3 — Core agent runtime: Implement `Agent` class with streaming chat loop and tool dispatch. Files: types.ts, agent.ts, registry.ts, index.ts, agent.test.ts
+- #4 — Built-in tools (Read, Write, Edit, Bash): Implement each tool with validation and error handling. Files: read.ts, write.ts, edit.ts, bash.ts, index.ts, tools.test.ts
