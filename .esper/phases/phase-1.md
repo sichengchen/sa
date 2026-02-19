@@ -47,3 +47,4 @@ Deliver a working personal AI agent that can be configured via an onboarding wiz
 - #7 — TUI interface with Ink: Create the main `App` component that orchestrates the TUI. Files: App.tsx, ChatView.tsx, Input.tsx, StatusBar.tsx, ModelPicker.tsx, index.ts
 - #8 — Telegram bot integration: Choose library `grammy` and implement `TelegramTransport` class. Files: transport.ts, formatter.ts, index.ts, telegram.test.ts
 - #9 — Onboarding wizard (TUI): Detect first run and launch step-by-step setup wizard. Files: Wizard.tsx, Welcome.tsx, Identity.tsx, ModelSetup.tsx, TelegramSetup.tsx, Confirm.tsx
+- #10 — Integration and E2E tests: Agent integration test with tool chain, config+router, memory persistence, and smoke test. Files: agent-flow.test.ts, config-router.test.ts, tool-chain.test.ts, memory-persistence.test.ts, smoke.test.ts
