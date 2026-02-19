@@ -1,6 +1,6 @@
 # SA (Sasa)
 
-A personal AI agent assistant with a terminal UI and Telegram integration. Local-first, single-user, configurable multi-provider model router.
+A personal AI agent assistant for myself.
 
 ## Prerequisites
 
