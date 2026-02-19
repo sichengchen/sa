@@ -2,6 +2,9 @@
 
 import React from "react";
 import { render } from "ink";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
 import { ConfigManager } from "./config/index.js";
 import { ModelRouter } from "./router/index.js";
 import { Agent } from "./agent/index.js";
@@ -10,11 +13,13 @@ import { getBuiltinTools } from "./tools/index.js";
 import { createRememberTool } from "./tools/remember.js";
 import { App } from "./tui/index.js";
 import { TelegramTransport } from "./telegram/index.js";
-import { join } from "node:path";
+import { Wizard } from "./wizard/index.js";
 
-async function main() {
-  // Load configuration
-  const config = new ConfigManager();
+const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
+const forceSetup = process.argv.includes("--setup");
+
+async function launchApp() {
+  const config = new ConfigManager(saHome);
   const saConfig = await config.load();
 
   // Initialize memory
@@ -58,6 +63,25 @@ async function main() {
   // Render TUI (unless --telegram-only flag)
   if (!process.argv.includes("--telegram-only")) {
     render(React.createElement(App, { agent, router }));
+  }
+}
+
+async function main() {
+  const isFirstRun = !existsSync(join(saHome, "config.json"));
+
+  if (isFirstRun || forceSetup) {
+    const { unmount, waitUntilExit } = render(
+      React.createElement(Wizard, {
+        homeDir: saHome,
+        onComplete: () => {
+          unmount();
+          launchApp();
+        },
+      })
+    );
+    await waitUntilExit();
+  } else {
+    await launchApp();
   }
 }
 
