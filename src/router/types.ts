@@ -13,6 +13,8 @@ export interface ModelConfig {
   temperature?: number;
   /** Maximum output tokens */
   maxTokens?: number;
+  /** Base URL for OpenAI-compatible providers with custom endpoints */
+  baseUrl?: string;
 }
 
 export interface ModelsFile {

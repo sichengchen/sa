@@ -45,6 +45,22 @@ export class ModelRouter {
         `API key not found: environment variable "${cfg.apiKeyEnvVar}" is not set`
       );
     }
+    // For OpenAI-compatible providers with a custom base URL, construct the
+    // Model object manually since pi-ai's getModel only handles known providers
+    if (cfg.baseUrl) {
+      return {
+        id: cfg.model,
+        name: cfg.model,
+        api: "openai-completions" as const,
+        provider: cfg.provider,
+        baseUrl: cfg.baseUrl,
+        reasoning: false,
+        input: ["text"] as ("text" | "image")[],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: cfg.maxTokens ?? 4096,
+      } as Model<Api>;
+    }
     // Dynamic provider/model strings require type assertion since PI-mono
     // uses exact literal types for its overloaded getModel signature
     return (getModel as (p: string, m: string) => Model<Api>)(
