@@ -36,3 +36,6 @@ Deliver a working personal AI agent that can be configured via an onboarding wiz
 - [ ] Long-term memory persists between sessions and is queryable
 - [ ] All core subsystems have passing unit tests
 - [ ] Integration test covers a full chat→tool→response round trip
+
+## Shipped Plans
+- #1 — Project scaffolding: Run `bun init` to create `package.json` and `tsconfig.json`. Files: package.json, tsconfig.json, .gitignore, .env.example, src/index.ts
