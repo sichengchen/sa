@@ -43,3 +43,4 @@ Deliver a working personal AI agent that can be configured via an onboarding wiz
 - #5 — Identity & configuration system: Define the config directory structure with `~/.sa/`. Files: types.ts, manager.ts, defaults.ts, index.ts, config.test.ts
 - #3 — Core agent runtime: Implement `Agent` class with streaming chat loop and tool dispatch. Files: types.ts, agent.ts, registry.ts, index.ts, agent.test.ts
 - #4 — Built-in tools (Read, Write, Edit, Bash): Implement each tool with validation and error handling. Files: read.ts, write.ts, edit.ts, bash.ts, index.ts, tools.test.ts
+- #6 — Long-term memory system: Define memory structure with `~/.sa/memory/` directory. Files: types.ts, manager.ts, index.ts, remember.ts, memory.test.ts
