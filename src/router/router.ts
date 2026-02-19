@@ -2,19 +2,22 @@ import { readFile, writeFile } from "node:fs/promises";
 import { getModel } from "@mariozechner/pi-ai";
 import type { Model, Api } from "@mariozechner/pi-ai";
 import type { ModelConfig, ModelsFile } from "./types.js";
+import type { SecretsFile } from "../config/types.js";
 
 export class ModelRouter {
   private config: ModelsFile;
   private activeModelName: string;
   private configPath: string;
+  private secrets: SecretsFile | null;
 
-  private constructor(config: ModelsFile, configPath: string) {
+  private constructor(config: ModelsFile, configPath: string, secrets: SecretsFile | null) {
     this.config = config;
     this.activeModelName = config.default;
     this.configPath = configPath;
+    this.secrets = secrets;
   }
 
-  static async load(configPath: string): Promise<ModelRouter> {
+  static async load(configPath: string, secrets?: SecretsFile | null): Promise<ModelRouter> {
     const raw = await readFile(configPath, "utf-8");
     const config: ModelsFile = JSON.parse(raw);
     if (!config.models || config.models.length === 0) {
@@ -33,18 +36,24 @@ export class ModelRouter {
     if (uniqueNames.size !== names.length) {
       throw new Error("Duplicate model names in models.json");
     }
-    return new ModelRouter(config, configPath);
+    return new ModelRouter(config, configPath, secrets ?? null);
+  }
+
+  /** Resolve an API key: env var takes precedence, then secrets file. */
+  private resolveApiKey(envVar: string): string {
+    const fromEnv = process.env[envVar];
+    if (fromEnv) return fromEnv;
+    const fromSecrets = this.secrets?.apiKeys[envVar];
+    if (fromSecrets) return fromSecrets;
+    throw new Error(
+      `API key not found: set environment variable "${envVar}" or run the setup wizard to store it in secrets.enc`
+    );
   }
 
   /** Get the PI-mono Model object for the active (or named) config */
   getModel(name?: string): Model<Api> {
     const cfg = this.getConfig(name);
-    const apiKey = process.env[cfg.apiKeyEnvVar];
-    if (!apiKey) {
-      throw new Error(
-        `API key not found: environment variable "${cfg.apiKeyEnvVar}" is not set`
-      );
-    }
+    const apiKey = this.resolveApiKey(cfg.apiKeyEnvVar);
     // For OpenAI-compatible providers with a custom base URL, construct the
     // Model object manually since pi-ai's getModel only handles known providers
     if (cfg.baseUrl) {
@@ -86,12 +95,7 @@ export class ModelRouter {
     apiKey: string;
   } {
     const cfg = this.getConfig(name);
-    const apiKey = process.env[cfg.apiKeyEnvVar];
-    if (!apiKey) {
-      throw new Error(
-        `API key not found: environment variable "${cfg.apiKeyEnvVar}" is not set`
-      );
-    }
+    const apiKey = this.resolveApiKey(cfg.apiKeyEnvVar);
     return {
       temperature: cfg.temperature,
       maxTokens: cfg.maxTokens,
