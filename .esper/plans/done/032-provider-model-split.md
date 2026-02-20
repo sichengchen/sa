@@ -1,14 +1,14 @@
 ---
-id: 032
+id: 32
 title: Split providers and models in config schema
-status: pending
+status: done
 type: feature
 priority: 1
 phase: phase-2
 branch: feature/phase-2
 created: 2026-02-20
+shipped_at: 2026-02-20
 ---
-
 # Split providers and models in config schema
 
 ## Context
@@ -274,3 +274,17 @@ In `ModelRouter.load()`, check `version` field:
   - Cannot remove the default model
   - Missing or unrecognized `version` throws descriptive error
   - Empty providers array is invalid (must have at least one)
+
+## Progress
+- Implemented new `ProviderConfig` type, updated `ModelConfig` and `ModelsFile` to v2 schema
+- Updated `ModelRouter` with provider resolution, CRUD methods (`addProvider`, `removeProvider`, `listProviders`), and schema version check
+- Updated `DEFAULT_MODELS` in defaults to v2 format
+- Added `provider.*` (list, add, remove) and expanded `model.*` (list, active, switch, add, remove) tRPC endpoints
+- Updated TUI App.tsx with real `model.switch` mutation and `/provider` command, Input.tsx with vertical suggestions + new commands, ModelPicker.tsx to accept full `ModelConfig[]`
+- Updated Telegram connector with model switching inline keyboard and provider list command
+- Updated Discord connector with model switching buttons and provider list command
+- Moved wizard from `src/wizard/` to `src/cli/wizard/`, fixed relative imports
+- Updated wizard ModelSetup to emit `providerId`/`providerType`, Wizard.tsx handleConfirm to write v2 schema, cli/index.ts loadExistingConfig to read v2 schema
+- Updated tests: router.test.ts and config-router.test.ts to v2 schema, agent.test.ts to v2 schema
+- Modified: src/router/types.ts, src/router/router.ts, src/router/index.ts, src/config/defaults.ts, src/engine/router.ts, src/connectors/tui/App.tsx, src/connectors/tui/Input.tsx, src/connectors/tui/ModelPicker.tsx, src/connectors/telegram/transport.ts, src/connectors/discord/transport.ts, src/cli/wizard/ (moved from src/wizard/), src/cli/index.ts, tests/router.test.ts, tests/integration/config-router.test.ts, tests/agent.test.ts
+- Verification: typecheck passed (pre-existing errors only), lint passed, tests 158 pass / 1 pre-existing fail (telegram @trpc/client missing)
