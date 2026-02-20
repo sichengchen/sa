@@ -7,13 +7,12 @@ import type { ToolImpl, ToolApprovalCallback } from "./agent/index.js";
 import { MemoryManager } from "./memory/index.js";
 import { getBuiltinTools, formatToolsSection } from "./tools/index.js";
 import { createRememberTool } from "./tools/remember.js";
+import { createClawHubInstallTool } from "./tools/clawhub-install.js";
+import { createClawHubUpdateTool } from "./tools/clawhub-update.js";
 import { SessionManager } from "./sessions.js";
 import { AuthManager } from "./auth.js";
 import { SkillRegistry, formatSkillsDiscovery } from "./skills/index.js";
 import { createReadSkillTool } from "./tools/read-skill.js";
-import { ClawHubClient } from "./clawhub/index.js";
-import { SkillInstaller } from "./clawhub/index.js";
-import { createClawHubSearchTool } from "./tools/clawhub-search.js";
 import { Scheduler, createHeartbeatTask } from "./scheduler.js";
 
 const SAFETY_ADVISORY = `## Safety
@@ -43,8 +42,6 @@ export interface EngineRuntime {
   sessions: SessionManager;
   auth: AuthManager;
   skills: SkillRegistry;
-  clawhub: ClawHubClient;
-  installer: SkillInstaller;
   scheduler: Scheduler;
   agentName: string;
   /** Create a new Agent instance for a session (each session gets its own Agent) */
@@ -71,12 +68,14 @@ export async function createRuntime(): Promise<EngineRuntime> {
   const skills = new SkillRegistry();
   await skills.loadAll(saHome);
 
-  // Initialize ClawHub client and installer
-  const clawhub = new ClawHubClient();
-  const installer = new SkillInstaller(saHome, clawhub);
-
-  // Build tools
-  const tools = [...getBuiltinTools(), createRememberTool(memory), createReadSkillTool(skills), createClawHubSearchTool(clawhub)];
+  // Build tools (ClawHub tools are self-contained, install/update need saHome + registry)
+  const tools = [
+    ...getBuiltinTools(),
+    createRememberTool(memory),
+    createReadSkillTool(skills),
+    createClawHubInstallTool(saHome, skills),
+    createClawHubUpdateTool(saHome, skills),
+  ];
 
   // Assemble system prompt
   const userProfile = await config.loadUserProfile();
@@ -114,8 +113,6 @@ export async function createRuntime(): Promise<EngineRuntime> {
     sessions,
     auth,
     skills,
-    clawhub,
-    installer,
     scheduler,
     agentName: saConfig.identity.name,
     createAgent(onToolApproval?: ToolApprovalCallback): Agent {

@@ -10,17 +10,10 @@ interface SkillSetupProps {
   onBack: () => void;
 }
 
-const STARTER_SKILLS = [
-  { name: "skill-creator", description: "Create new agent skills (bundled)" },
-  { name: "code-review", description: "AI-powered code review assistance" },
-  { name: "git-commit", description: "Generate commit messages from diffs" },
-  { name: "summarize", description: "Summarize documents and web pages" },
-];
-
 export function SkillSetup({ onNext, onBack }: SkillSetupProps) {
   const [selected, setSelected] = useState(0);
 
-  useInput((input, key) => {
+  useInput((_input, key) => {
     if (key.escape) { onBack(); return; }
 
     if (key.upArrow) {
@@ -48,23 +41,21 @@ export function SkillSetup({ onNext, onBack }: SkillSetupProps) {
         to perform specific tasks using existing tools.
       </Text>
       <Text />
-      <Text>Popular skills on ClawHub (clawhub.ai):</Text>
-      {STARTER_SKILLS.map((skill) => (
-        <Text key={skill.name}>
-          {"  "}<Text color="yellow">{skill.name}</Text> — {skill.description}
-        </Text>
-      ))}
+      <Text>
+        SA comes with bundled skills (like skill-creator and clawhub).
+        You can also install more skills later.
+      </Text>
       <Text />
-      <Text>Would you like to browse and install skills from ClawHub?</Text>
+      <Text>Enable bundled skills?</Text>
       <Text />
       <Box flexDirection="column">
         <Text>
           {selected === 0 ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}
-          Browse skills after setup
+          Yes, enable all bundled skills
         </Text>
         <Text>
           {selected === 1 ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}
-          Skip for now (you can install skills later)
+          Skip for now (you can enable skills later)
         </Text>
       </Box>
       <Text />
