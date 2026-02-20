@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Box, useApp, useInput } from "ink";
-import { ChatView, type ChatMessage } from "../../tui/ChatView.js";
-import { Input } from "../../tui/Input.js";
+import { ChatView, type ChatMessage } from "./ChatView.js";
+import { Input } from "./Input.js";
 import { StatusBar } from "./StatusBar.js";
-import { ModelPicker } from "../../tui/ModelPicker.js";
+import { ModelPicker } from "./ModelPicker.js";
 import { createTuiClient } from "./client.js";
 
 type EngineClient = ReturnType<typeof createTuiClient>;

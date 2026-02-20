@@ -3,15 +3,13 @@
   "version": "0.1.0",
   "description": "SA (Sasa) — Personal AI agent assistant",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "src/cli/index.ts",
   "bin": {
     "sa": "src/cli/index.ts"
   },
   "scripts": {
-    "cli": "bun run src/cli/index.ts",
-    "dev": "bun run src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun",
-    "engine:dev": "bun run src/engine/index.ts",
+    "dev": "bun run src/cli/index.ts",
+    "build": "bun build src/cli/index.ts --outdir dist --target bun",
     "test": "bun test",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit"

@@ -1,6 +1,6 @@
 # Built-in Tools
 
-SA provides the agent with five built-in tools. The agent decides when and how to use them based on the conversation.
+SA provides the agent with seven built-in tools. The agent decides when and how to use them based on the conversation.
 
 ## read
 
@@ -57,3 +57,23 @@ Save a piece of information to long-term memory. Memory entries persist across s
 | `content` | string | Yes      | The content to remember                                        |
 
 Memory is stored as individual files under `~/.sa/memory/` (or the configured `memory.directory`). Saving to an existing key overwrites the previous value.
+
+## read_skill
+
+Read and activate a skill's full instructions. Available when the Engine is running with skills loaded.
+
+| Parameter | Type   | Required | Description                                     |
+|-----------|--------|----------|-------------------------------------------------|
+| `name`    | string | Yes      | The name of the skill (from the available skills list) |
+
+Returns the skill's full Markdown content and marks it as active (injected into the agent's context). If the skill is not found, returns an error.
+
+## clawhub_search
+
+Search the ClawHub skill registry ([clawhub.ai](https://clawhub.ai)) for agent skills.
+
+| Parameter | Type   | Required | Description                                     |
+|-----------|--------|----------|-------------------------------------------------|
+| `query`   | string | Yes      | Search query describing the kind of skill to find |
+
+Returns a list of matching skills with name, slug, description, version, download count, and tags. Use this when the user wants to find, browse, or install a skill from the registry.

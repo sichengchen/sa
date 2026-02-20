@@ -149,6 +149,13 @@ async function restart(): Promise<void> {
   await start();
 }
 
+/** Ensure the Engine daemon is running. Starts it if not. */
+export async function ensureEngine(): Promise<void> {
+  const existingPid = await readPid();
+  if (existingPid && isProcessAlive(existingPid)) return;
+  await start();
+}
+
 export async function engineCommand(args: string[]): Promise<void> {
   const action = args[0];
 
