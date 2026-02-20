@@ -1,14 +1,13 @@
 ---
-id: 016
+id: 16
 title: Bootstrap context files — USER.md, tools, safety, heartbeat
-status: pending
+status: active
 type: feature
 priority: 2
 phase: phase-1
 branch: feature/phase-1
 created: 2026-02-19
 ---
-
 # Bootstrap Context Files — USER.md, Tools, Safety, Heartbeat
 
 ## Context
@@ -176,3 +175,8 @@ async loadUserProfile(): Promise<string | null> {
   - `USER.md` exists but is empty → treated as missing (no section injected)
   - Tool list changes (e.g. remember tool disabled) → tools section reflects actual registered tools
   - `router.getActiveModel()` throws → heartbeat falls back to "unknown" model name gracefully
+
+## Progress
+- Milestones: 5 commits (4 feature + 1 rename)
+- Modified: src/config/manager.ts, src/tools/index.ts, src/wizard/Wizard.tsx, src/index.ts, tests/config.test.ts, tests/integration/config-router.test.ts, README.md, docs/architecture.md, docs/configuration.md
+- Verification: 93 tests pass, lint clean, typecheck clean
