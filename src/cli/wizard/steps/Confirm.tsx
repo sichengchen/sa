@@ -8,6 +8,11 @@ export interface WizardData {
   timezone: string;
   communicationStyle: string;
   aboutMe: string;
+  /** Provider unique ID (references ProviderConfig.id) */
+  providerId: string;
+  /** Provider type for pi-ai */
+  providerType: string;
+  /** Kept for display compatibility */
   provider: string;
   model: string;
   apiKeyEnvVar: string;

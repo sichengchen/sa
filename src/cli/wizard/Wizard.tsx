@@ -33,6 +33,8 @@ export function Wizard({ homeDir, onComplete, existingConfig }: WizardProps) {
           timezone: "",
           communicationStyle: "",
           aboutMe: "",
+          providerId: "anthropic",
+          providerType: "anthropic",
           provider: "anthropic",
           model: "claude-sonnet-4-5-20250514",
           apiKeyEnvVar: "ANTHROPIC_API_KEY",
@@ -93,18 +95,25 @@ ${recurringContext}
         JSON.stringify(config, null, 2) + "\n"
       );
 
-      // Write models.json
+      // Write models.json (v2 schema with separate providers and models)
       const models = {
+        version: 2,
         default: "default",
+        providers: [
+          {
+            id: data.providerId,
+            type: data.providerType,
+            apiKeyEnvVar: data.apiKeyEnvVar,
+            ...(data.baseUrl ? { baseUrl: data.baseUrl } : {}),
+          },
+        ],
         models: [
           {
             name: "default",
-            provider: data.provider,
+            provider: data.providerId,
             model: data.model,
-            apiKeyEnvVar: data.apiKeyEnvVar,
             temperature: 0.7,
             maxTokens: 8192,
-            ...(data.baseUrl ? { baseUrl: data.baseUrl } : {}),
           },
         ],
       };
@@ -177,6 +186,8 @@ ${recurringContext}
           currentValues={
             existingConfig
               ? {
+                  providerId: data.providerId,
+                  providerType: data.providerType,
                   provider: data.provider,
                   model: data.model,
                   apiKeyEnvVar: data.apiKeyEnvVar,

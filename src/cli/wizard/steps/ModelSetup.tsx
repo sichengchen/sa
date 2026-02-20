@@ -15,6 +15,11 @@ const PROVIDER_OPTIONS: { type: ProviderType; label: string; apiKeyEnvVar: strin
 const VISIBLE_MODELS = 8;
 
 export interface ModelSetupData {
+  /** Provider unique ID (e.g. "anthropic", "openai", or custom compat name) */
+  providerId: string;
+  /** Provider type for pi-ai (e.g. "anthropic", "openai", "google", "openai-compat") */
+  providerType: string;
+  /** Model type alias kept for backward compat display (same as providerType for officials) */
   provider: string;
   model: string;
   apiKeyEnvVar: string;
@@ -109,12 +114,15 @@ export function ModelSetup({ onNext, onBack, currentValues }: ModelSetupProps) {
   }, [substep]); // intentionally only re-runs when substep changes to "fetching"
 
   function completeSetup(chosenModel: string) {
-    const finalProvider = isCompat ? "openai" : providerOption.type;
+    const finalProviderId = isCompat ? customName : providerOption.type;
+    const finalProviderType = providerOption.type;
     const finalEnvVar = isCompat
       ? `${customName.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_API_KEY`
       : providerOption.apiKeyEnvVar;
     onNext({
-      provider: finalProvider,
+      providerId: finalProviderId,
+      providerType: finalProviderType,
+      provider: finalProviderId,
       model: chosenModel,
       apiKeyEnvVar: finalEnvVar,
       apiKey,

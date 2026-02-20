@@ -39,6 +39,10 @@ async function loadExistingConfig(): Promise<unknown | undefined> {
       await readFile(config.getModelsPath(), "utf8")
     );
     const defaultModel = modelsRaw.models?.[0];
+    // Resolve provider config from the v2 schema's providers array
+    const defaultProvider = modelsRaw.providers?.find(
+      (p: { id: string }) => p.id === defaultModel?.provider
+    ) ?? modelsRaw.providers?.[0];
     const userProfile = await config.loadUserProfile();
     let userName = "";
     let timezone = "";
@@ -61,11 +65,13 @@ async function loadExistingConfig(): Promise<unknown | undefined> {
       timezone,
       communicationStyle,
       aboutMe,
-      provider: defaultModel?.provider ?? "anthropic",
+      providerId: defaultProvider?.id ?? "anthropic",
+      providerType: defaultProvider?.type ?? "anthropic",
+      provider: defaultProvider?.id ?? "anthropic",
       model: defaultModel?.model ?? "",
-      apiKeyEnvVar: defaultModel?.apiKeyEnvVar ?? "ANTHROPIC_API_KEY",
-      baseUrl: defaultModel?.baseUrl,
-      apiKey: secrets?.apiKeys?.[defaultModel?.apiKeyEnvVar ?? ""] ?? "",
+      apiKeyEnvVar: defaultProvider?.apiKeyEnvVar ?? "ANTHROPIC_API_KEY",
+      baseUrl: defaultProvider?.baseUrl,
+      apiKey: secrets?.apiKeys?.[defaultProvider?.apiKeyEnvVar ?? ""] ?? "",
       botToken: secrets?.botToken ?? "",
       pairingCode: secrets?.pairingCode,
       discordToken: secrets?.discordToken ?? "",
