@@ -1,11 +1,12 @@
-import { describe, test, expect, beforeEach, afterEach, mock } from "bun:test";
-import { mkdir, rm, writeFile, readFile } from "node:fs/promises";
+import { describe, test, expect, beforeEach, afterEach } from "bun:test";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
 import { ClawHubClient, ClawHubError } from "../src/engine/clawhub/client.js";
 import { SkillInstaller } from "../src/engine/clawhub/installer.js";
 import type { ClawHubPage, ClawHubSkill, ClawHubSkillDetail } from "../src/engine/clawhub/types.js";
+import { clawHubSearchTool } from "../src/engine/tools/clawhub-search.js";
 
 // --- Mock server setup ---
 
@@ -223,5 +224,21 @@ describe("SkillInstaller", () => {
     const installed = await installer.listInstalled();
     expect(installed).toHaveLength(1);
     expect(installed[0]!.slug).toBe("acme/test");
+  });
+});
+
+// --- Standalone tool tests ---
+
+describe("clawhub_search tool", () => {
+  test("has correct name and description", () => {
+    expect(clawHubSearchTool.name).toBe("clawhub_search");
+    expect(clawHubSearchTool.description).toContain("ClawHub");
+  });
+
+  test("returns error on network failure", async () => {
+    // Search against a non-existent server will fail
+    const result = await clawHubSearchTool.execute({ query: "test" });
+    expect(result.isError).toBe(true);
+    expect(result.content).toContain("ClawHub search failed");
   });
 });
