@@ -1,14 +1,14 @@
 ---
-id: 027
+id: 27
 title: Skill creator skill
-status: pending
+status: done
 type: feature
 priority: 3
 phase: phase-2
 branch: feature/phase-2
 created: 2026-02-19
+shipped_at: 2026-02-20
 ---
-
 # Skill creator skill
 
 ## Context
@@ -38,3 +38,11 @@ This is itself a skill — it lives in `src/skills/bundled/skill-creator/SKILL.m
 - Run: Start Engine, chat "create a skill that formats JSON files", verify SKILL.md is generated
 - Expected: Agent follows skill-creator instructions, writes a valid SKILL.md to `~/.sa/skills/`
 - Edge cases: Skill name collision with existing skill, invalid characters in name
+
+## Progress
+- Created src/skills/bundled/skill-creator/SKILL.md with 6-step skill creation instructions
+- Updated src/skills/registry.ts to scan bundled skills dir (via import.meta.url) alongside user skills dir
+- User skills override bundled skills on name collision
+- Updated tests/skills.test.ts to account for bundled skill-creator in registry size assertions
+- Modified: src/skills/bundled/skill-creator/SKILL.md, src/skills/registry.ts, tests/skills.test.ts
+- Verification: 147 tests pass, typecheck clean, lint clean
