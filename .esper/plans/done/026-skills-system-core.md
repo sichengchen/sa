@@ -1,14 +1,14 @@
 ---
-id: 026
+id: 26
 title: Skills system core
-status: pending
+status: done
 type: feature
 priority: 2
 phase: phase-2
 branch: feature/phase-2
 created: 2026-02-19
+shipped_at: 2026-02-20
 ---
-
 # Skills system core
 
 ## Context
@@ -71,3 +71,16 @@ Skills are loaded from:
 - Run: Create a test skill in `~/.sa/skills/test-skill/SKILL.md`, start Engine, verify it appears in system prompt
 - Expected: Skills are discovered, metadata injected into prompt, agent can read full content on demand
 - Edge cases: Invalid SKILL.md (missing name), empty skills directory, skill with only frontmatter
+
+## Progress
+- Created src/skills/types.ts with SkillMetadata and LoadedSkill types
+- Created src/skills/loader.ts with scanSkillDirectory, loadSkillContent, parseFrontmatter
+- Created src/skills/registry.ts with SkillRegistry (loadAll, activate, deactivate, getContent, getMetadataList)
+- Created src/skills/prompt.ts with formatSkillsDiscovery XML and formatActiveSkills
+- Created src/skills/index.ts barrel export
+- Created src/tools/read-skill.ts for agent to read and activate skills
+- Updated src/engine/runtime.ts to load skills on startup and inject into system prompt
+- Updated src/engine/router.ts with skill.list and skill.activate tRPC procedures
+- Created tests/skills.test.ts — 14 tests covering loader, registry, prompt generation
+- Modified: src/skills/{types,loader,registry,prompt,index}.ts, src/tools/read-skill.ts, src/engine/{runtime,router}.ts, tests/skills.test.ts
+- Verification: 136 tests pass, typecheck clean, lint clean
