@@ -89,8 +89,9 @@ export class TelegramTransport {
         return;
       }
 
-      // Send initial "thinking" message
-      let sentMsg = await ctx.reply("...");
+      // Show typing indicator instead of sending a placeholder message
+      await ctx.api.sendChatAction(ctx.message.chat.id, "typing");
+      let sentMsg: Awaited<ReturnType<typeof ctx.reply>> | null = null;
       let fullText = "";
       let lastEditTime = 0;
 
@@ -102,11 +103,16 @@ export class TelegramTransport {
               // Throttle edits to avoid Telegram rate limits
               if (Date.now() - lastEditTime > EDIT_THROTTLE_MS && fullText.length > 0) {
                 try {
-                  await ctx.api.editMessageText(
-                    ctx.message.chat.id,
-                    sentMsg.message_id,
-                    fullText.slice(0, 4096)
-                  );
+                  if (!sentMsg) {
+                    // First chunk — send as a new message
+                    sentMsg = await ctx.reply(fullText.slice(0, 4096));
+                  } else {
+                    await ctx.api.editMessageText(
+                      ctx.message.chat.id,
+                      sentMsg.message_id,
+                      fullText.slice(0, 4096)
+                    );
+                  }
                   lastEditTime = Date.now();
                 } catch {
                   // Edit may fail if content unchanged — ignore
@@ -126,15 +132,20 @@ export class TelegramTransport {
             }
 
             case "done":
-              // Final edit with complete text
+              // Final message with complete text
               if (fullText) {
                 const chunks = splitMessage(fullText);
                 try {
-                  await ctx.api.editMessageText(
-                    ctx.message.chat.id,
-                    sentMsg.message_id,
-                    chunks[0]
-                  );
+                  if (!sentMsg) {
+                    // Never sent a streaming message — send the final text directly
+                    sentMsg = await ctx.reply(chunks[0]);
+                  } else {
+                    await ctx.api.editMessageText(
+                      ctx.message.chat.id,
+                      sentMsg.message_id,
+                      chunks[0]
+                    );
+                  }
                 } catch {
                   // ignore
                 }
