@@ -1,12 +1,13 @@
 ---
 id: 14
 title: Telegram pairing — restrict bot to one authorized user
-status: active
+status: done
 type: feature
 priority: 1
 phase: phase-1
 branch: feature/phase-1
 created: 2026-02-19
+shipped_at: 2026-02-20
 ---
 # Telegram Pairing — Restrict Bot to One Authorized User
 
