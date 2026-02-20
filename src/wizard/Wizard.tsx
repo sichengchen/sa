@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Box, Text } from "ink";
-import { writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { Welcome } from "./steps/Welcome.js";
@@ -49,24 +49,33 @@ export function Wizard({ homeDir, onComplete, existingConfig }: WizardProps) {
       const identityMd = `# ${data.name}\n\n## Personality\n${data.personality}\n\n## System Prompt\nYou are ${data.name}, a personal AI agent assistant. You help with tasks, answer questions, and use tools when needed. Keep responses concise and actionable.\n`;
       await writeFile(join(homeDir, "IDENTITY.md"), identityMd);
 
-      // Write USER.md template (only if it doesn't exist — don't overwrite user edits)
+      // Write USER.md with profile data collected from the wizard
       const userProfilePath = join(homeDir, "USER.md");
-      if (!existsSync(userProfilePath)) {
-        const userProfileTemplate = `# User Profile
 
-Fill in what you want ${data.name} to always know about you.
+      // On re-setup, preserve any hand-edited Recurring Context section
+      let recurringContext = `<!-- Projects, goals, or ongoing context ${data.name} should always be aware of. -->`;
+      if (existsSync(userProfilePath)) {
+        const existing = await readFile(userProfilePath, "utf-8");
+        const rcMatch = existing.match(/## Recurring Context\s*\n([\s\S]*?)$/);
+        if (rcMatch && rcMatch[1].trim()) {
+          recurringContext = rcMatch[1].trimEnd();
+        }
+      }
+
+      const aboutLine = data.aboutMe ? `\n${data.aboutMe}\n` : "\n";
+      const userProfileContent = `# User Profile
 
 ## About Me
-<!-- Your name, location, timezone, role, etc. -->
-
+Name: ${data.userName}
+Timezone: ${data.timezone || "not set"}
+${aboutLine}
 ## Preferences
-<!-- Communication style, preferred tools, habits, etc. -->
+Communication style: ${data.communicationStyle || "not set"}
 
 ## Recurring Context
-<!-- Projects, goals, or ongoing context ${data.name} should always be aware of. -->
+${recurringContext}
 `;
-        await writeFile(userProfilePath, userProfileTemplate);
-      }
+      await writeFile(userProfilePath, userProfileContent);
 
       // Write config.json
       const config = {
