@@ -1,7 +1,13 @@
 import { z } from "zod";
-import { observable } from "@trpc/server/observable";
 import { router, publicProcedure } from "./trpc.js";
+import { SessionManager } from "./sessions.js";
 import type { EngineEvent, Session, SkillInfo } from "../shared/types.js";
+
+/** Singleton session manager — shared across all procedures */
+const sessionManager = new SessionManager();
+
+/** Export for use in server bootstrap and tests */
+export { sessionManager };
 
 /** Main tRPC router — all Engine procedures */
 export const appRouter = router({
@@ -18,6 +24,7 @@ export const appRouter = router({
     send: publicProcedure
       .input(z.object({ sessionId: z.string(), message: z.string() }))
       .mutation(async ({ input }): Promise<{ sessionId: string }> => {
+        sessionManager.touchSession(input.sessionId);
         // Stub — will be wired to Agent in plan #020
         return { sessionId: input.sessionId };
       }),
@@ -25,12 +32,10 @@ export const appRouter = router({
     /** Stream AgentEvents for a session */
     stream: publicProcedure
       .input(z.object({ sessionId: z.string() }))
-      .subscription(({ input }) => {
-        return observable<EngineEvent>((emit) => {
-          // Stub — will emit events from Agent streaming in plan #020
-          emit.next({ type: "done", stopReason: "stub" });
-          return () => {};
-        });
+      .subscription(async function* ({ input }): AsyncGenerator<EngineEvent> {
+        sessionManager.touchSession(input.sessionId);
+        // Stub — will yield events from Agent streaming in plan #020
+        yield { type: "done", stopReason: "stub" };
       }),
 
     /** Get conversation history for a session */
@@ -52,21 +57,13 @@ export const appRouter = router({
           connectorId: z.string(),
         }),
       )
-      .mutation(async ({ input }): Promise<Session> => {
-        // Stub — will be implemented in plan #019
-        return {
-          id: crypto.randomUUID(),
-          connectorType: input.connectorType,
-          connectorId: input.connectorId,
-          createdAt: Date.now(),
-          lastActiveAt: Date.now(),
-        };
+      .mutation(({ input }): Session => {
+        return sessionManager.createSession(input.connectorId, input.connectorType);
       }),
 
     /** List active sessions */
-    list: publicProcedure.query(async (): Promise<Session[]> => {
-      // Stub — will be implemented in plan #019
-      return [];
+    list: publicProcedure.query((): Session[] => {
+      return sessionManager.listSessions();
     }),
   }),
 
