@@ -72,10 +72,11 @@ export function Wizard({ homeDir, onComplete }: WizardProps) {
       // Write empty MEMORY.md
       await writeFile(join(homeDir, "memory", "MEMORY.md"), "");
 
-      // Persist secrets (API key + bot token) in encrypted file
+      // Persist secrets (API key + bot token + pairing code) in encrypted file
       await saveSecrets(homeDir, {
         apiKeys: data.apiKey ? { [data.apiKeyEnvVar]: data.apiKey } : {},
         botToken: data.botToken || undefined,
+        pairingCode: data.pairingCode,
       });
 
       setStep("done");
@@ -112,8 +113,8 @@ export function Wizard({ homeDir, onComplete }: WizardProps) {
     case "telegram":
       return (
         <TelegramSetup
-          onNext={({ botToken }) => {
-            setData((d) => ({ ...d, botToken }));
+          onNext={({ botToken, pairingCode }) => {
+            setData((d) => ({ ...d, botToken, pairingCode }));
             setStep("confirm");
           }}
           onBack={() => setStep("model")}

@@ -10,6 +10,7 @@ export interface WizardData {
   apiKey: string;
   botToken: string;
   baseUrl?: string;
+  pairingCode?: string;
 }
 
 interface ConfirmProps {
