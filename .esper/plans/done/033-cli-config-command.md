@@ -1,14 +1,14 @@
 ---
-id: "033"
-title: "sa config — interactive CLI configuration management"
-status: pending
+id: 33
+title: sa config — interactive CLI configuration management
+status: done
 type: feature
 priority: 2
 phase: phase-2
 branch: feature/phase-2
 created: 2026-02-20
+shipped_at: 2026-02-20
 ---
-
 # sa config — interactive CLI configuration management
 
 ## Context
@@ -135,3 +135,10 @@ The only way to edit config today is re-running the full onboarding wizard (`sa 
   - Config file doesn't exist yet (first run before wizard)
   - Concurrent engine running while editing config (engine uses old config until restart)
   - Provider with custom baseUrl (openai-compat) round-trips correctly
+
+## Progress
+- Part A: Merged models.json into config.json (v3 schema) — extended SAConfigFile type, auto-migration in ConfigManager, ModelRouter.fromConfig() pure in-memory pattern with onSave callback
+- Part B: Created `sa config` interactive CLI — ConfigMenu, ProviderManager, ModelManager, ConnectorSettings, MemorySettings; wired config command in cli/index.ts with engine restart hint
+- Modified: src/engine/config/types.ts, src/engine/config/manager.ts, src/engine/config/defaults.ts, src/engine/config/index.ts, src/engine/router/router.ts, src/engine/router/types.ts, src/engine/router/index.ts, src/engine/runtime.ts, src/cli/wizard/Wizard.tsx, src/cli/index.ts, tests/router.test.ts, tests/config.test.ts, tests/agent.test.ts, tests/e2e/smoke.test.ts, tests/integration/config-router.test.ts
+- Created: src/cli/config/index.ts, src/cli/config/ConfigMenu.tsx, src/cli/config/ProviderManager.tsx, src/cli/config/ModelManager.tsx, src/cli/config/ConnectorSettings.tsx, src/cli/config/MemorySettings.tsx
+- Verification: typecheck passed, 176 tests passed (0 failures), lint passed
