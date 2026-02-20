@@ -50,12 +50,14 @@ When the Engine starts, it auto-launches any configured IM connectors (Telegram 
 ## SA CLI
 
 ```
-sa                      Start the Engine (if needed) and open the TUI
+sa                      Onboard (if first run), start Engine, open TUI
+sa onboard              Run the onboarding wizard
 sa engine start         Start the Engine as a background daemon
 sa engine stop          Stop the running Engine
 sa engine status        Show Engine status
 sa engine logs          Show recent Engine logs
 sa engine restart       Restart the Engine
+sa help                 Show help
 ```
 
 ## Skills

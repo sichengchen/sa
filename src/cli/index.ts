@@ -1,41 +1,120 @@
 #!/usr/bin/env bun
 
-import { engineCommand, ensureEngine } from "./engine.js";
 import React from "react";
 import { render } from "ink";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
+import { engineCommand, ensureEngine } from "./engine.js";
 import { createTuiClient } from "../connectors/tui/client.js";
 import { App } from "../connectors/tui/App.js";
 
+const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
 const [subcommand, ...args] = process.argv.slice(2);
+
+async function runOnboarding(existingConfig?: unknown): Promise<void> {
+  const { Wizard } = await import("../wizard/index.js");
+  return new Promise<void>((resolve) => {
+    const { waitUntilExit } = render(
+      React.createElement(Wizard, {
+        homeDir: saHome,
+        existingConfig: existingConfig as any,
+        onComplete: () => resolve(),
+      })
+    );
+    waitUntilExit();
+  });
+}
+
+async function loadExistingConfig(): Promise<unknown | undefined> {
+  try {
+    const { ConfigManager } = await import("../config/index.js");
+    const { readFile } = await import("node:fs/promises");
+    const config = new ConfigManager(saHome);
+    const saConfig = await config.load();
+    const secrets = await config.loadSecrets();
+    const modelsRaw = JSON.parse(
+      await readFile(config.getModelsPath(), "utf8")
+    );
+    const defaultModel = modelsRaw.models?.[0];
+    const userProfile = await config.loadUserProfile();
+    let userName = "";
+    let timezone = "";
+    let communicationStyle = "";
+    let aboutMe = "";
+    if (userProfile) {
+      const nameMatch = userProfile.match(/^Name:\s*(.+)/m);
+      if (nameMatch) userName = nameMatch[1].trim();
+      const tzMatch = userProfile.match(/^Timezone:\s*(.+)/m);
+      if (tzMatch && tzMatch[1].trim() !== "not set") timezone = tzMatch[1].trim();
+      const styleMatch = userProfile.match(/^Communication style:\s*(.+)/m);
+      if (styleMatch && styleMatch[1].trim() !== "not set") communicationStyle = styleMatch[1].trim();
+      const aboutMatch = userProfile.match(/^Timezone:.*\n\n([\s\S]*?)\n\n## Preferences/m);
+      if (aboutMatch && aboutMatch[1].trim()) aboutMe = aboutMatch[1].trim();
+    }
+    return {
+      name: saConfig.identity.name,
+      personality: saConfig.identity.personality,
+      userName,
+      timezone,
+      communicationStyle,
+      aboutMe,
+      provider: defaultModel?.provider ?? "anthropic",
+      model: defaultModel?.model ?? "",
+      apiKeyEnvVar: defaultModel?.apiKeyEnvVar ?? "ANTHROPIC_API_KEY",
+      baseUrl: defaultModel?.baseUrl,
+      apiKey: secrets?.apiKeys?.[defaultModel?.apiKeyEnvVar ?? ""] ?? "",
+      botToken: secrets?.botToken ?? "",
+      pairingCode: secrets?.pairingCode,
+      discordToken: secrets?.discordToken ?? "",
+      discordGuildId: secrets?.discordGuildId ?? "",
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function isConfigured(): boolean {
+  return existsSync(join(saHome, "config.json"));
+}
+
+async function openTui(): Promise<void> {
+  await ensureEngine();
+  const client = createTuiClient();
+  const { waitUntilExit } = render(React.createElement(App, { client }));
+  await waitUntilExit();
+}
 
 const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   engine: engineCommand,
-};
-
-async function main() {
-  // No subcommand or bare "sa" → auto-start Engine + enter TUI
-  if (!subcommand) {
-    await ensureEngine();
-    const client = createTuiClient();
-    const { waitUntilExit } = render(React.createElement(App, { client }));
-    await waitUntilExit();
-    return;
-  }
-
-  if (subcommand === "--help" || subcommand === "-h") {
+  onboard: async () => {
+    const existing = isConfigured() ? await loadExistingConfig() : undefined;
+    await runOnboarding(existing);
+  },
+  help: async () => {
     console.log("SA — Personal AI Agent Assistant\n");
     console.log("Usage: sa [command]\n");
     console.log("Commands:");
     console.log("  (default)   Start the Engine (if needed) and open the TUI");
+    console.log("  onboard     Run the onboarding wizard");
     console.log("  engine      Manage the Engine daemon (start/stop/status/logs/restart)");
-    console.log("\nRun 'sa <command> --help' for more information on a command.");
+    console.log("  help        Show this help message");
+  },
+};
+
+async function main() {
+  if (!subcommand) {
+    if (!isConfigured()) {
+      await runOnboarding();
+    }
+    await openTui();
     return;
   }
 
   const handler = COMMANDS[subcommand];
   if (!handler) {
     console.error(`Unknown command: ${subcommand}`);
-    console.error("Run 'sa --help' for usage information.");
+    console.error("Run 'sa help' for usage information.");
     process.exit(1);
   }
 
