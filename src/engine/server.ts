@@ -82,6 +82,7 @@ export async function startServer(runtime: EngineRuntime, options: EngineServerO
       wss.close();
       // Clean up discovery files
       try { await unlink(join(saHome, "engine.url")); } catch {}
+      await runtime.auth.cleanup();
     },
   };
 }

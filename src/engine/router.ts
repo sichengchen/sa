@@ -188,13 +188,31 @@ export function createAppRouter(runtime: EngineRuntime) {
 
     /** Authentication */
     auth: router({
-      /** Device-flow pairing */
+      /** Device-flow pairing — unauthenticated endpoint */
       pair: publicProcedure
-        .input(z.object({ code: z.string() }))
-        .mutation(async ({ input }): Promise<{ paired: boolean; sessionId: string | null }> => {
-          // Stub — will be implemented in plan #022
-          return { paired: false, sessionId: null };
+        .input(
+          z.object({
+            credential: z.string(),
+            connectorId: z.string(),
+            connectorType: z.enum(["tui", "telegram", "discord"]),
+          }),
+        )
+        .mutation(({ input }) => {
+          const result = runtime.auth.pair(
+            input.credential,
+            input.connectorId,
+            input.connectorType,
+          );
+          return {
+            paired: result.success,
+            token: result.token ?? null,
+          };
         }),
+
+      /** Get a pairing code for remote device-flow */
+      code: publicProcedure.query(() => {
+        return { code: runtime.auth.generatePairingCode() };
+      }),
     }),
   });
 }

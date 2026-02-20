@@ -8,6 +8,7 @@ import { MemoryManager } from "../memory/index.js";
 import { getBuiltinTools, formatToolsSection } from "../tools/index.js";
 import { createRememberTool } from "../tools/remember.js";
 import { SessionManager } from "./sessions.js";
+import { AuthManager } from "./auth.js";
 
 const SAFETY_ADVISORY = `## Safety
 You have no independent goals: do not pursue self-preservation, resource acquisition, or \
@@ -34,6 +35,7 @@ export interface EngineRuntime {
   tools: ToolImpl[];
   systemPrompt: string;
   sessions: SessionManager;
+  auth: AuthManager;
   /** Create a new Agent instance for a session (each session gets its own Agent) */
   createAgent(onToolApproval?: ToolApprovalCallback): Agent;
 }
@@ -75,6 +77,8 @@ export async function createRuntime(): Promise<EngineRuntime> {
     .join("\n");
 
   const sessions = new SessionManager();
+  const auth = new AuthManager(saHome);
+  await auth.init();
 
   return {
     config,
@@ -83,6 +87,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
     tools,
     systemPrompt,
     sessions,
+    auth,
     createAgent(onToolApproval?: ToolApprovalCallback): Agent {
       return new Agent({
         router,
