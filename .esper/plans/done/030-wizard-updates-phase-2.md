@@ -1,14 +1,14 @@
 ---
-id: 030
+id: 30
 title: Wizard updates for Phase 2
-status: pending
+status: done
 type: feature
 priority: 3
 phase: phase-2
 branch: feature/phase-2
 created: 2026-02-19
+shipped_at: 2026-02-20
 ---
-
 # Wizard updates for Phase 2
 
 ## Context
@@ -59,3 +59,13 @@ The wizard uses Ink step components (`Welcome.tsx`, `Identity.tsx`, `ModelSetup.
 - Run: `bun run src/index.ts --setup` — wizard includes Discord and Skill steps
 - Expected: User can configure Discord bot, browse/install skills, wizard completes and starts Engine
 - Edge cases: Skip Discord (optional), skip skills, re-run wizard with existing Discord config (Keep/Change gate)
+
+## Progress
+- Created src/wizard/steps/DiscordSetup.tsx with token + guild ID input, keep/change gate for re-setup
+- Created src/wizard/steps/SkillSetup.tsx with starter skill list and browse/skip selection
+- Updated src/wizard/steps/Welcome.tsx with Engine+Connector architecture intro and 6-step list
+- Updated src/wizard/Wizard.tsx with discord and skills steps in the flow, default data fields
+- Updated src/wizard/steps/Confirm.tsx with Discord and Skills summary sections, WizardData extended
+- Updated src/config/types.ts with discordToken and discordGuildId in SecretsFile
+- Modified: DiscordSetup.tsx, SkillSetup.tsx, Welcome.tsx, Wizard.tsx, Confirm.tsx, config/types.ts
+- Verification: 163 tests pass, typecheck clean, lint clean
