@@ -1,88 +1,106 @@
 ---
 name: apple-mail-search
-description: Fast Apple Mail search via SQLite on macOS (~50ms results vs minutes with AppleScript).
+description: Fast Apple Mail search via SQLite on macOS. Search emails by subject, sender, date, attachments - results in ~50ms vs 8+ minutes with AppleScript. Use when asked to find, search, or list emails.
+homepage: https://github.com/steipete/clawdbot
+metadata: {"clawdbot":{"emoji":"📬","os":["darwin"],"requires":{"bins":["sqlite3"]}}}
 ---
+
 # Apple Mail Search
 
-Search Apple Mail via direct SQLite queries on the Envelope Index database. Results in ~50ms compared to 8+ minutes with AppleScript.
+Search Apple Mail.app emails instantly via SQLite. ~50ms vs 8+ minutes with AppleScript.
 
-## Requirements
+## Installation
 
-- macOS with Apple Mail.app
-- `sqlite3` binary (pre-installed on macOS)
-
-## Database Location
-
-The Mail SQLite database is at:
-```
-~/Library/Mail/V*/MailData/Envelope\ Index
-```
-
-## Search Commands
-
-### Search by subject
 ```bash
-sqlite3 -header -separator '|' ~/Library/Mail/V*/MailData/Envelope\ Index \
-  "SELECT m.ROWID, s.subject, a.address, datetime(m.date_sent + 978307200, 'unixepoch', 'localtime') as date
-   FROM messages m
-   JOIN subjects s ON m.subject = s.ROWID
-   JOIN addresses a ON m.sender = a.ROWID
-   WHERE s.subject LIKE '%search term%'
-   ORDER BY m.date_sent DESC LIMIT 20"
+# Copy mail-search to your PATH
+cp mail-search /usr/local/bin/
+chmod +x /usr/local/bin/mail-search
 ```
 
-### Search by sender
+## Usage
+
 ```bash
-sqlite3 -header -separator '|' ~/Library/Mail/V*/MailData/Envelope\ Index \
-  "SELECT m.ROWID, s.subject, a.address, datetime(m.date_sent + 978307200, 'unixepoch', 'localtime') as date
-   FROM messages m
-   JOIN subjects s ON m.subject = s.ROWID
-   JOIN addresses a ON m.sender = a.ROWID
-   WHERE a.address LIKE '%@example.com%'
-   ORDER BY m.date_sent DESC LIMIT 20"
+mail-search subject "invoice"           # Search subjects
+mail-search sender "@amazon.com"        # Search by sender email
+mail-search from-name "John"            # Search by sender name
+mail-search to "recipient@example.com"  # Search sent mail
+mail-search unread                      # List unread emails
+mail-search attachments                 # List emails with attachments
+mail-search attachment-type pdf         # Find PDFs
+mail-search recent 7                    # Last 7 days
+mail-search date-range 2025-01-01 2025-01-31
+mail-search open 12345                  # Open email by ID
+mail-search stats                       # Database statistics
 ```
 
-### List unread emails
+## Options
+
+```
+-n, --limit N    Max results (default: 20)
+-j, --json       Output as JSON
+-c, --csv        Output as CSV
+-q, --quiet      No headers
+--db PATH        Override database path
+```
+
+## Examples
+
 ```bash
-sqlite3 -header -separator '|' ~/Library/Mail/V*/MailData/Envelope\ Index \
-  "SELECT m.ROWID, s.subject, a.address, datetime(m.date_sent + 978307200, 'unixepoch', 'localtime') as date
-   FROM messages m
-   JOIN subjects s ON m.subject = s.ROWID
-   JOIN addresses a ON m.sender = a.ROWID
-   WHERE m.read = 0
-   ORDER BY m.date_sent DESC LIMIT 20"
+# Find bank statements from last month
+mail-search subject "statement" -n 50
+
+# Get unread emails as JSON for processing
+mail-search unread --json | jq '.[] | .subject'
+
+# Find all PDFs from a specific sender
+mail-search sender "@bankofamerica.com" -n 100 | grep -i statement
+
+# Export recent emails to CSV
+mail-search recent 30 --csv > recent_emails.csv
 ```
 
-### Search by date range
+## Why This Exists
+
+| Method | Time for 130k emails |
+|--------|---------------------|
+| AppleScript iteration | 8+ minutes |
+| Spotlight/mdfind | **Broken since Big Sur** |
+| SQLite (this tool) | ~50ms |
+
+Apple removed the emlx Spotlight importer in macOS Big Sur. This tool queries the `Envelope Index` SQLite database directly.
+
+## Technical Details
+
+**Database:** `~/Library/Mail/V{9,10,11}/MailData/Envelope Index`
+
+**Key tables:**
+- `messages` - Email metadata (dates, flags, FKs)
+- `subjects` - Subject lines
+- `addresses` - Email addresses and display names
+- `recipients` - TO/CC mappings
+- `attachments` - Attachment filenames
+
+**Limitations:**
+- Read-only (cannot compose/send)
+- Metadata only (bodies in .emlx files)
+- Mail.app only (not Outlook, etc.)
+
+## Advanced: Raw SQL
+
+For custom queries, use sqlite3 directly:
+
 ```bash
-sqlite3 -header -separator '|' ~/Library/Mail/V*/MailData/Envelope\ Index \
-  "SELECT m.ROWID, s.subject, a.address, datetime(m.date_sent + 978307200, 'unixepoch', 'localtime') as date
-   FROM messages m
-   JOIN subjects s ON m.subject = s.ROWID
-   JOIN addresses a ON m.sender = a.ROWID
-   WHERE m.date_sent > (strftime('%s', '2025-01-01') - 978307200)
-   ORDER BY m.date_sent DESC LIMIT 20"
+sqlite3 -header -column ~/Library/Mail/V10/MailData/Envelope\ Index "
+SELECT m.ROWID, s.subject, a.address
+FROM messages m
+JOIN subjects s ON m.subject = s.ROWID
+LEFT JOIN addresses a ON m.sender = a.ROWID
+WHERE s.subject LIKE '%your query%'
+ORDER BY m.date_sent DESC
+LIMIT 20;
+"
 ```
 
-### Email statistics
-```bash
-sqlite3 ~/Library/Mail/V*/MailData/Envelope\ Index \
-  "SELECT COUNT(*) as total, SUM(CASE WHEN read = 0 THEN 1 ELSE 0 END) as unread FROM messages"
-```
+## License
 
-## Output Formats
-
-- Default: pipe-separated with headers
-- JSON: Use `-json` flag with sqlite3
-- CSV: Use `-csv` flag with sqlite3
-
-## Technical Notes
-
-- Date epoch offset: Apple uses 978307200 (2001-01-01) as base
-- Read-only access — cannot modify emails
-- Tables: `messages`, `subjects`, `addresses`, `recipients`, `attachments`
-- Metadata only — cannot read email body content via SQLite
-
-## Why SQLite?
-
-Spotlight indexing broke after Big Sur removed emlx import. AppleScript iteration takes 8+ minutes for large mailboxes. Direct SQLite queries return in ~50ms.
+MIT

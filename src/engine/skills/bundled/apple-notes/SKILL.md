@@ -1,79 +1,50 @@
 ---
 name: apple-notes
-description: Manage Apple Notes via the `memo` CLI on macOS. Create, view, edit, search, move, and export notes.
+description: Manage Apple Notes via the `memo` CLI on macOS (create, view, edit, delete, search, move, and export notes). Use when a user asks to add a note, list notes, search notes, or manage note folders.
+homepage: https://github.com/antoniorodr/memo
+metadata: {"clawdbot":{"emoji":"📝","os":["darwin"],"requires":{"bins":["memo"]},"install":[{"id":"brew","kind":"brew","formula":"antoniorodr/memo/memo","bins":["memo"],"label":"Install memo via Homebrew"}]}}
 ---
-# Apple Notes
 
-Manage Apple Notes via the `memo` command-line interface on macOS.
+# Apple Notes CLI
 
-## Setup
+Use `memo notes` to manage Apple Notes directly from the terminal. Create, view, edit, delete, search, move notes between folders, and export to HTML/Markdown.
 
-Install via Homebrew:
-```bash
-brew tap antoniorodr/memo && brew install antoniorodr/memo/memo
-```
+Setup
+- Install (Homebrew): `brew tap antoniorodr/memo && brew install antoniorodr/memo/memo`
+- Manual (pip): `pip install .` (after cloning the repo)
+- macOS-only; if prompted, grant Automation access to Notes.app.
 
-## Commands
+View Notes
+- List all notes: `memo notes`
+- Filter by folder: `memo notes -f "Folder Name"`
+- Search notes (fuzzy): `memo notes -s "query"`
 
-### List all notes
-```bash
-memo list
-```
+Create Notes
+- Add a new note: `memo notes -a`
+  - Opens an interactive editor to compose the note.
+- Quick add with title: `memo notes -a "Note Title"`
 
-### List notes in a specific folder
-```bash
-memo list --folder "Work"
-```
+Edit Notes
+- Edit existing note: `memo notes -e`
+  - Interactive selection of note to edit.
 
-### Search notes
-```bash
-memo search "query"
-```
+Delete Notes
+- Delete a note: `memo notes -d`
+  - Interactive selection of note to delete.
 
-### Create a note
-```bash
-# Interactive editor
-memo new
+Move Notes
+- Move note to folder: `memo notes -m`
+  - Interactive selection of note and destination folder.
 
-# Quick create with title
-memo new --title "Meeting Notes"
-```
+Export Notes
+- Export to HTML/Markdown: `memo notes -ex`
+  - Exports selected note; uses Mistune for markdown processing.
 
-### Edit a note
-```bash
-memo edit
-```
-Opens interactive selection prompt.
+Limitations
+- Cannot edit notes containing images or attachments.
+- Interactive prompts may require terminal access.
 
-### Delete a note
-```bash
-memo delete
-```
-Opens interactive selection prompt.
-
-### Move a note between folders
-```bash
-memo move
-```
-Interactive selection for source and destination.
-
-### Export notes
-```bash
-# Export to HTML
-memo export --format html
-
-# Export to Markdown
-memo export --format md
-```
-
-## Limitations
-
-- Cannot edit notes containing images or attachments
-- Interactive features require terminal access
-- macOS only — requires Apple Notes.app
-
-## Notes
-
-- First run may prompt for automation permissions in System Settings
-- Supports fuzzy search across note content
-- Export converts selected notes to HTML or Markdown format
+Notes
+- macOS-only.
+- Requires Apple Notes.app to be accessible.
+- For automation, grant permissions in System Settings > Privacy & Security > Automation.

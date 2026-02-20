@@ -1,94 +1,67 @@
 ---
 name: apple-reminders
-description: Manage Apple Reminders via the `remindctl` CLI on macOS. List, add, edit, complete, and delete reminders with date filters and JSON output.
+description: Manage Apple Reminders via the `remindctl` CLI on macOS (list, add, edit, complete, delete). Supports lists, date filters, and JSON/plain output.
+homepage: https://github.com/steipete/remindctl
+metadata: {"clawdbot":{"emoji":"⏰","os":["darwin"],"requires":{"bins":["remindctl"]},"install":[{"id":"brew","kind":"brew","formula":"steipete/tap/remindctl","bins":["remindctl"],"label":"Install remindctl via Homebrew"}]}}
 ---
+
 # Apple Reminders CLI (remindctl)
 
-Use `remindctl` to manage Apple Reminders directly from the terminal.
+Use `remindctl` to manage Apple Reminders directly from the terminal. It supports list filtering, date-based views, and scripting output.
 
-## Setup
+Setup
+- Install (Homebrew): `brew install steipete/tap/remindctl`
+- From source: `pnpm install && pnpm build` (binary at `./bin/remindctl`)
+- macOS-only; grant Reminders permission when prompted.
 
-Install via Homebrew:
-```bash
-brew install steipete/tap/remindctl
-```
+Permissions
+- Check status: `remindctl status`
+- Request access: `remindctl authorize`
 
-## Permissions
+View Reminders
+- Default (today): `remindctl`
+- Today: `remindctl today`
+- Tomorrow: `remindctl tomorrow`
+- Week: `remindctl week`
+- Overdue: `remindctl overdue`
+- Upcoming: `remindctl upcoming`
+- Completed: `remindctl completed`
+- All: `remindctl all`
+- Specific date: `remindctl 2026-01-04`
 
-```bash
-# Check permission status
-remindctl status
+Manage Lists
+- List all lists: `remindctl list`
+- Show list: `remindctl list Work`
+- Create list: `remindctl list Projects --create`
+- Rename list: `remindctl list Work --rename Office`
+- Delete list: `remindctl list Work --delete`
 
-# Request permission
-remindctl authorize
-```
+Create Reminders
+- Quick add: `remindctl add "Buy milk"`
+- With list + due: `remindctl add --title "Call mom" --list Personal --due tomorrow`
 
-## View Reminders
+Edit Reminders
+- Edit title/due: `remindctl edit 1 --title "New title" --due 2026-01-04`
 
-```bash
-remindctl today         # Due today
-remindctl tomorrow      # Due tomorrow
-remindctl week          # Due this week
-remindctl overdue       # Past due
-remindctl upcoming      # All upcoming
-remindctl completed     # Completed items
-remindctl all           # Everything
-remindctl 2026-01-04    # Specific date
-```
+Complete Reminders
+- Complete by id: `remindctl complete 1 2 3`
 
-## Manage Lists
+Delete Reminders
+- Delete by id: `remindctl delete 4A83 --force`
 
-```bash
-remindctl list                    # Show all lists
-remindctl list create "Shopping"  # Create a list
-remindctl list rename "old" "new" # Rename a list
-remindctl list delete "Shopping"  # Delete a list
-```
+Output Formats
+- JSON (scripting): `remindctl today --json`
+- Plain TSV: `remindctl today --plain`
+- Counts only: `remindctl today --quiet`
 
-## Create Reminders
+Date Formats
+Accepted by `--due` and date filters:
+- `today`, `tomorrow`, `yesterday`
+- `YYYY-MM-DD`
+- `YYYY-MM-DD HH:mm`
+- ISO 8601 (`2026-01-04T12:34:56Z`)
 
-```bash
-# Quick add
-remindctl add "Buy milk"
-
-# With list and due date
-remindctl add "Buy milk" --list "Shopping" --due "tomorrow"
-```
-
-## Edit Reminders
-
-```bash
-remindctl edit <id> --title "New title" --due "2026-02-01"
-```
-
-## Complete Reminders
-
-```bash
-remindctl complete 1 2 3
-```
-
-## Delete Reminders
-
-```bash
-remindctl delete <id> --force
-```
-
-## Output Formats
-
-```bash
-remindctl today --json     # JSON output
-remindctl today --plain    # TSV output
-remindctl today --quiet    # Count only
-```
-
-## Date Formats
-
-- Relative: `today`, `tomorrow`, `next week`
-- Absolute: `YYYY-MM-DD`
-- ISO 8601: `2026-02-20T10:00:00`
-
-## Notes
-
-- macOS only — requires Reminders.app
-- First run prompts for permission in System Settings
-- If access denied, configure in System Settings > Privacy > Reminders
+Notes
+- macOS-only.
+- If access is denied, enable Terminal/remindctl in System Settings → Privacy & Security → Reminders.
+- If running over SSH, grant access on the Mac that runs the command.
