@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 
 type ProviderType = "anthropic" | "openai" | "google" | "openai-compat";
-type Substep = "provider" | "credentials" | "fetching" | "model";
+type Substep = "keep-or-change" | "provider" | "credentials" | "fetching" | "model";
 type CompatField = "name" | "baseUrl" | "apiKey";
 
 const PROVIDER_OPTIONS: { type: ProviderType; label: string; apiKeyEnvVar: string }[] = [
@@ -25,6 +25,7 @@ export interface ModelSetupData {
 interface ModelSetupProps {
   onNext: (data: ModelSetupData) => void;
   onBack: () => void;
+  currentValues?: ModelSetupData;
 }
 
 async function fetchModelList(
@@ -68,8 +69,10 @@ async function fetchModelList(
   return json.data.map((m) => m.id).sort();
 }
 
-export function ModelSetup({ onNext, onBack }: ModelSetupProps) {
-  const [substep, setSubstep] = useState<Substep>("provider");
+export function ModelSetup({ onNext, onBack, currentValues }: ModelSetupProps) {
+  const [substep, setSubstep] = useState<Substep>(
+    currentValues ? "keep-or-change" : "provider"
+  );
   const [providerIdx, setProviderIdx] = useState(0);
 
   // Credentials state
@@ -120,9 +123,27 @@ export function ModelSetup({ onNext, onBack }: ModelSetupProps) {
   }
 
   useInput((input, key) => {
+    // ── keep-or-change substep ────────────────────────────────────────────
+    if (substep === "keep-or-change") {
+      if (key.escape) { onBack(); return; }
+      if (input?.toLowerCase() === "k" && currentValues) {
+        onNext(currentValues);
+        return;
+      }
+      if (input?.toLowerCase() === "c") {
+        setSubstep("provider");
+        return;
+      }
+      return;
+    }
+
     // ── provider substep ──────────────────────────────────────────────────
     if (substep === "provider") {
-      if (key.escape) { onBack(); return; }
+      if (key.escape) {
+        if (currentValues) { setSubstep("keep-or-change"); return; }
+        onBack();
+        return;
+      }
       if (key.upArrow) { setProviderIdx((i) => Math.max(0, i - 1)); return; }
       if (key.downArrow) {
         setProviderIdx((i) => Math.min(PROVIDER_OPTIONS.length - 1, i + 1));
@@ -222,6 +243,27 @@ export function ModelSetup({ onNext, onBack }: ModelSetupProps) {
         Model Setup
       </Text>
       <Text />
+
+      {substep === "keep-or-change" && currentValues && (
+        <>
+          <Text>Current configuration:</Text>
+          <Text>  Provider: {currentValues.provider}</Text>
+          <Text>  Model: {currentValues.model}</Text>
+          <Text>
+            {"  "}API Key: {currentValues.apiKey ? "••••••••" : "(not set)"}{" "}
+            ({currentValues.apiKeyEnvVar})
+          </Text>
+          {currentValues.baseUrl && (
+            <Text>  Base URL: {currentValues.baseUrl}</Text>
+          )}
+          <Text />
+          <Text>
+            <Text color="yellow" bold>[K]</Text> Keep current{"  "}
+            <Text color="yellow" bold>[C]</Text> Change{"    "}
+            <Text dimColor>Esc to go back</Text>
+          </Text>
+        </>
+      )}
 
       {substep === "provider" && (
         <>
