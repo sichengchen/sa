@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 
-type ProviderType = "anthropic" | "openai" | "google" | "openai-compat";
+type ProviderType = "anthropic" | "openai" | "google" | "openrouter" | "openai-compat";
 type Substep = "keep-or-change" | "provider" | "credentials" | "fetching" | "model";
 type CompatField = "name" | "baseUrl" | "apiKey";
 
@@ -9,6 +9,7 @@ const PROVIDER_OPTIONS: { type: ProviderType; label: string; apiKeyEnvVar: strin
   { type: "anthropic", label: "Anthropic (official)", apiKeyEnvVar: "ANTHROPIC_API_KEY" },
   { type: "openai", label: "OpenAI (official)", apiKeyEnvVar: "OPENAI_API_KEY" },
   { type: "google", label: "Google (official)", apiKeyEnvVar: "GOOGLE_AI_API_KEY" },
+  { type: "openrouter", label: "OpenRouter", apiKeyEnvVar: "OPENROUTER_API_KEY" },
   { type: "openai-compat", label: "OpenAI compatible", apiKeyEnvVar: "" },
 ];
 
@@ -63,6 +64,14 @@ async function fetchModelList(
     return json.models
       .map((m) => m.name.replace(/^models\//, ""))
       .sort();
+  }
+  if (providerType === "openrouter") {
+    const res = await fetch("https://openrouter.ai/api/v1/models", {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = (await res.json()) as { data: { id: string }[] };
+    return json.data.map((m) => m.id).sort();
   }
   // openai-compat
   const url = baseUrl.replace(/\/$/, "");
