@@ -5,6 +5,7 @@ import { Input } from "./Input.js";
 import { StatusBar } from "./StatusBar.js";
 import { ModelPicker } from "./ModelPicker.js";
 import { createTuiClient } from "./client.js";
+import type { ModelConfig } from "../../router/types.js";
 
 type EngineClient = ReturnType<typeof createTuiClient>;
 
@@ -21,7 +22,7 @@ export function App({ client }: AppProps) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [modelName, setModelName] = useState("unknown");
   const [showModelPicker, setShowModelPicker] = useState(false);
-  const [models, setModels] = useState<string[]>([]);
+  const [models, setModels] = useState<ModelConfig[]>([]);
   const [agentName, setAgentName] = useState("SA");
 
   // Connect to Engine on mount
@@ -100,9 +101,29 @@ export function App({ client }: AppProps) {
         return;
       }
 
-      // Handle /model command
+      // Handle /model and /models commands — open model picker
       if (text === "/model" || text === "/models") {
         setShowModelPicker(true);
+        return;
+      }
+
+      // Handle /provider command — list providers
+      if (text === "/provider") {
+        try {
+          const providers = await client.provider.list.query();
+          const lines = providers.map((p) => `• ${p.id} (${p.type}) — ${p.apiKeyEnvVar}`);
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "tool",
+              content: `Providers:\n${lines.join("\n")}`,
+              toolName: "system",
+            },
+          ]);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          setMessages((prev) => [...prev, { role: "error", content: msg }]);
+        }
         return;
       }
 
@@ -188,15 +209,21 @@ export function App({ client }: AppProps) {
   );
 
   const handleModelSelect = useCallback(
-    (name: string) => {
+    async (name: string) => {
       setShowModelPicker(false);
-      setModelName(name);
-      setMessages((prev) => [
-        ...prev,
-        { role: "tool", content: `Switched to model: ${name}`, toolName: "system" },
-      ]);
+      try {
+        await client.model.switch.mutate({ name });
+        setModelName(name);
+        setMessages((prev) => [
+          ...prev,
+          { role: "tool", content: `Switched to model: ${name}`, toolName: "system" },
+        ]);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setMessages((prev) => [...prev, { role: "error", content: msg }]);
+      }
     },
-    [],
+    [client],
   );
 
   return (

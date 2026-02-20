@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
+import type { ModelConfig } from "../../router/types.js";
 
 interface ModelPickerProps {
-  models: string[];
+  models: ModelConfig[];
   activeModel: string;
   onSelect: (name: string) => void;
   onCancel: () => void;
@@ -15,7 +16,7 @@ export function ModelPicker({
   onCancel,
 }: ModelPickerProps) {
   const [selectedIndex, setSelectedIndex] = useState(
-    Math.max(0, models.indexOf(activeModel))
+    Math.max(0, models.findIndex((m) => m.name === activeModel))
   );
 
   useInput((_input, key) => {
@@ -24,7 +25,7 @@ export function ModelPicker({
       return;
     }
     if (key.return) {
-      onSelect(models[selectedIndex]);
+      onSelect(models[selectedIndex].name);
       return;
     }
     if (key.upArrow) {
@@ -45,12 +46,12 @@ export function ModelPicker({
       <Text bold color="cyan">
         Switch Model (↑↓ to navigate, Enter to select, Esc to cancel)
       </Text>
-      {models.map((name, i) => (
-        <Box key={name}>
+      {models.map((m, i) => (
+        <Box key={m.name}>
           <Text color={i === selectedIndex ? "cyan" : undefined}>
             {i === selectedIndex ? "❯ " : "  "}
-            {name}
-            {name === activeModel ? " (active)" : ""}
+            {m.name} ({m.provider} → {m.model})
+            {m.name === activeModel ? " (active)" : ""}
           </Text>
         </Box>
       ))}

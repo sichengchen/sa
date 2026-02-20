@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 
-const SLASH_COMMANDS = ["/new", "/status", "/model"];
+const SLASH_COMMANDS = ["/new", "/status", "/model", "/models", "/provider"];
 
 interface InputProps {
   onSubmit: (text: string) => void;
@@ -40,7 +40,7 @@ export function Input({ onSubmit, disabled }: InputProps) {
   return (
     <Box flexDirection="column">
       {suggestions.length > 0 && (
-        <Box paddingX={2} gap={1}>
+        <Box flexDirection="column" paddingX={2}>
           {suggestions.map((cmd) => (
             <Text key={cmd} dimColor>
               {cmd}
