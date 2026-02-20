@@ -9,7 +9,7 @@ import {
 } from "discord.js";
 import { splitMessage, formatToolResult } from "./formatter.js";
 import { createDiscordClient } from "./client.js";
-import type { ProviderConfig } from "../../router/types.js";
+import type { ProviderConfig } from "../../engine/router/types.js";
 
 const EDIT_THROTTLE_MS = 1000;
 

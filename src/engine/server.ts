@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { WebSocketServer } from "ws";
-import { createAppRouter, type AppRouter } from "./router.js";
+import { createAppRouter, type AppRouter } from "./procedures.js";
 import { createContext } from "./context.js";
 import type { EngineRuntime } from "./runtime.js";
 

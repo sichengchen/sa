@@ -1,5 +1,5 @@
 import { Bot, type Context, InlineKeyboard } from "grammy";
-import type { ProviderConfig } from "../../router/types.js";
+import type { ProviderConfig } from "../../engine/router/types.js";
 import { splitMessage, formatToolResult } from "./formatter.js";
 import { createTelegramClient } from "./client.js";
 import { markdownToHtml } from "../../shared/markdown.js";

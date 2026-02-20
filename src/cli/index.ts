@@ -30,7 +30,7 @@ async function runOnboarding(existingConfig?: unknown): Promise<void> {
 
 async function loadExistingConfig(): Promise<unknown | undefined> {
   try {
-    const { ConfigManager } = await import("../config/index.js");
+    const { ConfigManager } = await import("../engine/config/index.js");
     const { readFile } = await import("node:fs/promises");
     const config = new ConfigManager(saHome);
     const saConfig = await config.load();

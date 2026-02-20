@@ -1,19 +1,19 @@
 import { join } from "node:path";
 import { homedir } from "node:os";
-import { ConfigManager } from "../config/index.js";
-import { ModelRouter } from "../router/index.js";
-import { Agent } from "../agent/index.js";
-import type { ToolImpl, ToolApprovalCallback } from "../agent/index.js";
-import { MemoryManager } from "../memory/index.js";
-import { getBuiltinTools, formatToolsSection } from "../tools/index.js";
-import { createRememberTool } from "../tools/remember.js";
+import { ConfigManager } from "./config/index.js";
+import { ModelRouter } from "./router/index.js";
+import { Agent } from "./agent/index.js";
+import type { ToolImpl, ToolApprovalCallback } from "./agent/index.js";
+import { MemoryManager } from "./memory/index.js";
+import { getBuiltinTools, formatToolsSection } from "./tools/index.js";
+import { createRememberTool } from "./tools/remember.js";
 import { SessionManager } from "./sessions.js";
 import { AuthManager } from "./auth.js";
-import { SkillRegistry, formatSkillsDiscovery } from "../skills/index.js";
-import { createReadSkillTool } from "../tools/read-skill.js";
-import { ClawHubClient } from "../clawhub/index.js";
-import { SkillInstaller } from "../clawhub/index.js";
-import { createClawHubSearchTool } from "../tools/clawhub-search.js";
+import { SkillRegistry, formatSkillsDiscovery } from "./skills/index.js";
+import { createReadSkillTool } from "./tools/read-skill.js";
+import { ClawHubClient } from "./clawhub/index.js";
+import { SkillInstaller } from "./clawhub/index.js";
+import { createClawHubSearchTool } from "./tools/clawhub-search.js";
 import { Scheduler, createHeartbeatTask } from "./scheduler.js";
 
 const SAFETY_ADVISORY = `## Safety

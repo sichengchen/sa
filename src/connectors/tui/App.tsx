@@ -5,7 +5,7 @@ import { Input } from "./Input.js";
 import { StatusBar } from "./StatusBar.js";
 import { ModelPicker } from "./ModelPicker.js";
 import { createTuiClient } from "./client.js";
-import type { ModelConfig, ProviderConfig } from "../../router/types.js";
+import type { ModelConfig, ProviderConfig } from "../../engine/router/types.js";
 
 type EngineClient = ReturnType<typeof createTuiClient>;
 

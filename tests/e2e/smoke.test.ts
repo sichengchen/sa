@@ -1,10 +1,10 @@
 import { describe, test, expect, afterEach } from "bun:test";
-import { ConfigManager } from "../../src/config/index.js";
-import { ModelRouter } from "../../src/router/index.js";
-import { Agent } from "../../src/agent/index.js";
-import { MemoryManager } from "../../src/memory/index.js";
-import { getBuiltinTools } from "../../src/tools/index.js";
-import { createRememberTool } from "../../src/tools/remember.js";
+import { ConfigManager } from "../../src/engine/config/index.js";
+import { ModelRouter } from "../../src/engine/router/index.js";
+import { Agent } from "../../src/engine/agent/index.js";
+import { MemoryManager } from "../../src/engine/memory/index.js";
+import { getBuiltinTools } from "../../src/engine/tools/index.js";
+import { createRememberTool } from "../../src/engine/tools/remember.js";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

@@ -11,7 +11,7 @@ import { DiscordSetup, type DiscordSetupData } from "./steps/DiscordSetup.js";
 import { SkillSetup, type SkillSetupData } from "./steps/SkillSetup.js";
 import { UserProfile, type UserProfileData } from "./steps/UserProfile.js";
 import { Confirm, type WizardData } from "./steps/Confirm.js";
-import { saveSecrets } from "../../config/secrets.js";
+import { saveSecrets } from "../../engine/config/secrets.js";
 
 type Step = "welcome" | "identity" | "profile" | "model" | "telegram" | "discord" | "skills" | "confirm" | "done";
 

@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { router, publicProcedure } from "./trpc.js";
 import type { EngineRuntime } from "./runtime.js";
-import type { Agent } from "../agent/index.js";
+import type { Agent } from "./agent/index.js";
 import type { EngineEvent, SkillInfo } from "../shared/types.js";
-import type { ModelConfig, ProviderConfig } from "../router/types.js";
+import type { ModelConfig, ProviderConfig } from "./router/types.js";
 
 /** Per-session agent instances */
 const sessionAgents = new Map<string, Agent>();

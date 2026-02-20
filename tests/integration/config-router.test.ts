@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { ConfigManager } from "../../src/config/index.js";
-import { ModelRouter } from "../../src/router/index.js";
+import { ConfigManager } from "../../src/engine/config/index.js";
+import { ModelRouter } from "../../src/engine/router/index.js";
 import { rm, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

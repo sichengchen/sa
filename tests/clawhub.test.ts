@@ -3,9 +3,9 @@ import { mkdir, rm, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
-import { ClawHubClient, ClawHubError } from "../src/clawhub/client.js";
-import { SkillInstaller } from "../src/clawhub/installer.js";
-import type { ClawHubPage, ClawHubSkill, ClawHubSkillDetail } from "../src/clawhub/types.js";
+import { ClawHubClient, ClawHubError } from "../src/engine/clawhub/client.js";
+import { SkillInstaller } from "../src/engine/clawhub/installer.js";
+import type { ClawHubPage, ClawHubSkill, ClawHubSkillDetail } from "../src/engine/clawhub/types.js";
 
 // --- Mock server setup ---
 
