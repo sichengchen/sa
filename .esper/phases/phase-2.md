@@ -90,3 +90,4 @@ The Agent Skills spec (agentskills.io) is an open standard by Anthropic adopted 
 - #029 — Cron & heartbeat scheduler: Interval-based cron scheduler with 5-field expression parser, heartbeat built-in task, and tRPC procedures. Files: scheduler.ts, runtime.ts, router.ts, scheduler.test.ts
 - #030 — Wizard updates for Phase 2: Add Discord and Skills wizard steps, update Welcome with Engine architecture, extend Confirm summary. Files: DiscordSetup.tsx, SkillSetup.tsx, Welcome.tsx, Wizard.tsx, Confirm.tsx, types.ts
 - #032 — Split providers and models in config schema: Add ProviderConfig interface and update ModelConfig/ModelsFile to v2 schema with separate providers and models arrays. Files: types.ts, router.ts, defaults.ts, App.tsx, Input.tsx, ModelPicker.tsx, transport.ts, Wizard.tsx, ModelSetup.tsx, index.ts
+- #031 — Add OpenRouter as a built-in provider: Add "openrouter" to ProviderType, PROVIDER_OPTIONS, and fetchModelList in the wizard. Files: ModelSetup.tsx
