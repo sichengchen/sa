@@ -1,14 +1,14 @@
 ---
-id: 031
+id: 31
 title: Add OpenRouter as a built-in provider
-status: pending
+status: done
 type: feature
 priority: 2
 phase: phase-2
 branch: feature/phase-2
 created: 2026-02-20
+shipped_at: 2026-02-20
 ---
-
 # Add OpenRouter as a built-in provider
 
 **Depends on:** #032 (provider/model config split) — must be implemented first.
@@ -63,3 +63,11 @@ No special-casing needed in `completeSetup`.
 - Edge cases:
   - OpenRouter model list may return hundreds of models — verify scrollable picker handles large lists (already supports scroll with VISIBLE_MODELS=8)
   - API key validation — empty key should gracefully fall back to manual model entry (existing error handling covers this)
+
+## Progress
+- Added `"openrouter"` to `ProviderType` union in `ModelSetup.tsx`
+- Added OpenRouter entry to `PROVIDER_OPTIONS`: `{ type: "openrouter", label: "OpenRouter", apiKeyEnvVar: "OPENROUTER_API_KEY" }`
+- Added `fetchModelList` branch for `"openrouter"` using OpenAI-compatible `/models` endpoint at `https://openrouter.ai/api/v1/models` with Bearer auth
+- `completeSetup` works correctly for OpenRouter without any special-casing (not compat, so uses standard flow)
+- Modified: src/cli/wizard/steps/ModelSetup.tsx
+- Verification: typecheck passed (no new errors), lint passed, tests 158 pass / 1 pre-existing fail
