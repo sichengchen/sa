@@ -27,23 +27,34 @@ describe("Config + Router integration", () => {
   });
 
   test("Custom config with multiple models supports switching", async () => {
-    // Create custom config
+    // Create custom v2 config
     await mkdir(testHome, { recursive: true });
     const models = {
+      version: 2,
       default: "fast",
+      providers: [
+        {
+          id: "anthropic",
+          type: "anthropic",
+          apiKeyEnvVar: "ANTHROPIC_API_KEY",
+        },
+        {
+          id: "openai",
+          type: "openai",
+          apiKeyEnvVar: "OPENAI_API_KEY",
+        },
+      ],
       models: [
         {
           name: "fast",
           provider: "anthropic",
           model: "claude-sonnet-4-5-20250514",
-          apiKeyEnvVar: "ANTHROPIC_API_KEY",
           temperature: 0.5,
         },
         {
           name: "smart",
           provider: "openai",
           model: "gpt-4o",
-          apiKeyEnvVar: "OPENAI_API_KEY",
           temperature: 0.3,
         },
       ],
@@ -62,6 +73,10 @@ describe("Config + Router integration", () => {
     const cfg = router.getConfig();
     expect(cfg.provider).toBe("openai");
     expect(cfg.temperature).toBe(0.3);
+
+    // Provider resolution
+    const provider = router.getProvider("openai");
+    expect(provider.apiKeyEnvVar).toBe("OPENAI_API_KEY");
   });
 
   test("Identity loads from custom IDENTITY.md", async () => {
