@@ -4,7 +4,11 @@
   "description": "SA (Sasa) — Personal AI agent assistant",
   "type": "module",
   "main": "src/index.ts",
+  "bin": {
+    "sa": "src/cli/index.ts"
+  },
   "scripts": {
+    "cli": "bun run src/cli/index.ts",
     "dev": "bun run src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
     "engine:dev": "bun run src/engine/index.ts",

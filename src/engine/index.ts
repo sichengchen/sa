@@ -10,13 +10,12 @@ const port = process.env.SA_ENGINE_PORT
 async function main() {
   console.log("SA Engine bootstrapping...");
   const runtime = await createRuntime();
-  const server = startServer(runtime, { port });
+  const server = await startServer(runtime, { port });
 
   // Graceful shutdown
   function shutdown() {
     console.log("\nSA Engine shutting down...");
-    server.stop();
-    process.exit(0);
+    server.stop().then(() => process.exit(0));
   }
 
   process.on("SIGINT", shutdown);

@@ -1,3 +1,6 @@
+import { writeFile, unlink } from "node:fs/promises";
+import { join } from "node:path";
+import { homedir } from "node:os";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { WebSocketServer } from "ws";
@@ -14,13 +17,14 @@ export interface EngineServerOptions {
 
 export interface EngineServer {
   port: number;
-  stop: () => void;
+  stop: () => Promise<void>;
 }
 
 /** Start the Engine's HTTP + WebSocket server */
-export function startServer(runtime: EngineRuntime, options: EngineServerOptions = {}): EngineServer {
+export async function startServer(runtime: EngineRuntime, options: EngineServerOptions = {}): Promise<EngineServer> {
   const port = options.port ?? DEFAULT_PORT;
   const hostname = options.hostname ?? "127.0.0.1";
+  const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
 
   const appRouter = createAppRouter(runtime);
 
@@ -62,15 +66,22 @@ export function startServer(runtime: EngineRuntime, options: EngineServerOptions
     },
   });
 
-  console.log(`SA Engine listening on http://${hostname}:${port}`);
+  const httpUrl = `http://${hostname}:${port}`;
+
+  // Write discovery files for CLI and Connectors
+  await writeFile(join(saHome, "engine.url"), httpUrl);
+
+  console.log(`SA Engine listening on ${httpUrl}`);
   console.log(`SA Engine WS on ws://${hostname}:${port + 1}`);
 
   return {
     port,
-    stop() {
+    async stop() {
       httpServer.stop(true);
       wssHandler.broadcastReconnectNotification();
       wss.close();
+      // Clean up discovery files
+      try { await unlink(join(saHome, "engine.url")); } catch {}
     },
   };
 }
