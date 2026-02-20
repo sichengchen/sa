@@ -74,3 +74,6 @@ Split SA into a persistent background Engine (backend daemon) and thin Connector
 Phase 1 shipped a working monolith with TUI + Telegram (17 plans, 76 tests). The Telegram transport is tightly coupled to the Agent class — Phase 2 must refactor this into a Connector interface. The existing `src/telegram/transport.ts` directly imports `Agent` and calls `agent.chat()`, which needs to go through tRPC.
 
 The Agent Skills spec (agentskills.io) is an open standard by Anthropic adopted by ClawHub/OpenClaw, Claude Code, Cursor, and others. Skills are NOT tools — they are prompt-level documentation (SKILL.md) that teaches the agent how to use existing tools. Discovery is via name+description metadata; full instructions are lazy-loaded on activation.
+
+## Shipped Plans
+- #018 — tRPC router & Engine scaffolding: Install tRPC dependencies and create Engine entry point with HTTP + WS server and all procedure stubs. Files: package.json, tsconfig.json, trpc.ts, router.ts, context.ts, server.ts, index.ts, types.ts
