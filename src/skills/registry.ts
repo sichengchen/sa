@@ -1,7 +1,11 @@
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { homedir } from "node:os";
+import { fileURLToPath } from "node:url";
 import { scanSkillDirectory, loadSkillContent } from "./loader.js";
 import type { SkillMetadata, LoadedSkill } from "./types.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const BUNDLED_SKILLS_DIR = join(__dirname, "bundled");
 
 /** Central registry for discovered and activated skills */
 export class SkillRegistry {
@@ -9,12 +13,15 @@ export class SkillRegistry {
 
   /** Scan all skill directories and register metadata */
   async loadAll(saHome?: string): Promise<void> {
+    this.skills.clear();
     const home = saHome ?? process.env.SA_HOME ?? join(homedir(), ".sa");
     const skillsDir = join(home, "skills");
 
-    const discovered = await scanSkillDirectory(skillsDir);
+    // Scan bundled skills first, then user skills (user overrides bundled on name collision)
+    const bundled = await scanSkillDirectory(BUNDLED_SKILLS_DIR);
+    const userSkills = await scanSkillDirectory(skillsDir);
 
-    for (const meta of discovered) {
+    for (const meta of [...bundled, ...userSkills]) {
       this.skills.set(meta.name, {
         ...meta,
         content: "",

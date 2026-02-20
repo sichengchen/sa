@@ -71,15 +71,17 @@ describe("scanSkillDirectory", () => {
 });
 
 describe("SkillRegistry", () => {
-  test("loads skills from directory", async () => {
+  test("loads skills from directory (user + bundled)", async () => {
     await createSkill("test", "---\nname: test\ndescription: Test skill\n---\nInstructions here");
 
     const registry = new SkillRegistry();
     await registry.loadAll(testHome);
 
-    expect(registry.size).toBe(1);
-    expect(registry.getMetadataList()).toHaveLength(1);
-    expect(registry.getMetadataList()[0]!.name).toBe("test");
+    // Bundled skills (skill-creator) + user skills
+    expect(registry.size).toBeGreaterThanOrEqual(1);
+    const names = registry.getMetadataList().map((s) => s.name);
+    expect(names).toContain("test");
+    expect(names).toContain("skill-creator"); // bundled
   });
 
   test("activates and deactivates skills", async () => {
