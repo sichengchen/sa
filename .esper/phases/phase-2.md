@@ -77,3 +77,4 @@ The Agent Skills spec (agentskills.io) is an open standard by Anthropic adopted 
 
 ## Shipped Plans
 - #018 — tRPC router & Engine scaffolding: Install tRPC dependencies and create Engine entry point with HTTP + WS server and all procedure stubs. Files: package.json, tsconfig.json, trpc.ts, router.ts, context.ts, server.ts, index.ts, types.ts
+- #019 — Connector interface & session management: Define Connector interface and implement SessionManager with tRPC client factory. Files: connector.ts, types.ts, client.ts, sessions.ts, router.ts, sessions.test.ts
