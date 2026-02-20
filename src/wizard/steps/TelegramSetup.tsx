@@ -13,16 +13,33 @@ function generatePairingCode(): string {
 interface TelegramSetupProps {
   onNext: (data: { botToken: string; pairingCode?: string }) => void;
   onBack: () => void;
+  currentValues?: { botToken: string; pairingCode?: string };
 }
 
-export function TelegramSetup({ onNext, onBack }: TelegramSetupProps) {
+export function TelegramSetup({ onNext, onBack, currentValues }: TelegramSetupProps) {
   const [token, setToken] = useState("");
-  const [phase, setPhase] = useState<"token" | "code">("token");
+  const [phase, setPhase] = useState<"keep-or-change" | "token" | "code">(
+    currentValues ? "keep-or-change" : "token"
+  );
   const [pairingCode, setPairingCode] = useState("");
 
   useInput((input, key) => {
+    if (phase === "keep-or-change") {
+      if (key.escape) { onBack(); return; }
+      if (input?.toLowerCase() === "k" && currentValues) {
+        onNext(currentValues);
+        return;
+      }
+      if (input?.toLowerCase() === "c") {
+        setPhase("token");
+        return;
+      }
+      return;
+    }
+
     if (phase === "token") {
       if (key.escape) {
+        if (currentValues) { setPhase("keep-or-change"); return; }
         onBack();
         return;
       }
@@ -52,6 +69,30 @@ export function TelegramSetup({ onNext, onBack }: TelegramSetupProps) {
       }
     }
   });
+
+  if (phase === "keep-or-change" && currentValues) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <Text bold color="cyan">
+          Telegram Bot Setup
+        </Text>
+        <Text />
+        <Text>Current configuration:</Text>
+        <Text>
+          {"  "}Bot token: {currentValues.botToken ? "configured" : "not configured"}
+        </Text>
+        <Text>
+          {"  "}Pairing code: {currentValues.pairingCode ?? "none"}
+        </Text>
+        <Text />
+        <Text>
+          <Text color="yellow" bold>[K]</Text> Keep current{"  "}
+          <Text color="yellow" bold>[C]</Text> Change{"    "}
+          <Text dimColor>Esc to go back</Text>
+        </Text>
+      </Box>
+    );
+  }
 
   if (phase === "code") {
     return (
