@@ -5,7 +5,7 @@ import { Input } from "./Input.js";
 import { StatusBar } from "./StatusBar.js";
 import { ModelPicker } from "./ModelPicker.js";
 import { createTuiClient } from "./client.js";
-import type { ModelConfig } from "../../router/types.js";
+import type { ModelConfig, ProviderConfig } from "../../router/types.js";
 
 type EngineClient = ReturnType<typeof createTuiClient>;
 
@@ -111,7 +111,7 @@ export function App({ client }: AppProps) {
       if (text === "/provider") {
         try {
           const providers = await client.provider.list.query();
-          const lines = providers.map((p) => `• ${p.id} (${p.type}) — ${p.apiKeyEnvVar}`);
+          const lines = providers.map((p: ProviderConfig) => `• ${p.id} (${p.type}) — ${p.apiKeyEnvVar}`);
           setMessages((prev) => [
             ...prev,
             {

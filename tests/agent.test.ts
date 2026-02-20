@@ -18,13 +18,20 @@ async function setupRouter(): Promise<ModelRouter> {
   await writeFile(
     modelsPath,
     JSON.stringify({
+      version: 2,
       default: "test-model",
+      providers: [
+        {
+          id: "anthropic",
+          type: "anthropic",
+          apiKeyEnvVar: "TEST_API_KEY",
+        },
+      ],
       models: [
         {
           name: "test-model",
           provider: "anthropic",
           model: "claude-sonnet-4-5-20250514",
-          apiKeyEnvVar: "TEST_API_KEY",
           temperature: 0.7,
         },
       ],

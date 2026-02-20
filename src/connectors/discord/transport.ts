@@ -9,6 +9,7 @@ import {
 } from "discord.js";
 import { splitMessage, formatToolResult } from "./formatter.js";
 import { createDiscordClient } from "./client.js";
+import type { ProviderConfig } from "../../router/types.js";
 
 const EDIT_THROTTLE_MS = 1000;
 
@@ -122,7 +123,7 @@ export class DiscordConnector {
       if (text === "/provider") {
         try {
           const providers = await this.client.provider.list.query();
-          const lines = providers.map((p) => `• **${p.id}** (${p.type}) — \`${p.apiKeyEnvVar}\``);
+          const lines = providers.map((p: ProviderConfig) => `• **${p.id}** (${p.type}) — \`${p.apiKeyEnvVar}\``);
           await message.reply(`Providers:\n${lines.join("\n")}`);
         } catch {
           await message.reply("Engine unreachable.");

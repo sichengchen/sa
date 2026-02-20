@@ -1,4 +1,5 @@
 import { Bot, type Context, InlineKeyboard } from "grammy";
+import type { ProviderConfig } from "../../router/types.js";
 import { splitMessage, formatToolResult } from "./formatter.js";
 import { createTelegramClient } from "./client.js";
 import { markdownToHtml } from "../../shared/markdown.js";
@@ -121,7 +122,7 @@ export class TelegramConnector {
       if (!this.isAllowed(ctx.message!.chat.id)) return;
       try {
         const providers = await this.client.provider.list.query();
-        const lines = providers.map((p) => `• ${p.id} (${p.type}) — ${p.apiKeyEnvVar}`);
+        const lines = providers.map((p: ProviderConfig) => `• ${p.id} (${p.type}) — ${p.apiKeyEnvVar}`);
         await ctx.reply(`Providers:\n${lines.join("\n")}`);
       } catch {
         await ctx.reply("Engine unreachable.");
