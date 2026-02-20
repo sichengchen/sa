@@ -22,7 +22,7 @@ export interface WizardData {
   pairingCode?: string;
   discordToken?: string;
   discordGuildId?: string;
-  installSkills?: boolean;
+  selectedSkills?: string[];
 }
 
 interface ConfirmProps {
@@ -74,7 +74,9 @@ export function Confirm({ data, onConfirm, onBack }: ConfirmProps) {
       {data.discordGuildId && <Text> Guild: {data.discordGuildId}</Text>}
       <Text />
       <Text bold>Skills:</Text>
-      <Text> {data.installSkills ? "Will browse after setup" : "Skipped"}</Text>
+      <Text> {data.selectedSkills && data.selectedSkills.length > 0
+        ? `${data.selectedSkills.length} selected: ${data.selectedSkills.join(", ")}`
+        : "None selected"}</Text>
       <Text />
       <Text dimColor>Enter to save | Esc to go back</Text>
     </Box>

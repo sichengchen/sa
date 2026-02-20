@@ -43,7 +43,7 @@ export function Wizard({ homeDir, onComplete, existingConfig }: WizardProps) {
           baseUrl: undefined,
           discordToken: "",
           discordGuildId: "",
-          installSkills: false,
+          selectedSkills: [],
         }
   );
 
@@ -230,6 +230,11 @@ ${recurringContext}
     case "skills":
       return (
         <SkillSetup
+          currentValues={
+            existingConfig && data.selectedSkills
+              ? { selectedSkills: data.selectedSkills }
+              : undefined
+          }
           onNext={(skillData: SkillSetupData) => {
             setData((d) => ({ ...d, ...skillData }));
             setStep("confirm");
