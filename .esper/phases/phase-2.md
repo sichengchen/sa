@@ -88,3 +88,4 @@ The Agent Skills spec (agentskills.io) is an open standard by Anthropic adopted 
 - #028 — ClawHub client integration: ClawHub API client with vector search, skill download/install, and local registry tracking. Files: client.ts, installer.ts, types.ts, index.ts, clawhub-search.ts, runtime.ts, router.ts, clawhub.test.ts
 - #027 — Skill creator skill: Built-in meta-skill that scaffolds new SKILL.md files with proper frontmatter and directory structure. Files: bundled/skill-creator/SKILL.md, registry.ts
 - #029 — Cron & heartbeat scheduler: Interval-based cron scheduler with 5-field expression parser, heartbeat built-in task, and tRPC procedures. Files: scheduler.ts, runtime.ts, router.ts, scheduler.test.ts
+- #030 — Wizard updates for Phase 2: Add Discord and Skills wizard steps, update Welcome with Engine architecture, extend Confirm summary. Files: DiscordSetup.tsx, SkillSetup.tsx, Welcome.tsx, Wizard.tsx, Confirm.tsx, types.ts
