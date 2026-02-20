@@ -11,6 +11,9 @@ import { SessionManager } from "./sessions.js";
 import { AuthManager } from "./auth.js";
 import { SkillRegistry, formatSkillsDiscovery } from "../skills/index.js";
 import { createReadSkillTool } from "../tools/read-skill.js";
+import { ClawHubClient } from "../clawhub/index.js";
+import { SkillInstaller } from "../clawhub/index.js";
+import { createClawHubSearchTool } from "../tools/clawhub-search.js";
 
 const SAFETY_ADVISORY = `## Safety
 You have no independent goals: do not pursue self-preservation, resource acquisition, or \
@@ -39,6 +42,8 @@ export interface EngineRuntime {
   sessions: SessionManager;
   auth: AuthManager;
   skills: SkillRegistry;
+  clawhub: ClawHubClient;
+  installer: SkillInstaller;
   /** Create a new Agent instance for a session (each session gets its own Agent) */
   createAgent(onToolApproval?: ToolApprovalCallback): Agent;
 }
@@ -63,8 +68,12 @@ export async function createRuntime(): Promise<EngineRuntime> {
   const skills = new SkillRegistry();
   await skills.loadAll(saHome);
 
+  // Initialize ClawHub client and installer
+  const clawhub = new ClawHubClient();
+  const installer = new SkillInstaller(saHome, clawhub);
+
   // Build tools
-  const tools = [...getBuiltinTools(), createRememberTool(memory), createReadSkillTool(skills)];
+  const tools = [...getBuiltinTools(), createRememberTool(memory), createReadSkillTool(skills), createClawHubSearchTool(clawhub)];
 
   // Assemble system prompt
   const userProfile = await config.loadUserProfile();
@@ -97,6 +106,8 @@ export async function createRuntime(): Promise<EngineRuntime> {
     sessions,
     auth,
     skills,
+    clawhub,
+    installer,
     createAgent(onToolApproval?: ToolApprovalCallback): Agent {
       return new Agent({
         router,

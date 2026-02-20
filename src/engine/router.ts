@@ -186,6 +186,24 @@ export function createAppRouter(runtime: EngineRuntime) {
         .mutation(async ({ input }): Promise<{ activated: boolean }> => {
           return { activated: await runtime.skills.activate(input.name) };
         }),
+
+      /** Search ClawHub for skills */
+      search: publicProcedure
+        .input(z.object({ query: z.string(), limit: z.number().optional() }))
+        .query(async ({ input }) => {
+          return runtime.clawhub.search(input.query, { limit: input.limit });
+        }),
+
+      /** Install a skill from ClawHub */
+      install: publicProcedure
+        .input(z.object({ slug: z.string(), version: z.string().optional() }))
+        .mutation(async ({ input }) => {
+          const result = await runtime.installer.install(input.slug, input.version);
+          // Reload skills after installation
+          const saHome = runtime.config.homeDir;
+          await runtime.skills.loadAll(saHome);
+          return result;
+        }),
     }),
 
     /** Authentication */
