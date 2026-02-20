@@ -1,14 +1,13 @@
 ---
-id: 015
+id: 15
 title: Wizard re-run — keep or change per-section prompt
-status: pending
+status: active
 type: feature
 priority: 2
 phase: phase-1
 branch: feature/phase-1
 created: 2026-02-19
 ---
-
 # Wizard Re-run — Keep or Change Per-Section Prompt
 
 ## Context
@@ -172,3 +171,8 @@ Define in `src/wizard/Wizard.tsx` (or `steps/Confirm.tsx`) and re-export from `s
   - Corrupted config on re-run → catch block → `existingConfig` is undefined → wizard starts fresh
   - Model has no API key in secrets → show `(not set)` in the K/C summary
   - Telegram not configured (empty botToken) → still show K/C gate with "Not configured" summary
+
+## Progress
+- Milestones: 5 commits
+- Modified: src/index.ts, src/wizard/Wizard.tsx, src/wizard/steps/Identity.tsx, src/wizard/steps/ModelSetup.tsx, src/wizard/steps/TelegramSetup.tsx
+- Verification: 93 tests pass, lint clean, typecheck clean
