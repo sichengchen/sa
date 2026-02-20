@@ -1,12 +1,13 @@
 ---
 id: 15
 title: Wizard re-run — keep or change per-section prompt
-status: active
+status: done
 type: feature
 priority: 2
 phase: phase-1
 branch: feature/phase-1
 created: 2026-02-19
+shipped_at: 2026-02-20
 ---
 # Wizard Re-run — Keep or Change Per-Section Prompt
 
