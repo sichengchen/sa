@@ -95,8 +95,35 @@ export class DiscordConnector {
 
       if (text === "/model") {
         try {
-          const ping = await this.client.health.ping.query();
-          await message.reply(`Current model: ${ping.model}`);
+          const [activeRes, models] = await Promise.all([
+            this.client.model.active.query(),
+            this.client.model.list.query(),
+          ]);
+          const row = new ActionRowBuilder<ButtonBuilder>();
+          for (const m of models.slice(0, 5)) {
+            const label = m.name === activeRes.name ? `✓ ${m.name}` : m.name;
+            row.addComponents(
+              new ButtonBuilder()
+                .setCustomId(`model:${m.name}`)
+                .setLabel(label)
+                .setStyle(m.name === activeRes.name ? ButtonStyle.Success : ButtonStyle.Secondary),
+            );
+          }
+          await message.reply({
+            content: `Current model: **${activeRes.name}**\n\nSwitch to:`,
+            components: models.length > 0 ? [row] : [],
+          });
+        } catch {
+          await message.reply("Engine unreachable.");
+        }
+        return;
+      }
+
+      if (text === "/provider") {
+        try {
+          const providers = await this.client.provider.list.query();
+          const lines = providers.map((p) => `• **${p.id}** (${p.type}) — \`${p.apiKeyEnvVar}\``);
+          await message.reply(`Providers:\n${lines.join("\n")}`);
         } catch {
           await message.reply("Engine unreachable.");
         }
@@ -186,16 +213,33 @@ export class DiscordConnector {
       }
     });
 
-    // Button interaction handler for tool approvals
+    // Button interaction handler for tool approvals and model switching
     this.discord.on("interactionCreate", async (interaction: Interaction) => {
       if (!interaction.isButton()) return;
 
-      const [action, toolCallId] = interaction.customId.split(":");
-      if (!toolCallId || (action !== "approve" && action !== "reject")) return;
+      const colonIdx = interaction.customId.indexOf(":");
+      const action = colonIdx >= 0 ? interaction.customId.slice(0, colonIdx) : interaction.customId;
+      const value = colonIdx >= 0 ? interaction.customId.slice(colonIdx + 1) : "";
+
+      if (action === "model" && value) {
+        try {
+          await this.client.model.switch.mutate({ name: value });
+          await interaction.update({
+            content: `Switched to model: **${value}**`,
+            components: [],
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          await interaction.reply({ content: `Failed to switch: ${msg}`, ephemeral: true });
+        }
+        return;
+      }
+
+      if (action !== "approve" && action !== "reject") return;
 
       const approved = action === "approve";
       try {
-        await this.client.tool.approve.mutate({ toolCallId, approved });
+        await this.client.tool.approve.mutate({ toolCallId: value, approved });
         await interaction.update({
           content: `Tool ${approved ? "approved" : "rejected"}.`,
           components: [],
