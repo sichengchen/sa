@@ -171,7 +171,8 @@ export class TelegramConnector {
         const sessionId = await this.ensureSession();
         let sentMsg: Awaited<ReturnType<typeof ctx.reply>> | null = null;
         let fullText = "";
-        let lastEditTime = 0;
+        let lastEditTime = Date.now();
+        let editLock = Promise.resolve();
 
         const subscription = this.client.chat.stream.subscribe(
           { sessionId, message: userText },
@@ -181,20 +182,23 @@ export class TelegramConnector {
                 case "text_delta":
                   fullText += event.delta;
                   if (Date.now() - lastEditTime > EDIT_THROTTLE_MS && fullText.length > 0) {
-                    const html = markdownToHtml(fullText.slice(0, 4096));
-                    try {
-                      if (!sentMsg) {
-                        sentMsg = await ctx.reply(html, { parse_mode: "HTML" });
-                      } else {
-                        await ctx.api.editMessageText(
-                          ctx.message.chat.id,
-                          sentMsg.message_id,
-                          html,
-                          { parse_mode: "HTML" },
-                        );
+                    editLock = editLock.then(async () => {
+                      const html = markdownToHtml(fullText.slice(0, 4096));
+                      try {
+                        if (!sentMsg) {
+                          sentMsg = await ctx.reply(html, { parse_mode: "HTML" });
+                        } else {
+                          await ctx.api.editMessageText(
+                            ctx.message.chat.id,
+                            sentMsg.message_id,
+                            html,
+                            { parse_mode: "HTML" },
+                          );
+                        }
+                      } finally {
+                        lastEditTime = Date.now();
                       }
-                      lastEditTime = Date.now();
-                    } catch {}
+                    });
                   }
                   break;
 
@@ -221,23 +225,25 @@ export class TelegramConnector {
 
                 case "done":
                   if (fullText) {
-                    const htmlFull = markdownToHtml(fullText);
-                    const chunks = splitMessage(htmlFull);
-                    try {
-                      if (!sentMsg) {
-                        sentMsg = await ctx.reply(chunks[0]!, { parse_mode: "HTML" });
-                      } else {
-                        await ctx.api.editMessageText(
-                          ctx.message.chat.id,
-                          sentMsg.message_id,
-                          chunks[0]!,
-                          { parse_mode: "HTML" },
-                        );
+                    editLock = editLock.then(async () => {
+                      const htmlFull = markdownToHtml(fullText);
+                      const chunks = splitMessage(htmlFull);
+                      try {
+                        if (!sentMsg) {
+                          sentMsg = await ctx.reply(chunks[0]!, { parse_mode: "HTML" });
+                        } else {
+                          await ctx.api.editMessageText(
+                            ctx.message.chat.id,
+                            sentMsg.message_id,
+                            chunks[0]!,
+                            { parse_mode: "HTML" },
+                          );
+                        }
+                      } catch {}
+                      for (let i = 1; i < chunks.length; i++) {
+                        await ctx.reply(chunks[i]!, { parse_mode: "HTML" });
                       }
-                    } catch {}
-                    for (let i = 1; i < chunks.length; i++) {
-                      await ctx.reply(chunks[i]!, { parse_mode: "HTML" });
-                    }
+                    });
                   }
                   break;
 
