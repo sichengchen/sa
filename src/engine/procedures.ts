@@ -14,6 +14,29 @@ const SAFE_TOOLS = new Set([
   "web_fetch",
 ]);
 
+/** Format tool args as a compact summary for IM display */
+function formatArgsForIM(toolName: string, args: Record<string, unknown>): string {
+  // For exec: show the command
+  if (toolName === "exec" && typeof args.command === "string") {
+    return args.command;
+  }
+  // For read/write/edit: show the file path
+  if (typeof args.path === "string") {
+    return args.path;
+  }
+  // For web_search: show the query
+  if (typeof args.query === "string") {
+    return args.query;
+  }
+  // For web_fetch: show the URL
+  if (typeof args.url === "string") {
+    return args.url;
+  }
+  // Fallback: compact JSON
+  const json = JSON.stringify(args);
+  return json.length > 200 ? json.slice(0, 200) + "..." : json;
+}
+
 /** Per-session agent instances */
 const sessionAgents = new Map<string, Agent>();
 
@@ -115,6 +138,7 @@ export function createAppRouter(runtime: EngineRuntime) {
 
           runtime.sessions.touchSession(input.sessionId);
           const agent = getSessionAgent(input.sessionId);
+          const isIM = session.connectorType !== "tui";
 
           try {
             for await (const event of agent.chat(input.message)) {
@@ -126,13 +150,23 @@ export function createAppRouter(runtime: EngineRuntime) {
                   yield event;
                   break;
                 case "tool_start":
-                  yield { type: "tool_start", name: event.name, id: event.id };
+                  if (isIM && SAFE_TOOLS.has(event.name)) break;
+                  if (isIM) {
+                    // On IM: show what was called (args summary), suppress tool_end later
+                    const argsStr = formatArgsForIM(event.name, event.args);
+                    yield { type: "tool_end", name: event.name, id: event.id, content: argsStr, isError: false };
+                  } else {
+                    yield { type: "tool_start", name: event.name, id: event.id };
+                  }
                   break;
                 case "tool_end":
                   // Intercept reaction tool — emit a reaction event for connectors
                   if (event.name === "reaction" && event.result.content.startsWith("__reaction__:")) {
                     const emoji = event.result.content.slice("__reaction__:".length);
                     yield { type: "reaction", emoji };
+                  } else if (isIM) {
+                    // IM: already shown at tool_start, suppress result
+                    break;
                   } else {
                     yield {
                       type: "tool_end",
@@ -211,6 +245,7 @@ export function createAppRouter(runtime: EngineRuntime) {
 
           // Process transcript as a normal chat message
           const agent = getSessionAgent(input.sessionId);
+          const isIM = session.connectorType !== "tui";
           try {
             for await (const event of agent.chat(transcript)) {
               switch (event.type) {
@@ -221,12 +256,20 @@ export function createAppRouter(runtime: EngineRuntime) {
                   yield event;
                   break;
                 case "tool_start":
-                  yield { type: "tool_start", name: event.name, id: event.id };
+                  if (isIM && SAFE_TOOLS.has(event.name)) break;
+                  if (isIM) {
+                    const argsStr = formatArgsForIM(event.name, event.args);
+                    yield { type: "tool_end", name: event.name, id: event.id, content: argsStr, isError: false };
+                  } else {
+                    yield { type: "tool_start", name: event.name, id: event.id };
+                  }
                   break;
                 case "tool_end":
                   if (event.name === "reaction" && event.result.content.startsWith("__reaction__:")) {
                     const emoji = event.result.content.slice("__reaction__:".length);
                     yield { type: "reaction", emoji };
+                  } else if (isIM) {
+                    break;
                   } else {
                     yield {
                       type: "tool_end",

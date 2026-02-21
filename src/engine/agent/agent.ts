@@ -82,6 +82,7 @@ export class Agent {
                 type: "tool_start",
                 name: event.toolCall.name,
                 id: event.toolCall.id,
+                args: (event.toolCall.arguments ?? {}) as Record<string, unknown>,
               };
               break;
             case "done": {
