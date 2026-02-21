@@ -52,9 +52,12 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
     loadSecrets(homeDir).then((s) => setSecrets(s ?? { apiKeys: {} }));
   }, [homeDir]);
 
-  const telegramToken = secrets?.botToken ? "●●●●" + secrets.botToken.slice(-4) : "(not set)";
-  const discordToken = secrets?.discordToken ? "●●●●" + secrets.discordToken.slice(-4) : "(not set)";
-  const discordGuild = secrets?.discordGuildId || "(not set)";
+  const rawTelegram = secrets?.apiKeys?.TELEGRAM_BOT_TOKEN ?? secrets?.botToken;
+  const rawDiscord = secrets?.apiKeys?.DISCORD_TOKEN ?? secrets?.discordToken;
+  const rawGuild = secrets?.apiKeys?.DISCORD_GUILD_ID ?? secrets?.discordGuildId;
+  const telegramToken = rawTelegram ? "●●●●" + rawTelegram.slice(-4) : "(not set)";
+  const discordToken = rawDiscord ? "●●●●" + rawDiscord.slice(-4) : "(not set)";
+  const discordGuild = rawGuild || "(not set)";
 
   useInput((input, key) => {
     if (saved) return;
@@ -67,13 +70,13 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
       if (key.return) {
         const item = MENU_ITEMS[selected];
         if (item.key === "telegram-token") {
-          setEditValue(secrets?.botToken ?? "");
+          setEditValue(rawTelegram ?? "");
           setSubstep("edit-telegram-token");
         } else if (item.key === "discord-token") {
-          setEditValue(secrets?.discordToken ?? "");
+          setEditValue(rawDiscord ?? "");
           setSubstep("edit-discord-token");
         } else if (item.key === "discord-guild") {
-          setEditValue(secrets?.discordGuildId ?? "");
+          setEditValue(rawGuild ?? "");
           setSubstep("edit-discord-guild");
         } else if (item.key === "tui-approval" || item.key === "telegram-approval" || item.key === "discord-approval" || item.key === "webhook-approval") {
           const connector = item.key.replace("-approval", "") as ConnectorType;
@@ -115,11 +118,17 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
     if (key.return) {
       const updated: SecretsFile = { ...secrets!, apiKeys: { ...secrets!.apiKeys } };
       if (substep === "edit-telegram-token") {
-        updated.botToken = editValue.trim() || undefined;
+        const val = editValue.trim();
+        if (val) { updated.apiKeys.TELEGRAM_BOT_TOKEN = val; } else { delete updated.apiKeys.TELEGRAM_BOT_TOKEN; }
+        delete updated.botToken; // migrate away from legacy field
       } else if (substep === "edit-discord-token") {
-        updated.discordToken = editValue.trim() || undefined;
+        const val = editValue.trim();
+        if (val) { updated.apiKeys.DISCORD_TOKEN = val; } else { delete updated.apiKeys.DISCORD_TOKEN; }
+        delete updated.discordToken;
       } else if (substep === "edit-discord-guild") {
-        updated.discordGuildId = editValue.trim() || undefined;
+        const val = editValue.trim();
+        if (val) { updated.apiKeys.DISCORD_GUILD_ID = val; } else { delete updated.apiKeys.DISCORD_GUILD_ID; }
+        delete updated.discordGuildId;
       }
       setSaved(true);
       saveSecrets(homeDir, updated).then(() => {

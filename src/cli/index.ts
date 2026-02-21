@@ -67,10 +67,10 @@ async function loadExistingConfig(): Promise<unknown | undefined> {
       apiKeyEnvVar: defaultProvider?.apiKeyEnvVar ?? "ANTHROPIC_API_KEY",
       baseUrl: defaultProvider?.baseUrl,
       apiKey: secrets?.apiKeys?.[defaultProvider?.apiKeyEnvVar ?? ""] ?? "",
-      botToken: secrets?.botToken ?? "",
+      botToken: secrets?.apiKeys?.TELEGRAM_BOT_TOKEN ?? secrets?.botToken ?? "",
       pairingCode: secrets?.pairingCode,
-      discordToken: secrets?.discordToken ?? "",
-      discordGuildId: secrets?.discordGuildId ?? "",
+      discordToken: secrets?.apiKeys?.DISCORD_TOKEN ?? secrets?.discordToken ?? "",
+      discordGuildId: secrets?.apiKeys?.DISCORD_GUILD_ID ?? secrets?.discordGuildId ?? "",
     };
   } catch {
     return undefined;

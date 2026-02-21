@@ -6,8 +6,9 @@ import { ProviderManager } from "./ProviderManager.js";
 import { ModelManager } from "./ModelManager.js";
 import { ConnectorSettings } from "./ConnectorSettings.js";
 import { MemorySettings } from "./MemorySettings.js";
+import { EnvironmentSettings } from "./EnvironmentSettings.js";
 
-type Screen = "menu" | "providers" | "models" | "connectors" | "memory";
+type Screen = "menu" | "providers" | "models" | "connectors" | "memory" | "environment";
 
 interface ConfigAppProps {
   homeDir: string;
@@ -17,8 +18,9 @@ interface ConfigAppProps {
 const MENU_ITEMS = [
   { key: "providers", label: "Providers" },
   { key: "models", label: "Models" },
-  { key: "connectors", label: "Connectors (Telegram / Discord)" },
-  { key: "memory", label: "Memory settings" },
+  { key: "connectors", label: "Connectors" },
+  { key: "memory", label: "Memory" },
+  { key: "environment", label: "Environment" },
 ] as const;
 
 export function ConfigApp({ homeDir, onExit }: ConfigAppProps) {
@@ -97,10 +99,20 @@ export function ConfigApp({ homeDir, onExit }: ConfigAppProps) {
           onBack={() => setScreen("menu")}
         />
       );
+    case "environment":
+      return (
+        <EnvironmentSettings
+          config={config}
+          homeDir={homeDir}
+          onSave={saveConfig}
+          onBack={() => setScreen("menu")}
+        />
+      );
     default:
       return (
         <ConfigMenuScreen
           config={config}
+          homeDir={homeDir}
           onSelect={(s) => setScreen(s)}
           onExit={onExit}
         />
@@ -110,6 +122,7 @@ export function ConfigApp({ homeDir, onExit }: ConfigAppProps) {
 
 interface ConfigMenuScreenProps {
   config: SAConfigFile;
+  homeDir: string;
   onSelect: (screen: Screen) => void;
   onExit: () => void;
 }

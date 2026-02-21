@@ -121,12 +121,14 @@ ${recurringContext}
       await writeFile(join(homeDir, "memory", "MEMORY.md"), "");
 
       // Persist secrets (API key + bot tokens + pairing code) in encrypted file
+      const apiKeys: Record<string, string> = {};
+      if (data.apiKey) apiKeys[data.apiKeyEnvVar] = data.apiKey;
+      if (data.botToken) apiKeys.TELEGRAM_BOT_TOKEN = data.botToken;
+      if (data.discordToken) apiKeys.DISCORD_TOKEN = data.discordToken;
+      if (data.discordGuildId) apiKeys.DISCORD_GUILD_ID = data.discordGuildId;
       await saveSecrets(homeDir, {
-        apiKeys: data.apiKey ? { [data.apiKeyEnvVar]: data.apiKey } : {},
-        botToken: data.botToken || undefined,
+        apiKeys,
         pairingCode: data.pairingCode,
-        discordToken: data.discordToken || undefined,
-        discordGuildId: data.discordGuildId || undefined,
       });
 
       // Copy selected bundled skills into ~/.sa/skills/
