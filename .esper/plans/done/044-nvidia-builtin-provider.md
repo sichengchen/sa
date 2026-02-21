@@ -1,14 +1,14 @@
 ---
-id: 044
+id: 44
 title: Add Nvidia NIM as a built-in provider
-status: pending
+status: done
 type: feature
 priority: 2
 phase: phase-3
 branch: feature/phase-3
 created: 2026-02-21
+shipped_at: 2026-02-21
 ---
-
 # Add Nvidia NIM as a built-in provider
 
 ## Context
@@ -36,3 +36,11 @@ SA supports 5 provider types: anthropic, openai, google, openrouter, openai-comp
 - Run: `bun test && bun run typecheck`
 - Expected: Type checks pass; nvidia appears in wizard and config provider lists
 - Edge cases: API key env var must be configurable (not all users use NVIDIA_API_KEY); model listing should handle Nvidia's specific response format if it differs
+
+## Progress
+- Added "nvidia" to ProviderType in fetch-models.ts, ModelSetup.tsx, ProviderManager.tsx
+- Added nvidia case in fetchModelList hitting integrate.api.nvidia.com/v1/models
+- Added Nvidia NIM to wizard PROVIDER_OPTIONS with NVIDIA_API_KEY default
+- Added Nvidia NIM to config PROVIDER_TYPES
+- Modified: src/cli/shared/fetch-models.ts, src/cli/wizard/steps/ModelSetup.tsx, src/cli/config/ProviderManager.tsx
+- Verification: typecheck passed, lint passed, 201 tests passed
