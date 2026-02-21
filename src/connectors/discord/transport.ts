@@ -136,7 +136,7 @@ export class DiscordConnector {
         const sessionId = await this.ensureSession();
         let sentMsg: Message | null = null;
         let fullText = "";
-        let lastEditTime = Date.now();
+        let lastEditTime = 0;
         let editLock = Promise.resolve();
 
         this.client.chat.stream.subscribe(
@@ -147,6 +147,7 @@ export class DiscordConnector {
                 case "text_delta":
                   fullText += event.delta;
                   if (Date.now() - lastEditTime > EDIT_THROTTLE_MS && fullText.length > 0) {
+                    lastEditTime = Date.now();
                     editLock = editLock.then(async () => {
                       try {
                         if (!sentMsg) {

@@ -171,7 +171,7 @@ export class TelegramConnector {
         const sessionId = await this.ensureSession();
         let sentMsg: Awaited<ReturnType<typeof ctx.reply>> | null = null;
         let fullText = "";
-        let lastEditTime = Date.now();
+        let lastEditTime = 0;
         let editLock = Promise.resolve();
 
         const subscription = this.client.chat.stream.subscribe(
@@ -182,6 +182,7 @@ export class TelegramConnector {
                 case "text_delta":
                   fullText += event.delta;
                   if (Date.now() - lastEditTime > EDIT_THROTTLE_MS && fullText.length > 0) {
+                    lastEditTime = Date.now();
                     editLock = editLock.then(async () => {
                       const html = markdownToHtml(fullText.slice(0, 4096));
                       try {
