@@ -1,5 +1,5 @@
 import { readFile, writeFile, unlink } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, openSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { spawn } from "node:child_process";
@@ -42,17 +42,13 @@ async function start(): Promise<void> {
   await cleanStaleFiles();
 
   const engineScript = join(import.meta.dir, "..", "engine", "index.ts");
-  const logFd = Bun.file(LOG_FILE).writer();
+  const logFd = openSync(LOG_FILE, "a");
 
   const child = spawn("bun", ["run", engineScript], {
     detached: true,
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ["ignore", logFd, logFd],
     env: { ...process.env, SA_HOME: saHome },
   });
-
-  // Pipe stdout/stderr to log file
-  child.stdout?.on("data", (chunk: Buffer) => logFd.write(chunk));
-  child.stderr?.on("data", (chunk: Buffer) => logFd.write(chunk));
 
   child.unref();
 
