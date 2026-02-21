@@ -69,6 +69,7 @@ export function ConfigApp({ homeDir, onExit }: ConfigAppProps) {
       return (
         <ProviderManager
           config={config}
+          homeDir={homeDir}
           onSave={saveConfig}
           onBack={() => setScreen("menu")}
         />
