@@ -4,7 +4,7 @@ import type { SAConfigFile } from "../../engine/config/index.js";
 import type { ProviderConfig } from "../../engine/router/index.js";
 
 type Substep = "list" | "add-type" | "add-fields" | "confirm-remove";
-type ProviderType = "anthropic" | "openai" | "google" | "openrouter" | "openai-compat";
+type ProviderType = "anthropic" | "openai" | "google" | "openrouter" | "nvidia" | "openai-compat";
 type AddField = "id" | "apiKeyEnvVar" | "baseUrl";
 
 const PROVIDER_TYPES: { type: ProviderType; label: string; defaultEnvVar: string }[] = [
@@ -12,6 +12,7 @@ const PROVIDER_TYPES: { type: ProviderType; label: string; defaultEnvVar: string
   { type: "openai", label: "OpenAI", defaultEnvVar: "OPENAI_API_KEY" },
   { type: "google", label: "Google", defaultEnvVar: "GOOGLE_AI_API_KEY" },
   { type: "openrouter", label: "OpenRouter", defaultEnvVar: "OPENROUTER_API_KEY" },
+  { type: "nvidia", label: "Nvidia NIM", defaultEnvVar: "NVIDIA_API_KEY" },
   { type: "openai-compat", label: "OpenAI compatible", defaultEnvVar: "" },
 ];
 

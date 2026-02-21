@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import { fetchModelList, lookupModelMeta } from "../../shared/fetch-models.js";
 
-type ProviderType = "anthropic" | "openai" | "google" | "openrouter" | "openai-compat";
+type ProviderType = "anthropic" | "openai" | "google" | "openrouter" | "nvidia" | "openai-compat";
 type Substep = "keep-or-change" | "provider" | "credentials" | "fetching" | "model";
 type CompatField = "name" | "baseUrl" | "apiKey";
 
@@ -11,6 +11,7 @@ const PROVIDER_OPTIONS: { type: ProviderType; label: string; apiKeyEnvVar: strin
   { type: "openai", label: "OpenAI (official)", apiKeyEnvVar: "OPENAI_API_KEY" },
   { type: "google", label: "Google (official)", apiKeyEnvVar: "GOOGLE_AI_API_KEY" },
   { type: "openrouter", label: "OpenRouter", apiKeyEnvVar: "OPENROUTER_API_KEY" },
+  { type: "nvidia", label: "Nvidia NIM", apiKeyEnvVar: "NVIDIA_API_KEY" },
   { type: "openai-compat", label: "OpenAI compatible", apiKeyEnvVar: "" },
 ];
 
