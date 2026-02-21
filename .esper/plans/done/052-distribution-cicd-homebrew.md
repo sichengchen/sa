@@ -1,12 +1,13 @@
 ---
 id: 52
 title: CalVer versioning, GitHub Actions CI/CD, and Homebrew tap distribution
-status: active
+status: done
 type: feature
 priority: 1
 phase: 004-dx-distribution
 branch: feature/004-dx-distribution
 created: 2026-02-21
+shipped_at: 2026-02-21
 ---
 # CalVer versioning, GitHub Actions CI/CD, and Homebrew tap distribution
 
@@ -153,3 +154,13 @@ After the GitHub Release is created, add a step in `release.yml` that:
   - Multiple releases in same month increment patch correctly
   - Release workflow handles both ARM64 and x86_64 binaries
   - Formula correctly selects binary by architecture
+
+## Progress
+- Adopted CalVer `2026.2.0` in package.json, updated bin to `dist/index.js`
+- Created `scripts/version.ts` — bump + tag + optional push
+- Created `.github/workflows/ci.yml` — lint, typecheck, test, build on PRs and main
+- Created `.github/workflows/release.yml` — builds macOS ARM64 + x86_64, creates GitHub Release, updates Homebrew tap
+- Created `scripts/update-homebrew.ts` — updates Formula/sa.rb in tap repo with new version and checksums
+- Created `sichengchen/homebrew-tap` repo with placeholder `Formula/sa.rb`
+- Modified: package.json, scripts/version.ts, scripts/update-homebrew.ts, .github/workflows/ci.yml, .github/workflows/release.yml
+- Verification: typecheck pass, lint pass, 201 tests pass, build produces 7.11 MB binary
