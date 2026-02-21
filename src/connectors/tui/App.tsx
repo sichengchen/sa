@@ -264,12 +264,12 @@ export function App({ client }: AppProps) {
 
   return (
     <Box flexDirection="column" height="100%">
+      <ChatView messages={messages} streamingText={streamingText} agentName={agentName} />
       <StatusBar
         modelName={modelName}
         isStreaming={isStreaming}
         connected={connected}
       />
-      <ChatView messages={messages} streamingText={streamingText} agentName={agentName} />
       {showModelPicker ? (
         <ModelPicker
           models={models}
