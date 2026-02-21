@@ -181,6 +181,8 @@ export function createAppRouter(runtime: EngineRuntime) {
                   }
                   break;
                 case "tool_approval_request":
+                  // Safe tools are auto-approved — don't show approval UI
+                  if (SAFE_TOOLS.has(event.name)) break;
                   yield {
                     type: "tool_approval_request",
                     name: event.name,
@@ -284,6 +286,7 @@ export function createAppRouter(runtime: EngineRuntime) {
                   }
                   break;
                 case "tool_approval_request":
+                  if (SAFE_TOOLS.has(event.name)) break;
                   yield {
                     type: "tool_approval_request",
                     name: event.name,
