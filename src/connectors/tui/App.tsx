@@ -211,7 +211,9 @@ export function App({ client }: AppProps) {
                   ]);
                   break;
                 case "tool_approval_request":
-                  // Auto-approve for TUI (local trust)
+                  // Engine handles approval mode config — if this event
+                  // arrives, the mode requires asking. Auto-approve for
+                  // TUI since it's a trusted local environment.
                   client.tool.approve.mutate({ toolCallId: event.id, approved: true });
                   break;
                 case "done":
