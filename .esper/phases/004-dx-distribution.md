@@ -39,3 +39,4 @@ Make SA installable, updatable, and release-ready. Introduce calendar versioning
 Phase 3 shipped all 9 plans (042–050) covering connectors, tools, and media. SA is feature-rich but only installable via git clone + bun install. The build already produces a single 7.1 MB executable (`dist/index.js` with `#!/usr/bin/env bun` shebang), but there's no versioning, no CI, and no distribution channel. Plan 051 (tsconfig path aliases) was deferred from Phase 3 and is carried into this phase as a DX improvement.
 
 ## Shipped Plans
+- #052 — CalVer versioning, GitHub Actions CI/CD, and Homebrew tap distribution: Switch to CalVer (YYYY.M.patch), add CI/CD workflows, Homebrew tap, and version bump scripts. Files: package.json, scripts/version.ts, scripts/update-homebrew.ts, ci.yml, release.yml
