@@ -1,10 +1,14 @@
 import type { ProviderConfig, ModelConfig } from "../router/types.js";
+import type { ToolApprovalMode, ConnectorType } from "../../shared/types.js";
 
 export interface Identity {
   name: string;
   personality: string;
   systemPrompt: string;
 }
+
+/** Per-connector tool approval configuration */
+export type ToolApprovalConfig = Partial<Record<ConnectorType, ToolApprovalMode>>;
 
 export interface RuntimeConfig {
   activeModel: string;
@@ -13,6 +17,8 @@ export interface RuntimeConfig {
     enabled: boolean;
     directory: string;
   };
+  /** Per-connector tool approval mode (default: "never" for tui, "ask" for IM connectors) */
+  toolApproval?: ToolApprovalConfig;
 }
 
 /** On-disk config.json schema (v3 — merged models + runtime) */

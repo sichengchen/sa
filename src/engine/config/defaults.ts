@@ -19,6 +19,11 @@ export const DEFAULT_CONFIG: SAConfigFile = {
       enabled: true,
       directory: "memory",
     },
+    toolApproval: {
+      tui: "never",
+      telegram: "ask",
+      discord: "ask",
+    },
   },
   providers: [
     {
