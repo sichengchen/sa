@@ -5,8 +5,7 @@ Yet another personal AI assistant.
 ## Install
 
 ```bash
-brew tap sichengchen/tap
-brew install sa
+brew install sichengchen/tap/sa
 ```
 
 Requires [Bun](https://bun.sh). Update with `brew upgrade sa`.
