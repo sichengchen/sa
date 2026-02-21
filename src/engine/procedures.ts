@@ -5,13 +5,16 @@ import type { Agent } from "./agent/index.js";
 import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode } from "../shared/types.js";
 import type { ModelConfig, ProviderConfig } from "./router/types.js";
 
-/** Tools that are always auto-approved (read-only, no side effects) */
+/** Tools that are always auto-approved and silent on IM connectors */
 const SAFE_TOOLS = new Set([
   "read_skill",
-  "clawhub_search",
   "remember",
+  "reaction",
+  "set_api_key",
+  "clawhub_search",
   "web_search",
   "web_fetch",
+  "read",
 ]);
 
 /** Format tool args as a compact summary for IM display */
