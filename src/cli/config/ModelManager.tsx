@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import type { SAConfigFile } from "../../engine/config/index.js";
-import type { ModelConfig } from "../../engine/router/index.js";
-import { loadSecrets } from "../../engine/config/secrets.js";
+import type { SAConfigFile } from "@sa/engine/config/index.js";
+import type { ModelConfig } from "@sa/engine/router/index.js";
+import { loadSecrets } from "@sa/engine/config/secrets.js";
 import { fetchModelList, lookupModelMeta } from "../shared/fetch-models.js";
 
 type Substep = "list" | "add-provider" | "fetching" | "select-model" | "add-fields" | "confirm-remove";

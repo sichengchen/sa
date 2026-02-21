@@ -6,8 +6,8 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { engineCommand, ensureEngine } from "./engine.js";
-import { createTuiClient } from "../connectors/tui/client.js";
-import { App } from "../connectors/tui/App.js";
+import { createTuiClient } from "@sa/connectors/tui/client.js";
+import { App } from "@sa/connectors/tui/App.js";
 
 const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
 const [subcommand, ...args] = process.argv.slice(2);

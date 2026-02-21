@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import type { SAConfigFile } from "../../engine/config/index.js";
-import { loadSecrets, saveSecrets } from "../../engine/config/secrets.js";
-import type { SecretsFile } from "../../engine/config/types.js";
-import type { ToolApprovalMode, ConnectorType } from "../../shared/types.js";
+import type { SAConfigFile } from "@sa/engine/config/index.js";
+import { loadSecrets, saveSecrets } from "@sa/engine/config/secrets.js";
+import type { SecretsFile } from "@sa/engine/config/types.js";
+import type { ToolApprovalMode, ConnectorType } from "@sa/shared/types.js";
 
 type Substep = "menu" | "edit-telegram-token" | "edit-discord-token" | "edit-discord-guild";
 

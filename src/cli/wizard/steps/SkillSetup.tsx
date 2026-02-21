@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { scanSkillDirectory } from "../../../engine/skills/loader.js";
-import type { SkillMetadata } from "../../../engine/skills/types.js";
+import { scanSkillDirectory } from "@sa/engine/skills/loader.js";
+import type { SkillMetadata } from "@sa/engine/skills/types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BUNDLED_SKILLS_DIR = join(__dirname, "..", "..", "..", "engine", "skills", "bundled");

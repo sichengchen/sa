@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import type { SAConfigFile } from "../../engine/config/index.js";
+import type { SAConfigFile } from "@sa/engine/config/index.js";
 
 type Substep = "menu" | "edit-directory";
 

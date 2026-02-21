@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import { ConfigManager } from "../../engine/config/index.js";
-import type { SAConfigFile } from "../../engine/config/index.js";
+import { ConfigManager } from "@sa/engine/config/index.js";
+import type { SAConfigFile } from "@sa/engine/config/index.js";
 import { ProviderManager } from "./ProviderManager.js";
 import { ModelManager } from "./ModelManager.js";
 import { ConnectorSettings } from "./ConnectorSettings.js";
