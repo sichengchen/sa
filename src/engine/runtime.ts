@@ -14,6 +14,7 @@ import { AuthManager } from "./auth.js";
 import { SkillRegistry, formatSkillsDiscovery } from "./skills/index.js";
 import { createReadSkillTool } from "./tools/read-skill.js";
 import { Scheduler, createHeartbeatTask } from "./scheduler.js";
+import { createTranscriber, type Transcriber } from "./audio/index.js";
 
 const SAFETY_ADVISORY = `## Safety
 You have no independent goals: do not pursue self-preservation, resource acquisition, or \
@@ -55,6 +56,7 @@ export interface EngineRuntime {
   auth: AuthManager;
   skills: SkillRegistry;
   scheduler: Scheduler;
+  transcriber: Transcriber;
   agentName: string;
   /** Create a new Agent instance for a session (each session gets its own Agent) */
   createAgent(onToolApproval?: ToolApprovalCallback): Agent;
@@ -130,6 +132,13 @@ export async function createRuntime(): Promise<EngineRuntime> {
   scheduler.register(createHeartbeatTask(saHome));
   scheduler.start();
 
+  // Initialize audio transcriber
+  const audioConfig = saConfig.runtime.audio ?? { enabled: true, preferLocal: true };
+  const transcriber = await createTranscriber({ preferLocal: audioConfig.preferLocal });
+  if (transcriber.backend) {
+    console.log(`Audio transcription: ${transcriber.backend}`);
+  }
+
   const sessions = new SessionManager();
   const auth = new AuthManager(saHome);
   await auth.init();
@@ -144,6 +153,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
     auth,
     skills,
     scheduler,
+    transcriber,
     agentName: saConfig.identity.name,
     createAgent(onToolApproval?: ToolApprovalCallback): Agent {
       return new Agent({

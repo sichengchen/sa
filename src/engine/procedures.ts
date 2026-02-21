@@ -149,6 +149,86 @@ export function createAppRouter(runtime: EngineRuntime) {
           const messages = agent ? Array.from(agent.getMessages()) : [];
           return { sessionId: input.sessionId, messages };
         }),
+
+      /** Transcribe audio and send as a chat message */
+      transcribeAndSend: publicProcedure
+        .input(z.object({
+          sessionId: z.string(),
+          audio: z.string(), // base64-encoded audio
+          format: z.string(), // e.g. "ogg", "mp3", "wav", "m4a"
+        }))
+        .subscription(async function* ({ input }): AsyncGenerator<EngineEvent & { transcript?: string }> {
+          const session = runtime.sessions.getSession(input.sessionId);
+          if (!session) {
+            yield { type: "error", message: `Session not found: ${input.sessionId}` };
+            return;
+          }
+
+          const audioConfig = runtime.config.getConfigFile().runtime.audio;
+          if (audioConfig && !audioConfig.enabled) {
+            yield { type: "error", message: "Audio transcription is disabled in config" };
+            return;
+          }
+
+          runtime.sessions.touchSession(input.sessionId);
+
+          // Transcribe audio
+          let transcript: string;
+          try {
+            const audioBuffer = Buffer.from(input.audio, "base64");
+            transcript = await runtime.transcriber.transcribe(audioBuffer, input.format);
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            yield { type: "error", message: `Transcription failed: ${message}` };
+            return;
+          }
+
+          if (!transcript.trim()) {
+            yield { type: "error", message: "Transcription produced empty text" };
+            return;
+          }
+
+          // Yield transcript as metadata before streaming the response
+          yield { type: "text_delta", delta: "", transcript };
+
+          // Process transcript as a normal chat message
+          const agent = getSessionAgent(input.sessionId);
+          try {
+            for await (const event of agent.chat(transcript)) {
+              switch (event.type) {
+                case "text_delta":
+                case "thinking_delta":
+                case "done":
+                case "error":
+                  yield event;
+                  break;
+                case "tool_start":
+                  yield { type: "tool_start", name: event.name, id: event.id };
+                  break;
+                case "tool_end":
+                  yield {
+                    type: "tool_end",
+                    name: event.name,
+                    id: event.id,
+                    content: event.result.content,
+                    isError: event.result.isError ?? false,
+                  };
+                  break;
+                case "tool_approval_request":
+                  yield {
+                    type: "tool_approval_request",
+                    name: event.name,
+                    id: event.id,
+                    args: event.args,
+                  };
+                  break;
+              }
+            }
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            yield { type: "error", message };
+          }
+        }),
     }),
 
     /** Session management */
