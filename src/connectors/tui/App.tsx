@@ -28,6 +28,7 @@ export function App({ client }: AppProps) {
 
   const { stdout } = useStdout();
   const terminalRows = stdout?.rows ?? 24;
+  const terminalCols = stdout?.columns ?? 80;
   // StatusBar: 3 lines (border + content + border), Input: 3 lines
   const chatHeight = Math.max(3, terminalRows - 6);
 
@@ -291,6 +292,7 @@ export function App({ client }: AppProps) {
         streamingText={streamingText}
         agentName={agentName}
         height={chatHeight}
+        width={terminalCols}
         scrollOffset={scrollOffset}
       />
       {showModelPicker ? (

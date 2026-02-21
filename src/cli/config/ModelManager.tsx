@@ -21,6 +21,7 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
   const [substep, setSubstep] = useState<Substep>("list");
   const [selected, setSelected] = useState(0);
   const [removeTarget, setRemoveTarget] = useState<string>("");
+  const [notice, setNotice] = useState<string>("");
 
   // Add form state
   const [providerIdx, setProviderIdx] = useState(0);
@@ -97,8 +98,8 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
     // --- LIST ---
     if (substep === "list") {
       if (key.escape) { onBack(); return; }
-      if (key.upArrow) { setSelected((s) => Math.max(0, s - 1)); return; }
-      if (key.downArrow) { setSelected((s) => Math.min(listItems.length - 1, s + 1)); return; }
+      if (key.upArrow) { setSelected((s) => Math.max(0, s - 1)); setNotice(""); return; }
+      if (key.downArrow) { setSelected((s) => Math.min(listItems.length - 1, s + 1)); setNotice(""); return; }
 
       if (key.return) {
         if (selected < models.length) {
@@ -120,7 +121,10 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
 
       if (input === "d" && selected < models.length) {
         const target = models[selected];
-        if (target.name === config.defaultModel) return; // Can't remove default
+        if (target.name === config.defaultModel) {
+          setNotice("Can't delete the default model — set another as default first");
+          return;
+        }
         setRemoveTarget(target.name);
         setSubstep("confirm-remove");
       }
@@ -252,6 +256,7 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
           ))}
           <Text />
           <Text dimColor>↑↓ navigate | Enter set default | d delete | Esc back</Text>
+          {notice !== "" && <Text color="yellow">{notice}</Text>}
         </>
       )}
 
