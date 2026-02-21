@@ -1,12 +1,13 @@
 ---
 id: 38
 title: fix: copy selected bundled skills to ~/.sa/skills/ during onboarding
-status: active
+status: done
 type: fix
 priority: 1
 phase: phase-2
 branch: fix/bundled-skills-onboarding
 created: 2026-02-20
+shipped_at: 2026-02-21
 ---
 # fix: copy selected bundled skills to ~/.sa/skills/ during onboarding
 
