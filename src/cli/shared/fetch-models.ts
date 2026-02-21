@@ -1,7 +1,7 @@
 import { getModels } from "@mariozechner/pi-ai";
 import type { KnownProvider } from "@mariozechner/pi-ai";
 
-type ProviderType = "anthropic" | "openai" | "google" | "openrouter" | "nvidia" | "openai-compat";
+type ProviderType = "anthropic" | "openai" | "google" | "openrouter" | "openai-compat";
 
 /** Fetch available model IDs from a provider's API. */
 export async function fetchModelList(
@@ -37,14 +37,6 @@ export async function fetchModelList(
   }
   if (providerType === "openrouter") {
     const res = await fetch("https://openrouter.ai/api/v1/models", {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = (await res.json()) as { data: { id: string }[] };
-    return json.data.map((m) => m.id).sort();
-  }
-  if (providerType === "nvidia") {
-    const res = await fetch("https://integrate.api.nvidia.com/v1/models", {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

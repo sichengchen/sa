@@ -34,4 +34,3 @@ SA (nicknamed Sasa) is a personal AI agent assistant with minimalist design. It 
 4. **Single-user simplicity** — no auth, no permissions, no multi-user abstractions
 5. **Composable, not monolithic** — subsystems (router, tools, memory, transports) are loosely coupled and independently testable
 6. **Keep the bundled `sa` skill up to date** — `src/engine/skills/bundled/sa/SKILL.md` documents SA's architecture, commands, and capabilities. Update it as features evolve.
-7. **Credentials and config through SA, not the shell** — When introducing features that require API keys or credentials: store values in `secrets.enc` (encrypted), reference them from `config.json` if needed, inject into `process.env` at engine startup, and update the bundled `sa` skill so the agent knows to use `set_api_key` / `sa config` instead of shell profiles (`.zshrc`, `.bashrc`, etc.).

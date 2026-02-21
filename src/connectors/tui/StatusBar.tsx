@@ -1,26 +1,28 @@
-import { Text } from "ink";
+import React from "react";
+import { Box, Text } from "ink";
 
 interface StatusBarProps {
   modelName: string;
   isStreaming: boolean;
   connected: boolean;
-  sessionId?: string | null;
-  connectorType?: string;
 }
 
-export function StatusBar({ modelName, isStreaming, connected, sessionId, connectorType }: StatusBarProps) {
-  const sessionLabel = sessionId ? `${connectorType ?? "?"}:${sessionId.slice(0, 8)}` : "none";
-  const dot = connected ? "●" : "○";
-  const dotColor = connected ? "green" : "red";
-  const status = isStreaming ? "streaming..." : "ready";
-  const statusColor = isStreaming ? "yellow" : "green";
-
+export function StatusBar({ modelName, isStreaming, connected }: StatusBarProps) {
   return (
-    <Text dimColor>
-      <Text color={dotColor}>{dot}</Text>
-      {` ${modelName} | ${sessionLabel} | `}
-      <Text color={statusColor}>{status}</Text>
-      {" | Ctrl+C: exit"}
-    </Text>
+    <Box borderStyle="single" borderColor="gray" paddingX={1}>
+      <Text color={connected ? "green" : "red"}>
+        {connected ? "●" : "○"}
+      </Text>
+      <Text> </Text>
+      <Text color="cyan" bold>
+        model:
+      </Text>
+      <Text> {modelName}</Text>
+      <Text> | </Text>
+      <Text color={isStreaming ? "yellow" : "green"}>
+        {isStreaming ? "streaming..." : "ready"}
+      </Text>
+      <Text dimColor> | Ctrl+C: exit</Text>
+    </Box>
   );
 }

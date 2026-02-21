@@ -3,7 +3,6 @@ import { Box, Text, useInput } from "ink";
 import type { SAConfigFile } from "../../engine/config/index.js";
 import { loadSecrets, saveSecrets } from "../../engine/config/secrets.js";
 import type { SecretsFile } from "../../engine/config/types.js";
-import type { ToolApprovalMode, ConnectorType } from "../../shared/types.js";
 
 type Substep = "menu" | "edit-telegram-token" | "edit-discord-token" | "edit-discord-guild";
 
@@ -14,32 +13,11 @@ interface ConnectorSettingsProps {
   onBack: () => void;
 }
 
-const APPROVAL_MODES: ToolApprovalMode[] = ["ask", "never", "always"];
-const APPROVAL_LABELS: Record<ToolApprovalMode, string> = {
-  ask: "ask (allow per-session override)",
-  never: "never (auto-approve all)",
-  always: "always (ask every time)",
-};
-
 const MENU_ITEMS = [
   { key: "telegram-token", label: "Telegram bot token" },
   { key: "discord-token", label: "Discord bot token" },
   { key: "discord-guild", label: "Discord guild ID" },
-  { key: "tui-approval", label: "TUI tool approval" },
-  { key: "telegram-approval", label: "Telegram tool approval" },
-  { key: "discord-approval", label: "Discord tool approval" },
-  { key: "webhook-enabled", label: "Webhook connector" },
-  { key: "webhook-approval", label: "Webhook tool approval" },
 ] as const;
-
-function getApprovalMode(config: SAConfigFile, connector: ConnectorType): ToolApprovalMode {
-  return config.runtime.toolApproval?.[connector] ?? (connector === "tui" ? "never" : "ask");
-}
-
-function cycleApprovalMode(current: ToolApprovalMode): ToolApprovalMode {
-  const idx = APPROVAL_MODES.indexOf(current);
-  return APPROVAL_MODES[(idx + 1) % APPROVAL_MODES.length]!;
-}
 
 export function ConnectorSettings({ config, homeDir, onSave, onBack }: ConnectorSettingsProps) {
   const [substep, setSubstep] = useState<Substep>("menu");
@@ -75,36 +53,6 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
         } else if (item.key === "discord-guild") {
           setEditValue(secrets?.discordGuildId ?? "");
           setSubstep("edit-discord-guild");
-        } else if (item.key === "tui-approval" || item.key === "telegram-approval" || item.key === "discord-approval" || item.key === "webhook-approval") {
-          const connector = item.key.replace("-approval", "") as ConnectorType;
-          const current = getApprovalMode(config, connector);
-          const next = cycleApprovalMode(current);
-          const updated: SAConfigFile = {
-            ...config,
-            runtime: {
-              ...config.runtime,
-              toolApproval: {
-                ...config.runtime.toolApproval,
-                [connector]: next,
-              },
-            },
-          };
-          setSaved(true);
-          onSave(updated).then(() => setSaved(false));
-        } else if (item.key === "webhook-enabled") {
-          const current = config.runtime.webhook?.enabled ?? false;
-          const updated: SAConfigFile = {
-            ...config,
-            runtime: {
-              ...config.runtime,
-              webhook: {
-                ...config.runtime.webhook,
-                enabled: !current,
-              },
-            },
-          };
-          setSaved(true);
-          onSave(updated).then(() => setSaved(false));
         }
       }
       return;
@@ -158,11 +106,6 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
             if (item.key === "telegram-token") detail = ` ${telegramToken}`;
             else if (item.key === "discord-token") detail = ` ${discordToken}`;
             else if (item.key === "discord-guild") detail = ` ${discordGuild}`;
-            else if (item.key === "tui-approval") detail = ` ${APPROVAL_LABELS[getApprovalMode(config, "tui")]}`;
-            else if (item.key === "telegram-approval") detail = ` ${APPROVAL_LABELS[getApprovalMode(config, "telegram")]}`;
-            else if (item.key === "discord-approval") detail = ` ${APPROVAL_LABELS[getApprovalMode(config, "discord")]}`;
-            else if (item.key === "webhook-enabled") detail = ` ${config.runtime.webhook?.enabled ? "enabled" : "disabled"}`;
-            else if (item.key === "webhook-approval") detail = ` ${APPROVAL_LABELS[getApprovalMode(config, "webhook")]}`;
             return (
               <Text key={item.key}>
                 {i === selected ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}
@@ -172,7 +115,7 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
             );
           })}
           <Text />
-          <Text dimColor>↑↓ navigate | Enter edit/cycle | Esc back</Text>
+          <Text dimColor>↑↓ navigate | Enter edit | Esc back</Text>
         </>
       )}
 

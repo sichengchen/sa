@@ -170,19 +170,14 @@ describe("Bash tool", () => {
 });
 
 describe("getBuiltinTools", () => {
-  test("returns all 10 builtin tools", () => {
+  test("returns all 5 builtin tools", () => {
     const tools = getBuiltinTools();
-    expect(tools).toHaveLength(10);
+    expect(tools).toHaveLength(5);
     const names = tools.map((t) => t.name);
     expect(names).toContain("read");
     expect(names).toContain("write");
     expect(names).toContain("edit");
-    expect(names).toContain("exec");
-    expect(names).toContain("exec_status");
-    expect(names).toContain("exec_kill");
-    expect(names).toContain("web_fetch");
-    expect(names).toContain("web_search");
-    expect(names).toContain("reaction");
+    expect(names).toContain("bash");
     expect(names).toContain("clawhub_search");
   });
 });

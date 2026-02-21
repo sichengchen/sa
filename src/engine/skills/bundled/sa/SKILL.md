@@ -77,20 +77,6 @@ Skills are NOT tools — they are prompt-level instructions that teach you how t
 
 ## Common User Tasks
 
-### Setting an API key
-Use the `set_api_key` tool to store keys in SA's encrypted vault (`secrets.enc`). **Never** write API keys to shell profiles (`.zshrc`, `.bashrc`) or environment files.
-
-```
-set_api_key(name: "BRAVE_API_KEY", value: "BSA...")
-```
-
-Common tool keys: `BRAVE_API_KEY`, `PERPLEXITY_API_KEY`, `OPENAI_API_KEY`.
-Common provider keys: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_AI_API_KEY`, `OPENROUTER_API_KEY`, `NVIDIA_API_KEY`.
-
-Keys take effect immediately and persist across engine restarts.
-
-For interactive key management, direct the user to: `sa config`
-
 ### Adding a new model
 ```
 sa config → Models → + Add new model

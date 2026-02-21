@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 
+const SLASH_COMMANDS = ["/new", "/status", "/model", "/models", "/provider"];
+
 interface InputProps {
   onSubmit: (text: string) => void;
   disabled?: boolean;
-  commands?: string[];
 }
 
-export function Input({ onSubmit, disabled, commands = [] }: InputProps) {
+export function Input({ onSubmit, disabled }: InputProps) {
   const [value, setValue] = useState("");
 
   useInput((input, key) => {
@@ -33,7 +34,7 @@ export function Input({ onSubmit, disabled, commands = [] }: InputProps) {
 
   const suggestions =
     !disabled && value.startsWith("/") && value.length < 10
-      ? commands.filter((c) => c.startsWith(value) && c !== value)
+      ? SLASH_COMMANDS.filter((c) => c.startsWith(value) && c !== value)
       : [];
 
   return (

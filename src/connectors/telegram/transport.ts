@@ -22,9 +22,6 @@ export class TelegramConnector {
   private pairingCode?: string;
   private onPaired?: (chatId: number) => Promise<void>;
   private sessionId: string | null = null;
-  /** Track last user message for emoji reactions */
-  private lastUserMessageId: number | null = null;
-  private lastUserChatId: number | null = null;
 
   constructor(client: EngineClient, options: TelegramConnectorOptions) {
     this.bot = new Bot(options.botToken);
@@ -159,13 +156,6 @@ export class TelegramConnector {
       await ctx.editMessageReplyMarkup({ reply_markup: undefined });
     });
 
-    this.bot.callbackQuery(/^always:(.+)$/, async (ctx) => {
-      const toolCallId = ctx.match![1]!;
-      await this.client.tool.acceptForSession.mutate({ toolCallId });
-      await ctx.answerCallbackQuery({ text: "Always allowed for this session" });
-      await ctx.editMessageReplyMarkup({ reply_markup: undefined });
-    });
-
     // Message handler
     this.bot.on("message:text", async (ctx) => {
       if (!this.isAllowed(ctx.message.chat.id)) return;
@@ -173,10 +163,6 @@ export class TelegramConnector {
       const userText = ctx.message.text;
       // Skip commands already handled above
       if (userText.startsWith("/")) return;
-
-      // Track last user message for reactions
-      this.lastUserMessageId = ctx.message.message_id;
-      this.lastUserChatId = ctx.message.chat.id;
 
       await ctx.api.sendChatAction(ctx.message.chat.id, "typing");
 
@@ -218,27 +204,13 @@ export class TelegramConnector {
                 case "tool_approval_request": {
                   const keyboard = new InlineKeyboard()
                     .text("Approve", `approve:${event.id}`)
-                    .text("Reject", `reject:${event.id}`)
-                    .row()
-                    .text(`Always allow ${event.name}`, `always:${event.id}`);
+                    .text("Reject", `reject:${event.id}`);
                   await ctx.reply(
                     `Tool: ${event.name}\nApprove execution?`,
                     { reply_markup: keyboard },
                   );
                   break;
                 }
-
-                case "reaction":
-                  if (this.lastUserMessageId && this.lastUserChatId) {
-                    try {
-                      await ctx.api.setMessageReaction(this.lastUserChatId, this.lastUserMessageId, [
-                        { type: "emoji", emoji: event.emoji as any },
-                      ]);
-                    } catch {
-                      // Telegram may reject unsupported emoji — silently ignore
-                    }
-                  }
-                  break;
 
                 case "done":
                   handleDone();
@@ -250,123 +222,6 @@ export class TelegramConnector {
               }
             },
             onError: async (err) => {
-              const msg = err instanceof Error ? err.message : String(err);
-              await handleError(msg);
-            },
-          },
-        );
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        await ctx.reply(`Error: ${msg}`);
-      }
-    });
-
-    // Voice and audio message handler
-    this.bot.on(["message:voice", "message:audio"], async (ctx) => {
-      if (!this.isAllowed(ctx.message.chat.id)) return;
-
-      await ctx.api.sendChatAction(ctx.message.chat.id, "typing");
-
-      try {
-        const sessionId = await this.ensureSession();
-
-        // Get file info and download
-        const fileId = ctx.message.voice?.file_id ?? ctx.message.audio?.file_id;
-        if (!fileId) {
-          await ctx.reply("Could not read audio file.");
-          return;
-        }
-
-        const file = await ctx.api.getFile(fileId);
-        const filePath = file.file_path;
-        if (!filePath) {
-          await ctx.reply("Could not download audio file.");
-          return;
-        }
-
-        const fileUrl = `https://api.telegram.org/file/bot${this.bot.token}/${filePath}`;
-        const res = await fetch(fileUrl);
-        if (!res.ok) {
-          await ctx.reply("Failed to download audio file.");
-          return;
-        }
-
-        const audioBuffer = Buffer.from(await res.arrayBuffer());
-        const format = filePath.split(".").pop() ?? "ogg";
-        const audioBase64 = audioBuffer.toString("base64");
-
-        // Notify user transcription is in progress
-        const transcribingMsg = await ctx.reply("Transcribing voice message...");
-
-        type TgMsg = Awaited<ReturnType<typeof ctx.reply>>;
-        const { handleTextDelta, handleDone, handleError } = createStreamHandler<TgMsg>({
-          send: (content) => ctx.reply(content, { parse_mode: "HTML" }),
-          edit: (msg, content) =>
-            ctx.api.editMessageText(ctx.message.chat.id, msg.message_id, content, {
-              parse_mode: "HTML",
-            }).then(() => {}),
-          sendExtra: (content) => ctx.reply(content, { parse_mode: "HTML" }).then(() => {}),
-          format: (text) => markdownToHtml(text.slice(0, 4096)),
-          split: (text) => splitMessage(text),
-          sendError: (message) => ctx.reply(`Error: ${message}`).then(() => {}),
-        });
-
-        let transcriptShown = false;
-
-        this.client.chat.transcribeAndSend.subscribe(
-          { sessionId, audio: audioBase64, format },
-          {
-            onData: async (event: any) => {
-              // First event with transcript metadata
-              if (event.transcript && !transcriptShown) {
-                transcriptShown = true;
-                try {
-                  await ctx.api.editMessageText(
-                    ctx.message.chat.id,
-                    transcribingMsg.message_id,
-                    `🎤 "${event.transcript}"`,
-                  );
-                } catch {}
-              }
-
-              switch (event.type) {
-                case "text_delta":
-                  if (event.delta) handleTextDelta(event.delta);
-                  break;
-
-                case "tool_end": {
-                  const toolMsg = formatToolResult(event.name, event.content);
-                  try {
-                    await ctx.reply(toolMsg, { parse_mode: "MarkdownV2" });
-                  } catch {
-                    await ctx.reply(`[${event.name}] ${event.content.slice(0, 500)}`);
-                  }
-                  break;
-                }
-
-                case "tool_approval_request": {
-                  const keyboard = new InlineKeyboard()
-                    .text("Approve", `approve:${event.id}`)
-                    .text("Reject", `reject:${event.id}`)
-                    .row()
-                    .text(`Always allow ${event.name}`, `always:${event.id}`);
-                  await ctx.reply(
-                    `Tool: ${event.name}\nApprove execution?`,
-                    { reply_markup: keyboard },
-                  );
-                  break;
-                }
-
-                case "done":
-                  handleDone();
-                  break;
-
-                case "error":
-                  await handleError(event.message);
-                  break;
-              }
-            },
-            onError: async (err: unknown) => {
               const msg = err instanceof Error ? err.message : String(err);
               await handleError(msg);
             },
