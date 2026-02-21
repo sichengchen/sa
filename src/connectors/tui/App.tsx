@@ -1,6 +1,7 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import { Box, useApp, useInput, useStdout } from "ink";
-import { ChatView, type ChatMessage } from "./ChatView.js";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { Box, Static, Text, useApp, useInput } from "ink";
+import { MessageBlock, type ChatMessage } from "./MessageBlock.js";
+import { MarkdownText } from "./MarkdownText.js";
 import { Input } from "./Input.js";
 import { StatusBar } from "./StatusBar.js";
 import { ModelPicker } from "./ModelPicker.js";
@@ -30,14 +31,14 @@ export function App({ client }: AppProps) {
   const [models, setModels] = useState<ModelConfig[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [agentName, setAgentName] = useState("SA");
-  const [scrollOffset, setScrollOffset] = useState(0);
   const [sessionConnectorType, setSessionConnectorType] = useState("tui");
 
-  const { stdout } = useStdout();
-  const terminalRows = stdout?.rows ?? 24;
-  const terminalCols = stdout?.columns ?? 80;
-  // StatusBar: 3 lines (border + content + border), Input: 3 lines
-  const chatHeight = Math.max(3, terminalRows - 6);
+  const msgIdRef = useRef(0);
+  const nextId = () => ++msgIdRef.current;
+
+  function addMessage(msg: Omit<ChatMessage, "id">) {
+    setMessages((prev) => [...prev, { ...msg, id: nextId() }]);
+  }
 
   // Connect to Engine on mount
   useEffect(() => {
@@ -55,12 +56,8 @@ export function App({ client }: AppProps) {
         setSessionId(session.id);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        setMessages((prev) => [
-          ...prev,
-          { role: "error", content: `Failed to connect to Engine: ${msg}` },
-        ]);
+        addMessage({ role: "error", content: `Failed to connect to Engine: ${msg}` });
       }
-      // Fetch models separately so failure doesn't block session creation
       try {
         const modelList = await client.model.list.query();
         setModels(modelList);
@@ -68,11 +65,6 @@ export function App({ client }: AppProps) {
     }
     connect();
   }, [client]);
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    setScrollOffset(0);
-  }, [messages.length]);
 
   useInput((_input, key) => {
     if (key.ctrl && _input === "c") {
@@ -93,12 +85,6 @@ export function App({ client }: AppProps) {
         setShowModelPicker(false);
       })();
     }
-    if (key.upArrow) {
-      setScrollOffset((v) => Math.min(v + 1, Math.max(0, messages.length - 1)));
-    }
-    if (key.downArrow) {
-      setScrollOffset((v) => Math.max(0, v - 1));
-    }
   });
 
   const handleSubmit = useCallback(
@@ -115,8 +101,7 @@ export function App({ client }: AppProps) {
           });
           setSessionId(session.id);
           setSessionConnectorType("tui");
-          setMessages([]);
-          setMessages([{ role: "tool", content: "New session started.", toolName: "system" }]);
+          addMessage({ role: "tool", content: "New session started.", toolName: "system" });
         } catch {}
         return;
       }
@@ -125,17 +110,14 @@ export function App({ client }: AppProps) {
       if (text === "/status") {
         try {
           const ping = await client.health.ping.query();
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "tool",
-              content: `Engine: ${ping.status} | Model: ${ping.model} | Sessions: ${ping.sessions} | Uptime: ${Math.floor(ping.uptime)}s`,
-              toolName: "system",
-            },
-          ]);
+          addMessage({
+            role: "tool",
+            content: `Engine: ${ping.status} | Model: ${ping.model} | Sessions: ${ping.sessions} | Uptime: ${Math.floor(ping.uptime)}s`,
+            toolName: "system",
+          });
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          setMessages((prev) => [...prev, { role: "error", content: msg }]);
+          addMessage({ role: "error", content: msg });
         }
         return;
       }
@@ -162,17 +144,10 @@ export function App({ client }: AppProps) {
             const suffix = extras.length > 0 ? `  (${extras.join(", ")})` : "";
             return `${marker} ${m.name}  ${m.provider} → ${m.model}${suffix}`;
           });
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "tool",
-              content: `Models:\n${lines.join("\n")}`,
-              toolName: "system",
-            },
-          ]);
+          addMessage({ role: "tool", content: `Models:\n${lines.join("\n")}`, toolName: "system" });
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          setMessages((prev) => [...prev, { role: "error", content: msg }]);
+          addMessage({ role: "error", content: msg });
         }
         return;
       }
@@ -185,17 +160,10 @@ export function App({ client }: AppProps) {
             const base = `• ${p.id} (${p.type}) — ${p.apiKeyEnvVar}`;
             return p.baseUrl ? `${base}  [${p.baseUrl}]` : base;
           });
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "tool",
-              content: `Providers:\n${lines.join("\n")}`,
-              toolName: "system",
-            },
-          ]);
+          addMessage({ role: "tool", content: `Providers:\n${lines.join("\n")}`, toolName: "system" });
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          setMessages((prev) => [...prev, { role: "error", content: msg }]);
+          addMessage({ role: "error", content: msg });
         }
         return;
       }
@@ -208,7 +176,7 @@ export function App({ client }: AppProps) {
           setShowSessionPicker(true);
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          setMessages((prev) => [...prev, { role: "error", content: msg }]);
+          addMessage({ role: "error", content: msg });
         }
         return;
       }
@@ -217,14 +185,14 @@ export function App({ client }: AppProps) {
       if (text.startsWith("/switch ")) {
         const target = text.slice(8).trim();
         if (!target) {
-          setMessages((prev) => [...prev, { role: "error", content: "Usage: /switch <session-id>" }]);
+          addMessage({ role: "error", content: "Usage: /switch <session-id>" });
           return;
         }
         try {
           const list = await client.session.list.query();
           const match = list.find((s: Session) => s.id.startsWith(target));
           if (!match) {
-            setMessages((prev) => [...prev, { role: "error", content: `No session found matching: ${target}` }]);
+            addMessage({ role: "error", content: `No session found matching: ${target}` });
             return;
           }
           setSessionId(match.id);
@@ -232,29 +200,30 @@ export function App({ client }: AppProps) {
           // Load history
           const history = await client.chat.history.query({ sessionId: match.id });
           const historyMessages: ChatMessage[] = (history.messages as any[]).map((m: any) => ({
+            id: nextId(),
             role: m.role === "assistant" ? "assistant" : m.role === "user" ? "user" : "tool",
             content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
           }));
-          setMessages([
-            { role: "tool", content: `Switched to session ${match.id.slice(0, 8)} [${match.connectorType}]`, toolName: "system" },
+          setMessages((prev) => [
+            ...prev,
+            { id: nextId(), role: "tool", content: `Switched to session ${match.id.slice(0, 8)} [${match.connectorType}]`, toolName: "system" },
             ...historyMessages,
           ]);
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          setMessages((prev) => [...prev, { role: "error", content: msg }]);
+          addMessage({ role: "error", content: msg });
         }
         return;
       }
 
-      setMessages((prev) => [...prev, { role: "user", content: text }]);
+      addMessage({ role: "user", content: text });
       setIsStreaming(true);
       setStreamingText("");
 
       let fullText = "";
 
       try {
-        // Use the subscription to stream events
-        const subscription = client.chat.stream.subscribe(
+        client.chat.stream.subscribe(
           { sessionId, message: text },
           {
             onData(event) {
@@ -264,44 +233,26 @@ export function App({ client }: AppProps) {
                   setStreamingText(fullText);
                   break;
                 case "tool_start":
-                  setMessages((prev) => [
-                    ...prev,
-                    { role: "tool", content: `Calling ${event.name}...`, toolName: event.name },
-                  ]);
+                  addMessage({ role: "tool", content: `Calling ${event.name}...`, toolName: event.name });
                   break;
                 case "tool_end":
-                  setMessages((prev) => [
-                    ...prev,
-                    { role: "tool", content: event.content.slice(0, 500), toolName: event.name },
-                  ]);
+                  addMessage({ role: "tool", content: event.content.slice(0, 500), toolName: event.name });
                   break;
                 case "tool_approval_request":
-                  // Engine handles approval mode config — if this event
-                  // arrives, the mode requires asking. Auto-approve for
-                  // TUI since it's a trusted local environment.
                   client.tool.approve.mutate({ toolCallId: event.id, approved: true });
                   break;
                 case "reaction":
-                  setMessages((prev) => [
-                    ...prev,
-                    { role: "tool", content: event.emoji, toolName: "reaction" },
-                  ]);
+                  addMessage({ role: "tool", content: event.emoji, toolName: "reaction" });
                   break;
                 case "done":
                   if (fullText) {
-                    setMessages((prev) => [
-                      ...prev,
-                      { role: "assistant", content: fullText },
-                    ]);
+                    addMessage({ role: "assistant", content: fullText });
                   }
                   setStreamingText("");
                   setIsStreaming(false);
                   break;
                 case "error":
-                  setMessages((prev) => [
-                    ...prev,
-                    { role: "error", content: event.message },
-                  ]);
+                  addMessage({ role: "error", content: event.message });
                   setStreamingText("");
                   setIsStreaming(false);
                   break;
@@ -309,16 +260,13 @@ export function App({ client }: AppProps) {
             },
             onError(err) {
               const msg = err instanceof Error ? err.message : String(err);
-              setMessages((prev) => [...prev, { role: "error", content: msg }]);
+              addMessage({ role: "error", content: msg });
               setStreamingText("");
               setIsStreaming(false);
             },
             onComplete() {
               if (fullText && isStreaming) {
-                setMessages((prev) => [
-                  ...prev,
-                  { role: "assistant", content: fullText },
-                ]);
+                addMessage({ role: "assistant", content: fullText });
               }
               setStreamingText("");
               setIsStreaming(false);
@@ -327,7 +275,7 @@ export function App({ client }: AppProps) {
         );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        setMessages((prev) => [...prev, { role: "error", content: msg }]);
+        addMessage({ role: "error", content: msg });
         setStreamingText("");
         setIsStreaming(false);
       }
@@ -341,13 +289,10 @@ export function App({ client }: AppProps) {
       try {
         await client.model.switch.mutate({ name });
         setModelName(name);
-        setMessages((prev) => [
-          ...prev,
-          { role: "tool", content: `Switched to model: ${name}`, toolName: "system" },
-        ]);
+        addMessage({ role: "tool", content: `Switched to model: ${name}`, toolName: "system" });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        setMessages((prev) => [...prev, { role: "error", content: msg }]);
+        addMessage({ role: "error", content: msg });
       }
     },
     [client],
@@ -361,23 +306,25 @@ export function App({ client }: AppProps) {
         const list = await client.session.list.query();
         const match = list.find((s: Session) => s.id === targetSessionId);
         if (!match) {
-          setMessages((prev) => [...prev, { role: "error", content: "Session no longer exists." }]);
+          addMessage({ role: "error", content: "Session no longer exists." });
           return;
         }
         setSessionId(match.id);
         setSessionConnectorType(match.connectorType);
         const history = await client.chat.history.query({ sessionId: match.id });
         const historyMessages: ChatMessage[] = (history.messages as any[]).map((m: any) => ({
+          id: nextId(),
           role: m.role === "assistant" ? "assistant" : m.role === "user" ? "user" : "tool",
           content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
         }));
-        setMessages([
-          { role: "tool", content: `Switched to session ${match.id.slice(0, 8)} [${match.connectorType}]`, toolName: "system" },
+        setMessages((prev) => [
+          ...prev,
+          { id: nextId(), role: "tool", content: `Switched to session ${match.id.slice(0, 8)} [${match.connectorType}]`, toolName: "system" },
           ...historyMessages,
         ]);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        setMessages((prev) => [...prev, { role: "error", content: msg }]);
+        addMessage({ role: "error", content: msg });
       }
     },
     [client, sessionId],
@@ -400,7 +347,26 @@ export function App({ client }: AppProps) {
   ) : null;
 
   return (
-    <Box flexDirection="column" height="100%">
+    <Box flexDirection="column">
+      <Static items={messages}>
+        {(msg) => (
+          <Box key={msg.id} marginBottom={1}>
+            <MessageBlock message={msg} agentName={agentName} />
+          </Box>
+        )}
+      </Static>
+      {streamingText && (
+        <Box marginBottom={1}>
+          <Text color="green" bold>
+            {`${agentName}: `}
+          </Text>
+          <MarkdownText>{streamingText}</MarkdownText>
+          <Text color="yellow">{"▊"}</Text>
+        </Box>
+      )}
+      {pickerOverlay ?? (
+        <Input onSubmit={handleSubmit} disabled={isStreaming || !connected} commands={TUI_COMMANDS} />
+      )}
       <StatusBar
         modelName={modelName}
         isStreaming={isStreaming}
@@ -408,17 +374,6 @@ export function App({ client }: AppProps) {
         sessionId={sessionId}
         connectorType={sessionConnectorType}
       />
-      <ChatView
-        messages={messages}
-        streamingText={streamingText}
-        agentName={agentName}
-        height={chatHeight}
-        width={terminalCols}
-        scrollOffset={scrollOffset}
-      />
-      {pickerOverlay ?? (
-        <Input onSubmit={handleSubmit} disabled={isStreaming || !connected} commands={TUI_COMMANDS} />
-      )}
     </Box>
   );
 }

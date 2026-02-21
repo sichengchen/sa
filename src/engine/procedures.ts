@@ -5,6 +5,15 @@ import type { Agent } from "./agent/index.js";
 import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode } from "../shared/types.js";
 import type { ModelConfig, ProviderConfig } from "./router/types.js";
 
+/** Tools that are always auto-approved (read-only, no side effects) */
+const SAFE_TOOLS = new Set([
+  "read_skill",
+  "clawhub_search",
+  "remember",
+  "web_search",
+  "web_fetch",
+]);
+
 /** Per-session agent instances */
 const sessionAgents = new Map<string, Agent>();
 
@@ -37,6 +46,9 @@ export function createAppRouter(runtime: EngineRuntime) {
 
         // "never" mode: auto-approve everything
         if (mode === "never") return true;
+
+        // Safe tools are always auto-approved (read-only, no side effects)
+        if (SAFE_TOOLS.has(toolName)) return true;
 
         // "ask" mode: check session-level overrides first
         if (mode === "ask") {
