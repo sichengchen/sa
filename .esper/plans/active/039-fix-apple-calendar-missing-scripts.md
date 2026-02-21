@@ -48,6 +48,7 @@ Additionally, the `1password` skill references `references/get-started.md` and `
 - `src/engine/skills/bundled/apple-calendar/scripts/cal-search.sh` (create)
 - `src/engine/skills/bundled/1password/references/get-started.md` (create)
 - `src/engine/skills/bundled/1password/references/cli-examples.md` (create)
+- `src/engine/skills/registry.ts` (modify — interpolate `{baseDir}`)
 
 ## Verification
 
@@ -57,7 +58,7 @@ Additionally, the `1password` skill references `references/get-started.md` and `
 - Regression check: `bun run typecheck` still passes; other skills unaffected
 
 ## Progress
-- Milestones: 2 commits
-- Modified: src/engine/skills/bundled/apple-calendar/scripts/cal-list.sh, cal-events.sh, cal-read.sh, cal-create.sh, cal-update.sh, cal-delete.sh, cal-search.sh, src/engine/skills/bundled/1password/references/get-started.md, cli-examples.md
+- Milestones: 4 commits
+- Modified: 7x apple-calendar scripts, 2x 1password references, registry.ts ({baseDir} interpolation)
 - Verification: cal-list.sh returns 19 calendars; bun run typecheck passes
 - Verification: not yet run — run /esper:finish to verify and archive

@@ -67,7 +67,9 @@ export class SkillRegistry {
     if (!skill.content) {
       skill.content = await loadSkillContent(skill.filePath);
     }
-    return skill.content;
+    // Interpolate {baseDir} with the skill's actual directory path
+    const baseDir = dirname(skill.filePath);
+    return skill.content.replace(/\{baseDir\}/g, baseDir);
   }
 
   /** Check if a skill is active */
