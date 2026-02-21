@@ -8,6 +8,7 @@ phase: 004-dx-distribution
 branch: feature/004-dx-distribution
 created: 2026-02-21
 shipped_at: 2026-02-21
+pr: https://github.com/sichengchen/sa/pull/9
 ---
 # CalVer versioning, GitHub Actions CI/CD, and Homebrew tap distribution
 
