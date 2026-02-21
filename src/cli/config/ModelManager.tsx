@@ -5,7 +5,7 @@ import type { ModelConfig } from "../../engine/router/index.js";
 import { loadSecrets } from "../../engine/config/secrets.js";
 import { fetchModelList, lookupModelMeta } from "../shared/fetch-models.js";
 
-type Substep = "list" | "add-provider" | "fetching" | "select-model" | "add-fields" | "set-default" | "confirm-remove";
+type Substep = "list" | "add-provider" | "fetching" | "select-model" | "add-fields" | "confirm-remove";
 type AddField = "name" | "temperature" | "maxTokens";
 
 const VISIBLE_MODELS = 8;
@@ -38,10 +38,9 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
   const [manualModel, setManualModel] = useState("");
 
   const models = config.models;
-  // List items: models + set default + add
+  // List items: models + add
   const listItems = [
     ...models.map((m) => `${m.name} (${m.provider}/${m.model})${m.name === config.defaultModel ? " *default" : ""}`),
-    "Set default model",
     "+ Add new model",
   ];
 
@@ -102,13 +101,16 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
       if (key.downArrow) { setSelected((s) => Math.min(listItems.length - 1, s + 1)); return; }
 
       if (key.return) {
-        if (selected === models.length) {
-          // "Set default"
-          setSubstep("set-default");
-          setSelected(0);
+        if (selected < models.length) {
+          // Set selected model as default
+          const target = models[selected];
+          if (target.name !== config.defaultModel) {
+            const updated = { ...config, defaultModel: target.name };
+            onSave(updated);
+          }
           return;
         }
-        if (selected === models.length + 1) {
+        if (selected === models.length) {
           // "Add new"
           setSubstep("add-provider");
           setProviderIdx(0);
@@ -121,21 +123,6 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
         if (target.name === config.defaultModel) return; // Can't remove default
         setRemoveTarget(target.name);
         setSubstep("confirm-remove");
-      }
-      return;
-    }
-
-    // --- SET DEFAULT ---
-    if (substep === "set-default") {
-      if (key.escape) { setSubstep("list"); setSelected(0); return; }
-      if (key.upArrow) { setSelected((s) => Math.max(0, s - 1)); return; }
-      if (key.downArrow) { setSelected((s) => Math.min(models.length - 1, s + 1)); return; }
-      if (key.return) {
-        const updated = { ...config, defaultModel: models[selected].name };
-        onSave(updated).then(() => {
-          setSubstep("list");
-          setSelected(0);
-        });
       }
       return;
     }
@@ -264,21 +251,7 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
             </Text>
           ))}
           <Text />
-          <Text dimColor>↑↓ navigate | Enter select | d delete | Esc back</Text>
-        </>
-      )}
-
-      {substep === "set-default" && (
-        <>
-          <Text>Select default model:</Text>
-          {models.map((m, i) => (
-            <Text key={m.name}>
-              {i === selected ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}
-              {m.name}{m.name === config.defaultModel ? <Text dimColor> (current)</Text> : null}
-            </Text>
-          ))}
-          <Text />
-          <Text dimColor>↑↓ navigate | Enter select | Esc back</Text>
+          <Text dimColor>↑↓ navigate | Enter set default | d delete | Esc back</Text>
         </>
       )}
 
