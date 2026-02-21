@@ -186,8 +186,8 @@ export function createAppRouter(runtime: EngineRuntime) {
       /** Switch the active model */
       switch: publicProcedure
         .input(z.object({ name: z.string() }))
-        .mutation(({ input }): { name: string } => {
-          runtime.router.switchModel(input.name);
+        .mutation(async ({ input }): Promise<{ name: string }> => {
+          await runtime.router.switchModel(input.name);
           return { name: input.name };
         }),
 
