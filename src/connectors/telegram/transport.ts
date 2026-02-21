@@ -3,8 +3,7 @@ import type { ProviderConfig } from "../../engine/router/types.js";
 import { splitMessage, formatToolResult } from "./formatter.js";
 import { createTelegramClient } from "./client.js";
 import { markdownToHtml } from "../../shared/markdown.js";
-
-const EDIT_THROTTLE_MS = 1000;
+import { createStreamHandler } from "../shared/stream-handler.js";
 
 type EngineClient = ReturnType<typeof createTelegramClient>;
 
@@ -169,9 +168,19 @@ export class TelegramConnector {
 
       try {
         const sessionId = await this.ensureSession();
-        let sentMsg: Awaited<ReturnType<typeof ctx.reply>> | null = null;
-        let fullText = "";
-        let lastEditTime = 0;
+
+        type TgMsg = Awaited<ReturnType<typeof ctx.reply>>;
+        const { handleTextDelta, handleDone, handleError } = createStreamHandler<TgMsg>({
+          send: (content) => ctx.reply(content, { parse_mode: "HTML" }),
+          edit: (msg, content) =>
+            ctx.api.editMessageText(ctx.message.chat.id, msg.message_id, content, {
+              parse_mode: "HTML",
+            }).then(() => {}),
+          sendExtra: (content) => ctx.reply(content, { parse_mode: "HTML" }).then(() => {}),
+          format: (text) => markdownToHtml(text.slice(0, 4096)),
+          split: (text) => splitMessage(text),
+          sendError: (message) => ctx.reply(`Error: ${message}`).then(() => {}),
+        });
 
         const subscription = this.client.chat.stream.subscribe(
           { sessionId, message: userText },
@@ -179,23 +188,7 @@ export class TelegramConnector {
             onData: async (event) => {
               switch (event.type) {
                 case "text_delta":
-                  fullText += event.delta;
-                  if (Date.now() - lastEditTime > EDIT_THROTTLE_MS && fullText.length > 0) {
-                    const html = markdownToHtml(fullText.slice(0, 4096));
-                    try {
-                      if (!sentMsg) {
-                        sentMsg = await ctx.reply(html, { parse_mode: "HTML" });
-                      } else {
-                        await ctx.api.editMessageText(
-                          ctx.message.chat.id,
-                          sentMsg.message_id,
-                          html,
-                          { parse_mode: "HTML" },
-                        );
-                      }
-                      lastEditTime = Date.now();
-                    } catch {}
-                  }
+                  handleTextDelta(event.delta);
                   break;
 
                 case "tool_end": {
@@ -220,35 +213,17 @@ export class TelegramConnector {
                 }
 
                 case "done":
-                  if (fullText) {
-                    const htmlFull = markdownToHtml(fullText);
-                    const chunks = splitMessage(htmlFull);
-                    try {
-                      if (!sentMsg) {
-                        sentMsg = await ctx.reply(chunks[0]!, { parse_mode: "HTML" });
-                      } else {
-                        await ctx.api.editMessageText(
-                          ctx.message.chat.id,
-                          sentMsg.message_id,
-                          chunks[0]!,
-                          { parse_mode: "HTML" },
-                        );
-                      }
-                    } catch {}
-                    for (let i = 1; i < chunks.length; i++) {
-                      await ctx.reply(chunks[i]!, { parse_mode: "HTML" });
-                    }
-                  }
+                  handleDone();
                   break;
 
                 case "error":
-                  await ctx.reply(`Error: ${event.message}`);
+                  await handleError(event.message);
                   break;
               }
             },
             onError: async (err) => {
               const msg = err instanceof Error ? err.message : String(err);
-              await ctx.reply(`Error: ${msg}`);
+              await handleError(msg);
             },
           },
         );
@@ -264,6 +239,12 @@ export class TelegramConnector {
   }
 
   async start(): Promise<void> {
+    await this.bot.api.setMyCommands([
+      { command: "new", description: "Start a new session" },
+      { command: "status", description: "Show engine status" },
+      { command: "model", description: "List and switch models" },
+      { command: "provider", description: "List configured providers" },
+    ]);
     await this.bot.start({
       onStart: (botInfo) => {
         console.log(`Telegram Connector @${botInfo.username} started`);

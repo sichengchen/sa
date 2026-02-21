@@ -10,8 +10,7 @@ import {
 import { splitMessage, formatToolResult } from "./formatter.js";
 import { createDiscordClient } from "./client.js";
 import type { ProviderConfig } from "../../engine/router/types.js";
-
-const EDIT_THROTTLE_MS = 1000;
+import { createStreamHandler } from "../shared/stream-handler.js";
 
 type EngineClient = ReturnType<typeof createDiscordClient>;
 
@@ -134,9 +133,15 @@ export class DiscordConnector {
       // Regular chat
       try {
         const sessionId = await this.ensureSession();
-        let sentMsg: Message | null = null;
-        let fullText = "";
-        let lastEditTime = 0;
+
+        const { handleTextDelta, handleDone, handleError } = createStreamHandler<Message>({
+          send: (content) => message.reply(content),
+          edit: (msg, content) => msg.edit(content).then(() => {}),
+          sendExtra: (content) => message.channel.send(content).then(() => {}),
+          format: (text) => text.slice(0, 2000),
+          split: (text) => splitMessage(text),
+          sendError: (msg) => message.reply(`Error: ${msg}`).then(() => {}),
+        });
 
         this.client.chat.stream.subscribe(
           { sessionId, message: text },
@@ -144,17 +149,7 @@ export class DiscordConnector {
             onData: async (event) => {
               switch (event.type) {
                 case "text_delta":
-                  fullText += event.delta;
-                  if (Date.now() - lastEditTime > EDIT_THROTTLE_MS && fullText.length > 0) {
-                    try {
-                      if (!sentMsg) {
-                        sentMsg = await message.reply(fullText.slice(0, 2000));
-                      } else {
-                        await sentMsg.edit(fullText.slice(0, 2000));
-                      }
-                      lastEditTime = Date.now();
-                    } catch {}
-                  }
+                  handleTextDelta(event.delta);
                   break;
 
                 case "tool_end": {
@@ -182,29 +177,17 @@ export class DiscordConnector {
                 }
 
                 case "done":
-                  if (fullText) {
-                    const chunks = splitMessage(fullText);
-                    try {
-                      if (!sentMsg) {
-                        sentMsg = await message.reply(chunks[0]!);
-                      } else {
-                        await sentMsg.edit(chunks[0]!);
-                      }
-                    } catch {}
-                    for (let i = 1; i < chunks.length; i++) {
-                      await message.channel.send(chunks[i]!);
-                    }
-                  }
+                  handleDone();
                   break;
 
                 case "error":
-                  await message.reply(`Error: ${event.message}`);
+                  await handleError(event.message);
                   break;
               }
             },
             onError: async (err) => {
               const msg = err instanceof Error ? err.message : String(err);
-              await message.reply(`Error: ${msg}`);
+              await handleError(msg);
             },
           },
         );
