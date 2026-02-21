@@ -10,6 +10,16 @@ brew install sichengchen/tap/sa
 
 Requires [Bun](https://bun.sh). Update with `brew upgrade sa`.
 
+### Engine as a service
+
+```bash
+brew services start sa     # start engine, auto-start on login
+brew services stop sa      # stop engine
+brew services restart sa   # restart
+```
+
+Or manage manually with `sa engine start/stop/restart/status/logs`.
+
 ## Architecture
 
 The **Engine** runs as a background daemon and owns the agent loop, tools, memory, skills, scheduler, audio transcription, and model routing. **Connectors** (Telegram, Discord) auto-start with the Engine when configured. The **TUI** is launched on-demand. A **Webhook** endpoint (`POST /webhook`) allows external systems to send messages programmatically.
