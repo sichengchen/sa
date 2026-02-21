@@ -195,7 +195,7 @@ export class TelegramConnector {
                             { parse_mode: "HTML" },
                           );
                         }
-                      } finally {
+                      } catch {} finally {
                         lastEditTime = Date.now();
                       }
                     });

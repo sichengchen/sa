@@ -154,7 +154,7 @@ export class DiscordConnector {
                         } else {
                           await sentMsg.edit(fullText.slice(0, 2000));
                         }
-                      } finally {
+                      } catch {} finally {
                         lastEditTime = Date.now();
                       }
                     });
