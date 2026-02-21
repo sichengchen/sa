@@ -12,13 +12,15 @@ You can set values in your shell or a project `.env` file.
 | `OPENAI_API_KEY` | If using OpenAI | Provider API key |
 | `GOOGLE_AI_API_KEY` | If using Google | Provider API key |
 | `OPENROUTER_API_KEY` | If using OpenRouter | Provider API key |
+| `BRAVE_API_KEY` | Optional | Brave Search API key (enables `web_search` tool) |
+| `PERPLEXITY_API_KEY` | Optional | Perplexity API key (fallback for `web_search` tool) |
 | `TELEGRAM_BOT_TOKEN` | Optional | Telegram bot token (enables Telegram connector) |
 | `DISCORD_TOKEN` | Optional | Discord bot token (enables Discord connector) |
 | `DISCORD_GUILD_ID` | Optional | Restrict Discord bot to a guild |
 | `SA_HOME` | Optional | Override config directory |
 | `SA_ENGINE_PORT` | Optional | Override Engine HTTP port (default `7420`; WS uses `+1`) |
 
-API keys are resolved as: environment variable first, then `secrets.enc`.
+API keys are resolved as: environment variable first, then `secrets.enc`, then `runtime.env`.
 
 ## Config directory layout
 
@@ -53,6 +55,21 @@ Single source of truth for runtime, providers, and models.
     "memory": {
       "enabled": true,
       "directory": "memory"
+    },
+    "toolApproval": {
+      "tui": "never",
+      "telegram": "ask",
+      "discord": "ask"
+    },
+    "webhook": {
+      "enabled": false
+    },
+    "audio": {
+      "enabled": true,
+      "preferLocal": true
+    },
+    "env": {
+      "SA_LOG_LEVEL": "info"
     }
   },
   "providers": [
@@ -83,6 +100,36 @@ Single source of truth for runtime, providers, and models.
 | `runtime.telegramBotTokenEnvVar` | string | Legacy runtime field for Telegram env-var name |
 | `runtime.memory.enabled` | boolean | Enable/disable memory subsystem |
 | `runtime.memory.directory` | string | Memory directory path relative to `SA_HOME` |
+| `runtime.toolApproval` | object | Per-connector tool approval mode (see below) |
+| `runtime.webhook` | object | Webhook connector settings (see below) |
+| `runtime.audio` | object | Audio transcription settings (see below) |
+| `runtime.env` | object | Plain (non-secret) env vars injected at engine startup |
+
+### Tool approval (`runtime.toolApproval`)
+
+Per-connector approval mode for tool execution. Keys are connector types (`tui`, `telegram`, `discord`, `webhook`).
+
+| Mode | Behavior |
+|---|---|
+| `"never"` | Auto-approve all tools (default for TUI) |
+| `"ask"` | Prompt the connector for unsafe tools (default for IM connectors) |
+| `"always"` | Prompt for every tool call |
+
+Safe tools are always auto-approved regardless of mode. See [tools.md](tools.md#tool-approval) for the full list.
+
+### Webhook connector (`runtime.webhook`)
+
+| Field | Type | Description |
+|---|---|---|
+| `webhook.enabled` | boolean | Enable the `POST /webhook` endpoint (default `false`) |
+| `webhook.secret` | string | Shared secret for authenticating requests (optional; if set, callers must pass it in body or `X-Webhook-Secret` header) |
+
+### Audio transcription (`runtime.audio`)
+
+| Field | Type | Description |
+|---|---|---|
+| `audio.enabled` | boolean | Enable/disable audio transcription (default `true`) |
+| `audio.preferLocal` | boolean | Prefer local Whisper over cloud API (default `true`) |
 
 ### Provider fields (`providers[]`)
 
@@ -151,7 +198,8 @@ Encrypted JSON payload (AES-256-GCM). Key is derived locally from hostname + `.s
 ```json
 {
   "apiKeys": {
-    "ANTHROPIC_API_KEY": "sk-ant-..."
+    "ANTHROPIC_API_KEY": "sk-ant-...",
+    "BRAVE_API_KEY": "BSA..."
   },
   "botToken": "123456:ABC...",
   "pairedChatId": 12345678,
@@ -160,6 +208,8 @@ Encrypted JSON payload (AES-256-GCM). Key is derived locally from hostname + `.s
   "discordGuildId": "..."
 }
 ```
+
+Secrets can be managed at runtime using the `set_env_secret` tool, which encrypts and persists values to `secrets.enc` and injects them into `process.env` immediately.
 
 ## Skills directory
 

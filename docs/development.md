@@ -62,6 +62,7 @@ src/
     shared/
   engine/                # daemon internals
     agent/
+    audio/
     clawhub/
     config/
     memory/

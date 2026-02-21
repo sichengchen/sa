@@ -4,13 +4,7 @@ Yet another personal AI assistant.
 
 ## Architecture
 
-The **Engine** runs as a background daemon and owns the agent loop, tools, memory, skills, scheduler, and model routing. **Connectors** (Telegram, Discord) auto-start with the Engine when configured. The **TUI** is launched on-demand.
-
-## Prerequisites
-
-- [Bun](https://bun.sh) v1.0+
-- API key for at least one LLM provider (Anthropic, OpenAI, Google, etc.)
-- Optional: Telegram bot token and/or Discord bot token
+The **Engine** runs as a background daemon and owns the agent loop, tools, memory, skills, scheduler, audio transcription, and model routing. **Connectors** (Telegram, Discord) auto-start with the Engine when configured. The **TUI** is launched on-demand. A **Webhook** endpoint (`POST /webhook`) allows external systems to send messages programmatically.
 
 ## Quickstart
 
@@ -42,7 +36,6 @@ sa help                 Show help
 
 - Bundled skills ship in `src/engine/skills/bundled/`
 - User-installed/local skills live in `~/.sa/skills/<skill-name>/SKILL.md`
-- ClawHub ([clawhub.ai](https://clawhub.ai)) skills can be searched/installed/updated at runtime via tools
 
 ## Documentation
 
