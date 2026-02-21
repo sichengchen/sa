@@ -8,6 +8,8 @@ export function createReadSkillTool(registry: SkillRegistry): ToolImpl {
     name: "read_skill",
     description:
       "Read and activate a skill's full instructions. Use this when a task matches an available skill's description.",
+    summary:
+      "Read and activate a skill's full instructions. Call this when a task matches an available skill's description in the <available_skills> block.",
     parameters: Type.Object({
       name: Type.String({
         description: "The name of the skill to read (from <available_skills>)",

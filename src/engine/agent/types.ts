@@ -5,6 +5,8 @@ import type { ModelRouter } from "../router/index.js";
 export interface ToolImpl<TParams extends TSchema = TSchema> {
   name: string;
   description: string;
+  /** Richer summary for the system prompt (falls back to description if omitted) */
+  summary?: string;
   parameters: TParams;
   execute: (args: Record<string, unknown>) => Promise<ToolResult>;
 }

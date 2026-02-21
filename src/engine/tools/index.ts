@@ -18,6 +18,6 @@ export function getBuiltinTools(): ToolImpl[] {
 }
 
 export function formatToolsSection(tools: ToolImpl[]): string {
-  const lines = tools.map((t) => `- ${t.name}: ${t.description}`);
+  const lines = tools.map((t) => `- ${t.name}: ${t.summary ?? t.description}`);
   return `## Available Tools\n${lines.join("\n")}`;
 }

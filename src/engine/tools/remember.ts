@@ -7,6 +7,8 @@ export function createRememberTool(memory: MemoryManager): ToolImpl {
     name: "remember",
     description:
       "Save a piece of information to long-term memory. Use a short descriptive key and the content to remember.",
+    summary:
+      "Save information to long-term memory. Use for: facts the user asks you to remember across sessions, stable preferences, or recurring context.",
     parameters: Type.Object({
       key: Type.String({
         description: "Short descriptive key for this memory (e.g. 'user-preferences', 'project-context')",

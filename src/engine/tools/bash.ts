@@ -7,6 +7,8 @@ export const bashTool: ToolImpl = {
   name: "bash",
   description:
     "Execute a shell command and return stdout and stderr. Has a configurable timeout (default 30s).",
+  summary:
+    "Execute a shell command. Use for: running CLI tools, installing packages, curl requests, system operations. Always prefer dedicated tools (read, write, edit) over bash for file operations.",
   parameters: Type.Object({
     command: Type.String({ description: "The shell command to execute" }),
     cwd: Type.Optional(
