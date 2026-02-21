@@ -53,7 +53,7 @@ export interface AgentOptions {
 export type AgentEvent =
   | { type: "text_delta"; delta: string }
   | { type: "thinking_delta"; delta: string }
-  | { type: "tool_start"; name: string; id: string }
+  | { type: "tool_start"; name: string; id: string; args: Record<string, unknown> }
   | { type: "tool_end"; name: string; id: string; result: ToolResult }
   | { type: "tool_approval_request"; name: string; id: string; args: Record<string, unknown> }
   | { type: "warning"; message: string }

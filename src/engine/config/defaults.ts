@@ -19,6 +19,19 @@ export const DEFAULT_CONFIG: SAConfigFile = {
       enabled: true,
       directory: "memory",
     },
+    toolApproval: {
+      tui: "never",
+      telegram: "ask",
+      discord: "ask",
+      webhook: "never",
+    },
+    webhook: {
+      enabled: false,
+    },
+    audio: {
+      enabled: true,
+      preferLocal: true,
+    },
   },
   providers: [
     {

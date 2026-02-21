@@ -7,6 +7,7 @@ export type EngineEvent =
   | { type: "tool_start"; name: string; id: string }
   | { type: "tool_end"; name: string; id: string; content: string; isError: boolean }
   | { type: "tool_approval_request"; name: string; id: string; args: Record<string, unknown> }
+  | { type: "reaction"; emoji: string }
   | { type: "done"; stopReason: string }
   | { type: "error"; message: string };
 
@@ -20,7 +21,10 @@ export interface Session {
 }
 
 /** Connector types supported by the Engine */
-export type ConnectorType = "tui" | "telegram" | "discord";
+export type ConnectorType = "tui" | "telegram" | "discord" | "webhook";
+
+/** Tool approval mode per connector */
+export type ToolApprovalMode = "always" | "never" | "ask";
 
 /** A pending tool-approval request from Engine to Connector */
 export interface ToolApprovalRequest {

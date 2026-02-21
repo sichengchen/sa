@@ -20,11 +20,11 @@ describe("Agent flow integration", () => {
     }
 
     // Verify all tools are registered
-    expect(registry.listNames()).toEqual(["read", "write", "edit", "bash", "clawhub_search"]);
+    expect(registry.listNames()).toEqual(["read", "write", "edit", "exec", "exec_status", "exec_kill", "web_fetch", "web_search", "reaction", "clawhub_search"]);
 
     // Tool definitions are valid for LLM context
     const defs = registry.getToolDefinitions();
-    expect(defs).toHaveLength(5);
+    expect(defs).toHaveLength(10);
     for (const def of defs) {
       expect(def.name).toBeTruthy();
       expect(def.description).toBeTruthy();
@@ -44,11 +44,11 @@ describe("Agent flow integration", () => {
     });
     expect(readResult.content).toBe("integration test");
 
-    // Execute bash tool via registry
-    const bashResult = await registry.execute("bash", {
+    // Execute exec tool via registry
+    const execResult = await registry.execute("exec", {
       command: `cat "${join(testDir, "test.txt")}"`,
     });
-    expect(bashResult.content.trim()).toBe("integration test");
+    expect(execResult.content.trim()).toBe("integration test");
   });
 
   test("ToolRegistry handles unknown tools gracefully", async () => {

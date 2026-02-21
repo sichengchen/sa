@@ -29,6 +29,8 @@ export class DiscordConnector {
   private client: EngineClient;
   private options: DiscordConnectorOptions;
   private sessionId: string | null = null;
+  /** Track last user message for emoji reactions */
+  private lastUserMessage: Message | null = null;
 
   constructor(client: EngineClient, options: DiscordConnectorOptions) {
     this.client = client;
@@ -63,9 +65,114 @@ export class DiscordConnector {
     return this.sessionId;
   }
 
+  private async handleAudioMessage(message: Message, audioUrl: string, filename: string): Promise<void> {
+    if (!message.channel.isSendable()) return;
+    const channel = message.channel;
+
+    try {
+      const sessionId = await this.ensureSession();
+
+      // Download audio
+      const res = await fetch(audioUrl);
+      if (!res.ok) {
+        await message.reply("Failed to download audio file.");
+        return;
+      }
+
+      const audioBuffer = Buffer.from(await res.arrayBuffer());
+      const format = filename.split(".").pop() ?? "ogg";
+      const audioBase64 = audioBuffer.toString("base64");
+
+      const transcribingMsg = await message.reply("Transcribing voice message...");
+
+      const { handleTextDelta, handleDone, handleError } = createStreamHandler<Message>({
+        send: (content) => message.reply(content),
+        edit: (msg, content) => msg.edit(content).then(() => {}),
+        sendExtra: (content) => channel.send(content).then(() => {}),
+        format: (text) => text.slice(0, 2000),
+        split: (text) => splitMessage(text),
+        sendError: (msg) => message.reply(`Error: ${msg}`).then(() => {}),
+      });
+
+      let transcriptShown = false;
+
+      this.client.chat.transcribeAndSend.subscribe(
+        { sessionId, audio: audioBase64, format },
+        {
+          onData: async (event: any) => {
+            if (event.transcript && !transcriptShown) {
+              transcriptShown = true;
+              try {
+                await transcribingMsg.edit(`🎤 "${event.transcript}"`);
+              } catch {}
+            }
+
+            switch (event.type) {
+              case "text_delta":
+                if (event.delta) handleTextDelta(event.delta);
+                break;
+
+              case "tool_end": {
+                const toolMsg = formatToolResult(event.name, event.content);
+                await channel.send(toolMsg);
+                break;
+              }
+
+              case "tool_approval_request": {
+                const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+                  new ButtonBuilder()
+                    .setCustomId(`approve:${event.id}`)
+                    .setLabel("Approve")
+                    .setStyle(ButtonStyle.Success),
+                  new ButtonBuilder()
+                    .setCustomId(`reject:${event.id}`)
+                    .setLabel("Reject")
+                    .setStyle(ButtonStyle.Danger),
+                  new ButtonBuilder()
+                    .setCustomId(`always:${event.id}`)
+                    .setLabel(`Always allow ${event.name}`)
+                    .setStyle(ButtonStyle.Primary),
+                );
+                await channel.send({
+                  content: `Tool: **${event.name}** — Approve execution?`,
+                  components: [row],
+                });
+                break;
+              }
+
+              case "done":
+                handleDone();
+                break;
+
+              case "error":
+                await handleError(event.message);
+                break;
+            }
+          },
+          onError: async (err: unknown) => {
+            const msg = err instanceof Error ? err.message : String(err);
+            await handleError(msg);
+          },
+        },
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      await message.reply(`Error: ${msg}`);
+    }
+  }
+
   private setupHandlers(): void {
     this.discord.on("messageCreate", async (message) => {
       if (!this.isAllowed(message)) return;
+
+      // Check for audio attachments (voice messages)
+      const audioAttachment = message.attachments.find((a) =>
+        a.contentType?.startsWith("audio/"),
+      );
+      if (audioAttachment && !message.content.trim()) {
+        await this.handleAudioMessage(message, audioAttachment.url, audioAttachment.name ?? "audio.ogg");
+        return;
+      }
 
       const text = message.content.trim();
       if (!text) return;
@@ -130,6 +237,9 @@ export class DiscordConnector {
         return;
       }
 
+      // Track last user message for reactions
+      this.lastUserMessage = message;
+
       // Regular chat
       try {
         const sessionId = await this.ensureSession();
@@ -168,6 +278,10 @@ export class DiscordConnector {
                       .setCustomId(`reject:${event.id}`)
                       .setLabel("Reject")
                       .setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder()
+                      .setCustomId(`always:${event.id}`)
+                      .setLabel(`Always allow ${event.name}`)
+                      .setStyle(ButtonStyle.Primary),
                   );
                   await message.channel.send({
                     content: `Tool: **${event.name}** — Approve execution?`,
@@ -175,6 +289,16 @@ export class DiscordConnector {
                   });
                   break;
                 }
+
+                case "reaction":
+                  if (this.lastUserMessage) {
+                    try {
+                      await this.lastUserMessage.react(event.emoji);
+                    } catch {
+                      // Discord may reject unsupported emoji — silently ignore
+                    }
+                  }
+                  break;
 
                 case "done":
                   handleDone();
@@ -215,6 +339,19 @@ export class DiscordConnector {
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           await interaction.reply({ content: `Failed to switch: ${msg}`, ephemeral: true });
+        }
+        return;
+      }
+
+      if (action === "always" && value) {
+        try {
+          await this.client.tool.acceptForSession.mutate({ toolCallId: value });
+          await interaction.update({
+            content: "Tool always allowed for this session.",
+            components: [],
+          });
+        } catch {
+          await interaction.reply({ content: "Failed to process.", ephemeral: true });
         }
         return;
       }
