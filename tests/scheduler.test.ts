@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "bun:test";
-import { Scheduler, matchesCron, createHeartbeatTask } from "../src/engine/scheduler.js";
+import { Scheduler, matchesCron, createHeartbeatTask } from "@sa/engine/scheduler.js";
 import { mkdir, rm, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

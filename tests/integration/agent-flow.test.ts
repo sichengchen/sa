@@ -1,6 +1,6 @@
 import { describe, test, expect, afterEach } from "bun:test";
-import { ToolRegistry } from "../../src/engine/agent/index.js";
-import { getBuiltinTools } from "../../src/engine/tools/index.js";
+import { ToolRegistry } from "@sa/engine/agent/index.js";
+import { getBuiltinTools } from "@sa/engine/tools/index.js";
 import { rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

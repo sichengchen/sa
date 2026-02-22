@@ -3,10 +3,10 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
-import { ClawHubClient, ClawHubError } from "../src/engine/clawhub/client.js";
-import { SkillInstaller } from "../src/engine/clawhub/installer.js";
-import type { ClawHubPage, ClawHubSkill, ClawHubSkillDetail } from "../src/engine/clawhub/types.js";
-import { clawHubSearchTool } from "../src/engine/tools/clawhub-search.js";
+import { ClawHubClient, ClawHubError } from "@sa/engine/clawhub/client.js";
+import { SkillInstaller } from "@sa/engine/clawhub/installer.js";
+import type { ClawHubPage, ClawHubSkill, ClawHubSkillDetail } from "@sa/engine/clawhub/types.js";
+import { clawHubSearchTool } from "@sa/engine/tools/clawhub-search.js";
 
 // --- Mock server setup ---
 

@@ -5,7 +5,7 @@ import {
   escapeMarkdown,
   isMessageAllowed,
   validatePairingCode,
-} from "../src/connectors/telegram/index.js";
+} from "@sa/connectors/telegram/index.js";
 
 describe("Telegram pairing", () => {
   describe("isMessageAllowed", () => {

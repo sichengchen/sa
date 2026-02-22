@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from "bun:test";
-import { ModelRouter } from "../src/engine/router/index.js";
-import type { ModelRouterData } from "../src/engine/router/index.js";
+import { ModelRouter } from "@sa/engine/router/index.js";
+import type { ModelRouterData } from "@sa/engine/router/index.js";
 
 const validConfig: ModelRouterData = {
   defaultModel: "sonnet",

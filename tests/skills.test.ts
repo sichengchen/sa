@@ -2,8 +2,8 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { SkillRegistry, scanSkillDirectory, formatSkillsDiscovery, formatActiveSkills } from "../src/engine/skills/index.js";
-import { parseFrontmatter } from "../src/engine/skills/loader.js";
+import { SkillRegistry, scanSkillDirectory, formatSkillsDiscovery, formatActiveSkills } from "@sa/engine/skills/index.js";
+import { parseFrontmatter } from "@sa/engine/skills/loader.js";
 
 const testHome = join(tmpdir(), "sa-test-skills-" + Date.now());
 const skillsDir = join(testHome, "skills");

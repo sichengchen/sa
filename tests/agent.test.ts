@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, mock } from "bun:test";
-import { Agent, ToolRegistry } from "../src/engine/agent/index.js";
-import type { ToolImpl } from "../src/engine/agent/index.js";
-import { ModelRouter } from "../src/engine/router/index.js";
+import { Agent, ToolRegistry } from "@sa/engine/agent/index.js";
+import type { ToolImpl } from "@sa/engine/agent/index.js";
+import { ModelRouter } from "@sa/engine/router/index.js";
 import { Type } from "@mariozechner/pi-ai";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";

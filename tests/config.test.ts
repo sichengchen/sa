@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { ConfigManager, DEFAULT_CONFIG } from "../src/engine/config/index.js";
+import { ConfigManager, DEFAULT_CONFIG } from "@sa/engine/config/index.js";
 import { writeFile, rm, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "bun:test";
-import { SessionManager } from "../src/engine/sessions.js";
+import { SessionManager } from "@sa/engine/sessions.js";
 
 let manager: SessionManager;
 

@@ -1,8 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { readTool } from "../../src/engine/tools/read.js";
-import { writeTool } from "../../src/engine/tools/write.js";
-import { editTool } from "../../src/engine/tools/edit.js";
-import { bashTool } from "../../src/engine/tools/bash.js";
+import { readTool } from "@sa/engine/tools/read.js";
+import { writeTool } from "@sa/engine/tools/write.js";
+import { editTool } from "@sa/engine/tools/edit.js";
+import { bashTool } from "@sa/engine/tools/bash.js";
 import { rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

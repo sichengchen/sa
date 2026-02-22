@@ -3,9 +3,9 @@ import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { Scheduler, createHeartbeatTask, heartbeatState } from "../src/engine/scheduler.js";
-import { DEFAULT_HEARTBEAT } from "../src/engine/config/defaults.js";
-import { SessionManager } from "../src/engine/sessions.js";
+import { Scheduler, createHeartbeatTask, heartbeatState } from "@sa/engine/scheduler.js";
+import { DEFAULT_HEARTBEAT } from "@sa/engine/config/defaults.js";
+import { SessionManager } from "@sa/engine/sessions.js";
 
 let testDir: string;
 
