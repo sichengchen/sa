@@ -62,7 +62,7 @@ function registerCronTask(
     oneShot: opts?.oneShot,
     async handler() {
       const session = runtime.sessions.create(`cron:${name}`, "cron");
-      const agent = runtime.createAgent();
+      const agent = runtime.createAgent(undefined, opts?.model);
       sessionAgents.set(session.id, agent);
 
       let responseText = "";

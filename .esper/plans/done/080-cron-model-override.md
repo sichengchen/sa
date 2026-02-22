@@ -1,14 +1,15 @@
 ---
-id: 080
-title: "fix: honor cron task model override during execution"
-status: pending
+id: 80
+title: fix: honor cron task model override during execution
+status: done
 type: fix
 priority: 2
 phase: 006-full-stack-polish
 branch: fix/cron-model-override
 created: 2026-02-22
+shipped_at: 2026-02-22
+pr: https://github.com/sichengchen/sa/pull/17
 ---
-
 # fix: honor cron task model override during execution
 
 ## Context
@@ -35,3 +36,13 @@ The `model` field is accepted in the API, persisted to config, but never actuall
 - Run: `bun test tests/procedures.test.ts`
 - Expected: A cron task with `model: "eco"` uses the eco model, not the active model
 - Regression check: Tasks without a model override still use the runtime's active model
+
+## Progress
+- Added `modelOverride` option to `AgentOptions` in `types.ts`
+- Agent's `chat()` now passes `modelOverride` to `router.getModel()` and `router.getStreamOptions()`
+- Updated `registerCronTask` to pass `opts.model` to `runtime.createAgent()`
+- Updated `runtime.ts` createAgent interface to accept `modelOverride`, and restored cron task handler to pass `task.model`
+- Updated test mocks in `procedures.test.ts` and `live/procedures.test.ts` to accept `modelOverride`
+- Added test in `agent.test.ts` verifying Agent accepts `modelOverride`
+- Modified: `src/engine/agent/types.ts`, `src/engine/agent/agent.ts`, `src/engine/procedures.ts`, `src/engine/runtime.ts`, `tests/agent.test.ts`, `tests/procedures.test.ts`, `tests/live/procedures.test.ts`
+- Verification: full suite 461 pass / 0 fail, typecheck clean, lint clean
