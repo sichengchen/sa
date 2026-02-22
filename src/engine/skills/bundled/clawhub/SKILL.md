@@ -6,35 +6,60 @@ description: Search, install, and update agent skills from ClawHub (clawhub.ai).
 
 You can help the user find, install, and update agent skills from the ClawHub registry (clawhub.ai).
 
-## Tools
+## Scripts
 
-You have three tools for interacting with ClawHub:
+Use `exec` to run the ClawHub scripts. All scripts are located at `{baseDir}/scripts/`.
 
-- **clawhub_search** — Search the registry by keyword. Returns skill names, descriptions, versions, and download counts.
-- **clawhub_install** — Install a skill by its ClawHub slug (e.g. `steipete/apple-notes`). Optionally pin a version.
-- **clawhub_update** — Check for updates to installed skills and update them. Pass a slug to update one, or omit to check all.
+### Search
+
+Find skills on ClawHub by keyword:
+
+```
+exec(command: "bun run {baseDir}/scripts/search.ts '<query>'", danger: "safe")
+```
+
+### Install
+
+Install a skill by its ClawHub slug (e.g. `steipete/apple-notes`):
+
+```
+exec(command: "bun run {baseDir}/scripts/install.ts '<slug>' [version]", danger: "moderate")
+```
+
+The script downloads the skill, installs it to `~/.sa/skills/`, and reloads the engine's skill registry automatically.
+
+### Update
+
+Check for and apply updates to installed ClawHub skills:
+
+```
+# Update all installed skills
+exec(command: "bun run {baseDir}/scripts/update.ts", danger: "moderate")
+
+# Update a specific skill
+exec(command: "bun run {baseDir}/scripts/update.ts '<slug>'", danger: "moderate")
+```
 
 ## When to use
 
-- User asks to find, browse, or search for skills → use `clawhub_search`
-- User asks to install a specific skill → use `clawhub_install` with the slug
-- User asks to update skills or check for newer versions → use `clawhub_update`
+- User asks to find, browse, or search for skills -> run the **search** script
+- User asks to install a specific skill -> run the **install** script with the slug
+- User asks to update skills or check for newer versions -> run the **update** script
 
 ## Workflow: Finding and installing a skill
 
-1. Use `clawhub_search` with a descriptive query (e.g. "apple calendar", "code review", "weather")
+1. Run the search script with a descriptive query (e.g. "apple calendar", "code review", "weather")
 2. Present the results to the user with name, description, and version
-3. If the user picks one, use `clawhub_install` with the skill's slug
+3. If the user picks one, run the install script with the skill's slug
 4. Confirm installation succeeded and tell the user the skill is now available
 
 ## Workflow: Updating installed skills
 
-1. Use `clawhub_update` with no slug to check all installed skills for updates
-2. Report which skills have updates available and their current vs latest versions
-3. If the user confirms, use `clawhub_update` with each slug to update
+1. Run the update script with no arguments to check all installed skills
+2. Report which skills were updated and their version changes
 
 ## Notes
 
 - Skills are installed to `~/.sa/skills/<name>/` and automatically discovered by the skill registry
 - Installed skills override bundled skills of the same name
-- The ClawHub registry is at clawhub.ai — all searches use vector embeddings for relevance
+- The ClawHub registry is at clawhub.ai -- all searches use vector embeddings for relevance

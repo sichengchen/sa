@@ -145,7 +145,7 @@ This directive ensures the agent always considers its skill library before respo
 
 ## ClawHub Integration
 
-[ClawHub](https://clawhub.ai) is SA's skill marketplace. The integration consists of an HTTP client, an installer, and three agent tools.
+[ClawHub](https://clawhub.ai) is SA's skill marketplace. The integration consists of an HTTP client, an installer, and a self-contained bundled skill with scripts.
 
 ### ClawHubClient
 
@@ -180,22 +180,24 @@ The file `~/.sa/skills/.registry.json` tracks which skills were installed from C
 }
 ```
 
-This registry is used by the `clawhub_update` tool to compare installed versions against the latest available on ClawHub.
+This registry is used by the update script to compare installed versions against the latest available on ClawHub.
 
-### Agent Tools
+### Bundled Skill
 
-Three tools expose ClawHub functionality to the agent:
+ClawHub is a self-contained bundled skill (`src/engine/skills/bundled/clawhub/`) with three scripts that the agent runs via `exec`:
 
-| Tool               | Danger Level | Description                                                  |
-|--------------------|--------------|--------------------------------------------------------------|
-| `clawhub_search`   | safe         | Search the registry by keyword. Returns names, descriptions, versions, download counts. |
-| `clawhub_install`  | moderate     | Install a skill by its ClawHub slug (e.g., `steipete/apple-notes`). Reloads the skill registry after installation so the skill is immediately discoverable. |
-| `clawhub_update`   | moderate     | Check installed skills for newer versions and update them. Pass a slug to update one, or omit to check all. Reloads the registry after any updates. |
+| Script | Danger | Description |
+|--------|--------|-------------|
+| `scripts/search.ts` | safe | Search the registry by keyword |
+| `scripts/install.ts` | moderate | Install a skill by slug; reloads the engine skill registry via `skill.reload` tRPC endpoint |
+| `scripts/update.ts` | moderate | Check installed skills for updates; reloads registry after changes |
+
+The install and update scripts call the engine's `skill.reload` tRPC procedure after modifying the skills directory, ensuring newly installed or updated skills are immediately discoverable.
 
 Typical workflow:
 
-1. User asks to find a skill: agent calls `clawhub_search` with a descriptive query.
-2. User picks a result: agent calls `clawhub_install` with the slug.
+1. User asks to find a skill: agent reads the `clawhub` skill, then runs the search script.
+2. User picks a result: agent runs the install script with the slug.
 3. The skill registry is reloaded and the new skill appears in `<available_skills>` on the next turn.
 
 ## Creating Custom Skills
@@ -311,4 +313,4 @@ export type { SkillMetadata, LoadedSkill } from "./types.js";
 3. **User message arrives**: The agent scans `<available_skills>`, identifies the best match based on the user's request and each skill's description.
 4. **Skill loading**: The agent calls `read_skill(name: "...")`. The registry reads the SKILL.md body (from disk or embedded cache), interpolates `{baseDir}`, marks the skill active, and returns the content.
 5. **Agent follows instructions**: The skill body is now in the agent's context. The agent executes the task according to the skill's guidance, using existing tools as directed.
-6. **ClawHub expansion**: If no installed skill matches, the agent can search ClawHub via `clawhub_search`, install a skill via `clawhub_install`, and use it immediately after the registry reloads.
+6. **ClawHub expansion**: If no installed skill matches, the agent can read the `clawhub` skill, run its search/install scripts via `exec`, and use the newly installed skill immediately after the registry reloads.

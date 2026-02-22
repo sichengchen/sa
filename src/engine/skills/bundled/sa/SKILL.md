@@ -71,7 +71,7 @@ SA uses the Agent Skills spec (agentskills.io). Skills are SKILL.md files with Y
 
 - **Bundled skills**: Ship with SA in `src/engine/skills/bundled/`
 - **User skills**: Installed to `~/.sa/skills/`
-- **ClawHub skills**: Searchable and installable from clawhub.ai
+- **ClawHub skills**: Searchable and installable from clawhub.ai via the `clawhub` bundled skill (uses scripts)
 
 Skills are NOT tools — they are prompt-level instructions that teach you how to use existing tools effectively.
 

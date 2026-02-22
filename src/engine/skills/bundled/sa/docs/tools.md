@@ -1,6 +1,6 @@
 # Built-in Tools
 
-SA exposes 17 runtime tools to the agent. Each tool carries a **danger level** that governs
+SA exposes 14 runtime tools to the agent. Each tool carries a **danger level** that governs
 approval behavior and event reporting across connectors.
 
 | # | Tool | Danger Level | Purpose |
@@ -14,14 +14,11 @@ approval behavior and event reporting across connectors.
 | 7 | `web_fetch` | safe | Fetch a URL and return content as markdown |
 | 8 | `web_search` | safe | Web search via Brave or Perplexity |
 | 9 | `reaction` | safe | React to a message with an emoji (IM connectors) |
-| 10 | `clawhub_search` | safe | Search ClawHub skills |
-| 11 | `remember` | safe | Save memory entry by key |
-| 12 | `read_skill` | safe | Load and activate a skill by name |
-| 13 | `clawhub_install` | moderate | Install a skill from ClawHub |
-| 14 | `clawhub_update` | moderate | Update one/all installed ClawHub skills |
-| 15 | `set_env_secret` | safe | Store a secret in the encrypted vault (secrets.enc) |
-| 16 | `set_env_variable` | safe | Set a plain environment variable in config.json |
-| 17 | `notify` | safe | Push notification to Telegram/Discord |
+| 10 | `remember` | safe | Save memory entry by key |
+| 11 | `read_skill` | safe | Load and activate a skill by name |
+| 12 | `set_env_secret` | safe | Store a secret in the encrypted vault (secrets.enc) |
+| 13 | `set_env_variable` | safe | Set a plain environment variable in config.json |
+| 14 | `notify` | safe | Push notification to Telegram/Discord |
 
 *The `exec` tool is registered as `dangerous` but uses **hybrid classification** at runtime --
 see "Exec hybrid approval" below.
@@ -37,7 +34,7 @@ Every tool declares a `dangerLevel` of one of three tiers:
 Read-only or side-effect-free operations. These tools never trigger approval prompts regardless
 of connector configuration. They are suppressed from IM reporting by default.
 
-**Examples:** `read`, `web_fetch`, `web_search`, `remember`, `reaction`, `clawhub_search`,
+**Examples:** `read`, `web_fetch`, `web_search`, `remember`, `reaction`,
 `read_skill`, `exec_status`, `set_env_secret`, `set_env_variable`, `notify`
 
 ### `moderate` -- context-dependent approval
@@ -46,7 +43,7 @@ Tools that modify state in a reversible or bounded way. Whether they require app
 on the connector's approval mode. They appear in TUI reporting but are suppressed in IM
 connectors under the default `silent` verbosity.
 
-**Examples:** `write`, `edit`, `clawhub_install`, `clawhub_update`
+**Examples:** `write`, `edit`
 
 ### `dangerous` -- always requires approval
 
@@ -472,14 +469,6 @@ React to the user's message with an emoji. The reaction is forwarded to IM conne
 |---|---|---|---|
 | `emoji` | string | Yes | Emoji character |
 
-### `clawhub_search`
-
-Search ClawHub (`clawhub.ai`) for skills.
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `query` | string | Yes | Search query |
-
 ### `remember`
 
 Save a memory topic entry under the configured memory directory.
@@ -496,23 +485,6 @@ Load and activate a skill from the discovered skill list.
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `name` | string | Yes | Skill name from `<available_skills>` |
-
-### `clawhub_install`
-
-Install a skill by ClawHub slug.
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `slug` | string | Yes | Skill slug (example: `steipete/apple-notes`) |
-| `version` | string | No | Specific version (defaults to latest) |
-
-### `clawhub_update`
-
-Update installed ClawHub skills.
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `slug` | string | No | Skill slug to update; omit to check all installed skills |
 
 ### `set_env_secret`
 

@@ -7,8 +7,6 @@ import type { ToolImpl, ToolApprovalCallback } from "./agent/index.js";
 import { MemoryManager } from "./memory/index.js";
 import { getBuiltinTools, formatToolsSection } from "./tools/index.js";
 import { createRememberTool } from "./tools/remember.js";
-import { createClawHubInstallTool } from "./tools/clawhub-install.js";
-import { createClawHubUpdateTool } from "./tools/clawhub-update.js";
 import { createSetEnvSecretTool, createSetEnvVariableTool } from "./tools/set-api-key.js";
 import { createNotifyTool } from "./tools/notify.js";
 import { SessionManager } from "./sessions.js";
@@ -159,13 +157,11 @@ export async function createRuntime(): Promise<EngineRuntime> {
   const skills = new SkillRegistry();
   await skills.loadAll(saHome);
 
-  // Build tools (ClawHub tools are self-contained, install/update need saHome + registry)
+  // Build tools
   const tools = [
     ...getBuiltinTools(),
     createRememberTool(memory),
     createReadSkillTool(skills),
-    createClawHubInstallTool(saHome, skills),
-    createClawHubUpdateTool(saHome, skills),
     createSetEnvSecretTool(config),
     createSetEnvVariableTool(config),
     createNotifyTool(secrets),

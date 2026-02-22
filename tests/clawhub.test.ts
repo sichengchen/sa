@@ -6,7 +6,6 @@ import { existsSync } from "node:fs";
 import { ClawHubClient, ClawHubError } from "@sa/engine/clawhub/client.js";
 import { SkillInstaller } from "@sa/engine/clawhub/installer.js";
 import type { ClawHubPage, ClawHubSkill, ClawHubSkillDetail } from "@sa/engine/clawhub/types.js";
-import { clawHubSearchTool } from "@sa/engine/tools/clawhub-search.js";
 
 // --- Mock server setup ---
 
@@ -227,18 +226,53 @@ describe("SkillInstaller", () => {
   });
 });
 
-// --- Standalone tool tests ---
+// --- Script tests ---
 
-describe("clawhub_search tool", () => {
-  test("has correct name and description", () => {
-    expect(clawHubSearchTool.name).toBe("clawhub_search");
-    expect(clawHubSearchTool.description).toContain("ClawHub");
+describe("clawhub search script", () => {
+  const scriptPath = join(import.meta.dir, "..", "src", "engine", "skills", "bundled", "clawhub", "scripts", "search.ts");
+
+  test("exits with error when no query provided", async () => {
+    const proc = Bun.spawn(["bun", "run", scriptPath], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const exitCode = await proc.exited;
+    const stderr = await new Response(proc.stderr).text();
+    expect(exitCode).toBe(1);
+    expect(stderr).toContain("Usage:");
   });
+});
 
-  test("returns error on network failure", async () => {
-    // Search against a non-existent server will fail
-    const result = await clawHubSearchTool.execute({ query: "test" });
-    expect(result.isError).toBe(true);
-    expect(result.content).toContain("ClawHub search failed");
+describe("clawhub install script", () => {
+  const scriptPath = join(import.meta.dir, "..", "src", "engine", "skills", "bundled", "clawhub", "scripts", "install.ts");
+
+  test("exits with error when no slug provided", async () => {
+    const proc = Bun.spawn(["bun", "run", scriptPath], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const exitCode = await proc.exited;
+    const stderr = await new Response(proc.stderr).text();
+    expect(exitCode).toBe(1);
+    expect(stderr).toContain("Usage:");
+  });
+});
+
+// --- skill.reload procedure test ---
+
+describe("skill.reload procedure", () => {
+  test("SkillRegistry.loadAll reloads skills", async () => {
+    // This tests the underlying mechanism that the reload procedure calls
+    const { SkillRegistry } = await import("@sa/engine/skills/index.js");
+    const registry = new SkillRegistry();
+
+    // Initial load
+    await registry.loadAll();
+    const initialCount = registry.size;
+    expect(initialCount).toBeGreaterThan(0);
+
+    // Reload — should still have the same bundled skills
+    await registry.loadAll();
+    expect(registry.size).toBe(initialCount);
   });
 });
