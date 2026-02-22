@@ -8,6 +8,7 @@ phase: 006-full-stack-polish
 branch: fix/cron-model-override
 created: 2026-02-22
 shipped_at: 2026-02-22
+pr: https://github.com/sichengchen/sa/pull/17
 ---
 # fix: honor cron task model override during execution
 
