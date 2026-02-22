@@ -108,8 +108,12 @@ export class ModelRouter {
     if (fromEnv) return fromEnv;
     const fromSecrets = this.secrets?.apiKeys[envVar];
     if (fromSecrets) return fromSecrets;
+    const hint =
+      process.platform === "darwin"
+        ? ` (brew services does not inherit shell env vars — use "sa onboard" to store in secrets.enc)`
+        : "";
     throw new Error(
-      `API key not found: set environment variable "${envVar}" or run the setup wizard to store it in secrets.enc`
+      `API key not found: set environment variable "${envVar}" or run "sa onboard" to store it in secrets.enc${hint}`
     );
   }
 

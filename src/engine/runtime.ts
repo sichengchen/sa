@@ -106,6 +106,24 @@ export async function createRuntime(): Promise<EngineRuntime> {
       }
     }
   }
+  // Validate provider API keys — warn early if missing
+  for (const provider of saConfig.providers) {
+    const envVar = provider.apiKeyEnvVar;
+    if (!process.env[envVar] && !secrets?.apiKeys[envVar]) {
+      console.warn(
+        `[sa] Warning: API key "${envVar}" not found for provider "${provider.id}".`
+      );
+      console.warn(
+        `[sa]   Store it with: sa onboard (or set_env_secret tool)`
+      );
+      if (process.platform === "darwin") {
+        console.warn(
+          `[sa]   Note: brew services does not inherit shell env vars — keys must be in secrets.enc`
+        );
+      }
+    }
+  }
+
   const baseConfigFile = config.getConfigFile();
   const router = ModelRouter.fromConfig(
     { providers: saConfig.providers, models: saConfig.models, defaultModel: saConfig.defaultModel },
