@@ -124,4 +124,15 @@ describe("Agent", () => {
     agent.clearHistory();
     expect(agent.getMessages()).toHaveLength(0);
   });
+
+  test("accepts modelOverride option", () => {
+    const router = setupRouter();
+    // Agent should construct successfully with modelOverride
+    const agent = new Agent({
+      router,
+      systemPrompt: "Test",
+      modelOverride: "test-model",
+    });
+    expect(agent.getMessages()).toHaveLength(0);
+  });
 });

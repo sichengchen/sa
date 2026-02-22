@@ -72,8 +72,8 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
     transcriber: { transcribe: async () => "", backend: null } as any,
     agentName: "Test",
     mainSessionId: mainSession.id,
-    createAgent(onToolApproval) {
-      return new Agent({ router, tools, systemPrompt: "Reply briefly. Use tools when asked.", onToolApproval });
+    createAgent(onToolApproval, modelOverride?: string) {
+      return new Agent({ router, tools, systemPrompt: "Reply briefly. Use tools when asked.", onToolApproval, modelOverride });
     },
   };
 }

@@ -81,8 +81,8 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
     transcriber: { transcribe: async () => "", backend: null } as any,
     agentName: "Test",
     mainSessionId: mainSession.id,
-    createAgent() {
-      return new Agent({ router, tools: [], systemPrompt: "Test" });
+    createAgent(_onToolApproval?: any, modelOverride?: string) {
+      return new Agent({ router, tools: [], systemPrompt: "Test", modelOverride });
     },
   };
 }
