@@ -1,4 +1,5 @@
 import type { ProviderConfig, ModelConfig } from "../router/types.js";
+import type { ModelTier, TaskType } from "../router/task-types.js";
 import type { ToolApprovalMode, ConnectorType } from "@sa/shared/types.js";
 
 export interface Identity {
@@ -33,6 +34,12 @@ export interface RuntimeConfig {
   };
   /** Plain (non-secret) environment variables injected at engine startup */
   env?: Record<string, string>;
+  /** Map each model tier to a configured model name */
+  modelTiers?: Partial<Record<ModelTier, string>>;
+  /** Override the default task-to-tier mapping */
+  taskTierOverrides?: Partial<Record<TaskType, ModelTier>>;
+  /** Shorthand aliases for model names (e.g. { "fast": "haiku", "smart": "opus" }) */
+  modelAliases?: Record<string, string>;
 }
 
 /** On-disk config.json schema (v3 — merged models + runtime) */

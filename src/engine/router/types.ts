@@ -22,4 +22,6 @@ export interface ModelConfig {
   temperature?: number;
   /** Maximum output tokens */
   maxTokens?: number;
+  /** Fallback model name to use when this model's provider fails */
+  fallback?: string;
 }
