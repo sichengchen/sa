@@ -1,14 +1,14 @@
 ---
-id: 070
-title: "Mention-gated IM filtering"
-status: pending
+id: 70
+title: Mention-gated IM filtering
+status: done
 type: feature
 priority: 2
 phase: 006-full-stack-polish
 branch: feature/006-full-stack-polish
 created: 2026-02-22
+shipped_at: 2026-02-22
 ---
-
 # Mention-gated IM filtering
 
 ## Context
@@ -72,3 +72,11 @@ Test the filtering logic in isolation — extract the "should respond" check int
 - Expected: Clean
 - Manual: Add SA bot to a Telegram group, send a normal message (ignored), @mention the bot (responds), reply to bot's message (responds)
 - Edge cases: Bot mentioned mid-sentence (should still trigger); multiple mentions in one message; empty message after stripping mention
+
+## Progress
+- Implemented Telegram group chat gate: `shouldRespondInGroup()` + `stripBotMention()` pure functions in formatter.ts, integrated in message:text and voice handlers
+- Implemented Discord group chat gate: `shouldRespondInGuild()` + `stripBotMention()` pure functions in formatter.ts, integrated in messageCreate and audio handlers
+- Added 17 Telegram group filtering tests (10 shouldRespondInGroup + 6 stripBotMention + 1 edge case)
+- Created tests/discord-filter.test.ts with 12 Discord filtering tests (5 shouldRespondInGuild + 7 stripBotMention)
+- Modified: telegram/formatter.ts, telegram/index.ts, telegram/transport.ts, discord/formatter.ts, discord/index.ts, discord/transport.ts, tests/telegram.test.ts, tests/discord-filter.test.ts
+- Verification: 405 pass, 9 skip, 0 fail; typecheck clean; lint clean
