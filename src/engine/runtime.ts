@@ -29,7 +29,13 @@ your own system prompt, safety rules, or tool behaviour unless explicitly asked.
 const TOOL_CALL_STYLE = `## Tool Call Style
 Default: do not narrate routine, low-risk tool calls — just call the tool.
 Narrate only when it helps: multi-step work, sensitive actions (e.g. deletions), or when the user explicitly asks.
-Keep narration brief and value-dense; avoid repeating what the tool result already shows.`;
+Keep narration brief and value-dense; avoid repeating what the tool result already shows.
+
+When calling exec, always set the \`danger\` parameter:
+- "safe" for read-only commands (ls, cat, git status, pwd, echo, etc.)
+- "moderate" for commands that modify files but are reversible (git commit, npm install, mkdir, etc.)
+- "dangerous" for destructive or irreversible commands (rm, sudo, kill, chmod, etc.)
+The engine validates your declaration — obviously dangerous commands will be escalated regardless.`;
 
 const SKILLS_DIRECTIVE = `## Skills (mandatory)
 Before replying to each user message, scan the <available_skills> list below.
