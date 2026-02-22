@@ -1,12 +1,13 @@
 ---
 id: 82
 title: fix: Remove ClawHub integration from engine (keep bundled skills)
-status: active
+status: done
 type: fix
 priority: 2
 phase: 006-full-stack-polish
 branch: fix/remove-clawhub-engine
 created: 2026-02-22
+shipped_at: 2026-02-22
 ---
 # fix: Remove ClawHub integration from engine (keep bundled skills)
 
