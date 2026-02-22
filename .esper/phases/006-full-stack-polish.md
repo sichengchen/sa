@@ -91,3 +91,4 @@ Connectors track the "current session" per chat context. `/new` calls `create(pr
 - Plan 070 — Mention-gated IM filtering: Pure-function mention/reply gates for Telegram and Discord group chats. Files: telegram/formatter.ts, telegram/transport.ts, discord/formatter.ts, discord/transport.ts, telegram.test.ts, discord-filter.test.ts
 - Plan 071 — Group chat sender attribution + sessions: Per-chat session tracking with Map, sender name prefix for group messages, system prompt group guidance. Files: procedures.ts, telegram/transport.ts, discord/transport.ts, runtime.ts
 - Plan 073 — Webhook-triggered automation tasks: Bearer token auth, /webhook/agent + /webhook/tasks/:slug + /webhook/heartbeat routes, webhook task CRUD. Files: types.ts, server.ts, procedures.ts, webhook-tasks.test.ts
+- Plan 074 — TruffleHog secret scanning in CI: Added secret-scan job with --only-verified --fail. Files: .github/workflows/ci.yml
