@@ -1,14 +1,14 @@
 ---
-id: 064
-title: "Live LLM agent chat tests"
-status: pending
+id: 64
+title: Live LLM agent chat tests
+status: done
 type: feature
 priority: 2
 phase: 006-full-stack-polish
 branch: feature/006-full-stack-polish
 created: 2026-02-22
+shipped_at: 2026-02-22
 ---
-
 # Live LLM agent chat tests
 
 ## Context
@@ -43,3 +43,10 @@ All wrapped in `describeLive()` (skips without API key). Each test creates a fre
 - Run: `bun test tests/live/` (without API key)
 - Expected: Tests skip gracefully, exit code 0
 - Edge cases: Flaky assertions — use structural checks only; generous timeouts for API latency
+
+## Progress
+- Created tests/live/agent-chat.test.ts with 6 test cases: single-turn text, tool use round-trip, multi-turn history, streaming event order, tool approval callback, clearHistory
+- All tests use describeLive() — skip gracefully without API key (verified: 6 skip, 0 fail)
+- Uses shared helpers: makeLiveRouter(), echoTool from plan 063
+- Modified: tests/live/agent-chat.test.ts
+- Verification: typecheck clean, lint clean, tests skip gracefully without key
