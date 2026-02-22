@@ -35,7 +35,6 @@ Connectors (`src/connectors/`)      Engine (`src/engine/`)
                                     ├─ config/        — file-based config + secrets
                                     ├─ memory/        — persistent memory files
                                     ├─ skills/        — skill discovery + loading
-                                    ├─ clawhub/       — ClawHub API client
                                     ├─ tools/         — 9 built-in tools
                                     ├─ sessions.ts    — per-connector sessions
                                     ├─ auth.ts        — token management

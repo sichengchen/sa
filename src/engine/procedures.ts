@@ -630,7 +630,7 @@ export function createAppRouter(runtime: EngineRuntime) {
           return { activated: await runtime.skills.activate(input.name) };
         }),
 
-      /** Reload all skills from disk (used by ClawHub scripts after install/update) */
+      /** Reload all skills from disk (used after skill install/update) */
       reload: protectedProcedure
         .mutation(async (): Promise<{ reloaded: boolean; count: number }> => {
           await runtime.skills.loadAll();

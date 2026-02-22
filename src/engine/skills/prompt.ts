@@ -23,7 +23,7 @@ function formatSkillEntry(s: SkillMetadata): string {
 function wrapSkillsXml(entries: string, omitted: number): string {
   let xml = `<available_skills>\n${entries}\n</available_skills>`;
   if (omitted > 0) {
-    xml += `\n<!-- ${omitted} additional skill(s) omitted. Use clawhub_search to find more. -->`;
+    xml += `\n<!-- ${omitted} additional skill(s) omitted. Use the clawhub skill to find more. -->`;
   }
   return xml;
 }

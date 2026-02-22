@@ -50,7 +50,7 @@ describe("formatSkillsDiscovery", () => {
     const skillTagCount = (result.match(/<skill>/g) || []).length;
     expect(skillTagCount).toBeLessThanOrEqual(MAX_SKILLS_IN_PROMPT);
     expect(result).toContain("additional skill(s) omitted");
-    expect(result).toContain("clawhub_search");
+    expect(result).toContain("clawhub skill");
   });
 
   it("truncates by char limit and shows omission note", () => {

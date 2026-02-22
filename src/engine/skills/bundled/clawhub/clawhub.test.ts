@@ -3,14 +3,14 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
-import { ClawHubClient, ClawHubError } from "@sa/engine/clawhub/client.js";
-import { SkillInstaller } from "@sa/engine/clawhub/installer.js";
-import type { ClawHubPage, ClawHubSkill, ClawHubSkillDetail } from "@sa/engine/clawhub/types.js";
+import { ClawHubClient, ClawHubError } from "./lib/client.js";
+import { SkillInstaller } from "./lib/installer.js";
+import type { ClawHubPage, ClawHubSkill, ClawHubSkillDetail } from "./lib/types.js";
 
 // --- Mock server setup ---
 
 let mockServer: ReturnType<typeof Bun.serve> | null = null;
-let mockPort: number;
+let mockPort = 0;
 let mockRoutes: Map<string, { status: number; body: unknown }>;
 
 function setMockRoute(path: string, body: unknown, status = 200) {
@@ -39,7 +39,7 @@ beforeEach(async () => {
       });
     },
   });
-  mockPort = mockServer.port;
+  mockPort = mockServer.port!;
 });
 
 afterEach(async () => {
@@ -150,19 +150,19 @@ describe("ClawHubClient", () => {
   });
 
   test("sends auth header when token provided", async () => {
-    let receivedAuth: string | null = null;
+    let receivedAuth = "";
     if (mockServer) mockServer.stop(true);
 
     mockServer = Bun.serve({
       port: 0,
       fetch(req) {
-        receivedAuth = req.headers.get("authorization");
+        receivedAuth = req.headers.get("authorization") ?? "";
         return new Response(JSON.stringify(sampleDetail), {
           headers: { "Content-Type": "application/json" },
         });
       },
     });
-    mockPort = mockServer.port;
+    mockPort = mockServer.port!;
 
     const client = createClient("my-github-token");
     await client.getSkill("acme/code-review");
@@ -229,7 +229,7 @@ describe("SkillInstaller", () => {
 // --- Script tests ---
 
 describe("clawhub search script", () => {
-  const scriptPath = join(import.meta.dir, "..", "src", "engine", "skills", "bundled", "clawhub", "scripts", "search.ts");
+  const scriptPath = join(import.meta.dir, "scripts", "search.ts");
 
   test("exits with error when no query provided", async () => {
     const proc = Bun.spawn(["bun", "run", scriptPath], {
@@ -244,7 +244,7 @@ describe("clawhub search script", () => {
 });
 
 describe("clawhub install script", () => {
-  const scriptPath = join(import.meta.dir, "..", "src", "engine", "skills", "bundled", "clawhub", "scripts", "install.ts");
+  const scriptPath = join(import.meta.dir, "scripts", "install.ts");
 
   test("exits with error when no slug provided", async () => {
     const proc = Bun.spawn(["bun", "run", scriptPath], {

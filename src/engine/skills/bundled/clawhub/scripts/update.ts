@@ -10,8 +10,8 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { ClawHubClient } from "@sa/engine/clawhub/client.js";
-import { SkillInstaller } from "@sa/engine/clawhub/installer.js";
+import { ClawHubClient } from "../lib/client.js";
+import { SkillInstaller } from "../lib/installer.js";
 
 const slug = process.argv[2] as string | undefined;
 

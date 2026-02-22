@@ -3,7 +3,7 @@
  * ClawHub search script — search the skill registry.
  * Usage: bun run search.ts <query>
  */
-import { ClawHubClient } from "@sa/engine/clawhub/client.js";
+import { ClawHubClient } from "../lib/client.js";
 
 const query = process.argv[2];
 if (!query) {
