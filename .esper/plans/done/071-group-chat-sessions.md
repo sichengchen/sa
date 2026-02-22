@@ -1,14 +1,14 @@
 ---
-id: 071
-title: "Group chat sender attribution + sessions"
-status: pending
+id: 71
+title: Group chat sender attribution + sessions
+status: done
 type: feature
 priority: 2
 phase: 006-full-stack-polish
 branch: feature/006-full-stack-polish
 created: 2026-02-22
+shipped_at: 2026-02-22
 ---
-
 # Group chat sender attribution + sessions
 
 ## Context
@@ -88,3 +88,13 @@ Test sender attribution formatting, session-per-chat mapping, and private-vs-gro
 - Expected: Clean
 - Manual: In a Telegram group, have two users talk to the bot — verify the agent addresses them by name and maintains a coherent conversation with both
 - Edge cases: User with no display name (fall back to username or "Unknown"); very long display names (truncate); session cleanup when bot leaves a group; negative chat IDs for Telegram groups (e.g., `telegram:-100123456`)
+
+## Progress
+- Added `session.getLatest` tRPC procedure for prefix-based session lookup
+- Refactored Telegram connector: `activeSessions` Map for per-chat session tracking, `ensureSession(chatId)` with getLatest fallback, `/new` creates fresh session preserving history, sender attribution `[Name]: msg` for group chats
+- Refactored Discord connector: same pattern with `activeSessions` Map, `ensureSession(channelId)`, `/new` command, sender attribution using `displayName`
+- Added `GROUP_CHAT_GUIDE` section to system prompt in runtime.ts
+- Added `formatSenderAttribution()` pure functions to both connectors
+- Added 6 sender attribution tests (3 Telegram + 3 Discord)
+- Modified: procedures.ts, telegram/transport.ts, telegram/formatter.ts, telegram/index.ts, discord/transport.ts, discord/formatter.ts, discord/index.ts, runtime.ts
+- Verification: 411 pass, 9 skip, 0 fail; typecheck clean; lint clean
