@@ -1,14 +1,14 @@
 ---
-id: 066
-title: "Migrate imports to path aliases"
-status: pending
+id: 66
+title: Migrate imports to path aliases
+status: done
 type: feature
 priority: 2
 phase: 006-full-stack-polish
 branch: feature/006-full-stack-polish
 created: 2026-02-22
+shipped_at: 2026-02-22
 ---
-
 # Migrate imports to path aliases
 
 ## Context
@@ -56,3 +56,10 @@ Run typecheck, lint, tests, and `bun run build` to ensure all aliases resolve co
 - Run: `bun run build`
 - Expected: Bundle succeeds
 - Edge cases: Bun resolves tsconfig paths at runtime; verify `bun run dev` also works. Check that `.js` extensions are preserved in alias imports.
+
+## Progress
+- Migrated 56 cross-boundary imports across 20 test files from relative paths to @sa/* aliases
+- 54 @sa/engine/*, 1 @sa/shared/*, 1 @sa/connectors/*
+- Kept within-package relative imports (test helpers, cli internal, connector internal)
+- Modified: 22 files in tests/
+- Verification: 362 pass, 9 skip, 0 fail; typecheck clean; lint clean; build succeeds
