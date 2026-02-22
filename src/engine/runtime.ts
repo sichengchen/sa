@@ -84,7 +84,7 @@ export interface EngineRuntime {
   /** The main session ID (engine-level, not tied to any connector) */
   mainSessionId: string;
   /** Create a new Agent instance for a session (each session gets its own Agent) */
-  createAgent(onToolApproval?: ToolApprovalCallback): Agent;
+  createAgent(onToolApproval?: ToolApprovalCallback, modelOverride?: string): Agent;
 }
 
 /** Bootstrap all Engine subsystems */
@@ -237,7 +237,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
       oneShot: task.oneShot,
       async handler() {
         const session = sessions.create(`cron:${task.name}`, "cron");
-        const agent = new Agent({ router, tools, systemPrompt });
+        const agent = new Agent({ router, tools, systemPrompt, modelOverride: task.model });
         let responseText = "";
         try {
           for await (const event of agent.chat(task.prompt)) {
@@ -278,12 +278,13 @@ export async function createRuntime(): Promise<EngineRuntime> {
     transcriber,
     agentName: saConfig.identity.name,
     mainSessionId: mainSession.id,
-    createAgent(onToolApproval?: ToolApprovalCallback): Agent {
+    createAgent(onToolApproval?: ToolApprovalCallback, modelOverride?: string): Agent {
       return new Agent({
         router,
         tools,
         systemPrompt,
         onToolApproval,
+        modelOverride,
       });
     },
   };

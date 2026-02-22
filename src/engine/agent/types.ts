@@ -52,6 +52,8 @@ export interface AgentOptions {
   maxToolResultChars?: number;
   /** Optional callback for tool approval. If provided, called before tool execution. */
   onToolApproval?: ToolApprovalCallback;
+  /** Override the router's active model for this agent instance (e.g. for cron task model overrides) */
+  modelOverride?: string;
 }
 
 /** Events emitted by the agent during streaming */

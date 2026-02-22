@@ -62,8 +62,8 @@ export class Agent {
           tools: this.registry.getToolDefinitions(),
         };
 
-        const model = this.options.router.getModel();
-        const streamOpts = this.options.router.getStreamOptions();
+        const model = this.options.router.getModel(this.options.modelOverride);
+        const streamOpts = this.options.router.getStreamOptions(this.options.modelOverride);
         const eventStream = stream(model, context, streamOpts);
 
         const toolCalls: ToolCall[] = [];
