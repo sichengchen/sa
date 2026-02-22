@@ -217,6 +217,49 @@ describe("Scheduler", () => {
     expect(removedName).toBe("one-shot-tick");
   });
 
+  test("updateSchedule changes the cron expression of a task", () => {
+    scheduler.register({
+      name: "heartbeat",
+      schedule: "*/30 * * * *",
+      handler: () => {},
+      builtin: true,
+    });
+
+    const updated = scheduler.updateSchedule("heartbeat", "*/5 * * * *");
+    expect(updated).toBe(true);
+
+    const tasks = scheduler.list();
+    expect(tasks[0]!.schedule).toBe("*/5 * * * *");
+  });
+
+  test("updateSchedule returns false for nonexistent task", () => {
+    const updated = scheduler.updateSchedule("nope", "*/5 * * * *");
+    expect(updated).toBe(false);
+  });
+
+  test("updateSchedule resets lastRun so task can fire immediately", async () => {
+    let ran = false;
+    scheduler.register({
+      name: "test",
+      schedule: "* * * * *",
+      handler: () => { ran = true; },
+    });
+
+    // First tick runs it
+    await scheduler.tick();
+    expect(ran).toBe(true);
+    ran = false;
+
+    // Second tick in same minute skips it
+    await scheduler.tick();
+    expect(ran).toBe(false);
+
+    // Update schedule resets lastRun, so next tick runs it again
+    scheduler.updateSchedule("test", "* * * * *");
+    await scheduler.tick();
+    expect(ran).toBe(true);
+  });
+
   test("restored one-shot task with onComplete simulates config cleanup", async () => {
     // Simulates runtime.ts restore pattern: one-shot tasks get onComplete that removes from config
     const configStore = { cronTasks: [{ name: "reminder", oneShot: true }] };

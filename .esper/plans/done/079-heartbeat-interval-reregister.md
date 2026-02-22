@@ -1,14 +1,15 @@
 ---
-id: 079
-title: "fix: re-register heartbeat schedule when interval changes"
-status: pending
+id: 79
+title: fix: re-register heartbeat schedule when interval changes
+status: done
 type: fix
 priority: 2
 phase: 006-full-stack-polish
 branch: fix/heartbeat-interval-reregister
 created: 2026-02-22
+shipped_at: 2026-02-22
+pr: https://github.com/sichengchen/sa/pull/16
 ---
-
 # fix: re-register heartbeat schedule when interval changes
 
 ## Context
@@ -29,3 +30,10 @@ created: 2026-02-22
 - Run: `bun test tests/procedures.test.ts`
 - Expected: After calling `heartbeat.configure({ intervalMinutes: 5 })`, the scheduler uses `*/5 * * * *`
 - Regression check: Other task schedules are unaffected; heartbeat still works correctly after reconfig
+
+## Progress
+- Added `updateSchedule(name, schedule)` method to Scheduler that updates cron expression in-place and resets lastRun
+- Updated `heartbeat.configure` mutation to call `updateSchedule("heartbeat", ...)` when intervalMinutes changes
+- Added 3 tests: schedule change, nonexistent task returns false, lastRun reset allows immediate re-fire
+- Modified: `src/engine/scheduler.ts`, `src/engine/procedures.ts`, `tests/scheduler.test.ts`
+- Verification: all 25 scheduler tests pass, typecheck clean, lint clean

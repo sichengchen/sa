@@ -135,6 +135,15 @@ export class Scheduler {
     }
   }
 
+  /** Update the cron schedule of an existing task */
+  updateSchedule(name: string, schedule: string): boolean {
+    const task = this.tasks.get(name);
+    if (!task) return false;
+    task.schedule = schedule;
+    task.lastRun = 0; // Reset so the new schedule can fire immediately
+    return true;
+  }
+
   /** Run a single task by name, bypassing cron matching and lastRun guard */
   async runTask(name: string): Promise<boolean> {
     const task = this.tasks.get(name);
