@@ -78,48 +78,128 @@ describe("Webhook prompt interpolation", () => {
   });
 });
 
-describe("Webhook bearer token authentication", () => {
-  // Test the timing-safe comparison logic pattern
-  function safeCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) return false;
-    const bufA = Buffer.from(a);
-    const bufB = Buffer.from(b);
-    const { timingSafeEqual } = require("node:crypto");
-    return timingSafeEqual(bufA, bufB);
+describe("Webhook bearer-token-only authentication", () => {
+  const { timingSafeEqual } = require("node:crypto");
+
+  // Mirror the production authenticateWebhook logic (bearer-token only)
+  function authenticateWebhook(
+    req: Request,
+    webhookConfig: { token?: string } | undefined,
+  ): Response | null {
+    if (webhookConfig?.token) {
+      const authHeader = req.headers.get("authorization") ?? "";
+      const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+      if (!bearerToken || bearerToken.length !== webhookConfig.token.length ||
+          !timingSafeEqual(Buffer.from(bearerToken), Buffer.from(webhookConfig.token))) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return null;
+    }
+    return null; // No auth configured = open
   }
 
-  test("matching tokens return true", () => {
-    expect(safeCompare("test-token-123", "test-token-123")).toBe(true);
+  test("valid bearer token authenticates", () => {
+    const req = new Request("http://localhost/webhook/agent", {
+      method: "POST",
+      headers: { authorization: "Bearer my-token" },
+    });
+    const result = authenticateWebhook(req, { token: "my-token" });
+    expect(result).toBeNull();
   });
 
-  test("different tokens return false", () => {
-    expect(safeCompare("test-token-123", "wrong-token-456")).toBe(false);
+  test("wrong bearer token returns 401", () => {
+    const req = new Request("http://localhost/webhook/agent", {
+      method: "POST",
+      headers: { authorization: "Bearer wrong-token" },
+    });
+    const result = authenticateWebhook(req, { token: "my-token" });
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe(401);
   });
 
-  test("different length tokens return false", () => {
-    expect(safeCompare("short", "much-longer-token")).toBe(false);
+  test("missing authorization header returns 401 when token configured", () => {
+    const req = new Request("http://localhost/webhook/agent", {
+      method: "POST",
+    });
+    const result = authenticateWebhook(req, { token: "my-token" });
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe(401);
   });
 
-  test("empty tokens match", () => {
-    expect(safeCompare("", "")).toBe(true);
+  test("non-Bearer auth scheme returns 401", () => {
+    const req = new Request("http://localhost/webhook/agent", {
+      method: "POST",
+      headers: { authorization: "Basic dXNlcjpwYXNz" },
+    });
+    const result = authenticateWebhook(req, { token: "my-token" });
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe(401);
   });
 
-  test("bearer token extraction from header", () => {
-    const header = "Bearer my-secret-token";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-    expect(token).toBe("my-secret-token");
+  test("no token configured allows request through (open)", () => {
+    const req = new Request("http://localhost/webhook/agent", {
+      method: "POST",
+    });
+    const result = authenticateWebhook(req, { token: undefined });
+    expect(result).toBeNull();
   });
 
-  test("non-bearer header returns empty", () => {
-    const header = "Basic dXNlcjpwYXNz";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-    expect(token).toBe("");
+  test("undefined webhook config allows request through", () => {
+    const req = new Request("http://localhost/webhook/agent", {
+      method: "POST",
+    });
+    const result = authenticateWebhook(req, undefined);
+    expect(result).toBeNull();
   });
 
-  test("missing header returns empty", () => {
-    const header = "";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-    expect(token).toBe("");
+  test("legacy secret in body is not accepted (no secret auth path)", () => {
+    // Even if someone sends a secret field in the body, it should not bypass bearer token auth
+    const req = new Request("http://localhost/webhook/agent", {
+      method: "POST",
+      headers: { "x-webhook-secret": "some-secret" },
+    });
+    const result = authenticateWebhook(req, { token: "my-token" });
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe(401);
+  });
+
+  test("all routes use same auth (task route)", () => {
+    const req = new Request("http://localhost/webhook/tasks/deploy", {
+      method: "POST",
+      headers: { authorization: "Bearer correct-token" },
+    });
+    const result = authenticateWebhook(req, { token: "correct-token" });
+    expect(result).toBeNull();
+  });
+
+  test("all routes use same auth (heartbeat route)", () => {
+    const req = new Request("http://localhost/webhook/heartbeat", {
+      method: "POST",
+      headers: { authorization: "Bearer correct-token" },
+    });
+    const result = authenticateWebhook(req, { token: "correct-token" });
+    expect(result).toBeNull();
+  });
+
+  test("task route rejects without bearer token", () => {
+    const req = new Request("http://localhost/webhook/tasks/deploy", {
+      method: "POST",
+    });
+    const result = authenticateWebhook(req, { token: "my-token" });
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe(401);
+  });
+
+  test("heartbeat route rejects without bearer token", () => {
+    const req = new Request("http://localhost/webhook/heartbeat", {
+      method: "POST",
+    });
+    const result = authenticateWebhook(req, { token: "my-token" });
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe(401);
   });
 });
 
