@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { router, publicProcedure } from "./trpc.js";
 import type { EngineRuntime } from "./runtime.js";
-import type { Agent } from "./agent/index.js";
+import type { Agent, AgentEvent } from "./agent/index.js";
 import type { DangerLevel } from "./agent/types.js";
 import { classifyExecCommand } from "./tools/exec-classifier.js";
+import { ToolPolicyManager, type ToolEventContext } from "./tools/policy.js";
 import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode } from "@sa/shared/types.js";
 import type { ModelConfig, ProviderConfig } from "./router/types.js";
 
@@ -44,12 +45,17 @@ const pendingApprovalMeta = new Map<string, { sessionId: string; toolName: strin
 
 /** Create the tRPC router bound to a runtime instance */
 export function createAppRouter(runtime: EngineRuntime) {
-  /** Build a danger level lookup from runtime tools (defaults to "dangerous" for unknown tools) */
-  const dangerLevels = new Map<string, DangerLevel>(
+  /** Build the policy manager from config + built-in tool danger levels */
+  const builtinLevels = new Map<string, DangerLevel>(
     runtime.tools.map((t) => [t.name, t.dangerLevel]),
   );
+  const policyManager = new ToolPolicyManager(
+    runtime.config.getConfigFile().runtime.toolPolicy,
+    builtinLevels,
+  );
+
   function getDangerLevel(toolName: string): DangerLevel {
-    return dangerLevels.get(toolName) ?? "dangerous";
+    return policyManager.getDangerLevel(toolName);
   }
 
   /** Resolve the tool approval mode for a session */
@@ -122,6 +128,75 @@ export function createAppRouter(runtime: EngineRuntime) {
     return agent;
   }
 
+  /** Shared generator that filters agent events through the policy manager */
+  async function* filterAgentEvents(
+    events: AsyncIterable<AgentEvent>,
+    connectorType: ConnectorType,
+  ): AsyncGenerator<EngineEvent> {
+    const isIM = connectorType !== "tui";
+
+    for await (const event of events) {
+      switch (event.type) {
+        case "text_delta":
+        case "thinking_delta":
+        case "done":
+        case "error":
+          yield event;
+          break;
+        case "tool_start": {
+          const ctx: ToolEventContext = {
+            toolName: event.name,
+            dangerLevel: getDangerLevel(event.name),
+          };
+          if (!policyManager.shouldEmitToolStart(connectorType, ctx)) break;
+          if (isIM) {
+            const argsStr = formatArgsForIM(event.name, event.args);
+            yield { type: "tool_end", name: event.name, id: event.id, content: argsStr, isError: false };
+          } else {
+            yield { type: "tool_start", name: event.name, id: event.id };
+          }
+          break;
+        }
+        case "tool_end":
+          // Intercept reaction tool — emit a reaction event for connectors
+          if (event.name === "reaction" && event.result.content.startsWith("__reaction__:")) {
+            const emoji = event.result.content.slice("__reaction__:".length);
+            yield { type: "reaction", emoji };
+          } else {
+            const ctx: ToolEventContext = {
+              toolName: event.name,
+              dangerLevel: getDangerLevel(event.name),
+              isError: event.result.isError,
+            };
+            if (policyManager.shouldEmitToolEnd(connectorType, ctx)) {
+              yield {
+                type: "tool_end",
+                name: event.name,
+                id: event.id,
+                content: event.result.content,
+                isError: event.result.isError ?? false,
+              };
+            }
+          }
+          break;
+        case "tool_approval_request": {
+          const ctx: ToolEventContext = {
+            toolName: event.name,
+            dangerLevel: getDangerLevel(event.name),
+          };
+          if (!policyManager.shouldEmitApproval(connectorType, ctx)) break;
+          yield {
+            type: "tool_approval_request",
+            name: event.name,
+            id: event.id,
+            args: event.args,
+          };
+          break;
+        }
+      }
+    }
+  }
+
   return router({
     /** Health check */
     health: router({
@@ -162,57 +237,10 @@ export function createAppRouter(runtime: EngineRuntime) {
 
           runtime.sessions.touchSession(input.sessionId);
           const agent = getSessionAgent(input.sessionId);
-          const isIM = session.connectorType !== "tui";
+          const connectorType = session.connectorType as ConnectorType;
 
           try {
-            for await (const event of agent.chat(input.message)) {
-              switch (event.type) {
-                case "text_delta":
-                case "thinking_delta":
-                case "done":
-                case "error":
-                  yield event;
-                  break;
-                case "tool_start":
-                  if (isIM && getDangerLevel(event.name) === "safe") break;
-                  if (isIM) {
-                    // On IM: show what was called (args summary), suppress tool_end later
-                    const argsStr = formatArgsForIM(event.name, event.args);
-                    yield { type: "tool_end", name: event.name, id: event.id, content: argsStr, isError: false };
-                  } else {
-                    yield { type: "tool_start", name: event.name, id: event.id };
-                  }
-                  break;
-                case "tool_end":
-                  // Intercept reaction tool — emit a reaction event for connectors
-                  if (event.name === "reaction" && event.result.content.startsWith("__reaction__:")) {
-                    const emoji = event.result.content.slice("__reaction__:".length);
-                    yield { type: "reaction", emoji };
-                  } else if (isIM) {
-                    // IM: already shown at tool_start, suppress result
-                    break;
-                  } else {
-                    yield {
-                      type: "tool_end",
-                      name: event.name,
-                      id: event.id,
-                      content: event.result.content,
-                      isError: event.result.isError ?? false,
-                    };
-                  }
-                  break;
-                case "tool_approval_request":
-                  // Safe tools are auto-approved — don't show approval UI
-                  if (getDangerLevel(event.name) === "safe") break;
-                  yield {
-                    type: "tool_approval_request",
-                    name: event.name,
-                    id: event.id,
-                    args: event.args,
-                  };
-                  break;
-              }
-            }
+            yield* filterAgentEvents(agent.chat(input.message), connectorType);
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             yield { type: "error", message };
@@ -271,52 +299,9 @@ export function createAppRouter(runtime: EngineRuntime) {
 
           // Process transcript as a normal chat message
           const agent = getSessionAgent(input.sessionId);
-          const isIM = session.connectorType !== "tui";
+          const connectorType = session.connectorType as ConnectorType;
           try {
-            for await (const event of agent.chat(transcript)) {
-              switch (event.type) {
-                case "text_delta":
-                case "thinking_delta":
-                case "done":
-                case "error":
-                  yield event;
-                  break;
-                case "tool_start":
-                  if (isIM && getDangerLevel(event.name) === "safe") break;
-                  if (isIM) {
-                    const argsStr = formatArgsForIM(event.name, event.args);
-                    yield { type: "tool_end", name: event.name, id: event.id, content: argsStr, isError: false };
-                  } else {
-                    yield { type: "tool_start", name: event.name, id: event.id };
-                  }
-                  break;
-                case "tool_end":
-                  if (event.name === "reaction" && event.result.content.startsWith("__reaction__:")) {
-                    const emoji = event.result.content.slice("__reaction__:".length);
-                    yield { type: "reaction", emoji };
-                  } else if (isIM) {
-                    break;
-                  } else {
-                    yield {
-                      type: "tool_end",
-                      name: event.name,
-                      id: event.id,
-                      content: event.result.content,
-                      isError: event.result.isError ?? false,
-                    };
-                  }
-                  break;
-                case "tool_approval_request":
-                  if (getDangerLevel(event.name) === "safe") break;
-                  yield {
-                    type: "tool_approval_request",
-                    name: event.name,
-                    id: event.id,
-                    args: event.args,
-                  };
-                  break;
-              }
-            }
+            yield* filterAgentEvents(agent.chat(transcript), connectorType);
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             yield { type: "error", message };
