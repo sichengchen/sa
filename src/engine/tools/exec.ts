@@ -1,16 +1,81 @@
+/**
+ * exec tool — shell command execution
+ *
+ * Security model:
+ * - Commands run as the SA process user (no privilege isolation)
+ * - Approval is enforced by the 3-tier danger classification + exec classifier
+ * - Sensitive env vars (API keys, tokens, secrets) are stripped by default
+ * - Output is capped at 1MB to prevent OOM from chatty commands
+ * - Foreground timeout: 300s (5min); background timeout: 1800s (30min)
+ * - The user is ultimately responsible for what commands the agent runs
+ *
+ * What is NOT sandboxed:
+ * - Filesystem access (no chroot or restricted directories)
+ * - Network access (no firewall rules)
+ * - Process spawning (no cgroup limits)
+ * - These are appropriate for a single-user, localhost-only personal agent
+ */
+
 import { Type } from "@mariozechner/pi-ai";
 import type { ToolImpl } from "../agent/types.js";
 import { generateHandle, registerBackground } from "./exec-background.js";
 
-const DEFAULT_TIMEOUT_S = 1800;
+/** Default timeout for foreground commands (5 minutes) */
+const DEFAULT_TIMEOUT_S = 300;
+/** Default timeout for background commands (30 minutes) */
+const BACKGROUND_TIMEOUT_S = 1800;
 const DEFAULT_YIELD_MS = 10_000;
+/** Maximum output size in bytes (1MB) */
+const MAX_OUTPUT_BYTES = 1_048_576;
+
+/** Patterns for env var names that should be stripped from subprocess environment */
+const SENSITIVE_ENV_PATTERNS = [
+  /_KEY$/,
+  /_TOKEN$/,
+  /_SECRET$/,
+  /^SA_/,
+  /^ANTHROPIC_/,
+  /^OPENAI_/,
+  /^GOOGLE_AI_/,
+  /^OPENROUTER_/,
+];
+
+/**
+ * Create a sanitized copy of process.env that strips sensitive variables.
+ * API keys, tokens, and SA-internal vars are removed to prevent leakage.
+ */
+export function sanitizeEnv(
+  baseEnv: Record<string, string | undefined>,
+  overrides?: Record<string, string>,
+): Record<string, string | undefined> {
+  const clean: Record<string, string | undefined> = {};
+  for (const [key, value] of Object.entries(baseEnv)) {
+    if (SENSITIVE_ENV_PATTERNS.some((p) => p.test(key))) continue;
+    clean[key] = value;
+  }
+  if (overrides) {
+    Object.assign(clean, overrides);
+  }
+  return clean;
+}
+
+/** Truncate output string to MAX_OUTPUT_BYTES, adding a truncation notice */
+export function capOutput(output: string): string {
+  if (Buffer.byteLength(output) <= MAX_OUTPUT_BYTES) return output;
+  // Truncate to approximate byte limit
+  let truncated = output;
+  while (Buffer.byteLength(truncated) > MAX_OUTPUT_BYTES - 100) {
+    truncated = truncated.slice(0, Math.floor(truncated.length * 0.9));
+  }
+  return truncated + "\n...[output truncated at 1MB]";
+}
 
 export const execTool: ToolImpl = {
   name: "exec",
   description:
     "Execute a shell command with advanced options: workdir, env overrides, background mode, yield timeout, and process timeout.",
   summary:
-    "Execute a shell command. Supports workdir, env overrides, background mode (returns handle), yieldMs (auto-background after delay, default 10s), and timeout (seconds, default 1800). Use exec_status/exec_kill to manage background processes.",
+    "Execute a shell command. Supports workdir, env overrides, background mode (returns handle), yieldMs (auto-background after delay, default 10s), and timeout (seconds, default 300 foreground / 1800 background). Sensitive env vars are stripped by default. Use exec_status/exec_kill to manage background processes.",
   dangerLevel: "dangerous",
   parameters: Type.Object({
     command: Type.String({ description: "The shell command to execute" }),
@@ -26,7 +91,7 @@ export const execTool: ToolImpl = {
     workdir: Type.Optional(Type.String({ description: "Working directory (defaults to cwd)" })),
     env: Type.Optional(
       Type.Record(Type.String(), Type.String(), {
-        description: "Environment variable overrides merged with process.env",
+        description: "Environment variable overrides merged with sanitized env",
       }),
     ),
     background: Type.Optional(
@@ -39,7 +104,7 @@ export const execTool: ToolImpl = {
       }),
     ),
     timeout: Type.Optional(
-      Type.Number({ description: "Kill after this many seconds (default 1800)" }),
+      Type.Number({ description: "Kill after this many seconds (default 300 foreground, 1800 background)" }),
     ),
   }),
   async execute(args) {
@@ -48,9 +113,11 @@ export const execTool: ToolImpl = {
     const env = args.env as Record<string, string> | undefined;
     const background = args.background as boolean | undefined;
     const yieldMs = args.yieldMs as number | undefined;
-    const timeoutS = (args.timeout as number | undefined) ?? DEFAULT_TIMEOUT_S;
+    const defaultTimeout = background ? BACKGROUND_TIMEOUT_S : DEFAULT_TIMEOUT_S;
+    const timeoutS = (args.timeout as number | undefined) ?? defaultTimeout;
 
-    const mergedEnv = env ? { ...process.env, ...env } : undefined;
+    // Sanitize environment: strip sensitive vars, then apply user overrides
+    const mergedEnv = sanitizeEnv(process.env, env);
 
     try {
       const proc = Bun.spawn(["sh", "-c", command], {
@@ -71,7 +138,6 @@ export const execTool: ToolImpl = {
         clearTimeout(killTimer);
         const handle = generateHandle();
         registerBackground(handle, command, proc);
-        // Set a separate timeout for background processes
         setTimeout(() => {
           try { proc.kill(); } catch {}
         }, timeoutMs);
@@ -91,7 +157,6 @@ export const execTool: ToolImpl = {
         ]);
 
         if (!finished) {
-          // Process still running — move to background
           clearTimeout(killTimer);
           const handle = generateHandle();
           registerBackground(handle, command, proc);
@@ -123,7 +188,7 @@ export const execTool: ToolImpl = {
       }
 
       return {
-        content: output || "(no output)",
+        content: capOutput(output) || "(no output)",
         isError: exitCode !== 0,
       };
     } catch (err) {
