@@ -1,5 +1,5 @@
 import type { Tool } from "@mariozechner/pi-ai";
-import type { ToolImpl, ToolResult } from "./types.js";
+import type { DangerLevel, ToolImpl, ToolResult } from "./types.js";
 
 export class ToolRegistry {
   private tools = new Map<string, ToolImpl>();
@@ -35,6 +35,11 @@ export class ToolRegistry {
       description: t.description,
       parameters: t.parameters,
     }));
+  }
+
+  /** Get the danger level for a tool (defaults to "dangerous" if unknown) */
+  getDangerLevel(name: string): DangerLevel {
+    return this.tools.get(name)?.dangerLevel ?? "dangerous";
   }
 
   listNames(): string[] {

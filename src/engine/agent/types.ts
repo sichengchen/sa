@@ -1,12 +1,17 @@
 import type { TSchema } from "@sinclair/typebox";
 import type { ModelRouter } from "../router/index.js";
 
+/** Tool danger classification for approval policy */
+export type DangerLevel = "safe" | "moderate" | "dangerous";
+
 /** A tool implementation that the agent can invoke */
 export interface ToolImpl<TParams extends TSchema = TSchema> {
   name: string;
   description: string;
   /** Richer summary for the system prompt (falls back to description if omitted) */
   summary?: string;
+  /** Danger level for approval policy: safe (auto-approve), moderate (context-dependent), dangerous (always ask) */
+  dangerLevel: DangerLevel;
   parameters: TParams;
   execute: (args: Record<string, unknown>) => Promise<ToolResult>;
 }
