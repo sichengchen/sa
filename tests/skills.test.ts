@@ -1,7 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { existsSync } from "node:fs";
 import { SkillRegistry, scanSkillDirectory, formatSkillsDiscovery, formatActiveSkills } from "@sa/engine/skills/index.js";
 import { parseFrontmatter } from "@sa/engine/skills/loader.js";
 
@@ -142,5 +143,53 @@ describe("formatActiveSkills", () => {
 
   test("returns empty string for no active skills", () => {
     expect(formatActiveSkills([])).toBe("");
+  });
+});
+
+describe("bundled orchestration skills", () => {
+  const bundledDir = join(import.meta.dir, "..", "src", "engine", "skills", "bundled");
+
+  const orchestrationSkills = [
+    { dir: "claude-code", expectedName: "claude-code", mustMention: ["--print", "ANTHROPIC_API_KEY", "exec"] },
+    { dir: "codex", expectedName: "codex", mustMention: ["OPENAI_API_KEY", "exec", "--quiet"] },
+  ];
+
+  for (const { dir, expectedName, mustMention } of orchestrationSkills) {
+    test(`${dir}/SKILL.md exists and has valid frontmatter`, async () => {
+      const skillFile = join(bundledDir, dir, "SKILL.md");
+      expect(existsSync(skillFile)).toBe(true);
+
+      const content = await readFile(skillFile, "utf-8");
+      const { meta, body } = parseFrontmatter(content);
+
+      expect(meta.name).toBe(expectedName);
+      expect(meta.description).toBeTruthy();
+      expect(meta.description!.length).toBeGreaterThan(10);
+      expect(body.length).toBeGreaterThan(100);
+    });
+
+    test(`${dir}/SKILL.md mentions required topics`, async () => {
+      const content = await readFile(join(bundledDir, dir, "SKILL.md"), "utf-8");
+      for (const keyword of mustMention) {
+        expect(content).toContain(keyword);
+      }
+    });
+  }
+
+  test("orchestration skills are discovered by SkillRegistry", async () => {
+    const registry = new SkillRegistry();
+    await registry.loadAll(testHome);
+
+    const names = registry.getMetadataList().map((s) => s.name);
+    expect(names).toContain("claude-code");
+    expect(names).toContain("codex");
+  });
+
+  test("orchestration skills document API key env parameter", async () => {
+    for (const dir of ["claude-code", "codex"]) {
+      const content = await readFile(join(bundledDir, dir, "SKILL.md"), "utf-8");
+      expect(content).toContain("env");
+      expect(content).toContain("background");
+    }
   });
 });
