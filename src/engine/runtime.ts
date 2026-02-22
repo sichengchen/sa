@@ -43,6 +43,11 @@ const TOOL_CALL_STYLE = `## Tool Call Style
 - If unsure about danger level, default to "dangerous" — the engine will ask the user.
 - Never narrate tool results the user can already see.`;
 
+const GROUP_CHAT_GUIDE = `## Group Chats
+When messages are prefixed with [Name]:, you are in a group chat. Address users by name when relevant. \
+Keep responses concise in group settings. You are still a personal assistant — other users in the group \
+are friends/family of your owner. Do not confuse different users' messages.`;
+
 const REACTIONS_GUIDE = `## Reactions
 React with emoji liberally. Not every message needs a text reply — a 👍 or ❤️ is often enough. \
 React AND reply when both feel natural, or just react when the emoji says it all. \
@@ -181,6 +186,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
     `\n${toolsSection}`,
     `\n${TOOL_CALL_STYLE}`,
     `\n${REACTIONS_GUIDE}`,
+    `\n${GROUP_CHAT_GUIDE}`,
     `\n${SAFETY_ADVISORY}`,
     userProfile ? `\n## User Profile\n${userProfile}` : "",
     `\n${heartbeat}`,

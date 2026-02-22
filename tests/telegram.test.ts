@@ -7,6 +7,7 @@ import {
   validatePairingCode,
   shouldRespondInGroup,
   stripBotMention,
+  formatSenderAttribution,
 } from "@sa/connectors/telegram/index.js";
 
 describe("Telegram pairing", () => {
@@ -229,6 +230,22 @@ describe("Telegram group chat filtering", () => {
 
     test("preserves text without mention", () => {
       expect(stripBotMention("hello world", "sa_bot")).toBe("hello world");
+    });
+  });
+
+  describe("formatSenderAttribution", () => {
+    test("prefixes message with sender name", () => {
+      expect(formatSenderAttribution("Alice", "hello")).toBe("[Alice]: hello");
+    });
+
+    test("handles long display names", () => {
+      const name = "A".repeat(100);
+      const result = formatSenderAttribution(name, "hi");
+      expect(result).toBe(`[${name}]: hi`);
+    });
+
+    test("handles empty text", () => {
+      expect(formatSenderAttribution("Bob", "")).toBe("[Bob]: ");
     });
   });
 });

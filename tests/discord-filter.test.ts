@@ -2,6 +2,7 @@ import { describe, test, expect } from "bun:test";
 import {
   shouldRespondInGuild,
   stripBotMention,
+  formatSenderAttribution,
 } from "@sa/connectors/discord/index.js";
 
 describe("Discord group chat filtering", () => {
@@ -74,6 +75,20 @@ describe("Discord group chat filtering", () => {
 
     test("strips mention with trailing whitespace", () => {
       expect(stripBotMention("<@123456>   hello", "123456")).toBe("hello");
+    });
+  });
+
+  describe("formatSenderAttribution", () => {
+    test("prefixes message with display name", () => {
+      expect(formatSenderAttribution("Alice", "hello")).toBe("[Alice]: hello");
+    });
+
+    test("handles display name with special characters", () => {
+      expect(formatSenderAttribution("User#1234", "hi")).toBe("[User#1234]: hi");
+    });
+
+    test("handles empty text", () => {
+      expect(formatSenderAttribution("Bob", "")).toBe("[Bob]: ");
     });
   });
 });
