@@ -42,6 +42,40 @@ export function isMessageAllowed(allowedChatId: number | undefined, chatId: numb
   return allowedChatId === undefined || allowedChatId === chatId;
 }
 
+/** Input for group chat mention/reply filtering */
+export interface TelegramGroupFilterInput {
+  chatType: string;
+  entities?: Array<{ type: string; offset: number; length: number }>;
+  text?: string;
+  botUsername: string;
+  replyToMessageFromId?: number;
+  botId: number;
+}
+
+/**
+ * Pure helper — returns true if the bot should respond to this message.
+ * Private chats always pass. Group chats require an @mention or reply-to-bot.
+ */
+export function shouldRespondInGroup(input: TelegramGroupFilterInput): boolean {
+  const isGroupChat = input.chatType === "group" || input.chatType === "supergroup";
+  if (!isGroupChat) return true;
+
+  const isMentioned = input.entities?.some(
+    (e) =>
+      e.type === "mention" &&
+      input.text?.slice(e.offset, e.offset + e.length).toLowerCase() === `@${input.botUsername.toLowerCase()}`,
+  ) ?? false;
+
+  const isReply = input.replyToMessageFromId === input.botId;
+
+  return isMentioned || isReply;
+}
+
+/** Strip the @botname mention from message text */
+export function stripBotMention(text: string, botUsername: string): string {
+  return text.replace(new RegExp(`@${botUsername}\\s*`, "gi"), "").trim();
+}
+
 /** Pure helper — validates that the user-supplied pairing code matches the expected one */
 export function validatePairingCode(input: string | undefined, expected: string | undefined): boolean {
   if (!expected || !input) return false;

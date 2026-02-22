@@ -1,6 +1,6 @@
 import { Bot, type Context, InlineKeyboard } from "grammy";
 import type { ProviderConfig } from "@sa/engine/router/types.js";
-import { splitMessage, formatToolResult } from "./formatter.js";
+import { splitMessage, formatToolResult, shouldRespondInGroup, stripBotMention } from "./formatter.js";
 import { createTelegramClient } from "./client.js";
 import { markdownToHtml } from "@sa/shared/markdown.js";
 import { createStreamHandler } from "../shared/stream-handler.js";
@@ -170,9 +170,26 @@ export class TelegramConnector {
     this.bot.on("message:text", async (ctx) => {
       if (!this.isAllowed(ctx.message.chat.id)) return;
 
-      const userText = ctx.message.text;
+      let userText = ctx.message.text;
       // Skip commands already handled above
       if (userText.startsWith("/")) return;
+
+      // Group chat gate: only respond when @mentioned or replied to
+      const botInfo = this.bot.botInfo;
+      if (botInfo && !shouldRespondInGroup({
+        chatType: ctx.chat.type,
+        entities: ctx.message.entities as Array<{ type: string; offset: number; length: number }> | undefined,
+        text: userText,
+        botUsername: botInfo.username,
+        replyToMessageFromId: ctx.message.reply_to_message?.from?.id,
+        botId: botInfo.id,
+      })) return;
+
+      // Strip @botname mention from text before forwarding to engine
+      if (botInfo) {
+        userText = stripBotMention(userText, botInfo.username);
+      }
+      if (!userText) return; // Empty after stripping mention
 
       // Track last user message for reactions
       this.lastUserMessageId = ctx.message.message_id;
@@ -264,6 +281,14 @@ export class TelegramConnector {
     // Voice and audio message handler
     this.bot.on(["message:voice", "message:audio"], async (ctx) => {
       if (!this.isAllowed(ctx.message.chat.id)) return;
+
+      // Group chat gate: voice messages can only trigger via reply-to-bot
+      const isGroupChat = ctx.chat.type === "group" || ctx.chat.type === "supergroup";
+      if (isGroupChat) {
+        const botInfo = this.bot.botInfo;
+        const isReply = botInfo && ctx.message.reply_to_message?.from?.id === botInfo.id;
+        if (!isReply) return;
+      }
 
       await ctx.api.sendChatAction(ctx.message.chat.id, "typing");
 
