@@ -1,12 +1,13 @@
 ---
 id: 61
 title: Replace apple-calendar skill with apple-calendar-cli
-status: active
+status: done
 type: feature
 priority: 2
 phase: 005-security-tool-policy
 branch: feature/005-security-tool-policy
 created: 2026-02-22
+shipped_at: 2026-02-22
 ---
 # Replace apple-calendar skill with apple-calendar-cli
 
