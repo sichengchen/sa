@@ -7,6 +7,7 @@ export const clawHubSearchTool: ToolImpl = {
   name: "clawhub_search",
   description:
     "Search the ClawHub skill registry (clawhub.ai) for agent skills. Use this when the user wants to find, browse, or install a skill from the registry.",
+  dangerLevel: "safe",
   parameters: Type.Object({
     query: Type.String({
       description: "Search query describing the kind of skill to find",

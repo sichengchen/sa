@@ -12,6 +12,7 @@ export function createSetEnvSecretTool(config: ConfigManager): ToolImpl {
     summary:
       "Store a secret (API key, token) encrypted in secrets.enc. " +
       "Use for: BRAVE_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, bot tokens, etc.",
+    dangerLevel: "safe",
     parameters: Type.Object({
       name: Type.String({
         description: 'Environment variable name, e.g. "BRAVE_API_KEY"',
@@ -55,6 +56,7 @@ export function createSetEnvVariableTool(config: ConfigManager): ToolImpl {
     summary:
       "Set a plain (non-secret) environment variable in config.json. " +
       "Use for: feature flags, paths, non-sensitive config. Not for API keys or tokens.",
+    dangerLevel: "safe",
     parameters: Type.Object({
       name: Type.String({
         description: 'Environment variable name, e.g. "SA_LOG_LEVEL"',

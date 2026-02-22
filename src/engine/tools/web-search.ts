@@ -89,6 +89,7 @@ export const webSearchTool: ToolImpl = {
     "Search the web using Brave Search or Perplexity API and return structured results.",
   summary:
     "Search the web and return results (title, URL, snippet). Backends: Brave (BRAVE_API_KEY) or Perplexity (PERPLEXITY_API_KEY). Auto-selects available backend.",
+  dangerLevel: "safe",
   parameters: Type.Object({
     query: Type.String({ description: "The search query" }),
     count: Type.Optional(Type.Number({ description: "Number of results (default 5)" })),

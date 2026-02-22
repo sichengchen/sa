@@ -13,6 +13,7 @@ export const webFetchTool: ToolImpl = {
   description: "Fetch a URL and return its content. HTML is converted to markdown for readability.",
   summary:
     "Fetch a URL and return content as markdown (HTML) or plain text (JSON, text, XML). Supports custom headers and max length truncation.",
+  dangerLevel: "safe",
   parameters: Type.Object({
     url: Type.String({ description: "The URL to fetch" }),
     maxLength: Type.Optional(

@@ -6,6 +6,7 @@ export const reactionTool: ToolImpl = {
   description:
     "React to the user's message with an emoji. Use this for quick acknowledgments, sentiment, or feedback without a full text response.",
   summary: "React to a message with an emoji (Telegram/Discord tap-back).",
+  dangerLevel: "safe",
   parameters: Type.Object({
     emoji: Type.String({ description: "Emoji character to react with, e.g. '👍', '❤️', '😂'" }),
   }),

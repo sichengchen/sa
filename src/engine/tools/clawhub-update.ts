@@ -9,6 +9,7 @@ export function createClawHubUpdateTool(saHome: string, skills: SkillRegistry): 
     name: "clawhub_update",
     description:
       "Check for updates to installed ClawHub skills and update them. Pass a slug to update one skill, or omit to check all installed skills.",
+    dangerLevel: "moderate",
     parameters: Type.Object({
       slug: Type.Optional(
         Type.String({

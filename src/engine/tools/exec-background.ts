@@ -86,6 +86,7 @@ export const execStatusTool: ToolImpl = {
   name: "exec_status",
   description: "Check the status and output of a background exec process.",
   summary: "Check status/output of a background process by handle. Returns stdout, stderr, exit code, and whether still running.",
+  dangerLevel: "safe",
   parameters: Type.Object({
     handle: Type.String({ description: "The background process handle returned by exec" }),
   }),
@@ -113,6 +114,7 @@ export const execKillTool: ToolImpl = {
   name: "exec_kill",
   description: "Terminate a background exec process.",
   summary: "Kill a background process by handle. Returns final output.",
+  dangerLevel: "dangerous",
   parameters: Type.Object({
     handle: Type.String({ description: "The background process handle to kill" }),
   }),

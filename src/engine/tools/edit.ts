@@ -7,6 +7,7 @@ export const editTool: ToolImpl = {
   description:
     "Perform an exact string replacement in a file. The old_string must appear exactly once in the file.",
   summary: "Make precise string replacements in a file. Prefer this over bash+sed.",
+  dangerLevel: "moderate",
   parameters: Type.Object({
     file_path: Type.String({ description: "Absolute path to the file to edit" }),
     old_string: Type.String({ description: "The exact string to find and replace" }),

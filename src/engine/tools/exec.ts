@@ -11,6 +11,7 @@ export const execTool: ToolImpl = {
     "Execute a shell command with advanced options: workdir, env overrides, background mode, yield timeout, and process timeout.",
   summary:
     "Execute a shell command. Supports workdir, env overrides, background mode (returns handle), yieldMs (auto-background after delay, default 10s), and timeout (seconds, default 1800). Use exec_status/exec_kill to manage background processes.",
+  dangerLevel: "dangerous",
   parameters: Type.Object({
     command: Type.String({ description: "The shell command to execute" }),
     workdir: Type.Optional(Type.String({ description: "Working directory (defaults to cwd)" })),

@@ -9,6 +9,7 @@ export function createClawHubInstallTool(saHome: string, skills: SkillRegistry):
     name: "clawhub_install",
     description:
       "Install a skill from the ClawHub registry (clawhub.ai) by its slug. The skill will be downloaded and available immediately.",
+    dangerLevel: "moderate",
     parameters: Type.Object({
       slug: Type.String({
         description: "The ClawHub skill slug (e.g. 'steipete/apple-notes')",

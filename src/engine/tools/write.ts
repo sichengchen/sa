@@ -8,6 +8,7 @@ export const writeTool: ToolImpl = {
   description:
     "Write content to a file. Creates the file and parent directories if they don't exist. Overwrites existing files.",
   summary: "Create or overwrite a file. Prefer this over bash+echo.",
+  dangerLevel: "moderate",
   parameters: Type.Object({
     file_path: Type.String({ description: "Absolute path to write the file" }),
     content: Type.String({ description: "Content to write to the file" }),

@@ -7,6 +7,7 @@ export const readTool: ToolImpl = {
   description:
     "Read the contents of a file. Returns the file content as text. Optionally specify line offset and limit for partial reads.",
   summary: "Read file contents. Prefer this over bash+cat.",
+  dangerLevel: "safe",
   parameters: Type.Object({
     file_path: Type.String({ description: "Absolute path to the file to read" }),
     offset: Type.Optional(
