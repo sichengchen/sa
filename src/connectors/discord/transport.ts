@@ -7,7 +7,7 @@ import {
   type Message,
   type Interaction,
 } from "discord.js";
-import { splitMessage, formatToolResult } from "./formatter.js";
+import { splitMessage, formatToolResult, shouldRespondInGuild, stripBotMention } from "./formatter.js";
 import { createDiscordClient } from "./client.js";
 import type { ProviderConfig } from "@sa/engine/router/types.js";
 import { createStreamHandler } from "../shared/stream-handler.js";
@@ -170,11 +170,44 @@ export class DiscordConnector {
         a.contentType?.startsWith("audio/"),
       );
       if (audioAttachment && !message.content.trim()) {
+        // Guild gate for audio: only reply-to-bot (can't @mention in voice)
+        if (message.guild && this.discord.user && message.reference?.messageId) {
+          try {
+            const refMsg = await message.channel.messages.fetch(message.reference.messageId);
+            if (refMsg.author.id !== this.discord.user.id) return;
+          } catch {
+            return; // Can't verify reply — skip in group
+          }
+        } else if (message.guild) {
+          return; // Group audio without reply — skip
+        }
         await this.handleAudioMessage(message, audioAttachment.url, audioAttachment.name ?? "audio.ogg");
         return;
       }
 
-      const text = message.content.trim();
+      // Guild (group) chat gate: only respond when @mentioned or replied to
+      const isGuild = message.guild !== null;
+      if (isGuild && this.discord.user) {
+        const mentionedBot = message.mentions.has(this.discord.user);
+        let isReplyToBot = false;
+        if (message.reference?.messageId) {
+          try {
+            const refMsg = await message.channel.messages.fetch(message.reference.messageId);
+            isReplyToBot = refMsg.author.id === this.discord.user.id;
+          } catch {
+            // Failed to fetch referenced message — not a reply to bot
+          }
+        }
+        if (!shouldRespondInGuild({ isGuild, mentionedBot, isReplyToBot })) return;
+      }
+
+      let text = message.content.trim();
+
+      // Strip bot mention from text before processing
+      if (this.discord.user) {
+        text = stripBotMention(text, this.discord.user.id);
+      }
+
       if (!text) return;
 
       // Slash commands

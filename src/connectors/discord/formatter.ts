@@ -6,6 +6,27 @@ export function formatToolResult(toolName: string, content: string): string {
   return `**${toolName}**\n\`\`\`\n${truncated}\n\`\`\``;
 }
 
+/** Input for guild (group) chat mention/reply filtering */
+export interface DiscordGroupFilterInput {
+  isGuild: boolean;
+  mentionedBot: boolean;
+  isReplyToBot: boolean;
+}
+
+/**
+ * Pure helper — returns true if the bot should respond to this message.
+ * DMs always pass. Guild messages require an @mention or reply-to-bot.
+ */
+export function shouldRespondInGuild(input: DiscordGroupFilterInput): boolean {
+  if (!input.isGuild) return true;
+  return input.mentionedBot || input.isReplyToBot;
+}
+
+/** Strip the <@botId> mention from message text */
+export function stripBotMention(text: string, botId: string): string {
+  return text.replace(new RegExp(`<@!?${botId}>\\s*`, "g"), "").trim();
+}
+
 /** Split a long message into chunks fitting Discord's 2000 char limit */
 export function splitMessage(text: string): string[] {
   if (text.length <= DISCORD_MAX_LENGTH) return [text];
