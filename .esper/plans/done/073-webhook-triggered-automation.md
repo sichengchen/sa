@@ -1,14 +1,14 @@
 ---
-id: 073
-title: "Webhook-triggered automation tasks"
-status: pending
+id: 73
+title: Webhook-triggered automation tasks
+status: done
 type: feature
 priority: 2
 phase: 006-full-stack-polish
 branch: feature/006-full-stack-polish
 created: 2026-02-22
+shipped_at: 2026-02-22
 ---
-
 # Webhook-triggered automation tasks
 
 ## Context
@@ -111,3 +111,15 @@ Reuse the same `~/.sa/automation/` logging from plan 067.
 - Manual: `curl -X POST http://127.0.0.1:7420/webhook/heartbeat -H "Authorization: Bearer <token>"`, verify heartbeat triggers immediately
 - Manual: Create a webhook task with `connector: "telegram"`, trigger it, verify response is pushed to Telegram
 - Edge cases: Unknown slug (404); disabled task (403); missing bearer token when required (401); invalid bearer token (401); very large payload (truncate before interpolation); concurrent webhook triggers for same task (each gets its own session); heartbeat trigger when heartbeat is disabled (409)
+
+## Progress
+- Added WebhookTask interface with slug, prompt template, connector delivery field
+- Added `token` to webhook config for bearer token authentication
+- Refactored server.ts: extracted `authenticateWebhook` helper, renamed `/webhook` → `/webhook/agent` (with backward compat), added `/webhook/tasks/:slug` and `/webhook/heartbeat` routes
+- `/webhook/tasks/:slug` dispatches to isolated agent sessions with {{payload}} interpolation, result logging, and optional connector delivery via notify tool
+- `/webhook/heartbeat` triggers scheduler.tick() with auth
+- Added 4 webhook task CRUD procedures (list/add/update/remove) with slug uniqueness validation
+- Created tests/webhook-tasks.test.ts with 30 tests covering types, prompt interpolation, bearer auth, slug routing, URL patterns, payload truncation
+- Modified: types.ts, server.ts, procedures.ts
+- Created: tests/webhook-tasks.test.ts
+- Verification: 441 pass, 9 skip, 0 fail; typecheck clean; lint clean
