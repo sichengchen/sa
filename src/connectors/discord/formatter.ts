@@ -27,6 +27,11 @@ export function stripBotMention(text: string, botId: string): string {
   return text.replace(new RegExp(`<@!?${botId}>\\s*`, "g"), "").trim();
 }
 
+/** Format a message with sender attribution for guild chats */
+export function formatSenderAttribution(displayName: string, text: string): string {
+  return `[${displayName}]: ${text}`;
+}
+
 /** Split a long message into chunks fitting Discord's 2000 char limit */
 export function splitMessage(text: string): string[] {
   if (text.length <= DISCORD_MAX_LENGTH) return [text];

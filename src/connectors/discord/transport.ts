@@ -28,7 +28,8 @@ export class DiscordConnector {
   private discord: Client;
   private client: EngineClient;
   private options: DiscordConnectorOptions;
-  private sessionId: string | null = null;
+  /** Per-channel active session: prefix → sessionId */
+  private activeSessions = new Map<string, string>();
   /** Track last user message for emoji reactions */
   private lastUserMessage: Message | null = null;
 
@@ -54,15 +55,25 @@ export class DiscordConnector {
     return true;
   }
 
-  private async ensureSession(): Promise<string> {
-    if (!this.sessionId) {
-      const session = await this.client.session.create.mutate({
-        connectorType: "discord",
-        prefix: `discord:${this.options.allowedChannelId ?? "default"}`,
-      });
-      this.sessionId = session.id;
+  private async ensureSession(channelId: string): Promise<string> {
+    const prefix = `discord:${channelId}`;
+    const existing = this.activeSessions.get(prefix);
+    if (existing) return existing;
+
+    // Try to resume existing session on the engine
+    const latest = await this.client.session.getLatest.query({ prefix });
+    if (latest) {
+      this.activeSessions.set(prefix, latest.id);
+      return latest.id;
     }
-    return this.sessionId;
+
+    // Create a new session
+    const session = await this.client.session.create.mutate({
+      connectorType: "discord",
+      prefix,
+    });
+    this.activeSessions.set(prefix, session.id);
+    return session.id;
   }
 
   private async handleAudioMessage(message: Message, audioUrl: string, filename: string): Promise<void> {
@@ -70,7 +81,7 @@ export class DiscordConnector {
     const channel = message.channel;
 
     try {
-      const sessionId = await this.ensureSession();
+      const sessionId = await this.ensureSession(message.channelId);
 
       // Download audio
       const res = await fetch(audioUrl);
@@ -212,10 +223,13 @@ export class DiscordConnector {
 
       // Slash commands
       if (text === "/new") {
-        if (this.sessionId) {
-          try { await this.client.session.destroy.mutate({ sessionId: this.sessionId }); } catch {}
-        }
-        this.sessionId = null;
+        const prefix = `discord:${message.channelId}`;
+        // Create a fresh session under the same prefix (old session preserved)
+        const session = await this.client.session.create.mutate({
+          connectorType: "discord",
+          prefix,
+        });
+        this.activeSessions.set(prefix, session.id);
         await message.reply("New session started.");
         return;
       }
@@ -275,7 +289,13 @@ export class DiscordConnector {
 
       // Regular chat
       try {
-        const sessionId = await this.ensureSession();
+        const sessionId = await this.ensureSession(message.channelId);
+
+        // Sender attribution for guild (group) chats
+        const isGuild = message.guild !== null;
+        const messageForEngine = isGuild
+          ? `[${message.author.displayName}]: ${text}`
+          : text;
 
         const { handleTextDelta, handleDone, handleError } = createStreamHandler<Message>({
           send: (content) => message.reply(content),
@@ -287,7 +307,7 @@ export class DiscordConnector {
         });
 
         this.client.chat.stream.subscribe(
-          { sessionId, message: text },
+          { sessionId, message: messageForEngine },
           {
             onData: async (event) => {
               switch (event.type) {
