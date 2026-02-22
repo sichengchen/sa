@@ -145,46 +145,11 @@ This directive ensures the agent always considers its skill library before respo
 
 ## ClawHub Integration
 
-[ClawHub](https://clawhub.ai) is SA's skill marketplace. The integration consists of an HTTP client, an installer, and a self-contained bundled skill with scripts.
-
-### ClawHubClient
-
-`src/engine/clawhub/client.ts` provides the HTTP client for the ClawHub REST API at `https://api.clawhub.ai`. Key methods:
-
-| Method          | Endpoint                           | Description                           |
-|-----------------|------------------------------------|---------------------------------------|
-| `search(query)` | `GET /skills/search?q=...`         | Vector-embedding search over skills   |
-| `getSkill(slug)`| `GET /skills/:slug`                | Full metadata for a single skill      |
-| `listPopular()` | `GET /skills/popular`              | Browse popular/highlighted skills     |
-| `download(slug)`| `GET /skills/:slug/download[/:ver]`| Download skill as a zip archive       |
-
-### SkillInstaller
-
-`src/engine/clawhub/installer.ts` manages the local installation of ClawHub skills. Key behaviors:
-
-- **Install**: Downloads the zip, extracts to `~/.sa/skills/<name>/`, validates that `SKILL.md` exists, and updates the local registry.
-- **Uninstall**: Removes the skill directory and its registry entry.
-- **Name conflict detection**: If a skill with the same name but a different slug already exists, installation is rejected with an error.
-- **Update (overwrite)**: If the same slug is already installed, the new version overwrites it.
-
-### Local Registry (`.registry.json`)
-
-The file `~/.sa/skills/.registry.json` tracks which skills were installed from ClawHub. Each entry records:
-
-```json
-{
-  "slug": "steipete/apple-notes",
-  "name": "apple-notes",
-  "version": "1.2.0",
-  "installedAt": "2026-02-20T10:30:00.000Z"
-}
-```
-
-This registry is used by the update script to compare installed versions against the latest available on ClawHub.
+[ClawHub](https://clawhub.ai) is SA's skill marketplace. The integration is a self-contained bundled skill (`src/engine/skills/bundled/clawhub/`) with its own library code and scripts. The library (`lib/client.ts`, `lib/types.ts`, `lib/installer.ts`) provides the HTTP client and installer; the scripts invoke them via `exec`.
 
 ### Bundled Skill
 
-ClawHub is a self-contained bundled skill (`src/engine/skills/bundled/clawhub/`) with three scripts that the agent runs via `exec`:
+ClawHub is a self-contained bundled skill with three scripts that the agent runs via `exec`:
 
 | Script | Danger | Description |
 |--------|--------|-------------|
@@ -224,7 +189,7 @@ To create a skill manually:
    Include example commands and expected output.
    ```
 
-3. The skill will be discovered on the next engine restart (or when `SkillRegistry.loadAll()` is called, e.g., after a `clawhub_install`).
+3. The skill will be discovered on the next engine restart (or when `SkillRegistry.loadAll()` is called, e.g., after a ClawHub install).
 
 For scaffolding assistance, the bundled `skill-creator` skill can guide the agent through the process interactively.
 

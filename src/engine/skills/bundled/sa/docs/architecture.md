@@ -59,10 +59,10 @@ interactive config editor. The Engine itself is a separate long-running Bun proc
 | Agent | `src/engine/agent/` | Conversation loop, streaming events, tool dispatch, tool approval, loop detection, result size guard |
 | Model Router | `src/engine/router/` | Provider/model configuration, active model switching, tier-based routing, alias resolution, fallback chains. Wraps `@mariozechner/pi-ai` |
 | Config | `src/engine/config/` | `IDENTITY.md`, `config.json` (v3), `USER.md`, `secrets.enc` loading, saving, and migration |
-| Tools | `src/engine/tools/` | 17 built-in tools across three danger tiers. Includes exec classifier, tool policy manager, and background process management |
+| Tools | `src/engine/tools/` | 14 built-in tools across three danger tiers. Includes exec classifier, tool policy manager, and background process management |
 | Memory | `src/engine/memory/` | Memory directory initialization, persistence helpers, context loading for system prompt |
 | Skills | `src/engine/skills/` | Skill discovery, loading (bundled + `~/.sa/skills/`), activation, and prompt integration via `SKILL.md` |
-| ClawHub | `src/engine/clawhub/` | ClawHub API client for skill search, install, and update |
+| ClawHub skill | `src/engine/skills/bundled/clawhub/` | Self-contained bundled skill for skill search, install, and update via ClawHub |
 | Audio | `src/engine/audio/` | Audio transcription --- prefers local Whisper, falls back to cloud API |
 | Connectors | `src/connectors/` | TUI (Ink + React), Telegram (Grammy), Discord (Discord.js), shared stream handler |
 | CLI | `src/cli/` | `sa` command entry point, daemon control (`engine start/stop/status/logs/restart`), onboarding wizard, config editor |
@@ -108,11 +108,11 @@ sa engine start
        |    |     Load bundled skills (src/engine/skills/bundled/*) +
        |    |     user-installed skills (~/.sa/skills/*)
        |    |
-       |    +-- Build tools (17 total)
-       |    |     10 builtins (read, write, edit, exec, exec_status, exec_kill,
-       |    |     web_fetch, web_search, reaction, clawhub_search) +
-       |    |     7 context-bound (remember, read_skill, clawhub_install,
-       |    |     clawhub_update, set_env_secret, set_env_variable, notify)
+       |    +-- Build tools (14 total)
+       |    |     9 builtins (read, write, edit, exec, exec_status, exec_kill,
+       |    |     web_fetch, web_search, reaction) +
+       |    |     5 context-bound (remember, read_skill,
+       |    |     set_env_secret, set_env_variable, notify)
        |    |
        |    +-- Assemble system prompt
        |    |     identity + tools section + tool call style guide +
@@ -292,9 +292,6 @@ The 17 built-in tools and their danger levels:
 | `web_fetch` | safe | Fetch a URL |
 | `web_search` | safe | Web search |
 | `reaction` | safe | Send an emoji reaction |
-| `clawhub_search` | safe | Search ClawHub skill registry |
-| `clawhub_install` | moderate | Install a skill from ClawHub |
-| `clawhub_update` | moderate | Update an installed skill |
 | `remember` | safe | Persist a memory note |
 | `read_skill` | safe | Load a skill's full content |
 | `set_env_secret` | moderate | Store an encrypted secret |
@@ -743,7 +740,7 @@ containing a `SKILL.md` file.
 | Source | Path | Example |
 |---|---|---|
 | Bundled | `src/engine/skills/bundled/<name>/` | `sa`, `podcast`, `translate` |
-| User-installed | `~/.sa/skills/<name>/` | Skills installed via `clawhub_install` |
+| User-installed | `~/.sa/skills/<name>/` | Skills installed manually or via ClawHub |
 
 ### Skill lifecycle
 

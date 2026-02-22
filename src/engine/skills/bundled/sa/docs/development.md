@@ -58,7 +58,6 @@ src/
   engine/                # daemon internals
     agent/
     audio/
-    clawhub/
     config/
     memory/
     router/

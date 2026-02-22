@@ -28,7 +28,6 @@ reporting.
 | `read` | safe | Read-only file access |
 | `web_search` | safe | Read-only web search |
 | `web_fetch` | safe | Read-only URL fetch |
-| `clawhub_search` | safe | Read-only skill search |
 | `read_skill` | safe | Read-only skill loading |
 | `exec_status` | safe | Read-only process status check |
 | `remember` | safe | Appends to memory files |
@@ -38,8 +37,6 @@ reporting.
 | `notify` | safe | Sends notifications to connectors |
 | `write` | moderate | Creates or overwrites files |
 | `edit` | moderate | Edits files in place |
-| `clawhub_install` | moderate | Downloads and installs skills |
-| `clawhub_update` | moderate | Updates installed skills |
 | `exec` | dangerous | Arbitrary shell command execution |
 | `exec_kill` | dangerous | Kills background processes |
 

@@ -424,8 +424,8 @@ Override the danger level or reporting behavior for individual tools by name:
 
 | Level | Built-in tools at this level |
 |---|---|
-| `"safe"` | `read`, `web_fetch`, `web_search`, `clawhub_search`, `remember`, `set_env_secret`, `set_env_variable`, `exec_status`, `reaction`, `notify` |
-| `"moderate"` | `write`, `edit`, `clawhub_install`, `clawhub_update` |
+| `"safe"` | `read`, `web_fetch`, `web_search`, `remember`, `set_env_secret`, `set_env_variable`, `exec_status`, `reaction`, `notify` |
+| `"moderate"` | `write`, `edit` |
 | `"dangerous"` | `exec`, `bash`, `exec_kill` |
 
 **`report`** controls event emission regardless of verbosity:
