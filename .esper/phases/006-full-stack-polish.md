@@ -95,6 +95,7 @@ Connectors track the "current session" per chat context. `/new` calls `create(pr
 - Plan 075 — Comprehensive docs bundled in sa skill: Relocate docs/ into sa skill directory as single source of truth (8 docs, 4200+ lines). Files: architecture.md, configuration.md, tools.md, development.md, skills.md, sessions.md, automation.md, security.md, SKILL.md, README.md, CONSTITUTION.md, embed-skills.ts, loader.ts, Wizard.tsx
 - Plan 069 — Skill-based agent orchestration: Claude Code and Codex orchestration skills for delegating coding tasks via exec. Files: claude-code/SKILL.md, codex/SKILL.md, skills.test.ts
 - Plan 076 — fix: remove legacy webhook secret auth, enforce bearer token on all routes: Remove legacy secret branch from authenticateWebhook, enforce bearer-token-only on all webhook routes. Files: server.ts, types.ts, webhook-tasks.test.ts, security.md, configuration.md, architecture.md
+- Plan 077 — fix: trigger only heartbeat for manual heartbeat APIs: Add Scheduler.runTask() for isolated task execution, use for heartbeat.trigger and /webhook/heartbeat. Files: scheduler.ts, procedures.ts, server.ts, scheduler.test.ts
 
 ## Post-Review Findings (2026-02-22)
 - [ ] **[P1] Enforce legacy webhook secret on task + heartbeat routes** (`src/engine/server.ts`): `authenticateWebhook` only checks `webhook.secret` when a request body is passed, so `/webhook/tasks/:slug` and `/webhook/heartbeat` are not protected when token auth is unset.
