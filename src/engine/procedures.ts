@@ -423,12 +423,13 @@ export function createAppRouter(runtime: EngineRuntime) {
         return { name: runtime.router.getActiveModelName() };
       }),
 
-      /** Switch the active model */
+      /** Switch the active model (supports aliases) */
       switch: publicProcedure
         .input(z.object({ name: z.string() }))
         .mutation(async ({ input }): Promise<{ name: string }> => {
-          await runtime.router.switchModel(input.name);
-          return { name: input.name };
+          const resolved = runtime.router.resolveAlias(input.name);
+          await runtime.router.switchModel(resolved);
+          return { name: resolved };
         }),
 
       /** Add a model configuration */
@@ -454,6 +455,27 @@ export function createAppRouter(runtime: EngineRuntime) {
           await runtime.router.removeModel(input.name);
           return { removed: true };
         }),
+
+      /** Get the current tier-to-model mapping */
+      tiers: publicProcedure.query(() => {
+        return runtime.router.getTierConfig();
+      }),
+
+      /** Set a tier's model */
+      setTier: publicProcedure
+        .input(z.object({
+          tier: z.enum(["performance", "normal", "eco"]),
+          modelName: z.string(),
+        }))
+        .mutation(async ({ input }) => {
+          await runtime.router.setTierModel(input.tier, input.modelName);
+          return { tier: input.tier, modelName: input.modelName };
+        }),
+
+      /** Get full routing state (tiers, aliases, active/default model) */
+      routing: publicProcedure.query(() => {
+        return runtime.router.getRoutingState();
+      }),
     }),
 
     /** Provider management */
