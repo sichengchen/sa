@@ -8,6 +8,7 @@ phase: 006-full-stack-polish
 branch: feature/006-full-stack-polish
 created: 2026-02-22
 shipped_at: 2026-02-22
+pr: https://github.com/sichengchen/sa/pull/12
 ---
 # Migrate imports to path aliases
 
