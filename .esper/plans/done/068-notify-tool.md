@@ -1,14 +1,14 @@
 ---
-id: 068
-title: "Notify tool"
-status: pending
+id: 68
+title: Notify tool
+status: done
 type: feature
 priority: 2
 phase: 006-full-stack-polish
 branch: feature/006-full-stack-polish
 created: 2026-02-22
+shipped_at: 2026-02-22
 ---
-
 # Notify tool
 
 ## Context
@@ -60,3 +60,11 @@ Add `notify` tool documentation to `src/engine/skills/bundled/sa/SKILL.md`.
 - Expected: Clean
 - Manual: Configure bot token + paired chat ID, use notify tool in a chat session, verify message arrives on Telegram
 - Edge cases: No bot token configured (return helpful error, don't crash); Telegram API rate limit (handle 429 gracefully); message too long (truncate or split)
+
+## Progress
+- Created src/engine/tools/notify.ts with Telegram and Discord HTTP push
+- Created src/engine/tools/notify.test.ts (7 tests: metadata, empty message, missing config, specific connector errors, graceful failure)
+- Registered notify tool in runtime.ts
+- Updated bundled SA skill with notify tool documentation
+- Modified: notify.ts, notify.test.ts, runtime.ts, SKILL.md
+- Verification: 377 pass, 9 skip, 0 fail; typecheck clean; lint clean
