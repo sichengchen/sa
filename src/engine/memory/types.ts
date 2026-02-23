@@ -16,8 +16,10 @@ export interface SearchResult {
   lineStart: number;
   /** Last line of this chunk in the source file (1-indexed) */
   lineEnd: number;
-  /** BM25 relevance score (lower rank = more relevant; normalized to 0..1 for consumers) */
+  /** Combined relevance score (higher = more relevant) */
   score: number;
+  /** Vector similarity score (0..1), present when embedding search was used */
+  vectorScore?: number;
   /** Unix timestamp of last update */
   updatedAt: number;
 }
@@ -28,4 +30,17 @@ export interface SearchOptions {
   maxResults?: number;
   /** Filter by source type (default: "all") */
   sourceType?: "memory" | "topic" | "journal" | "all";
+}
+
+/** Embedding function callback type */
+export type EmbedFn = (texts: string[]) => Promise<{ vectors: number[][]; dimensions: number }>;
+
+/** Embedding configuration for MemoryManager */
+export interface EmbeddingConfig {
+  /** Function to embed text into vectors */
+  embed: EmbedFn;
+  /** Provider name (for tracking reindex needs) */
+  provider: string;
+  /** Model name (for tracking reindex needs) */
+  model: string;
 }

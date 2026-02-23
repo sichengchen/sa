@@ -137,7 +137,7 @@ describe("MemoryManager — FTS5 search", () => {
     await mgr.save("address", "My address is 123 Example St, Columbus OH");
     await mgr.save("phone", "My phone number is 555-1234");
 
-    const results = mgr.searchIndex("address");
+    const results = await mgr.searchIndex("address");
     expect(results.length).toBeGreaterThanOrEqual(1);
     expect(results[0].sourceType).toBe("topic");
     expect(results[0].source).toBe("topics/address.md");
@@ -154,8 +154,8 @@ describe("MemoryManager — FTS5 search", () => {
     await mgr.save("note", "Meeting notes for today");
     await mgr.appendJournal("Had a meeting about project X");
 
-    const topicOnly = mgr.searchIndex("meeting", { sourceType: "topic" });
-    const journalOnly = mgr.searchIndex("meeting", { sourceType: "journal" });
+    const topicOnly = await mgr.searchIndex("meeting", { sourceType: "topic" });
+    const journalOnly = await mgr.searchIndex("meeting", { sourceType: "journal" });
 
     expect(topicOnly.every((r) => r.sourceType === "topic")).toBe(true);
     expect(journalOnly.every((r) => r.sourceType === "journal")).toBe(true);
@@ -170,7 +170,7 @@ describe("MemoryManager — FTS5 search", () => {
       await mgr.save(`note-${i}`, `Important note number ${i} about testing`);
     }
 
-    const limited = mgr.searchIndex("note", { maxResults: 2 });
+    const limited = await mgr.searchIndex("note", { maxResults: 2 });
     expect(limited.length).toBeLessThanOrEqual(2);
     mgr.close();
   });
@@ -180,7 +180,7 @@ describe("MemoryManager — FTS5 search", () => {
     await mgr.init();
 
     await mgr.save("item", "Hello world");
-    const results = mgr.searchIndex("zzzzzznonexistent");
+    const results = await mgr.searchIndex("zzzzzznonexistent");
     expect(results).toEqual([]);
     mgr.close();
   });
@@ -192,7 +192,7 @@ describe("MemoryManager — FTS5 search", () => {
     await writeFile(join(testDir, "MEMORY.md"), "The user prefers dark mode in all applications.");
     await mgr.reindex();
 
-    const results = mgr.searchIndex("dark mode");
+    const results = await mgr.searchIndex("dark mode");
     expect(results.length).toBeGreaterThanOrEqual(1);
     expect(results[0].sourceType).toBe("memory");
     mgr.close();
@@ -203,11 +203,11 @@ describe("MemoryManager — FTS5 search", () => {
     await mgr.init();
 
     await mgr.save("removeme", "This content will be deleted.");
-    let results = mgr.searchIndex("deleted");
+    let results = await mgr.searchIndex("deleted");
     expect(results.length).toBeGreaterThanOrEqual(1);
 
     await mgr.delete("removeme");
-    results = mgr.searchIndex("deleted");
+    results = await mgr.searchIndex("deleted");
     expect(results).toEqual([]);
     mgr.close();
   });
@@ -241,7 +241,7 @@ describe("MemoryManager — Journal", () => {
     await mgr.init();
 
     await mgr.appendJournal("Discussed the new database migration plan.", "2026-02-22");
-    const results = mgr.searchIndex("database migration");
+    const results = await mgr.searchIndex("database migration");
     expect(results.length).toBeGreaterThanOrEqual(1);
     expect(results[0].sourceType).toBe("journal");
     mgr.close();
@@ -257,7 +257,7 @@ describe("MemoryManager — Reindex and migration", () => {
     await writeFile(join(testDir, "topics", "external.md"), "Externally created memory file.");
     await mgr.reindex();
 
-    const results = mgr.searchIndex("externally created");
+    const results = await mgr.searchIndex("externally created");
     expect(results.length).toBeGreaterThanOrEqual(1);
     expect(results[0].source).toBe("topics/external.md");
     mgr.close();
@@ -269,14 +269,14 @@ describe("MemoryManager — Reindex and migration", () => {
 
     await mgr.save("willdelete", "This unique content will be gone soon.");
     // Verify it's indexed
-    expect(mgr.searchIndex("unique content").length).toBeGreaterThanOrEqual(1);
+    expect((await mgr.searchIndex("unique content")).length).toBeGreaterThanOrEqual(1);
 
     // Delete file externally
     const { unlink } = await import("node:fs/promises");
     await unlink(join(testDir, "topics", "willdelete.md"));
     await mgr.reindex();
 
-    expect(mgr.searchIndex("unique content")).toEqual([]);
+    expect(await mgr.searchIndex("unique content")).toEqual([]);
     mgr.close();
   });
 
