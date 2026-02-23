@@ -8,6 +8,7 @@ import type { Agent, AgentEvent } from "./agent/index.js";
 import type { DangerLevel } from "./agent/types.js";
 import { classifyExecCommand } from "./tools/exec-classifier.js";
 import { ToolPolicyManager, type ToolEventContext } from "./tools/policy.js";
+import { ConnectorTypeSchema } from "@sa/shared/types.js";
 import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode } from "@sa/shared/types.js";
 import type { ModelConfig, ProviderConfig } from "./router/types.js";
 import { heartbeatState, createHeartbeatTask } from "./scheduler.js";
@@ -437,7 +438,7 @@ export function createAppRouter(runtime: EngineRuntime) {
       create: protectedProcedure
         .input(
           z.object({
-            connectorType: z.enum(["tui", "telegram", "discord", "webhook", "engine"]),
+            connectorType: ConnectorTypeSchema,
             prefix: z.string(),
           }),
         )
@@ -658,7 +659,7 @@ export function createAppRouter(runtime: EngineRuntime) {
           z.object({
             credential: z.string(),
             connectorId: z.string(),
-            connectorType: z.enum(["tui", "telegram", "discord", "webhook", "engine"]),
+            connectorType: ConnectorTypeSchema,
           }),
         )
         .mutation(({ input }) => {

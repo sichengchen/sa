@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /** Shared types between Engine and Connectors */
 
 /** Events emitted by the agent during streaming — mirrors AgentEvent but for tRPC transport */
@@ -20,8 +22,9 @@ export interface Session {
   lastActiveAt: number;
 }
 
-/** Connector types supported by the Engine */
-export type ConnectorType = "tui" | "telegram" | "discord" | "webhook" | "engine" | "cron";
+/** Connector types supported by the Engine — single source of truth */
+export const ConnectorTypeSchema = z.enum(["tui", "telegram", "discord", "webhook", "engine", "cron"]);
+export type ConnectorType = z.infer<typeof ConnectorTypeSchema>;
 
 /** Tool approval mode per connector */
 export type ToolApprovalMode = "always" | "never" | "ask";
