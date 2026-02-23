@@ -32,6 +32,12 @@ export const DEFAULT_CONFIG: SAConfigFile = {
     memory: {
       enabled: true,
       directory: "memory",
+      search: {
+        maxResults: 10,
+      },
+      journal: {
+        enabled: true,
+      },
     },
     toolApproval: {
       tui: "never",

@@ -82,6 +82,16 @@ export interface RuntimeConfig {
   memory: {
     enabled: boolean;
     directory: string;
+    /** Search configuration */
+    search?: {
+      /** Maximum number of search results (default: 10) */
+      maxResults?: number;
+    };
+    /** Journal (daily log) configuration */
+    journal?: {
+      /** Whether daily journal is enabled (default: true) */
+      enabled?: boolean;
+    };
   };
   /** Per-connector tool approval mode (default: "never" for tui, "ask" for IM connectors) */
   toolApproval?: ToolApprovalConfig;
