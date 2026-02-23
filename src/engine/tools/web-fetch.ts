@@ -36,9 +36,9 @@ export const webFetchTool: ToolImpl = {
       return { content: `Error: Invalid URL: ${url}`, isError: true };
     }
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
     try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
       const res = await fetch(url, {
         headers: {
@@ -48,7 +48,6 @@ export const webFetchTool: ToolImpl = {
         signal: controller.signal,
         redirect: "follow",
       });
-      clearTimeout(timer);
 
       if (!res.ok) {
         return { content: `Error: HTTP ${res.status} ${res.statusText}`, isError: true };
@@ -72,6 +71,8 @@ export const webFetchTool: ToolImpl = {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       return { content: `Error: ${msg}`, isError: true };
+    } finally {
+      clearTimeout(timer);
     }
   },
 };

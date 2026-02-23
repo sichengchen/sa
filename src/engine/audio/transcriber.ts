@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { writeFile, readFile, unlink, mkdtemp } from "node:fs/promises";
+import { writeFile, readFile, unlink, mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -74,8 +74,7 @@ async function transcribeWithWhisperCpp(audio: Buffer, format: string): Promise<
     });
     return result;
   } finally {
-    try { await unlink(inputPath); } catch {}
-    try { await unlink(outputPath); } catch {}
+    try { await rm(dir, { recursive: true, force: true }); } catch {}
   }
 }
 
@@ -116,8 +115,7 @@ async function transcribeWithWhisperPython(audio: Buffer, format: string): Promi
     });
     return result;
   } finally {
-    try { await unlink(inputPath); } catch {}
-    try { await unlink(join(dir, "input.txt")); } catch {}
+    try { await rm(dir, { recursive: true, force: true }); } catch {}
   }
 }
 

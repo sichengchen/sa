@@ -58,7 +58,9 @@ export function createStreamHandler<TMsg>(ops: StreamOps<TMsg>) {
           } else {
             await ops.edit(state.sentMsg, content);
           }
-        } catch {} finally {
+        } catch (err) {
+          console.warn("[stream-handler] edit failed:", err instanceof Error ? err.message : err);
+        } finally {
           state.lastEditTime = Date.now();
         }
       });
@@ -76,7 +78,9 @@ export function createStreamHandler<TMsg>(ops: StreamOps<TMsg>) {
           } else {
             await ops.edit(state.sentMsg, chunks[0]!);
           }
-        } catch {}
+        } catch (err) {
+          console.warn("[stream-handler] final edit failed:", err instanceof Error ? err.message : err);
+        }
         for (let i = 1; i < chunks.length; i++) {
           await ops.sendExtra(chunks[i]!);
         }

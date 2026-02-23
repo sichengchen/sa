@@ -1,14 +1,15 @@
 ---
-id: 091
-title: "fix: temp dir leak, clearTimeout gap, and silent stream-handler catches"
-status: pending
+id: 91
+title: fix: temp dir leak, clearTimeout gap, and silent stream-handler catches
+status: done
 type: fix
 priority: 2
 phase: 007-memory-redesign
 branch: fix/error-handling-leaks
 created: 2026-02-23
+shipped_at: 2026-02-23
+pr: https://github.com/sichengchen/sa/pull/24
 ---
-
 # fix: temp dir leak, clearTimeout gap, and silent stream-handler catches
 
 ## Context
@@ -44,3 +45,10 @@ Two empty catch blocks swallow all errors from message edit operations on platfo
 - Manual test transcriber: run a voice transcription, confirm no `sa-audio-*` dir remains in `$TMPDIR` after completion
 - Manual test web-fetch: simulate network error (bad URL) — confirm no stray timer warnings in test output
 - Regression check: Telegram/Discord message editing should still silently skip on rate-limit errors (the behavior is preserved; only logging is added)
+
+## Progress
+- Transcriber: replaced individual file unlinks with `rm(dir, { recursive: true, force: true })` in both whisper-cpp and whisper-python finally blocks
+- web-fetch: moved controller/timer declarations outside try block, added finally block for clearTimeout
+- stream-handler: replaced both empty `catch {}` with `console.warn` logging (edit failed, final edit failed)
+- Modified: src/engine/audio/transcriber.ts, src/engine/tools/web-fetch.ts, src/connectors/shared/stream-handler.ts
+- Verification: 535 tests pass, lint clean, typecheck clean
