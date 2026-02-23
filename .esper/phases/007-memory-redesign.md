@@ -69,3 +69,4 @@ Phase 6 shipped cleanly — no carry-forward. This phase is informed by explorat
 - Plan 092 — fix: add missing tests for agent timeout and memory embedding fallback: Agent timeout tests using mock pi-ai stream; session destroy coverage. Files: agent.test.ts, sessions.test.ts
 - Plan 093 — fix: standardize tRPC mutation return shapes and session ID pairing entropy: Wrap session.create return as { session }, add pairing brute-force rate limit. Files: procedures.ts, auth.ts, App.tsx, transport.ts, procedures.test.ts
 - Plan 094 — fix: sa --help shows error instead of usage text: Add --help/-h flag handling before COMMANDS dispatch. Files: index.ts
+- Plan 095 — Update Claude Code & Codex skills: OAuth-first auth, docs links: Restructure API key handling to OAuth-first flow, update Claude Code install to native installer, add docs links. Files: SKILL.md (claude-code), SKILL.md (codex), embedded-skills.generated.ts
