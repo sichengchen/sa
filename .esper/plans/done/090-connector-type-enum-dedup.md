@@ -8,6 +8,7 @@ phase: 007-memory-redesign
 branch: fix/connector-type-enum-dedup
 created: 2026-02-23
 shipped_at: 2026-02-23
+pr: https://github.com/sichengchen/sa/pull/23
 ---
 # fix: ConnectorType Zod enum missing 'cron' and duplicated across modules
 
