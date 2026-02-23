@@ -8,6 +8,7 @@ phase: 007-memory-redesign
 branch: fix/update-orchestration-skills
 created: 2026-02-23
 shipped_at: 2026-02-23
+pr: https://github.com/sichengchen/sa/pull/28
 ---
 # Update Claude Code & Codex skills: OAuth-first auth, docs links
 
