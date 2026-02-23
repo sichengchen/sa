@@ -24,4 +24,6 @@ export interface ModelConfig {
   maxTokens?: number;
   /** Fallback model name to use when this model's provider fails */
   fallback?: string;
+  /** Model type: "chat" (default) or "embedding" for vector search */
+  type?: "chat" | "embedding";
 }

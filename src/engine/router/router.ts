@@ -373,6 +373,104 @@ export class ModelRouter {
     }
   }
 
+  // --- Embedding support ---
+
+  /** Get the first model configured with type: "embedding", or null */
+  getEmbeddingConfig(): ModelConfig | null {
+    return this.models.find((m) => m.type === "embedding") ?? null;
+  }
+
+  /** Check if an embedding model is configured */
+  hasEmbedding(): boolean {
+    return this.getEmbeddingConfig() !== null;
+  }
+
+  /**
+   * Embed texts using the configured embedding model.
+   * Dispatches to the provider-specific embedding API endpoint.
+   * Throws if no embedding model is configured or the API call fails.
+   */
+  async embed(texts: string[]): Promise<{ vectors: number[][]; dimensions: number }> {
+    const cfg = this.getEmbeddingConfig();
+    if (!cfg) throw new Error("No embedding model configured");
+
+    const provider = this.getProvider(cfg.provider);
+    const apiKey = this.resolveApiKey(provider.apiKeyEnvVar);
+
+    // Dispatch based on provider type
+    const providerType = provider.type as string;
+    if (providerType === "google" || providerType === "google-vertex") {
+      return this.embedGoogle(cfg.model, apiKey, texts, provider.baseUrl);
+    }
+    // OpenAI-compatible: openai, openrouter, nvidia, openai-compat, etc.
+    return this.embedOpenAI(cfg.model, apiKey, texts, provider.baseUrl);
+  }
+
+  /** Call OpenAI-compatible /v1/embeddings endpoint */
+  private async embedOpenAI(
+    model: string,
+    apiKey: string,
+    texts: string[],
+    baseUrl?: string,
+  ): Promise<{ vectors: number[][]; dimensions: number }> {
+    const url = `${baseUrl ?? "https://api.openai.com"}/v1/embeddings`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({ model, input: texts }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Embedding API error (${res.status}): ${body}`);
+    }
+
+    const json = (await res.json()) as {
+      data: Array<{ embedding: number[]; index: number }>;
+    };
+    const sorted = json.data.sort((a, b) => a.index - b.index);
+    const vectors = sorted.map((d) => d.embedding);
+    const dimensions = vectors[0]?.length ?? 0;
+    return { vectors, dimensions };
+  }
+
+  /** Call Google Gemini embedding endpoint */
+  private async embedGoogle(
+    model: string,
+    apiKey: string,
+    texts: string[],
+    baseUrl?: string,
+  ): Promise<{ vectors: number[][]; dimensions: number }> {
+    const base = baseUrl ?? "https://generativelanguage.googleapis.com";
+    // Gemini batch embed endpoint
+    const url = `${base}/v1beta/models/${model}:batchEmbedContents?key=${apiKey}`;
+    const requests = texts.map((text) => ({
+      model: `models/${model}`,
+      content: { parts: [{ text }] },
+    }));
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requests }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Gemini embedding API error (${res.status}): ${body}`);
+    }
+
+    const json = (await res.json()) as {
+      embeddings: Array<{ values: number[] }>;
+    };
+    const vectors = json.embeddings.map((e) => e.values);
+    const dimensions = vectors[0]?.length ?? 0;
+    return { vectors, dimensions };
+  }
+
   private async save(): Promise<void> {
     if (this.onSave) {
       await this.onSave({
