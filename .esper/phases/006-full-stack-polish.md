@@ -1,7 +1,7 @@
 ---
 phase: 006-full-stack-polish
 title: "Full-Stack Polish"
-status: active
+status: completed
 ---
 
 # Phase 6: Full-Stack Polish
@@ -32,26 +32,26 @@ Broad sweep across five explored areas — testing infrastructure, automation, g
 - CI integration for live LLM tests (live tests exist but skip without API key)
 
 ## Acceptance Criteria
-- [ ] `tests/helpers/` exists with temp-dir, live-model, and test-tools utilities
-- [ ] TESTING.md exists at project root with agent-readable testing guidance
-- [ ] Live LLM tests cover agent chat loop (text response, tool use, multi-turn) and tRPC chat.stream
-- [ ] tsconfig path aliases work — all cross-boundary imports use `@sa/*` syntax
-- [ ] Session IDs use structured format: `<prefix>:<session-id>` (e.g., `main:<id>`, `telegram:<chatId>:<id>`)
-- [ ] `SessionManager` supports `create(prefix)`, `getLatest(prefix)`, `listByPrefix(prefix)`
-- [ ] `/new` command creates a fresh session under the same prefix, preserving previous session history
-- [ ] Engine creates a persistent `main` session at startup; heartbeat runs in it
-- [ ] Heartbeat reads `HEARTBEAT.md` checklist, runs agent in main session, suppresses `HEARTBEAT_OK`
-- [ ] `cron.add` dispatches prompts to isolated agent sessions (not a stub)
-- [ ] One-shot scheduling works for time-delayed tasks
-- [ ] Scheduled tasks persist in config.json and restore on engine restart
-- [ ] Webhook payloads can trigger automation tasks via `/webhook/tasks/:slug`
-- [ ] `notify` tool sends messages to connectors from within the agent loop
-- [ ] At least one orchestration skill (Claude Code) works via exec in one-shot mode
-- [ ] Telegram and Discord connectors only respond when @mentioned or replied to in groups
-- [ ] Group chats get isolated session histories and sender attribution
-- [ ] TruffleHog secret scan runs in CI and blocks PRs with verified secret leaks
-- [ ] Every plan includes tests for new/changed code
-- [ ] `bun run typecheck`, `bun run lint`, and `bun test` all pass
+- [x]`tests/helpers/` exists with temp-dir, live-model, and test-tools utilities
+- [x]TESTING.md exists at project root with agent-readable testing guidance
+- [x]Live LLM tests cover agent chat loop (text response, tool use, multi-turn) and tRPC chat.stream
+- [x]tsconfig path aliases work — all cross-boundary imports use `@sa/*` syntax
+- [x]Session IDs use structured format: `<prefix>:<session-id>` (e.g., `main:<id>`, `telegram:<chatId>:<id>`)
+- [x]`SessionManager` supports `create(prefix)`, `getLatest(prefix)`, `listByPrefix(prefix)`
+- [x]`/new` command creates a fresh session under the same prefix, preserving previous session history
+- [x]Engine creates a persistent `main` session at startup; heartbeat runs in it
+- [x]Heartbeat reads `HEARTBEAT.md` checklist, runs agent in main session, suppresses `HEARTBEAT_OK`
+- [x]`cron.add` dispatches prompts to isolated agent sessions (not a stub)
+- [x]One-shot scheduling works for time-delayed tasks
+- [x]Scheduled tasks persist in config.json and restore on engine restart
+- [x]Webhook payloads can trigger automation tasks via `/webhook/tasks/:slug`
+- [x]`notify` tool sends messages to connectors from within the agent loop
+- [x]At least one orchestration skill (Claude Code) works via exec in one-shot mode
+- [x]Telegram and Discord connectors only respond when @mentioned or replied to in groups
+- [x]Group chats get isolated session histories and sender attribution
+- [x]TruffleHog secret scan runs in CI and blocks PRs with verified secret leaks
+- [x]Every plan includes tests for new/changed code
+- [x]`bun run typecheck`, `bun run lint`, and `bun test` all pass
 
 ## Phase Notes
 Phase 5 shipped cleanly — no carry-forward items. This phase follows the minimal recommended approach from each exploration to avoid over-engineering. Key constraint: every plan must include tests (enforced as a phase rule).
@@ -104,8 +104,8 @@ Connectors track the "current session" per chat context. `/new` calls `create(pr
 - Plan 083 — fix: expose missing memory tools (recall, list, search, delete): Add 4 new agent tools exposing existing MemoryManager API. Files: recall.ts, list-memories.ts, search-memories.ts, forget.ts, index.ts, runtime.ts, tools.md, SKILL.md, memory-tools.test.ts
 
 ## Post-Review Findings (2026-02-22)
-- [ ] **[P1] Enforce legacy webhook secret on task + heartbeat routes** (`src/engine/server.ts`): `authenticateWebhook` only checks `webhook.secret` when a request body is passed, so `/webhook/tasks/:slug` and `/webhook/heartbeat` are not protected when token auth is unset.
-- [ ] **[P1] Trigger only heartbeat for manual heartbeat APIs** (`src/engine/procedures.ts`, `src/engine/server.ts`): `heartbeat.trigger` and `/webhook/heartbeat` call `runtime.scheduler.tick()`, which can also run unrelated user cron jobs due in the same minute.
-- [ ] **[P2] Remove restored one-shot cron tasks from persisted config** (`src/engine/runtime.ts`): restored one-shot tasks are registered without completion cleanup, so they can be restored and run again after restart.
-- [ ] **[P2] Re-register heartbeat schedule when interval changes** (`src/engine/procedures.ts`): `heartbeat.configure` mutates in-memory config only; scheduler cron expression is not updated until restart.
-- [ ] **[P2] Honor cron task model override during execution** (`src/engine/procedures.ts`, `src/engine/runtime.ts`): `cron.add` accepts/persists `model`, but cron execution always uses runtime active model.
+- [x]**[P1] Enforce legacy webhook secret on task + heartbeat routes** (`src/engine/server.ts`): `authenticateWebhook` only checks `webhook.secret` when a request body is passed, so `/webhook/tasks/:slug` and `/webhook/heartbeat` are not protected when token auth is unset.
+- [x]**[P1] Trigger only heartbeat for manual heartbeat APIs** (`src/engine/procedures.ts`, `src/engine/server.ts`): `heartbeat.trigger` and `/webhook/heartbeat` call `runtime.scheduler.tick()`, which can also run unrelated user cron jobs due in the same minute.
+- [x]**[P2] Remove restored one-shot cron tasks from persisted config** (`src/engine/runtime.ts`): restored one-shot tasks are registered without completion cleanup, so they can be restored and run again after restart.
+- [x]**[P2] Re-register heartbeat schedule when interval changes** (`src/engine/procedures.ts`): `heartbeat.configure` mutates in-memory config only; scheduler cron expression is not updated until restart.
+- [x]**[P2] Honor cron task model override during execution** (`src/engine/procedures.ts`, `src/engine/runtime.ts`): `cron.add` accepts/persists `model`, but cron execution always uses runtime active model.
