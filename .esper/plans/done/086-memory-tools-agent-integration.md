@@ -8,6 +8,7 @@ phase: 007-memory-redesign
 branch: feature/007-memory-redesign
 created: 2026-02-22
 shipped_at: 2026-02-23
+pr: https://github.com/sichengchen/sa/pull/20
 ---
 # New memory tools + agent integration + docs
 
