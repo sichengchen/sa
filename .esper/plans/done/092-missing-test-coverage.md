@@ -1,14 +1,15 @@
 ---
-id: 092
-title: "fix: add missing tests for agent timeout and memory embedding fallback"
-status: pending
+id: 92
+title: fix: add missing tests for agent timeout and memory embedding fallback
+status: done
 type: fix
 priority: 2
 phase: 007-memory-redesign
 branch: fix/missing-test-coverage
 created: 2026-02-23
+shipped_at: 2026-02-23
+pr: https://github.com/sichengchen/sa/pull/25
 ---
-
 # fix: add missing tests for agent timeout and memory embedding fallback
 
 ## Context
@@ -51,3 +52,14 @@ Additional untested paths (low severity, include if straightforward):
 - Run: `bun test src/engine/memory` — new embedding fallback test must pass
 - Run: `bun test` — full suite must pass with no regressions
 - Coverage check: the paths at `agent.ts:42-45` and `memory/manager.ts:480-485` should now be exercised
+
+## Progress
+- Created `src/engine/agent/agent.test.ts` with 3 timeout tests using `mock.module` for pi-ai:
+  - Timeout between tool call rounds (multi-round, cumulative delay)
+  - Timeout during tool execution (slow tool > timeout)
+  - No timeout when timeoutMs=0
+- Embedding fallback: already covered by existing `tests/memory-embeddings.test.ts:109` ("embedding failure falls back to BM25 gracefully")
+- Created `src/engine/sessions.test.ts` with 8 tests: destroy existing/nonexistent/double-destroy, create/retrieve, list with exclusion, touchSession
+- Modified: (none — test-only additions)
+- Created: src/engine/agent/agent.test.ts, src/engine/sessions.test.ts
+- Verification: 546 tests pass, lint clean, typecheck clean

@@ -32,6 +32,24 @@ describe("SessionManager", () => {
     });
   });
 
+  describe("destroySession()", () => {
+    it("returns true and removes an existing session", () => {
+      const session = manager.create("tui", "tui");
+      expect(manager.destroySession(session.id)).toBe(true);
+      expect(manager.getSession(session.id)).toBeUndefined();
+    });
+
+    it("returns false for a non-existent session", () => {
+      expect(manager.destroySession("nonexistent:id")).toBe(false);
+    });
+
+    it("prevents double-destroy", () => {
+      const session = manager.create("tui", "tui");
+      expect(manager.destroySession(session.id)).toBe(true);
+      expect(manager.destroySession(session.id)).toBe(false);
+    });
+  });
+
   describe("create()", () => {
     it("stores sessions retrievable by ID", () => {
       const session = manager.create("tui", "tui");
@@ -71,6 +89,31 @@ describe("SessionManager", () => {
       manager.create("telegram:222", "telegram");
       expect(manager.listByPrefix("telegram:111")).toHaveLength(2);
       expect(manager.listByPrefix("telegram:222")).toHaveLength(1);
+    });
+  });
+
+  describe("listSessions()", () => {
+    it("returns all active sessions", () => {
+      manager.create("tui", "tui");
+      manager.create("telegram:123", "telegram");
+      expect(manager.listSessions()).toHaveLength(2);
+    });
+
+    it("excludes destroyed sessions", () => {
+      const s1 = manager.create("tui", "tui");
+      manager.create("telegram:123", "telegram");
+      manager.destroySession(s1.id);
+      expect(manager.listSessions()).toHaveLength(1);
+    });
+  });
+
+  describe("touchSession()", () => {
+    it("updates lastActiveAt timestamp", async () => {
+      const session = manager.create("tui", "tui");
+      const before = session.lastActiveAt;
+      await new Promise((r) => setTimeout(r, 10));
+      manager.touchSession(session.id);
+      expect(session.lastActiveAt).toBeGreaterThan(before);
     });
   });
 });
