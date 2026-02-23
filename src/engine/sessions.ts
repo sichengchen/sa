@@ -1,8 +1,8 @@
 import type { Session, ConnectorType } from "@sa/shared/types.js";
 
-/** Generate a short random suffix for session IDs */
-function shortId(): string {
-  return crypto.randomUUID().slice(0, 8);
+/** Generate a random suffix for session IDs (full 128-bit UUID) */
+function randomSuffix(): string {
+  return crypto.randomUUID();
 }
 
 /** Manages active sessions between Engine and Connectors.
@@ -23,7 +23,7 @@ export class SessionManager {
    *       create("telegram:123456", "telegram") → "telegram:123456:e5f6g7h8"
    */
   create(prefix: string, connectorType: ConnectorType): Session {
-    const id = `${prefix}:${shortId()}`;
+    const id = `${prefix}:${randomSuffix()}`;
     const session: Session = {
       id,
       connectorType,

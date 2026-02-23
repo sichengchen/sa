@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { writeFile, unlink } from "node:fs/promises";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -7,6 +7,12 @@ import { homedir } from "node:os";
 const TOKEN_BYTES = 32;
 const PAIRING_CODE_LENGTH = 6;
 const PAIRING_CODE_CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I confusion
+
+/** Timing-safe string comparison to prevent timing side-channel attacks */
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 interface TokenEntry {
   token: string;
@@ -62,7 +68,7 @@ export class AuthManager {
     connectorType: string,
   ): { success: boolean; token?: string } {
     // Master token (local Connectors read from ~/.sa/engine.token)
-    if (credential === this.masterToken) {
+    if (this.masterToken && safeCompare(credential, this.masterToken)) {
       const sessionToken = randomBytes(TOKEN_BYTES).toString("hex");
       this.pairedTokens.set(sessionToken, {
         token: sessionToken,
@@ -74,7 +80,7 @@ export class AuthManager {
     }
 
     // Pairing code (remote device-flow)
-    if (this.activePairingCode && credential === this.activePairingCode) {
+    if (this.activePairingCode && safeCompare(credential, this.activePairingCode)) {
       this.activePairingCode = null; // one-time use
       const sessionToken = randomBytes(TOKEN_BYTES).toString("hex");
       this.pairedTokens.set(sessionToken, {
@@ -92,7 +98,7 @@ export class AuthManager {
   /** Validate a bearer token. Returns connector info if valid. */
   validate(token: string): TokenEntry | null {
     // Master token is always valid
-    if (token === this.masterToken) {
+    if (this.masterToken && safeCompare(token, this.masterToken)) {
       return {
         token: this.masterToken,
         connectorId: "master",

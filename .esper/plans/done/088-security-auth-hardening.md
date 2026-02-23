@@ -1,14 +1,15 @@
 ---
-id: 088
-title: "fix: timing-safe token comparison and session ID entropy"
-status: pending
+id: 88
+title: fix: timing-safe token comparison and session ID entropy
+status: done
 type: fix
 priority: 1
 phase: 007-memory-redesign
 branch: fix/security-auth-hardening
 created: 2026-02-23
+shipped_at: 2026-02-23
+pr: https://github.com/sichengchen/sa/pull/22
 ---
-
 # fix: timing-safe token comparison and session ID entropy
 
 ## Context
@@ -36,3 +37,12 @@ Two auth-related vulnerabilities identified in the security audit:
 - Run: `bun test src/engine/auth` and `bun test src/engine/sessions` (add unit tests for both fixes)
 - Expected: token comparison returns false for wrong credentials without short-circuit; session IDs are 36-char UUIDs
 - Regression check: `bun test` — verify no test uses hardcoded 8-char session ID format; check TUI/Telegram client session handling still works
+
+## Progress
+- Implemented timing-safe `safeCompare()` in auth.ts using `timingSafeEqual`, replaced all 3 `===` comparisons (pair master token, pair pairing code, validate)
+- Replaced `shortId()` with `randomSuffix()` using full `crypto.randomUUID()` in sessions.ts
+- TUI display code already uses `.slice(0, 8)` for display only — no changes needed
+- Added 12 auth unit tests (pair success/failure, validate, revoke) and 9 session unit tests (UUID format, uniqueness, prefix handling)
+- Modified: src/engine/auth.ts, src/engine/sessions.ts
+- Created: src/engine/auth.test.ts, src/engine/sessions.test.ts
+- Verification: all 556 tests pass, lint clean, typecheck clean
