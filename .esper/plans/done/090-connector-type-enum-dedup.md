@@ -1,14 +1,15 @@
 ---
-id: 090
-title: "fix: ConnectorType Zod enum missing 'cron' and duplicated across modules"
-status: pending
+id: 90
+title: fix: ConnectorType Zod enum missing 'cron' and duplicated across modules
+status: done
 type: fix
 priority: 1
 phase: 007-memory-redesign
 branch: fix/connector-type-enum-dedup
 created: 2026-02-23
+shipped_at: 2026-02-23
+pr: https://github.com/sichengchen/sa/pull/23
 ---
-
 # fix: ConnectorType Zod enum missing 'cron' and duplicated across modules
 
 ## Context
@@ -53,3 +54,11 @@ The audit flags this as **[HIGH] breaking change risk** because the TypeScript t
 - Run: `bun run lint` — must pass
 - Run: `bun test` — full suite must pass
 - Regression check: verify cron session creation works end-to-end; verify existing connector types (tui, telegram, discord) still validate correctly
+
+## Progress
+- Added `ConnectorTypeSchema` Zod enum to `src/shared/types.ts` as single source of truth (includes all 6 types including "cron")
+- Derived `ConnectorType` from `z.infer<typeof ConnectorTypeSchema>` — replaces manual union
+- Replaced both inline `z.enum([...])` in `procedures.ts` with imported `ConnectorTypeSchema`
+- All existing `import type { ConnectorType }` statements work unchanged
+- Modified: src/shared/types.ts, src/engine/procedures.ts
+- Verification: 535 tests pass, lint clean, typecheck clean
