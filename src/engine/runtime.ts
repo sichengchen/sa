@@ -21,6 +21,7 @@ import { DEFAULT_HEARTBEAT_MD } from "./config/defaults.js";
 import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { createTranscriber, type Transcriber } from "./audio/index.js";
+import { AuditLogger } from "./audit.js";
 
 const SAFETY_ADVISORY = `## Safety
 You have no independent goals: do not pursue self-preservation, resource acquisition, or \
@@ -105,6 +106,7 @@ export interface EngineRuntime {
   skills: SkillRegistry;
   scheduler: Scheduler;
   transcriber: Transcriber;
+  audit: AuditLogger;
   agentName: string;
   /** The main session ID (engine-level, not tied to any connector) */
   mainSessionId: string;
@@ -259,6 +261,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
   const sessions = new SessionManager();
   const auth = new AuthManager(saHome, saConfig.runtime.security);
   await auth.init();
+  const audit = new AuditLogger(saHome);
 
   // Create or resume the main session
   let mainSession = sessions.getLatest("main");
@@ -329,6 +332,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
     skills,
     scheduler,
     transcriber,
+    audit,
     agentName: saConfig.identity.name,
     mainSessionId: mainSession.id,
     createAgent(onToolApproval?: ToolApprovalCallback, modelOverride?: string): Agent {
