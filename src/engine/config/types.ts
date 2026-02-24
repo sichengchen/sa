@@ -53,6 +53,8 @@ export interface CronTask {
   model?: string;
   /** ISO timestamp for one-shot tasks scheduled at a specific time */
   runAt?: string;
+  /** Tool allowlist — only these tools are available (default: CRON_DEFAULT_TOOLS) */
+  allowedTools?: string[];
 }
 
 /** A user-defined webhook-triggered automation task */
@@ -68,6 +70,8 @@ export interface WebhookTask {
   model?: string;
   /** Which connector to deliver the response through (e.g. "telegram", "discord") */
   connector?: string;
+  /** Tool allowlist — only these tools are available (default: WEBHOOK_DEFAULT_TOOLS) */
+  allowedTools?: string[];
 }
 
 /** Automation configuration (cron + webhook tasks) */
@@ -126,12 +130,59 @@ export interface RuntimeConfig {
   taskTierOverrides?: Partial<Record<TaskType, ModelTier>>;
   /** Shorthand aliases for model names (e.g. { "fast": "haiku", "smart": "opus" }) */
   modelAliases?: Record<string, string>;
+  /** Security configuration */
+  security?: {
+    /** Session token TTL in seconds (default: 86400 = 24h) */
+    sessionTTL?: number;
+    /** Pairing code TTL in seconds (default: 600 = 10min) */
+    pairingTTL?: number;
+    /** Pairing code length (default: 8) */
+    pairingCodeLength?: number;
+    /** Exec working directory fence */
+    exec?: {
+      /** Allowed working directories (default: ["~/projects", "/tmp"]) */
+      fence?: string[];
+      /** Always-denied paths (default: ["~/.sa", "~/.ssh", "~/.gnupg", "~/.aws", "~/.config/gcloud"]) */
+      alwaysDeny?: string[];
+    };
+    /** Default security mode for new sessions */
+    defaultMode?: "default" | "trusted" | "unrestricted";
+    /** Auto-revert TTL per elevated mode */
+    modeTTL?: {
+      /** Trusted mode TTL in seconds (default: 3600 = 1 hour) */
+      trusted?: number;
+      /** Unrestricted mode TTL in seconds (default: 1800 = 30 min) */
+      unrestricted?: number;
+    };
+    /** Whether unrestricted mode can be activated from IM connectors (default: false) */
+    allowUnrestrictedFromIM?: boolean;
+  };
+  /** URL policy for web_fetch — SSRF protection */
+  urlPolicy?: {
+    additionalBlockedHosts?: string[];
+    allowedExceptions?: string[];
+  };
   /** Tool policy: per-connector verbosity and per-tool overrides */
   toolPolicy?: ToolPolicyConfig;
   /** Heartbeat configuration */
   heartbeat?: HeartbeatConfig;
   /** Automation configuration (cron tasks) */
   automation?: AutomationConfig;
+  /** Orchestration (sub-agent) configuration */
+  orchestration?: {
+    /** Default model tier for sub-agents (default: "eco") */
+    defaultTier?: string;
+    /** Default sub-agent timeout in ms (default: 120_000) */
+    defaultTimeoutMs?: number;
+    /** Whether sub-agents can write to memory by default (default: true) */
+    memoryWriteDefault?: boolean;
+    /** Max concurrent background sub-agents (default: 3) */
+    maxConcurrent?: number;
+    /** Max sub-agents per agent turn (default: 10) */
+    maxSubAgentsPerTurn?: number;
+    /** Result retention time in ms (default: 1_800_000 = 30 min) */
+    resultRetentionMs?: number;
+  };
 }
 
 /** On-disk config.json schema (v3 — merged models + runtime) */
