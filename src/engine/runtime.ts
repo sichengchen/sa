@@ -24,6 +24,7 @@ import { writeFile } from "node:fs/promises";
 import { createTranscriber, type Transcriber } from "./audio/index.js";
 import { AuditLogger } from "./audit.js";
 import { SecurityModeManager } from "./security-mode.js";
+import { configureSandbox } from "./tools/exec.js";
 
 const SAFETY_ADVISORY = `## Safety
 You have no independent goals: do not pursue self-preservation, resource acquisition, or \
@@ -289,6 +290,15 @@ export async function createRuntime(): Promise<EngineRuntime> {
   await auth.init();
   const audit = new AuditLogger(saHome);
   const securityMode = new SecurityModeManager(saConfig.runtime.security);
+
+  // Configure OS sandbox with exec fence paths
+  const execSecurity = saConfig.runtime.security?.exec;
+  if (execSecurity) {
+    configureSandbox({
+      fence: execSecurity.fence ?? [],
+      deny: execSecurity.alwaysDeny ?? [],
+    });
+  }
 
   // Create or resume the main session
   let mainSession = sessions.getLatest("main");
