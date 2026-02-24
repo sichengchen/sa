@@ -9,9 +9,12 @@ import type { DangerLevel } from "./agent/types.js";
 import { classifyExecCommand } from "./tools/exec-classifier.js";
 import { ToolPolicyManager, type ToolEventContext } from "./tools/policy.js";
 import { ConnectorTypeSchema } from "@sa/shared/types.js";
-import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode } from "@sa/shared/types.js";
+import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode, EscalationChoice } from "@sa/shared/types.js";
+import { type SessionSecurityOverrides, createEmptyOverrides } from "./agent/security-types.js";
 import type { ModelConfig, ProviderConfig } from "./router/types.js";
 import { heartbeatState, createHeartbeatTask } from "./scheduler.js";
+import { describeModeEffects } from "./security-mode.js";
+import { CRON_DEFAULT_TOOLS } from "./config/defaults.js";
 
 /** Format tool args as a compact summary for IM display */
 function formatArgsForIM(toolName: string, args: Record<string, unknown>): string {
@@ -45,8 +48,24 @@ const pendingApprovals = new Map<string, (approved: boolean) => void>();
 /** Session-level tool overrides: sessionId -> Set of auto-approved tool names */
 const sessionToolOverrides = new Map<string, Set<string>>();
 
+/** Session-level security overrides: sessionId -> allowed resources */
+const sessionSecurityOverrides = new Map<string, SessionSecurityOverrides>();
+
 /** Pending approval metadata: toolCallId -> { sessionId, toolName } */
 const pendingApprovalMeta = new Map<string, { sessionId: string; toolName: string }>();
+
+/** Pending security escalation resolvers: escalationId -> resolve(choice) */
+const pendingEscalations = new Map<string, { resolve: (choice: EscalationChoice) => void; sessionId: string }>();
+
+/** Get or create session security overrides */
+function getSecurityOverrides(sessionId: string): SessionSecurityOverrides {
+  let overrides = sessionSecurityOverrides.get(sessionId);
+  if (!overrides) {
+    overrides = createEmptyOverrides();
+    sessionSecurityOverrides.set(sessionId, overrides);
+  }
+  return overrides;
+}
 
 /** Register a cron task with the scheduler that dispatches to an isolated agent session */
 function registerCronTask(
@@ -54,7 +73,7 @@ function registerCronTask(
   name: string,
   schedule: string,
   prompt: string,
-  opts?: { oneShot?: boolean; model?: string },
+  opts?: { oneShot?: boolean; model?: string; allowedTools?: string[] },
 ): void {
   runtime.scheduler.register({
     name,
@@ -63,7 +82,7 @@ function registerCronTask(
     oneShot: opts?.oneShot,
     async handler() {
       const session = runtime.sessions.create(`cron:${name}`, "cron");
-      const agent = runtime.createAgent(undefined, opts?.model);
+      const agent = runtime.createAgent(undefined, opts?.model, opts?.allowedTools ?? CRON_DEFAULT_TOOLS);
       sessionAgents.set(session.id, agent);
 
       let responseText = "";
@@ -110,7 +129,7 @@ function registerCronTask(
 /** Persist a cron task to config.json */
 async function persistCronTask(
   runtime: EngineRuntime,
-  task: { name: string; schedule: string; prompt: string; enabled: boolean; oneShot?: boolean; model?: string },
+  task: { name: string; schedule: string; prompt: string; enabled: boolean; oneShot?: boolean; model?: string; allowedTools?: string[] },
 ): Promise<void> {
   const configFile = runtime.config.getConfigFile();
   const automation = configFile.runtime.automation ?? { cronTasks: [] };
@@ -132,6 +151,11 @@ async function removeCronTaskFromConfig(runtime: EngineRuntime, name: string): P
     ...configFile,
     runtime: { ...configFile.runtime, automation },
   });
+}
+
+/** Shorthand for audit logging */
+function auditLog(runtime: EngineRuntime, input: import("./audit.js").AuditInput): void {
+  try { runtime.audit.log(input); } catch { /* audit failure is non-fatal */ }
 }
 
 /** Create the tRPC router bound to a runtime instance */
@@ -242,8 +266,10 @@ export function createAppRouter(runtime: EngineRuntime) {
     events: AsyncIterable<AgentEvent>,
     connectorType: ConnectorType,
     approvalMode: ToolApprovalMode,
+    sessionId?: string,
   ): AsyncGenerator<EngineEvent> {
     const isIM = connectorType !== "tui";
+    const sid = sessionId ?? "unknown";
 
     for await (const event of events) {
       switch (event.type) {
@@ -254,10 +280,20 @@ export function createAppRouter(runtime: EngineRuntime) {
           yield event;
           break;
         case "tool_start": {
-          const ctx: ToolEventContext = {
-            toolName: event.name,
-            dangerLevel: getEffectiveDangerLevel(event.name, event.args),
-          };
+          const dangerLevel = getEffectiveDangerLevel(event.name, event.args);
+          const ctx: ToolEventContext = { toolName: event.name, dangerLevel };
+
+          // Audit: tool_call
+          auditLog(runtime, {
+            session: sid,
+            connector: connectorType,
+            event: "tool_call",
+            tool: event.name,
+            danger: dangerLevel,
+            command: event.name === "exec" && typeof event.args.command === "string" ? event.args.command : undefined,
+            url: event.name === "web_fetch" && typeof event.args.url === "string" ? event.args.url : undefined,
+          });
+
           if (!policyManager.shouldEmitToolStart(connectorType, ctx)) break;
           if (isIM) {
             const argsStr = formatArgsForIM(event.name, event.args);
@@ -267,7 +303,16 @@ export function createAppRouter(runtime: EngineRuntime) {
           }
           break;
         }
-        case "tool_end":
+        case "tool_end": {
+          // Audit: tool_result
+          auditLog(runtime, {
+            session: sid,
+            connector: connectorType,
+            event: "tool_result",
+            tool: event.name,
+            summary: event.result.content.slice(0, 200),
+          });
+
           // Intercept reaction tool — emit a reaction event for connectors
           if (event.name === "reaction" && event.result.content.startsWith("__reaction__:")) {
             const emoji = event.result.content.slice("__reaction__:".length);
@@ -289,6 +334,7 @@ export function createAppRouter(runtime: EngineRuntime) {
             }
           }
           break;
+        }
         case "tool_approval_request": {
           const ctx: ToolEventContext = {
             toolName: event.name,
@@ -361,7 +407,7 @@ export function createAppRouter(runtime: EngineRuntime) {
           }
 
           try {
-            yield* filterAgentEvents(agent.chat(chatMessage), connectorType, getApprovalMode(input.sessionId));
+            yield* filterAgentEvents(agent.chat(chatMessage), connectorType, getApprovalMode(input.sessionId), input.sessionId);
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             yield { type: "error", message };
@@ -422,7 +468,7 @@ export function createAppRouter(runtime: EngineRuntime) {
           const agent = getSessionAgent(input.sessionId);
           const connectorType = session.connectorType as ConnectorType;
           try {
-            yield* filterAgentEvents(agent.chat(transcript), connectorType, getApprovalMode(input.sessionId));
+            yield* filterAgentEvents(agent.chat(transcript), connectorType, getApprovalMode(input.sessionId), input.sessionId);
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             yield { type: "error", message };
@@ -444,6 +490,11 @@ export function createAppRouter(runtime: EngineRuntime) {
         )
         .mutation(({ input }) => {
           const session = runtime.sessions.create(input.prefix, input.connectorType);
+          auditLog(runtime, {
+            session: session.id,
+            connector: input.connectorType,
+            event: "session_create",
+          });
           return { session };
         }),
 
@@ -463,8 +514,16 @@ export function createAppRouter(runtime: EngineRuntime) {
       destroy: protectedProcedure
         .input(z.object({ sessionId: z.string() }))
         .mutation(({ input }): { destroyed: boolean } => {
+          const session = runtime.sessions.getSession(input.sessionId);
+          auditLog(runtime, {
+            session: input.sessionId,
+            connector: session?.connectorType ?? "unknown",
+            event: "session_destroy",
+          });
           sessionAgents.delete(input.sessionId);
           sessionToolOverrides.delete(input.sessionId);
+          sessionSecurityOverrides.delete(input.sessionId);
+          runtime.securityMode.clearMode(input.sessionId);
           return { destroyed: runtime.sessions.destroySession(input.sessionId) };
         }),
     }),
@@ -488,11 +547,24 @@ export function createAppRouter(runtime: EngineRuntime) {
         )
         .mutation(({ input }): { acknowledged: boolean } => {
           const resolver = pendingApprovals.get(input.toolCallId);
+          const meta = pendingApprovalMeta.get(input.toolCallId);
           if (!resolver) {
             return { acknowledged: false };
           }
           pendingApprovals.delete(input.toolCallId);
           pendingApprovalMeta.delete(input.toolCallId);
+
+          // Audit: approval or denial
+          if (meta) {
+            const session = runtime.sessions.getSession(meta.sessionId);
+            auditLog(runtime, {
+              session: meta.sessionId,
+              connector: session?.connectorType ?? "unknown",
+              event: input.approved ? "tool_approval" : "tool_denial",
+              tool: meta.toolName,
+            });
+          }
+
           resolver(input.approved);
           return { acknowledged: true };
         }),
@@ -524,6 +596,82 @@ export function createAppRouter(runtime: EngineRuntime) {
           pendingApprovalMeta.delete(input.toolCallId);
           resolver(true);
           return { acknowledged: true };
+        }),
+    }),
+
+    /** Security escalation */
+    escalation: router({
+      /** Respond to a security escalation prompt */
+      respond: protectedProcedure
+        .input(z.object({
+          id: z.string(),
+          choice: z.enum(["allow_once", "allow_session", "add_persistent", "deny"]),
+        }))
+        .mutation(async ({ input }): Promise<{ acknowledged: boolean }> => {
+          const pending = pendingEscalations.get(input.id);
+          if (!pending) {
+            return { acknowledged: false };
+          }
+          pendingEscalations.delete(input.id);
+
+          // Audit: escalation response
+          const session = runtime.sessions.getSession(pending.sessionId);
+          auditLog(runtime, {
+            session: pending.sessionId,
+            connector: session?.connectorType ?? "unknown",
+            event: "security_escalation",
+            escalation: {
+              layer: "escalation",
+              choice: input.choice,
+            },
+          });
+
+          // If allow_session, add the resource to session overrides
+          // (the resource info is attached to the escalation — handled by the caller)
+          pending.resolve(input.choice as EscalationChoice);
+          return { acknowledged: true };
+        }),
+    }),
+
+    /** Security mode management */
+    securityMode: router({
+      /** Get the current security mode for a session */
+      get: protectedProcedure
+        .input(z.object({ sessionId: z.string() }))
+        .query(({ input }) => {
+          const mode = runtime.securityMode.getMode(input.sessionId);
+          const remainingTTL = runtime.securityMode.getRemainingTTL(input.sessionId);
+          return { mode, remainingTTL };
+        }),
+
+      /** Switch security mode for a session */
+      set: protectedProcedure
+        .input(z.object({
+          sessionId: z.string(),
+          mode: z.enum(["default", "trusted", "unrestricted"]),
+        }))
+        .mutation(({ input }) => {
+          const session = runtime.sessions.getSession(input.sessionId);
+          const connectorType = session?.connectorType ?? "unknown";
+          const isIM = connectorType !== "tui" && connectorType !== "engine";
+          const previousMode = runtime.securityMode.getMode(input.sessionId);
+
+          const result = runtime.securityMode.setMode(input.sessionId, input.mode, { isIM });
+          if (!result.ok) {
+            throw new TRPCError({ code: "FORBIDDEN", message: result.error });
+          }
+
+          // Audit: mode_change
+          auditLog(runtime, {
+            session: input.sessionId,
+            connector: connectorType,
+            event: "mode_change",
+            summary: `${previousMode} → ${input.mode}`,
+          });
+
+          const ttl = runtime.securityMode.getRemainingTTL(input.sessionId);
+          const description = describeModeEffects(input.mode, ttl);
+          return { mode: input.mode, remainingTTL: ttl, description };
         }),
     }),
 
@@ -669,6 +817,15 @@ export function createAppRouter(runtime: EngineRuntime) {
             input.connectorId,
             input.connectorType,
           );
+
+          // Audit: auth success/failure
+          auditLog(runtime, {
+            session: input.connectorId,
+            connector: input.connectorType,
+            event: result.success ? "auth_success" : "auth_failure",
+            summary: result.error,
+          });
+
           return {
             paired: result.success,
             token: result.token ?? null,
@@ -697,12 +854,14 @@ export function createAppRouter(runtime: EngineRuntime) {
           prompt: z.string(),
           oneShot: z.boolean().optional(),
           model: z.string().optional(),
+          allowedTools: z.array(z.string()).optional(),
         }))
         .mutation(async ({ input }) => {
           // Register with the scheduler — handler dispatches to an isolated agent
           registerCronTask(runtime, input.name, input.schedule, input.prompt, {
             oneShot: input.oneShot,
             model: input.model,
+            allowedTools: input.allowedTools,
           });
 
           // Persist to config
@@ -713,6 +872,7 @@ export function createAppRouter(runtime: EngineRuntime) {
             enabled: true,
             oneShot: input.oneShot,
             model: input.model,
+            allowedTools: input.allowedTools,
           });
 
           return { added: true, name: input.name };

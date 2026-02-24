@@ -4,7 +4,7 @@ import { writeTool } from "./write.js";
 import { editTool } from "./edit.js";
 import { execTool } from "./exec.js";
 import { execStatusTool, execKillTool } from "./exec-background.js";
-import { webFetchTool } from "./web-fetch.js";
+import { webFetchTool, createWebFetchTool } from "./web-fetch.js";
 import { webSearchTool } from "./web-search.js";
 import { reactionTool } from "./reaction.js";
 
@@ -15,7 +15,7 @@ export { execTool } from "./exec.js";
 export { execStatusTool, execKillTool } from "./exec-background.js";
 /** @deprecated Use execTool instead */
 export { bashTool } from "./bash.js";
-export { webFetchTool } from "./web-fetch.js";
+export { webFetchTool, createWebFetchTool } from "./web-fetch.js";
 export { webSearchTool } from "./web-search.js";
 export { reactionTool } from "./reaction.js";
 export { createSetEnvSecretTool, createSetEnvVariableTool } from "./set-api-key.js";
@@ -23,9 +23,11 @@ export { createMemoryWriteTool } from "./memory-write.js";
 export { createMemorySearchTool } from "./memory-search.js";
 export { createMemoryReadTool } from "./memory-read.js";
 export { createMemoryDeleteTool } from "./memory-delete.js";
+export { createDelegateTool } from "./delegate.js";
+export { createDelegateStatusTool } from "./delegate-status.js";
 
 export function getBuiltinTools(): ToolImpl[] {
-  return [readTool, writeTool, editTool, execTool, execStatusTool, execKillTool, webFetchTool, webSearchTool, reactionTool];
+  return [readTool, writeTool, editTool, execTool, execStatusTool, execKillTool, webSearchTool, reactionTool];
 }
 
 export function formatToolsSection(tools: ToolImpl[]): string {
