@@ -1,14 +1,14 @@
 ---
 id: 100
-title: "Content framing + output sanitizer — prompt injection defense"
-status: pending
+title: Content framing + output sanitizer — prompt injection defense
+status: done
 type: feature
 priority: 1
 phase: 008-security-and-subagents
 branch: feature/008-security-and-subagents
 created: 2026-02-23
+shipped_at: 2026-02-24
 ---
-
 # Content framing + output sanitizer — prompt injection defense
 
 ## Context
@@ -97,3 +97,13 @@ Apply `sanitizeToolResult()` in `agent.ts` after tool execution, before adding t
 - Run: `bun run typecheck && bun run lint`
 - Expected: No errors
 - Edge cases: Content containing `</data-` tags (must be escaped), very large content (framing + cap interaction), binary content in exec output, API keys split across multiple lines
+
+## Progress
+- Created content-frame.ts with frameAsData(), redactSecrets(), maskPaths(), truncateStackTraces(), sanitizeContent()
+- 18 unit tests covering all framing and sanitization functions
+- Integrated web_fetch (data-web-fetch), exec (data-exec), webhook (data-webhook) framing
+- Agent.ts applies sanitizeContent() to all tool results before adding to message history
+- System prompt updated with data-tag safety directive
+- Replaced ad-hoc webhook escaping in server.ts with standard frameAsData()
+- Modified: content-frame.ts, content-frame.test.ts, web-fetch.ts, exec.ts, server.ts, runtime.ts, agent.ts, agent-flow.test.ts
+- Verification: typecheck, lint, all 642 tests pass
