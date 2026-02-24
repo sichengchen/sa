@@ -14,6 +14,7 @@ import { type SessionSecurityOverrides, createEmptyOverrides } from "./agent/sec
 import type { ModelConfig, ProviderConfig } from "./router/types.js";
 import { heartbeatState, createHeartbeatTask } from "./scheduler.js";
 import { describeModeEffects } from "./security-mode.js";
+import { CRON_DEFAULT_TOOLS } from "./config/defaults.js";
 
 /** Format tool args as a compact summary for IM display */
 function formatArgsForIM(toolName: string, args: Record<string, unknown>): string {
@@ -72,7 +73,7 @@ function registerCronTask(
   name: string,
   schedule: string,
   prompt: string,
-  opts?: { oneShot?: boolean; model?: string },
+  opts?: { oneShot?: boolean; model?: string; allowedTools?: string[] },
 ): void {
   runtime.scheduler.register({
     name,
@@ -81,7 +82,7 @@ function registerCronTask(
     oneShot: opts?.oneShot,
     async handler() {
       const session = runtime.sessions.create(`cron:${name}`, "cron");
-      const agent = runtime.createAgent(undefined, opts?.model);
+      const agent = runtime.createAgent(undefined, opts?.model, opts?.allowedTools ?? CRON_DEFAULT_TOOLS);
       sessionAgents.set(session.id, agent);
 
       let responseText = "";
@@ -128,7 +129,7 @@ function registerCronTask(
 /** Persist a cron task to config.json */
 async function persistCronTask(
   runtime: EngineRuntime,
-  task: { name: string; schedule: string; prompt: string; enabled: boolean; oneShot?: boolean; model?: string },
+  task: { name: string; schedule: string; prompt: string; enabled: boolean; oneShot?: boolean; model?: string; allowedTools?: string[] },
 ): Promise<void> {
   const configFile = runtime.config.getConfigFile();
   const automation = configFile.runtime.automation ?? { cronTasks: [] };
@@ -853,12 +854,14 @@ export function createAppRouter(runtime: EngineRuntime) {
           prompt: z.string(),
           oneShot: z.boolean().optional(),
           model: z.string().optional(),
+          allowedTools: z.array(z.string()).optional(),
         }))
         .mutation(async ({ input }) => {
           // Register with the scheduler — handler dispatches to an isolated agent
           registerCronTask(runtime, input.name, input.schedule, input.prompt, {
             oneShot: input.oneShot,
             model: input.model,
+            allowedTools: input.allowedTools,
           });
 
           // Persist to config
@@ -869,6 +872,7 @@ export function createAppRouter(runtime: EngineRuntime) {
             enabled: true,
             oneShot: input.oneShot,
             model: input.model,
+            allowedTools: input.allowedTools,
           });
 
           return { added: true, name: input.name };

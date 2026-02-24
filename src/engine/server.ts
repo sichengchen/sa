@@ -11,6 +11,7 @@ import type { EngineEvent } from "@sa/shared/types.js";
 import { heartbeatState } from "./scheduler.js";
 import { Agent } from "./agent/index.js";
 import { frameAsData } from "./agent/content-frame.js";
+import { WEBHOOK_DEFAULT_TOOLS } from "./config/defaults.js";
 
 const DEFAULT_PORT = 7420;
 
@@ -211,9 +212,10 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
   const securePayload = frameAsData(payloadStr, "webhook");
   const prompt = task.prompt.replace(/\{\{payload\}\}/g, securePayload);
 
-  // Dispatch to isolated agent session
+  // Dispatch to isolated agent session with restricted tools
   const session = runtime.sessions.create(`webhook:${slug}`, "webhook");
-  const agent = runtime.createAgent();
+  const allowedTools = task.allowedTools ?? WEBHOOK_DEFAULT_TOOLS;
+  const agent = runtime.createAgent(undefined, task.model, allowedTools);
   let responseText = "";
 
   try {

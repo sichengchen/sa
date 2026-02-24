@@ -53,6 +53,8 @@ export interface CronTask {
   model?: string;
   /** ISO timestamp for one-shot tasks scheduled at a specific time */
   runAt?: string;
+  /** Tool allowlist — only these tools are available (default: CRON_DEFAULT_TOOLS) */
+  allowedTools?: string[];
 }
 
 /** A user-defined webhook-triggered automation task */
@@ -68,6 +70,8 @@ export interface WebhookTask {
   model?: string;
   /** Which connector to deliver the response through (e.g. "telegram", "discord") */
   connector?: string;
+  /** Tool allowlist — only these tools are available (default: WEBHOOK_DEFAULT_TOOLS) */
+  allowedTools?: string[];
 }
 
 /** Automation configuration (cron + webhook tasks) */

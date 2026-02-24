@@ -18,7 +18,7 @@ import { AuthManager } from "./auth.js";
 import { SkillRegistry, formatSkillsDiscovery } from "./skills/index.js";
 import { createReadSkillTool } from "./tools/read-skill.js";
 import { Scheduler, createHeartbeatTask } from "./scheduler.js";
-import { DEFAULT_HEARTBEAT_MD } from "./config/defaults.js";
+import { DEFAULT_HEARTBEAT_MD, CRON_DEFAULT_TOOLS } from "./config/defaults.js";
 import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { createTranscriber, type Transcriber } from "./audio/index.js";
@@ -114,7 +114,7 @@ export interface EngineRuntime {
   /** The main session ID (engine-level, not tied to any connector) */
   mainSessionId: string;
   /** Create a new Agent instance for a session (each session gets its own Agent) */
-  createAgent(onToolApproval?: ToolApprovalCallback, modelOverride?: string): Agent;
+  createAgent(onToolApproval?: ToolApprovalCallback, modelOverride?: string, allowedTools?: string[]): Agent;
 }
 
 /** Bootstrap all Engine subsystems */
@@ -320,7 +320,9 @@ export async function createRuntime(): Promise<EngineRuntime> {
       oneShot: task.oneShot,
       async handler() {
         const session = sessions.create(`cron:${task.name}`, "cron");
-        const agent = new Agent({ router, tools, systemPrompt, modelOverride: task.model });
+        const allowedTools = task.allowedTools ?? CRON_DEFAULT_TOOLS;
+        const filteredTools = tools.filter((t) => allowedTools.includes(t.name));
+        const agent = new Agent({ router, tools: filteredTools, systemPrompt, modelOverride: task.model });
         let responseText = "";
         try {
           for await (const event of agent.chat(task.prompt)) {
@@ -363,10 +365,13 @@ export async function createRuntime(): Promise<EngineRuntime> {
     securityMode,
     agentName: saConfig.identity.name,
     mainSessionId: mainSession.id,
-    createAgent(onToolApproval?: ToolApprovalCallback, modelOverride?: string): Agent {
+    createAgent(onToolApproval?: ToolApprovalCallback, modelOverride?: string, allowedTools?: string[]): Agent {
+      const agentTools = allowedTools
+        ? tools.filter((t) => allowedTools.includes(t.name))
+        : tools;
       return new Agent({
         router,
-        tools,
+        tools: agentTools,
         systemPrompt,
         onToolApproval,
         modelOverride,
