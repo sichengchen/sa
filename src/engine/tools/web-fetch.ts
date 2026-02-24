@@ -2,6 +2,7 @@ import { Type } from "@mariozechner/pi-ai";
 import { NodeHtmlMarkdown } from "node-html-markdown";
 import type { ToolImpl } from "../agent/types.js";
 import { validateUrl, validateHeaders, MAX_REDIRECTS, type UrlPolicyConfig } from "./url-policy.js";
+import { frameAsData, sanitizeContent } from "../agent/content-frame.js";
 
 const DEFAULT_MAX_LENGTH = 50_000;
 const FETCH_TIMEOUT = 30_000;
@@ -124,7 +125,8 @@ export function createWebFetchTool(urlPolicy?: UrlPolicyConfig): ToolImpl {
           output = output.slice(0, maxLength) + `\n\n[Truncated at ${maxLength} characters]`;
         }
 
-        return { content: output || "(empty response)", isError: false };
+        const framed = frameAsData(sanitizeContent(output || "(empty response)"), "web-fetch");
+        return { content: framed, isError: false };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         return { content: `Error: ${msg}`, isError: true };

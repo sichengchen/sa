@@ -48,7 +48,8 @@ describe("Agent flow integration", () => {
     const execResult = await registry.execute("exec", {
       command: `cat "${join(testDir, "test.txt")}"`,
     });
-    expect(execResult.content.trim()).toBe("integration test");
+    expect(execResult.content).toContain("integration test");
+    expect(execResult.content).toContain("<data-exec>");
   });
 
   test("ToolRegistry handles unknown tools gracefully", async () => {

@@ -19,6 +19,7 @@
 import { Type } from "@mariozechner/pi-ai";
 import type { ToolImpl } from "../agent/types.js";
 import { generateHandle, registerBackground } from "./exec-background.js";
+import { frameAsData, sanitizeContent } from "../agent/content-frame.js";
 
 /** Default timeout for foreground commands (5 minutes) */
 const DEFAULT_TIMEOUT_S = 300;
@@ -187,8 +188,9 @@ export const execTool: ToolImpl = {
         output += (output ? "\n" : "") + `exit code: ${exitCode}`;
       }
 
+      const sanitized = sanitizeContent(capOutput(output) || "(no output)");
       return {
-        content: capOutput(output) || "(no output)",
+        content: frameAsData(sanitized, "exec"),
         isError: exitCode !== 0,
       };
     } catch (err) {
