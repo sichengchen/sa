@@ -8,6 +8,7 @@ phase: 008-security-and-subagents
 branch: feature/008-security-and-subagents
 created: 2026-02-23
 shipped_at: 2026-02-24
+pr: https://github.com/sichengchen/sa/pull/29
 ---
 # URL policy for web_fetch — SSRF protection
 

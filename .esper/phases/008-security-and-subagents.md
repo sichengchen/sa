@@ -1,7 +1,7 @@
 ---
 phase: 008-security-and-subagents
 title: "Security & Subagents"
-status: active
+status: completed
 ---
 
 # Phase 8: Security & Subagents
@@ -37,21 +37,21 @@ Subagents (from exploration 008) add the ability for a parent agent to spawn chi
 
 ## Acceptance Criteria
 
-- [ ] web_fetch blocks localhost, private ranges, cloud metadata, SA engine ports; follows redirects safely
-- [ ] Exec classifier defaults to "dangerous" on unknown commands; detects shell indirection, inline interpreters
-- [ ] All external content (web, webhook, skill, memory, exec output) wrapped in `<data-*>` framing tags
-- [ ] Tool results sanitized: API keys redacted, SA paths masked, safe truncation
-- [ ] Webhook endpoints use dedicated token (not master token); session tokens have configurable TTL
-- [ ] Inline escalation prompts appear when soft security layers block a tool call; user can allow once/session/persist
-- [ ] Exec fence restricts working directory; `~/.sa`, `~/.ssh`, `~/.gnupg` always denied
-- [ ] Audit log records all tool calls, approvals, denials, auth events; NDJSON with rotation
-- [ ] `/mode default|trusted|unrestricted` switches session security; auto-reverts after configurable TTL
-- [ ] Cron/webhook agents use restricted tool registries configurable per-task
-- [ ] OS sandbox wraps exec on supported platforms (best-effort, no-op with warning on unsupported)
-- [ ] `delegate` tool spawns synchronous subagents with narrowed tools and auto-approve
-- [ ] `delegate_status` polls background subagents; Orchestrator manages concurrency limits
-- [ ] Subagent memory write access configurable; disabled by default for background subagents
-- [ ] `bun run typecheck`, `bun run lint`, and `bun test` all pass
+- [x] web_fetch blocks localhost, private ranges, cloud metadata, SA engine ports; follows redirects safely
+- [x] Exec classifier defaults to "dangerous" on unknown commands; detects shell indirection, inline interpreters
+- [x] All external content (web, webhook, skill, memory, exec output) wrapped in `<data-*>` framing tags
+- [x] Tool results sanitized: API keys redacted, SA paths masked, safe truncation
+- [x] Webhook endpoints use dedicated token (not master token); session tokens have configurable TTL
+- [x] Inline escalation prompts appear when soft security layers block a tool call; user can allow once/session/persist
+- [x] Exec fence restricts working directory; `~/.sa`, `~/.ssh`, `~/.gnupg` always denied
+- [x] Audit log records all tool calls, approvals, denials, auth events; NDJSON with rotation
+- [x] `/mode default|trusted|unrestricted` switches session security; auto-reverts after configurable TTL
+- [x] Cron/webhook agents use restricted tool registries configurable per-task
+- [x] OS sandbox wraps exec on supported platforms (best-effort, no-op with warning on unsupported)
+- [x] `delegate` tool spawns synchronous subagents with narrowed tools and auto-approve
+- [x] `delegate_status` polls background subagents; Orchestrator manages concurrency limits
+- [x] Subagent memory write access configurable; disabled by default for background subagents
+- [x] `bun run typecheck`, `bun run lint`, and `bun test` all pass
 
 ## Phase Notes
 
