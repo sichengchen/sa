@@ -27,9 +27,8 @@ const ALWAYS_DANGEROUS_PATTERNS: RegExp[] = [
   // Permission/ownership changes
   /\bchmod\b/,
   /\bchown\b/,
-  // Pipe to shell (remote code execution patterns)
-  /\|\s*(ba)?sh\b/,
-  /\|\s*zsh\b/,
+  // Pipe to shell (remote code execution patterns) — all shell variants
+  /\|\s*(ba|da|k|z|c|tc|fi)?sh\b/,
   /\|\s*source\b/,
   /\bcurl\b.*\|\s*/,
   /\bwget\b.*\|\s*/,
@@ -41,6 +40,26 @@ const ALWAYS_DANGEROUS_PATTERNS: RegExp[] = [
   // Network danger
   /\biptables\b/,
   /\bnft\b/,
+];
+
+/**
+ * Shell indirection / metaprogramming — always dangerous.
+ * These catch patterns where the command invokes another command dynamically.
+ */
+const SHELL_INDIRECTION: RegExp[] = [
+  /\$\(/,                             // command substitution $(...)
+  /`[^`]+`/,                          // backtick substitution
+  /\beval\b/,                         // dynamic execution
+  /\bsource\b/,                       // source scripts
+  /\bexec\b\s/,                       // process replacement
+  /\bxargs\b.*\b(ba|da|k|z|c|tc|fi)?sh\b/, // xargs piping to shell
+  /\bfind\b.*-exec/,                  // find -exec
+  /\bawk\b.*\bsystem\b/,             // awk system()
+  /\bperl\b.*-e/,                     // inline Perl
+  /\bpython3?\b.*-c/,                // inline Python
+  /\bruby\b.*-e/,                     // inline Ruby
+  /\bnode\b.*-e/,                     // inline Node
+  /\bphp\b.*-r/,                      // inline PHP
 ];
 
 /**
@@ -64,9 +83,13 @@ const ALWAYS_SAFE_COMMANDS = new Set([
   "test", "[",
   "basename", "dirname", "realpath", "readlink",
   "md5", "md5sum", "shasum", "sha256sum",
-  "diff", "cmp",
+  "diff", "cmp", "comm", "column",
   "jq", "yq",
   "man", "help", "info",
+  "grep", "rg", "ag", "ack",
+  "sed", "awk",
+  "find",
+  "curl", "wget", "http",
 ]);
 
 /** Git subcommands that are read-only and safe */
@@ -77,23 +100,35 @@ const SAFE_GIT_SUBCOMMANDS = new Set([
   "describe", "shortlog", "blame", "reflog",
 ]);
 
+/** Git subcommands that are always dangerous */
+const DANGEROUS_GIT_SUBCOMMANDS = new Set([
+  "push", "reset", "clean",
+  "checkout .", "restore .",
+]);
+
 /**
  * Classify an exec command using pattern matching.
  * The engine overrides the agent's self-declared level when patterns match.
  *
  * Priority:
  * 1. ALWAYS_DANGEROUS_PATTERNS → "dangerous" (overrides agent)
- * 2. ALWAYS_SAFE heuristics → "safe" (overrides agent)
- * 3. Otherwise → trust the agent's declaration
+ * 2. SHELL_INDIRECTION → "dangerous" (overrides agent)
+ * 3. ALWAYS_SAFE heuristics → "safe" (overrides agent)
+ * 4. Otherwise → "dangerous" (default-deny)
  */
 export function classifyExecCommand(
   command: string,
-  agentDeclared: DangerLevel = "dangerous",
+  _agentDeclared: DangerLevel = "dangerous",
 ): DangerLevel {
   const trimmed = command.trim();
 
   // Check dangerous patterns first (highest priority)
   for (const pattern of ALWAYS_DANGEROUS_PATTERNS) {
+    if (pattern.test(trimmed)) return "dangerous";
+  }
+
+  // Check shell indirection patterns
+  for (const pattern of SHELL_INDIRECTION) {
     if (pattern.test(trimmed)) return "dangerous";
   }
 
@@ -112,9 +147,18 @@ export function classifyExecCommand(
   if (baseCmd === "git") {
     const gitArgs = trimmed.replace(/^\s*\S+\s*/, ""); // strip "git "
     const subcommand = gitArgs.split(/\s/)[0];
+
+    // Check dangerous git subcommands first
+    if (DANGEROUS_GIT_SUBCOMMANDS.has(subcommand)) return "dangerous";
+    // Check two-word dangerous patterns
+    const twoWordGit = gitArgs.split(/\s/).slice(0, 2).join(" ");
+    if (DANGEROUS_GIT_SUBCOMMANDS.has(twoWordGit)) return "dangerous";
+    // Check for git config --global (can set core.sshCommand, hooks, etc.)
+    if (/^config\s+--global\b/.test(gitArgs)) return "dangerous";
+
     if (SAFE_GIT_SUBCOMMANDS.has(subcommand)) return "safe";
   }
 
-  // Trust the agent's declaration
-  return agentDeclared;
+  // Default: dangerous (default-deny policy)
+  return "dangerous";
 }
