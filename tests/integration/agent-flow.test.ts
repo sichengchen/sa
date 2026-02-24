@@ -1,6 +1,6 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { ToolRegistry } from "@sa/engine/agent/index.js";
-import { getBuiltinTools } from "@sa/engine/tools/index.js";
+import { getBuiltinTools, createWebFetchTool } from "@sa/engine/tools/index.js";
 import { rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -15,12 +15,12 @@ describe("Agent flow integration", () => {
   test("ToolRegistry with all built-in tools executes correctly", async () => {
     await mkdir(testDir, { recursive: true });
     const registry = new ToolRegistry();
-    for (const tool of getBuiltinTools()) {
+    for (const tool of [...getBuiltinTools(), createWebFetchTool()]) {
       registry.register(tool);
     }
 
     // Verify all tools are registered
-    expect(registry.listNames()).toEqual(["read", "write", "edit", "exec", "exec_status", "exec_kill", "web_fetch", "web_search", "reaction"]);
+    expect(registry.listNames()).toEqual(["read", "write", "edit", "exec", "exec_status", "exec_kill", "web_search", "reaction", "web_fetch"]);
 
     // Tool definitions are valid for LLM context
     const defs = registry.getToolDefinitions();

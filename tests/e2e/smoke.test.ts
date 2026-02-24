@@ -3,7 +3,7 @@ import { ConfigManager } from "@sa/engine/config/index.js";
 import { ModelRouter } from "@sa/engine/router/index.js";
 import { Agent } from "@sa/engine/agent/index.js";
 import { MemoryManager } from "@sa/engine/memory/index.js";
-import { getBuiltinTools } from "@sa/engine/tools/index.js";
+import { getBuiltinTools, createWebFetchTool } from "@sa/engine/tools/index.js";
 import { createMemoryWriteTool } from "@sa/engine/tools/memory-write.js";
 import { createMemorySearchTool } from "@sa/engine/tools/memory-search.js";
 import { createMemoryReadTool } from "@sa/engine/tools/memory-read.js";
@@ -43,6 +43,7 @@ describe("E2E smoke test", () => {
     // 4. Agent initializes with all components
     const tools = [
       ...getBuiltinTools(),
+      createWebFetchTool(),
       createMemoryWriteTool(memory),
       createMemorySearchTool(memory),
       createMemoryReadTool(memory),
@@ -58,7 +59,7 @@ describe("E2E smoke test", () => {
 
     // 5. Verify tool definitions are available for LLM
     // (We can't call agent.chat() without a real LLM, but we can verify the setup is correct)
-    expect(tools).toHaveLength(13); // read, write, edit, exec, exec_status, exec_kill, web_fetch, web_search, reaction, memory_write, memory_search, memory_read, memory_delete
+    expect(tools).toHaveLength(13); // read, write, edit, exec, exec_status, exec_kill, web_search, reaction, web_fetch, memory_write, memory_search, memory_read, memory_delete
     expect(tools.map((t) => t.name)).toEqual([
       "read",
       "write",
@@ -66,9 +67,9 @@ describe("E2E smoke test", () => {
       "exec",
       "exec_status",
       "exec_kill",
-      "web_fetch",
       "web_search",
       "reaction",
+      "web_fetch",
       "memory_write",
       "memory_search",
       "memory_read",
