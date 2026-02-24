@@ -151,6 +151,11 @@ async function removeCronTaskFromConfig(runtime: EngineRuntime, name: string): P
   });
 }
 
+/** Shorthand for audit logging */
+function auditLog(runtime: EngineRuntime, input: import("./audit.js").AuditInput): void {
+  try { runtime.audit.log(input); } catch { /* audit failure is non-fatal */ }
+}
+
 /** Create the tRPC router bound to a runtime instance */
 export function createAppRouter(runtime: EngineRuntime) {
   /** Build the policy manager from config + built-in tool danger levels */
@@ -259,8 +264,10 @@ export function createAppRouter(runtime: EngineRuntime) {
     events: AsyncIterable<AgentEvent>,
     connectorType: ConnectorType,
     approvalMode: ToolApprovalMode,
+    sessionId?: string,
   ): AsyncGenerator<EngineEvent> {
     const isIM = connectorType !== "tui";
+    const sid = sessionId ?? "unknown";
 
     for await (const event of events) {
       switch (event.type) {
@@ -271,10 +278,20 @@ export function createAppRouter(runtime: EngineRuntime) {
           yield event;
           break;
         case "tool_start": {
-          const ctx: ToolEventContext = {
-            toolName: event.name,
-            dangerLevel: getEffectiveDangerLevel(event.name, event.args),
-          };
+          const dangerLevel = getEffectiveDangerLevel(event.name, event.args);
+          const ctx: ToolEventContext = { toolName: event.name, dangerLevel };
+
+          // Audit: tool_call
+          auditLog(runtime, {
+            session: sid,
+            connector: connectorType,
+            event: "tool_call",
+            tool: event.name,
+            danger: dangerLevel,
+            command: event.name === "exec" && typeof event.args.command === "string" ? event.args.command : undefined,
+            url: event.name === "web_fetch" && typeof event.args.url === "string" ? event.args.url : undefined,
+          });
+
           if (!policyManager.shouldEmitToolStart(connectorType, ctx)) break;
           if (isIM) {
             const argsStr = formatArgsForIM(event.name, event.args);
@@ -284,7 +301,16 @@ export function createAppRouter(runtime: EngineRuntime) {
           }
           break;
         }
-        case "tool_end":
+        case "tool_end": {
+          // Audit: tool_result
+          auditLog(runtime, {
+            session: sid,
+            connector: connectorType,
+            event: "tool_result",
+            tool: event.name,
+            summary: event.result.content.slice(0, 200),
+          });
+
           // Intercept reaction tool — emit a reaction event for connectors
           if (event.name === "reaction" && event.result.content.startsWith("__reaction__:")) {
             const emoji = event.result.content.slice("__reaction__:".length);
@@ -306,6 +332,7 @@ export function createAppRouter(runtime: EngineRuntime) {
             }
           }
           break;
+        }
         case "tool_approval_request": {
           const ctx: ToolEventContext = {
             toolName: event.name,
@@ -378,7 +405,7 @@ export function createAppRouter(runtime: EngineRuntime) {
           }
 
           try {
-            yield* filterAgentEvents(agent.chat(chatMessage), connectorType, getApprovalMode(input.sessionId));
+            yield* filterAgentEvents(agent.chat(chatMessage), connectorType, getApprovalMode(input.sessionId), input.sessionId);
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             yield { type: "error", message };
@@ -439,7 +466,7 @@ export function createAppRouter(runtime: EngineRuntime) {
           const agent = getSessionAgent(input.sessionId);
           const connectorType = session.connectorType as ConnectorType;
           try {
-            yield* filterAgentEvents(agent.chat(transcript), connectorType, getApprovalMode(input.sessionId));
+            yield* filterAgentEvents(agent.chat(transcript), connectorType, getApprovalMode(input.sessionId), input.sessionId);
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             yield { type: "error", message };
@@ -461,6 +488,11 @@ export function createAppRouter(runtime: EngineRuntime) {
         )
         .mutation(({ input }) => {
           const session = runtime.sessions.create(input.prefix, input.connectorType);
+          auditLog(runtime, {
+            session: session.id,
+            connector: input.connectorType,
+            event: "session_create",
+          });
           return { session };
         }),
 
@@ -480,6 +512,12 @@ export function createAppRouter(runtime: EngineRuntime) {
       destroy: protectedProcedure
         .input(z.object({ sessionId: z.string() }))
         .mutation(({ input }): { destroyed: boolean } => {
+          const session = runtime.sessions.getSession(input.sessionId);
+          auditLog(runtime, {
+            session: input.sessionId,
+            connector: session?.connectorType ?? "unknown",
+            event: "session_destroy",
+          });
           sessionAgents.delete(input.sessionId);
           sessionToolOverrides.delete(input.sessionId);
           sessionSecurityOverrides.delete(input.sessionId);
@@ -506,11 +544,24 @@ export function createAppRouter(runtime: EngineRuntime) {
         )
         .mutation(({ input }): { acknowledged: boolean } => {
           const resolver = pendingApprovals.get(input.toolCallId);
+          const meta = pendingApprovalMeta.get(input.toolCallId);
           if (!resolver) {
             return { acknowledged: false };
           }
           pendingApprovals.delete(input.toolCallId);
           pendingApprovalMeta.delete(input.toolCallId);
+
+          // Audit: approval or denial
+          if (meta) {
+            const session = runtime.sessions.getSession(meta.sessionId);
+            auditLog(runtime, {
+              session: meta.sessionId,
+              connector: session?.connectorType ?? "unknown",
+              event: input.approved ? "tool_approval" : "tool_denial",
+              tool: meta.toolName,
+            });
+          }
+
           resolver(input.approved);
           return { acknowledged: true };
         }),
@@ -559,6 +610,18 @@ export function createAppRouter(runtime: EngineRuntime) {
             return { acknowledged: false };
           }
           pendingEscalations.delete(input.id);
+
+          // Audit: escalation response
+          const session = runtime.sessions.getSession(pending.sessionId);
+          auditLog(runtime, {
+            session: pending.sessionId,
+            connector: session?.connectorType ?? "unknown",
+            event: "security_escalation",
+            escalation: {
+              layer: "escalation",
+              choice: input.choice,
+            },
+          });
 
           // If allow_session, add the resource to session overrides
           // (the resource info is attached to the escalation — handled by the caller)
@@ -709,6 +772,15 @@ export function createAppRouter(runtime: EngineRuntime) {
             input.connectorId,
             input.connectorType,
           );
+
+          // Audit: auth success/failure
+          auditLog(runtime, {
+            session: input.connectorId,
+            connector: input.connectorType,
+            event: result.success ? "auth_success" : "auth_failure",
+            summary: result.error,
+          });
+
           return {
             paired: result.success,
             token: result.token ?? null,

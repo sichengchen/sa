@@ -30,6 +30,14 @@ function authenticateWebhook(
   const authHeader = req.headers.get("authorization") ?? "";
   const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
   if (!bearerToken || !runtime.auth.validateWebhookToken(bearerToken)) {
+    try {
+      runtime.audit.log({
+        session: "webhook",
+        connector: "webhook",
+        event: "auth_failure",
+        summary: "Webhook authentication failed",
+      });
+    } catch { /* non-fatal */ }
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "content-type": "application/json" },
