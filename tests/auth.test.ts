@@ -40,11 +40,11 @@ describe("AuthManager", () => {
   });
 
   describe("generatePairingCode", () => {
-    test("generates an 8-char alphanumeric code by default", () => {
+    test("generates a 6-char alphanumeric code", () => {
       const auth = new AuthManager(testHome);
       const code = auth.generatePairingCode();
-      expect(code).toHaveLength(8);
-      expect(code).toMatch(/^[A-Z2-9]{8}$/);
+      expect(code).toHaveLength(6);
+      expect(code).toMatch(/^[A-Z2-9]{6}$/);
     });
   });
 

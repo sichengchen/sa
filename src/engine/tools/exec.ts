@@ -19,8 +19,6 @@
 import { Type } from "@mariozechner/pi-ai";
 import type { ToolImpl } from "../agent/types.js";
 import { generateHandle, registerBackground } from "./exec-background.js";
-import { frameAsData, sanitizeContent } from "../agent/content-frame.js";
-import { detectSandbox, type Sandbox, type SandboxOptions } from "./sandbox.js";
 
 /** Default timeout for foreground commands (5 minutes) */
 const DEFAULT_TIMEOUT_S = 300;
@@ -29,21 +27,6 @@ const BACKGROUND_TIMEOUT_S = 1800;
 const DEFAULT_YIELD_MS = 10_000;
 /** Maximum output size in bytes (1MB) */
 const MAX_OUTPUT_BYTES = 1_048_576;
-
-/** Lazily detected OS sandbox */
-let _sandbox: Sandbox | null = null;
-function getSandbox(): Sandbox {
-  if (!_sandbox) _sandbox = detectSandbox();
-  return _sandbox;
-}
-
-/** Sandbox options from exec fence config (set at module load or lazily) */
-let _sandboxOpts: SandboxOptions = { fence: [], deny: [] };
-
-/** Configure sandbox options from exec fence config */
-export function configureSandbox(opts: SandboxOptions): void {
-  _sandboxOpts = opts;
-}
 
 /** Patterns for env var names that should be stripped from subprocess environment */
 const SENSITIVE_ENV_PATTERNS = [
@@ -137,14 +120,7 @@ export const execTool: ToolImpl = {
     const mergedEnv = sanitizeEnv(process.env, env);
 
     try {
-      // Wrap command with OS sandbox if available and configured
-      let spawnCmd: string[] = ["sh", "-c", command];
-      const sandbox = getSandbox();
-      if (sandbox.available() && (_sandboxOpts.fence.length > 0 || _sandboxOpts.deny.length > 0)) {
-        spawnCmd = sandbox.wrap(spawnCmd, _sandboxOpts);
-      }
-
-      const proc = Bun.spawn(spawnCmd, {
+      const proc = Bun.spawn(["sh", "-c", command], {
         cwd: workdir,
         env: mergedEnv,
         stdout: "pipe",
@@ -211,12 +187,8 @@ export const execTool: ToolImpl = {
         output += (output ? "\n" : "") + `exit code: ${exitCode}`;
       }
 
-      // Cleanup sandbox temp files
-      if (sandbox.cleanup) sandbox.cleanup();
-
-      const sanitized = sanitizeContent(capOutput(output) || "(no output)");
       return {
-        content: frameAsData(sanitized, "exec"),
+        content: capOutput(output) || "(no output)",
         isError: exitCode !== 0,
       };
     } catch (err) {

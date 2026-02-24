@@ -90,10 +90,6 @@ async function openTui(): Promise<void> {
 
 const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   engine: engineCommand,
-  audit: async (cmdArgs) => {
-    const { auditCommand } = await import("./audit.js");
-    await auditCommand(cmdArgs);
-  },
   config: async () => {
     if (!isConfigured()) {
       console.error("No configuration found. Run 'sa onboard' first.");
@@ -115,7 +111,6 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     console.log("Usage: sa [command]\n");
     console.log("Commands:");
     console.log("  (default)   Start the Engine (if needed) and open the TUI");
-    console.log("  audit       View the audit log (--tail N, --tool, --event, --since, --json)");
     console.log("  config      Interactive configuration editor");
     console.log("  onboard     Run the onboarding wizard");
     console.log("  engine      Manage the Engine daemon (start/stop/status/logs/restart)");

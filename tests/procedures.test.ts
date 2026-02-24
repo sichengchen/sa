@@ -11,8 +11,6 @@ import { ModelRouter } from "@sa/engine/router/index.js";
 import { Agent } from "@sa/engine/agent/index.js";
 import { SkillRegistry } from "@sa/engine/skills/index.js";
 import { Scheduler, createHeartbeatTask } from "@sa/engine/scheduler.js";
-import { AuditLogger } from "@sa/engine/audit.js";
-import { SecurityModeManager } from "@sa/engine/security-mode.js";
 import type { EngineRuntime } from "@sa/engine/runtime.js";
 import type { KnownProvider } from "@mariozechner/pi-ai";
 
@@ -81,8 +79,6 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
     skills,
     scheduler,
     transcriber: { transcribe: async () => "", backend: null } as any,
-    audit: new AuditLogger(saHome),
-    securityMode: new SecurityModeManager(),
     agentName: "Test",
     mainSessionId: mainSession.id,
     createAgent(_onToolApproval?: any, modelOverride?: string) {

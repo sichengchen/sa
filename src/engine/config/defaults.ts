@@ -1,19 +1,5 @@
 import type { SAConfigFile, HeartbeatConfig } from "./types.js";
 
-/** Default tool allowlist for cron tasks — read + search, memory, notify */
-export const CRON_DEFAULT_TOOLS = [
-  "read", "web_fetch", "web_search",
-  "memory_search", "memory_read", "memory_write",
-  "notify",
-];
-
-/** Default tool allowlist for webhook tasks — read + search, no memory writes */
-export const WEBHOOK_DEFAULT_TOOLS = [
-  "read", "web_fetch", "web_search",
-  "memory_search", "memory_read",
-  "notify",
-];
-
 /** Default heartbeat configuration */
 export const DEFAULT_HEARTBEAT: HeartbeatConfig = {
   enabled: true,
@@ -71,10 +57,6 @@ export const DEFAULT_CONFIG: SAConfigFile = {
     audio: {
       enabled: true,
       preferLocal: true,
-    },
-    urlPolicy: {
-      additionalBlockedHosts: [],
-      allowedExceptions: [],
     },
     toolPolicy: {
       verbosity: {

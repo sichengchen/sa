@@ -22,8 +22,6 @@ approval behavior and event reporting across connectors.
 | 15 | `set_env_secret` | safe | Store a secret in the encrypted vault (secrets.enc) |
 | 16 | `set_env_variable` | safe | Set a plain environment variable in config.json |
 | 17 | `notify` | safe | Push notification to Telegram/Discord |
-| 18 | `delegate` | moderate | Delegate a task to a sub-agent (sync or background) |
-| 19 | `delegate_status` | safe | Check status of background sub-agents |
 
 *The `exec` tool is registered as `dangerous` but uses **hybrid classification** at runtime --
 see "Exec hybrid approval" below.
@@ -570,46 +568,6 @@ neither is configured, it returns an informational message directing the user to
 - Cron task completion reports (e.g., daily summary, scheduled reminders)
 - Webhook-triggered task results
 - Any scenario where the agent needs to proactively reach the user
-
-### `delegate`
-
-Delegate a task to a sub-agent. By default runs synchronously (blocks until done). Set
-`background=true` to spawn in the background and poll with `delegate_status`. Sub-agents have
-limited tools (no `delegate` -- no recursion) and auto-approve all tool calls.
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `task` | string | No* | Task instruction for a single sub-agent |
-| `tasks` | array | No* | Spawn multiple background sub-agents (always background) |
-| `model` | string | No | Model override (default: eco tier) |
-| `tools` | string[] | No | Tool name allowlist (default: all non-delegate tools) |
-| `background` | boolean | No | If true, return handle immediately (default: false) |
-
-*One of `task` or `tasks` is required.
-
-**Multi-spawn format:** Each entry in `tasks` is `{ task: string, model?: string, tools?: string[] }`.
-
-**Synchronous mode (default):** Blocks until the sub-agent completes. Returns the sub-agent's
-output, tool calls, and status.
-
-**Background mode:** Returns immediately with a sub-agent ID. Use `delegate_status` to poll.
-Concurrency is limited (default: 3 concurrent, configurable via `orchestration.maxConcurrent`).
-
-**Memory policy:** Synchronous sub-agents can write to memory by default. Background sub-agents
-cannot write or delete memory entries by default (configurable via `orchestration.memoryWriteDefault`).
-All sub-agents can search and read memory.
-
-### `delegate_status`
-
-Check status of background sub-agents or get their results.
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `id` | string | No | Specific sub-agent ID (omit to list all) |
-
-Returns:
-- With `id`: Full status JSON including result (if done), error, tool calls, elapsed time.
-- Without `id`: Summary list of all background sub-agents with status and elapsed time.
 
 ---
 

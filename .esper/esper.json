@@ -1,6 +1,6 @@
 {
   "backlog_mode": "local",
-  "current_phase": "008-security-and-subagents",
+  "current_phase": "007-memory-redesign",
   "commands": {
     "test": "bun test",
     "lint": "bun run lint",

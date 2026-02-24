@@ -10,7 +10,6 @@ import type {
 import { ToolRegistry } from "./registry.js";
 import { ToolLoopDetector } from "./tool-loop-detection.js";
 import { capToolResultSize } from "./tool-result-guard.js";
-import { sanitizeContent } from "./content-frame.js";
 import type { AgentOptions, AgentEvent, ToolImpl, ToolLoopConfig } from "./types.js";
 
 /** Default agent timeout: 10 minutes (matching OpenClaw) */
@@ -167,12 +166,8 @@ export class Agent {
 
                   const rawResult = await this.registry.execute(tc.name, tc.arguments);
 
-                  // Sanitize + cap tool result size
-                  const sanitized = {
-                    ...rawResult,
-                    content: sanitizeContent(rawResult.content),
-                  };
-                  const result = capToolResultSize(sanitized, this.options.maxToolResultChars);
+                  // Cap tool result size
+                  const result = capToolResultSize(rawResult, this.options.maxToolResultChars);
 
                   // Record result for loop detection
                   if (loopDetector) {
