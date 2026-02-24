@@ -1,14 +1,14 @@
 ---
 id: 109
-title: "Subagent background execution + Orchestrator"
-status: pending
+title: Subagent background execution + Orchestrator
+status: done
 type: feature
 priority: 2
 phase: 008-security-and-subagents
 branch: feature/008-security-and-subagents
 created: 2026-02-23
+shipped_at: 2026-02-24
 ---
-
 # Subagent background execution + Orchestrator
 
 ## Context
@@ -156,3 +156,16 @@ orchestration?: {
 - Expected: No errors
 - Manual: Ask agent to "research weather in 3 cities simultaneously" — spawns 3 background sub-agents, polls for results
 - Edge cases: All sub-agents fail simultaneously, parent session destroyed while sub-agents running (cleanup), concurrency limit hit with mixed sync+background calls
+
+## Progress
+- Created `src/engine/agent/orchestrator.ts` — Orchestrator class with concurrency limits, queuing, result retention, cancellation
+- Created `src/engine/tools/delegate-status.ts` — delegate_status tool for polling sub-agent status
+- Updated `src/engine/tools/delegate.ts` — added background mode and multi-spawn support
+- Updated `src/engine/tools/index.ts` — export delegate_status
+- Updated `src/engine/config/types.ts` — expanded orchestration config (maxConcurrent, maxSubAgentsPerTurn, resultRetentionMs)
+- Wired shared Orchestrator in `src/engine/runtime.ts` — passes to both delegate and delegate_status tools
+- Fixed queuing bug in Orchestrator.spawnBackground
+- Created `src/engine/agent/orchestrator.test.ts` (9 tests) and `src/engine/tools/delegate-status.test.ts` (6 tests)
+- Note: Used shared orchestrator (not per-session) since tools are shared across sessions — matches exec background pattern
+- Note: Skipped procedures.ts per-session orchestrator map (not needed with shared orchestrator), config/defaults.ts (no new defaults needed), and tools.md doc update (low priority)
+- Verification: typecheck ✓, lint ✓, 726 tests pass
