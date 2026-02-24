@@ -78,6 +78,10 @@ memory/, skills/
 engine.url, engine.pid, engine.token, engine.log, engine.heartbeat
 ```
 
+## Documentation
+
+System docs live in `specs/` — the single source of truth. At build time, `scripts/copy-specs.ts` copies them into the SA bundled skill for embedding in the binary. See `specs/README.md` for the full index.
+
 ## ESLint
 
 Uses ESLint 10+ flat config (`eslint.config.js`) with `@typescript-eslint/parser`. Only covers `src/**/*.ts` and `src/**/*.tsx`.

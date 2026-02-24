@@ -15,17 +15,58 @@ export function createReadSkillTool(registry: SkillRegistry): ToolImpl {
       name: Type.String({
         description: "The name of the skill to read (from <available_skills>)",
       }),
+      path: Type.Optional(
+        Type.String({
+          description:
+            'Optional sub-file path within the skill directory. Use "__index__" to list all files, or a relative path like "specs/overview.md" to read a specific file. Omit to read the main SKILL.md.',
+        }),
+      ),
     }),
     async execute(args) {
       const name = args.name as string;
-      const content = await registry.getContent(name);
-      if (!content) {
+      const path = args.path as string | undefined;
+
+      // No path — existing behavior: load SKILL.md and activate
+      if (!path) {
+        const content = await registry.getContent(name);
+        if (!content) {
+          return {
+            content: `Skill "${name}" not found. Check <available_skills> for available skill names.`,
+            isError: true,
+          };
+        }
+        await registry.activate(name);
+        return { content };
+      }
+
+      // Traversal guard
+      if (path.includes("..")) {
         return {
-          content: `Skill "${name}" not found. Check <available_skills> for available skill names.`,
+          content: "Path traversal is not allowed.",
           isError: true,
         };
       }
-      await registry.activate(name);
+
+      // __index__ — list all files
+      if (path === "__index__") {
+        const files = await registry.listFiles(name);
+        if (files.length === 0) {
+          return {
+            content: `Skill "${name}" not found or has no files.`,
+            isError: true,
+          };
+        }
+        return { content: files.join("\n") };
+      }
+
+      // Load a specific sub-file
+      const content = await registry.getSubFile(name, path);
+      if (content === null) {
+        return {
+          content: `File "${path}" not found in skill "${name}". Use path "__index__" to list available files.`,
+          isError: true,
+        };
+      }
       return { content };
     },
   };

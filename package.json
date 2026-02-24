@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "bun run src/cli/index.ts",
-    "build": "bun run scripts/embed-skills.ts && bun build src/cli/index.ts --outdir dist --target bun",
+    "build": "bun scripts/copy-specs.ts && bun run scripts/embed-skills.ts && bun build src/cli/index.ts --outdir dist --target bun",
     "test": "bun test",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",

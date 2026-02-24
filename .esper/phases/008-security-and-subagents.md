@@ -73,3 +73,4 @@ Informed by explorations 008 (Subagents Support) and 011 (SA Security Model v2).
 - Plan 110 — Subagent memory policy + documentation: memoryWrite option on SubAgentOptions filters memory_write/memory_delete from background sub-agents. Files: sub-agent.ts, sub-agent.test.ts, delegate.ts, runtime.ts, tools.md, security.md, SKILL.md
 - Plan 106 — Cron/webhook tool restrictions: Default tool allowlists for cron and webhook agents, per-task allowedTools config. Files: types.ts, defaults.ts, runtime.ts, procedures.ts, server.ts
 - Plan 107 — OS sandbox: Seatbelt sandbox for macOS exec commands, noop fallback for other platforms, integrated with exec fence config. Files: sandbox.ts, sandbox.test.ts, exec.ts, runtime.ts
+- Plan 111 — System spec docs in /specs with embedded access: Create specs/ directory with granular docs. Files: specs/, scripts/copy-specs.ts, package.json, read-skill.ts, registry.ts, SKILL.md, CONSTITUTION.md, CLAUDE.md

@@ -34,6 +34,6 @@ SA (nicknamed Sasa) is a personal AI agent assistant with minimalist design. It 
 3. **Configuration as documents** — Markdown and JSON files are the source of truth, not databases
 4. **Single-user simplicity** — no auth, no permissions, no multi-user abstractions
 5. **Composable, not monolithic** — subsystems (router, tools, memory, transports) are loosely coupled and independently testable
-6. **Keep the bundled `sa` skill up to date** — `src/engine/skills/bundled/sa/SKILL.md` documents SA's architecture, commands, and capabilities. Update it as features evolve.
+6. **`specs/` is the system manual** — single source of truth for all SA documentation. Copied into the SA skill at build time (`scripts/copy-specs.ts`), embedded in the binary. When features change, update the relevant spec doc in `specs/`.
 7. **Credentials and config through SA, not the shell** — When introducing features that require API keys or credentials: store secrets in `secrets.enc` (encrypted) via `set_env_secret`, store plain config in `config.json` via `set_env_variable`, inject both into `process.env` at engine startup, and update the bundled `sa` skill. Never use shell profiles (`.zshrc`, `.bashrc`, etc.).
-8. **Keep documentation current** — The `sa` bundled skill directory (`src/engine/skills/bundled/sa/`) is the single source of truth for all project documentation. When features are added or changed, update the relevant doc files in `sa/docs/`. The `SKILL.md` stays concise (agent quick-reference); detailed docs live in `sa/docs/`.
+8. **Keep documentation current** — When features are added or changed, update the relevant spec file in `specs/`. The `SKILL.md` is a minimal index; all detailed docs live in `specs/`.

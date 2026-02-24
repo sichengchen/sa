@@ -1,8 +1,9 @@
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { homedir } from "node:os";
 import { existsSync } from "node:fs";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { scanSkillDirectory, loadSkillContent, parseEmbeddedSkills } from "./loader.js";
+import { scanSkillDirectory, loadSkillContent, parseEmbeddedSkills, loadEmbeddedDoc, listEmbeddedFiles } from "./loader.js";
 import { EMBEDDED_SKILLS } from "./embedded-skills.generated.js";
 import type { SkillMetadata, LoadedSkill } from "./types.js";
 
@@ -89,6 +90,66 @@ export class SkillRegistry {
   /** Get a skill by name */
   get(name: string): LoadedSkill | undefined {
     return this.skills.get(name);
+  }
+
+  /** Load a sub-file from a skill directory by relative path */
+  async getSubFile(name: string, relativePath: string): Promise<string | null> {
+    const skill = this.skills.get(name);
+    if (!skill) return null;
+
+    if (skill.filePath.startsWith("embedded:")) {
+      // Embedded mode — look up in cache
+      const content = loadEmbeddedDoc(name, relativePath);
+      return content ?? null;
+    }
+
+    // Filesystem mode — resolve relative to skill directory
+    const skillDir = dirname(skill.filePath);
+    const target = resolve(skillDir, relativePath);
+
+    // Traversal guard: target must be within the skill directory
+    if (!target.startsWith(skillDir)) return null;
+
+    try {
+      return await readFile(target, "utf-8");
+    } catch {
+      return null;
+    }
+  }
+
+  /** List all files in a skill directory (relative paths) */
+  async listFiles(name: string): Promise<string[]> {
+    const skill = this.skills.get(name);
+    if (!skill) return [];
+
+    if (skill.filePath.startsWith("embedded:")) {
+      return listEmbeddedFiles(name);
+    }
+
+    // Filesystem mode — recursive scan for .md files
+    const skillDir = dirname(skill.filePath);
+    return this.scanDir(skillDir, skillDir);
+  }
+
+  /** Recursively scan a directory for .md files, returning relative paths */
+  private async scanDir(dir: string, baseDir: string): Promise<string[]> {
+    const results: string[] = [];
+    try {
+      const entries = await readdir(dir);
+      for (const entry of entries) {
+        const full = join(dir, entry);
+        const s = await stat(full);
+        if (s.isDirectory()) {
+          results.push(...(await this.scanDir(full, baseDir)));
+        } else if (entry.endsWith(".md")) {
+          const rel = full.slice(baseDir.length + 1); // strip baseDir + separator
+          results.push(rel);
+        }
+      }
+    } catch {
+      // dir doesn't exist or unreadable
+    }
+    return results.sort();
   }
 
   /** Total number of discovered skills */
