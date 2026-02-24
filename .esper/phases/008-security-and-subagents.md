@@ -62,3 +62,4 @@ Informed by explorations 008 (Subagents Support) and 011 (SA Security Model v2).
 ## Shipped Plans
 - Plan 098 — URL policy for web_fetch — SSRF protection: Create URL policy module with blocked hosts/schemes/ports, integrate into web_fetch with manual redirect following. Files: url-policy.ts, url-policy.test.ts, web-fetch.ts, types.ts, defaults.ts
 - Plan 099 — Exec classifier hardening: Default-deny fallback, shell indirection detection, expanded pipe-to-shell, dangerous git ops. Files: exec-classifier.ts, exec-classifier.test.ts
+- Plan 100 — Content framing + output sanitizer: frameAsData() wraps all external content in data tags, sanitizeContent() redacts secrets/paths/traces. Files: content-frame.ts, web-fetch.ts, exec.ts, server.ts, runtime.ts, agent.ts
