@@ -141,6 +141,17 @@ export interface RuntimeConfig {
       /** Always-denied paths (default: ["~/.sa", "~/.ssh", "~/.gnupg", "~/.aws", "~/.config/gcloud"]) */
       alwaysDeny?: string[];
     };
+    /** Default security mode for new sessions */
+    defaultMode?: "default" | "trusted" | "unrestricted";
+    /** Auto-revert TTL per elevated mode */
+    modeTTL?: {
+      /** Trusted mode TTL in seconds (default: 3600 = 1 hour) */
+      trusted?: number;
+      /** Unrestricted mode TTL in seconds (default: 1800 = 30 min) */
+      unrestricted?: number;
+    };
+    /** Whether unrestricted mode can be activated from IM connectors (default: false) */
+    allowUnrestrictedFromIM?: boolean;
   };
   /** URL policy for web_fetch — SSRF protection */
   urlPolicy?: {

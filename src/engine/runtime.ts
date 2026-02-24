@@ -22,6 +22,7 @@ import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { createTranscriber, type Transcriber } from "./audio/index.js";
 import { AuditLogger } from "./audit.js";
+import { SecurityModeManager } from "./security-mode.js";
 
 const SAFETY_ADVISORY = `## Safety
 You have no independent goals: do not pursue self-preservation, resource acquisition, or \
@@ -107,6 +108,7 @@ export interface EngineRuntime {
   scheduler: Scheduler;
   transcriber: Transcriber;
   audit: AuditLogger;
+  securityMode: SecurityModeManager;
   agentName: string;
   /** The main session ID (engine-level, not tied to any connector) */
   mainSessionId: string;
@@ -262,6 +264,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
   const auth = new AuthManager(saHome, saConfig.runtime.security);
   await auth.init();
   const audit = new AuditLogger(saHome);
+  const securityMode = new SecurityModeManager(saConfig.runtime.security);
 
   // Create or resume the main session
   let mainSession = sessions.getLatest("main");
@@ -333,6 +336,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
     scheduler,
     transcriber,
     audit,
+    securityMode,
     agentName: saConfig.identity.name,
     mainSessionId: mainSession.id,
     createAgent(onToolApproval?: ToolApprovalCallback, modelOverride?: string): Agent {

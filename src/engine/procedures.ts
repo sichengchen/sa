@@ -13,6 +13,7 @@ import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode, Escalatio
 import { type SessionSecurityOverrides, createEmptyOverrides } from "./agent/security-types.js";
 import type { ModelConfig, ProviderConfig } from "./router/types.js";
 import { heartbeatState, createHeartbeatTask } from "./scheduler.js";
+import { describeModeEffects } from "./security-mode.js";
 
 /** Format tool args as a compact summary for IM display */
 function formatArgsForIM(toolName: string, args: Record<string, unknown>): string {
@@ -521,6 +522,7 @@ export function createAppRouter(runtime: EngineRuntime) {
           sessionAgents.delete(input.sessionId);
           sessionToolOverrides.delete(input.sessionId);
           sessionSecurityOverrides.delete(input.sessionId);
+          runtime.securityMode.clearMode(input.sessionId);
           return { destroyed: runtime.sessions.destroySession(input.sessionId) };
         }),
     }),
@@ -627,6 +629,48 @@ export function createAppRouter(runtime: EngineRuntime) {
           // (the resource info is attached to the escalation — handled by the caller)
           pending.resolve(input.choice as EscalationChoice);
           return { acknowledged: true };
+        }),
+    }),
+
+    /** Security mode management */
+    securityMode: router({
+      /** Get the current security mode for a session */
+      get: protectedProcedure
+        .input(z.object({ sessionId: z.string() }))
+        .query(({ input }) => {
+          const mode = runtime.securityMode.getMode(input.sessionId);
+          const remainingTTL = runtime.securityMode.getRemainingTTL(input.sessionId);
+          return { mode, remainingTTL };
+        }),
+
+      /** Switch security mode for a session */
+      set: protectedProcedure
+        .input(z.object({
+          sessionId: z.string(),
+          mode: z.enum(["default", "trusted", "unrestricted"]),
+        }))
+        .mutation(({ input }) => {
+          const session = runtime.sessions.getSession(input.sessionId);
+          const connectorType = session?.connectorType ?? "unknown";
+          const isIM = connectorType !== "tui" && connectorType !== "engine";
+          const previousMode = runtime.securityMode.getMode(input.sessionId);
+
+          const result = runtime.securityMode.setMode(input.sessionId, input.mode, { isIM });
+          if (!result.ok) {
+            throw new TRPCError({ code: "FORBIDDEN", message: result.error });
+          }
+
+          // Audit: mode_change
+          auditLog(runtime, {
+            session: input.sessionId,
+            connector: connectorType,
+            event: "mode_change",
+            summary: `${previousMode} → ${input.mode}`,
+          });
+
+          const ttl = runtime.securityMode.getRemainingTTL(input.sessionId);
+          const description = describeModeEffects(input.mode, ttl);
+          return { mode: input.mode, remainingTTL: ttl, description };
         }),
     }),
 
