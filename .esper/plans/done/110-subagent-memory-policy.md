@@ -1,14 +1,14 @@
 ---
 id: 110
-title: "Subagent memory policy + documentation"
-status: pending
+title: Subagent memory policy + documentation
+status: done
 type: feature
 priority: 2
 phase: 008-security-and-subagents
 branch: feature/008-security-and-subagents
 created: 2026-02-23
+shipped_at: 2026-02-24
 ---
-
 # Subagent memory policy + documentation
 
 ## Context
