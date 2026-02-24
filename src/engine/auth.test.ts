@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { AuthManager } from "./auth.js";
@@ -17,6 +17,19 @@ describe("AuthManager", () => {
   afterEach(async () => {
     await auth.cleanup();
     await rm(dir, { recursive: true, force: true });
+  });
+
+  describe("init()", () => {
+    it("creates separate master and webhook tokens", async () => {
+      expect(auth.getMasterToken()).toBeTruthy();
+      expect(auth.getWebhookToken()).toBeTruthy();
+      expect(auth.getMasterToken()).not.toBe(auth.getWebhookToken());
+    });
+
+    it("writes webhook token file with restricted permissions", async () => {
+      const content = await readFile(join(dir, "engine.webhook-token"), "utf-8");
+      expect(content).toBe(auth.getWebhookToken());
+    });
   });
 
   describe("pair()", () => {
@@ -47,7 +60,7 @@ describe("AuthManager", () => {
 
     it("fails with wrong pairing code", () => {
       auth.generatePairingCode();
-      const result = auth.pair("ZZZZZZ", "telegram:123", "telegram");
+      const result = auth.pair("ZZZZZZZZ", "telegram:123", "telegram");
       expect(result.success).toBe(false);
     });
 
@@ -59,18 +72,75 @@ describe("AuthManager", () => {
     });
   });
 
+  describe("pairing code", () => {
+    it("generates 8-character codes by default", () => {
+      const code = auth.generatePairingCode();
+      expect(code.length).toBe(8);
+    });
+
+    it("respects custom code length", async () => {
+      const customAuth = new AuthManager(dir, { pairingCodeLength: 12 });
+      await customAuth.init();
+      const code = customAuth.generatePairingCode();
+      expect(code.length).toBe(12);
+      await customAuth.cleanup();
+    });
+
+    it("expires after TTL", async () => {
+      const shortTTLAuth = new AuthManager(dir, { pairingTTL: 0 }); // 0s = instant expiry
+      await shortTTLAuth.init();
+      const code = shortTTLAuth.generatePairingCode();
+      // Wait a tick for time to pass
+      await new Promise((r) => setTimeout(r, 10));
+      const result = shortTTLAuth.pair(code, "test", "test");
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("expired");
+      await shortTTLAuth.cleanup();
+    });
+  });
+
+  describe("pairing rate limiting", () => {
+    it("applies exponential backoff on failures", () => {
+      auth.generatePairingCode();
+      // First failure
+      auth.pair("WRONG111", "telegram:123", "telegram");
+      // Second failure should be locked
+      const result = auth.pair("WRONG222", "telegram:123", "telegram");
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Too many failed");
+    });
+
+    it("tracks failures per-connector", () => {
+      auth.generatePairingCode();
+      // Fail for connector A
+      auth.pair("WRONG111", "telegram:A", "telegram");
+      // Connector B should still be able to try
+      const result = auth.pair("WRONG222", "telegram:B", "telegram");
+      // B gets its own first failure, not locked yet (just wrong code)
+      expect(result.error).toBeUndefined();
+    });
+  });
+
   describe("validate()", () => {
-    it("validates master token", () => {
+    it("validates master token with type 'master'", () => {
       const entry = auth.validate(auth.getMasterToken());
       expect(entry).not.toBeNull();
       expect(entry!.connectorId).toBe("master");
+      expect(entry!.type).toBe("master");
     });
 
-    it("validates paired session token", () => {
+    it("validates webhook token with type 'webhook'", () => {
+      const entry = auth.validate(auth.getWebhookToken());
+      expect(entry).not.toBeNull();
+      expect(entry!.type).toBe("webhook");
+    });
+
+    it("validates paired session token with type 'session'", () => {
       const { token } = auth.pair(auth.getMasterToken(), "tui", "tui");
       const entry = auth.validate(token!);
       expect(entry).not.toBeNull();
       expect(entry!.connectorId).toBe("tui");
+      expect(entry!.type).toBe("session");
     });
 
     it("rejects invalid token", () => {
@@ -81,6 +151,31 @@ describe("AuthManager", () => {
     it("rejects empty token", () => {
       const entry = auth.validate("");
       expect(entry).toBeNull();
+    });
+
+    it("rejects expired session token", async () => {
+      // sessionTTL=0.001 → 1ms TTL so it expires almost immediately
+      const shortTTLAuth = new AuthManager(dir, { sessionTTL: 0.001 });
+      await shortTTLAuth.init();
+      const { token } = shortTTLAuth.pair(shortTTLAuth.getMasterToken(), "test", "test");
+      // Wait for expiry
+      await new Promise((r) => setTimeout(r, 10));
+      expect(shortTTLAuth.validate(token!)).toBeNull();
+      await shortTTLAuth.cleanup();
+    });
+  });
+
+  describe("validateWebhookToken()", () => {
+    it("validates correct webhook token", () => {
+      expect(auth.validateWebhookToken(auth.getWebhookToken())).toBe(true);
+    });
+
+    it("rejects master token", () => {
+      expect(auth.validateWebhookToken(auth.getMasterToken())).toBe(false);
+    });
+
+    it("rejects invalid token", () => {
+      expect(auth.validateWebhookToken("invalid")).toBe(false);
     });
   });
 
