@@ -1,14 +1,14 @@
 ---
 id: 101
-title: "Auth overhaul — token scopes, webhook separation, session TTL"
-status: pending
+title: Auth overhaul — token scopes, webhook separation, session TTL
+status: done
 type: feature
 priority: 1
 phase: 008-security-and-subagents
 branch: feature/008-security-and-subagents
 created: 2026-02-23
+shipped_at: 2026-02-24
 ---
-
 # Auth overhaul — token scopes, webhook separation, session TTL
 
 ## Context
@@ -86,3 +86,14 @@ security?: {
 - Run: `bun run typecheck && bun run lint`
 - Expected: No errors
 - Edge cases: Clock skew (use monotonic time for TTL), race between token expiry check and concurrent requests, backward compatibility (existing paired connectors get migrated with default TTL)
+
+## Progress
+- Separated webhook token from master token — dedicated file with 0o600 perms
+- Added session TTL (default 24h), expired tokens auto-removed on validate()
+- Pairing codes increased to 8 chars (from 6) with 10-min expiry
+- Per-connector exponential backoff (1s→60s cap) replaces flat lockout
+- Token type field for audit integration
+- Security config section added to RuntimeConfig
+- 24 unit tests in auth.test.ts + updated tests/auth.test.ts
+- Modified: auth.ts, auth.test.ts, server.ts, runtime.ts, types.ts, tests/auth.test.ts
+- Verification: typecheck, lint, all 654 tests pass
