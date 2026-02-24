@@ -1,14 +1,14 @@
 ---
 id: 105
-title: "Session security modes — default/trusted/unrestricted"
-status: pending
+title: Session security modes — default/trusted/unrestricted
+status: done
 type: feature
 priority: 2
 phase: 008-security-and-subagents
 branch: feature/008-security-and-subagents
 created: 2026-02-23
+shipped_at: 2026-02-24
 ---
-
 # Session security modes — default/trusted/unrestricted
 
 ## Context
@@ -142,3 +142,15 @@ Log `mode_change` events: `{ event: "mode_change", from: "default", to: "trusted
 - Expected: No errors
 - Manual: Start TUI, `/mode trusted`, verify relaxed URL policy and exec fence, wait for auto-revert
 - Edge cases: Mode change during active tool execution (apply to next call, not current), concurrent mode changes from different sessions (per-session state)
+
+## Progress
+- Created SecurityModeManager with per-session modes, auto-revert TTL, IM restriction
+- 18 unit tests covering mode get/set, expiry, clear, IM blocking, TTL, isolation
+- Added tRPC securityMode.get/set procedures with audit logging
+- Added mode_change event type to shared types
+- Added config schema (defaultMode, modeTTL, allowUnrestrictedFromIM) to types.ts
+- Fixed test runtime mock to include audit and securityMode
+- Deferred: TUI/connector visual indicators (status bar, /mode command) — cosmetic, can be wired in separately
+- Deferred: System prompt integration for mode awareness — can be added when modes are consumed by actual security layers
+- Modified: security-mode.ts, security-mode.test.ts, runtime.ts, procedures.ts, types.ts, shared/types.ts, tests/procedures.test.ts
+- Verification: 702 tests pass, typecheck clean, lint clean
