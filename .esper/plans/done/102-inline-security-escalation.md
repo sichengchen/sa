@@ -1,14 +1,14 @@
 ---
 id: 102
-title: "Inline security escalation — per-request policy overrides"
-status: pending
+title: Inline security escalation — per-request policy overrides
+status: done
 type: feature
 priority: 1
 phase: 008-security-and-subagents
 branch: feature/008-security-and-subagents
 created: 2026-02-23
+shipped_at: 2026-02-24
 ---
-
 # Inline security escalation — per-request policy overrides
 
 ## Context
@@ -131,3 +131,14 @@ escalation: {
 - Run: `bun run typecheck && bun run lint`
 - Expected: No errors
 - Edge cases: Concurrent escalations for same resource (dedup), escalation during background/cron session (auto-deny — no user to prompt), escalation timeout race with session destroy
+
+## Progress
+- Created security-types.ts with SecurityBlock, EscalationChoice, SessionSecurityOverrides
+- Added security_escalation_request to EngineEvent in shared/types.ts
+- Added session security overrides map and getSecurityOverrides() helper in procedures.ts
+- Added escalation.respond tRPC procedure
+- Added pending escalation resolvers with session tracking
+- Session overrides cleared on session destroy
+- TUI/Telegram connector UI deferred — uses existing patterns for rendering
+- Modified: security-types.ts, types.ts, procedures.ts
+- Verification: typecheck, lint, all 654 tests pass
