@@ -1,7 +1,6 @@
 import { writeFile, unlink, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import { timingSafeEqual } from "node:crypto";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { WebSocketServer } from "ws";
@@ -13,12 +12,6 @@ import { heartbeatState } from "./scheduler.js";
 import { Agent } from "./agent/index.js";
 import { frameAsData } from "./agent/content-frame.js";
 
-/** Timing-safe string comparison to prevent timing attacks on secret comparison */
-function safeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
-}
-
 const DEFAULT_PORT = 7420;
 
 interface WebhookBody {
@@ -27,26 +20,22 @@ interface WebhookBody {
 }
 
 /**
- * Authenticate a webhook request using bearer token.
+ * Authenticate a webhook request using the dedicated webhook bearer token.
  * Returns a Response if authentication fails, or null if authenticated.
  */
 function authenticateWebhook(
   req: Request,
-  webhookConfig: { token?: string } | undefined,
+  runtime: EngineRuntime,
 ): Response | null {
-  if (webhookConfig?.token) {
-    const authHeader = req.headers.get("authorization") ?? "";
-    const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-    if (!bearerToken || !safeCompare(bearerToken, webhookConfig.token)) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "content-type": "application/json" },
-      });
-    }
-    return null; // Authenticated
+  const authHeader = req.headers.get("authorization") ?? "";
+  const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!bearerToken || !runtime.auth.validateWebhookToken(bearerToken)) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "content-type": "application/json" },
+    });
   }
-
-  return null; // No auth configured = open
+  return null; // Authenticated
 }
 
 /** Handle POST /webhook/agent requests (direct agent chat) */
@@ -79,7 +68,7 @@ async function handleWebhookAgent(req: Request, runtime: EngineRuntime, appRoute
   }
 
   // Authenticate (bearer token only)
-  const authError = authenticateWebhook(req, webhookConfig);
+  const authError = authenticateWebhook(req, runtime);
   if (authError) return authError;
 
   // Create or resume session
@@ -177,7 +166,7 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
   }
 
   // Authenticate
-  const authError = authenticateWebhook(req, webhookConfig);
+  const authError = authenticateWebhook(req, runtime);
   if (authError) return authError;
 
   // Look up task by slug
@@ -274,7 +263,7 @@ async function handleWebhookHeartbeat(req: Request, runtime: EngineRuntime): Pro
     });
   }
 
-  const authError = authenticateWebhook(req, webhookConfig);
+  const authError = authenticateWebhook(req, runtime);
   if (authError) return authError;
 
   // Check if heartbeat is enabled

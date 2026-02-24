@@ -126,6 +126,15 @@ export interface RuntimeConfig {
   taskTierOverrides?: Partial<Record<TaskType, ModelTier>>;
   /** Shorthand aliases for model names (e.g. { "fast": "haiku", "smart": "opus" }) */
   modelAliases?: Record<string, string>;
+  /** Security configuration */
+  security?: {
+    /** Session token TTL in seconds (default: 86400 = 24h) */
+    sessionTTL?: number;
+    /** Pairing code TTL in seconds (default: 600 = 10min) */
+    pairingTTL?: number;
+    /** Pairing code length (default: 8) */
+    pairingCodeLength?: number;
+  };
   /** URL policy for web_fetch — SSRF protection */
   urlPolicy?: {
     additionalBlockedHosts?: string[];

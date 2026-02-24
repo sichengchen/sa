@@ -257,7 +257,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
   }
 
   const sessions = new SessionManager();
-  const auth = new AuthManager(saHome);
+  const auth = new AuthManager(saHome, saConfig.runtime.security);
   await auth.init();
 
   // Create or resume the main session
