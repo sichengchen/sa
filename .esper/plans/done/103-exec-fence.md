@@ -1,14 +1,14 @@
 ---
 id: 103
-title: "Exec working directory fence"
-status: pending
+title: Exec working directory fence
+status: done
 type: feature
 priority: 2
 phase: 008-security-and-subagents
 branch: feature/008-security-and-subagents
 created: 2026-02-23
+shipped_at: 2026-02-24
 ---
-
 # Exec working directory fence
 
 ## Context
@@ -85,3 +85,11 @@ Default `alwaysDeny`: `["~/.sa", "~/.ssh", "~/.gnupg", "~/.aws", "~/.config/gclo
 - Run: `bun run typecheck && bun run lint`
 - Expected: No errors
 - Edge cases: Symlinks pointing outside fence (resolve before checking), relative paths (`../../../etc/passwd`), paths with spaces, commands using environment variables (`$HOME/.ssh`)
+
+## Progress
+- Implemented exec-fence.ts with validateExecPaths(), path expansion, extractAbsolutePaths, isPathWithinFence, isPathDenied, isPathWithinOverrides
+- Created exec-fence.test.ts with 17 tests covering workdir validation, command path extraction, tilde expansion, session overrides, defaults
+- Added exec fence config to runtime.security in types.ts
+- Fixed override check to use prefix matching (isPathWithinOverrides helper)
+- Modified: src/engine/tools/exec-fence.ts, src/engine/tools/exec-fence.test.ts, src/engine/config/types.ts
+- Verification: all tests pass, typecheck clean, lint clean
