@@ -1,14 +1,14 @@
 ---
 id: 116
 title: Microsoft Teams connector via Chat SDK
-status: pending
+status: done
 type: feature
 priority: 2
 phase: 009-chat-sdk-and-agent-tools
 branch: feature/009-chat-sdk-and-agent-tools
 created: 2026-02-25
+shipped_at: 2026-02-26
 ---
-
 # Microsoft Teams connector via Chat SDK
 
 ## Context
