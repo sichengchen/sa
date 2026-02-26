@@ -7,6 +7,7 @@ import { StatusBar } from "./StatusBar.js";
 import { ModelPicker } from "./ModelPicker.js";
 import { SessionPicker } from "./SessionPicker.js";
 import { ToolApproval } from "./ToolApproval.js";
+import { UserQuestion } from "./UserQuestion.js";
 import { createTuiClient } from "./client.js";
 import type { ModelConfig, ProviderConfig } from "@sa/engine/router/types.js";
 import type { Session } from "@sa/shared/types.js";
@@ -37,6 +38,11 @@ export function App({ client }: AppProps) {
     toolName: string;
     toolCallId: string;
     args: Record<string, unknown>;
+  } | null>(null);
+  const [pendingQuestion, setPendingQuestion] = useState<{
+    questionId: string;
+    question: string;
+    options?: string[];
   } | null>(null);
 
   const msgIdRef = useRef(0);
@@ -298,6 +304,13 @@ export function App({ client }: AppProps) {
                     args: event.args,
                   });
                   break;
+                case "user_question":
+                  setPendingQuestion({
+                    questionId: event.id,
+                    question: event.question,
+                    options: event.options,
+                  });
+                  break;
                 case "reaction":
                   addMessage({ role: "tool", content: event.emoji, toolName: "reaction" });
                   break;
@@ -411,6 +424,15 @@ export function App({ client }: AppProps) {
     [client],
   );
 
+  const handleQuestionAnswer = useCallback(
+    (questionId: string, answer: string) => {
+      client.question.answer.mutate({ id: questionId, answer });
+      setPendingQuestion(null);
+      addMessage({ role: "tool", content: `Answer: ${answer}`, toolName: "ask_user" });
+    },
+    [client],
+  );
+
   const pickerOverlay = showModelPicker ? (
     <ModelPicker
       models={models}
@@ -453,6 +475,13 @@ export function App({ client }: AppProps) {
           onApprove={handleToolApprove}
           onReject={handleToolReject}
           onAcceptForSession={handleToolAcceptForSession}
+        />
+      ) : pendingQuestion ? (
+        <UserQuestion
+          questionId={pendingQuestion.questionId}
+          question={pendingQuestion.question}
+          options={pendingQuestion.options}
+          onAnswer={handleQuestionAnswer}
         />
       ) : pickerOverlay ?? (
         <Input onSubmit={handleSubmit} disabled={isStreaming || !connected} commands={TUI_COMMANDS} />
