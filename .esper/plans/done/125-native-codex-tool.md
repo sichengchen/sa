@@ -1,14 +1,14 @@
 ---
 id: 125
 title: Native codex tool — replace skill with ToolImpl
-status: pending
+status: done
 type: feature
 priority: 2
 phase: 009-chat-sdk-and-agent-tools
 branch: feature/009-chat-sdk-and-agent-tools
 created: 2026-02-25
+shipped_at: 2026-02-26
 ---
-
 # Native codex tool — replace skill with ToolImpl
 
 ## Context
@@ -47,6 +47,13 @@ The `codex` bundled skill has the same brittleness as `claude-code` — one-shot
 - `src/engine/runtime.ts` (modify — instantiate with deps)
 - `src/engine/skills/bundled/codex/SKILL.md` (modify — add deprecation notice)
 - `specs/tools.md` (modify — document codex tool)
+
+## Progress
+- Created `src/engine/tools/codex.ts` — native ToolImpl with auth probing, foreground/background execution, handle polling
+- Registered in tools/index.ts and runtime.ts (with secrets lookup for API key fallback)
+- Deprecated bundled codex skill with notice pointing to native tool
+- Modified: codex.ts, index.ts, runtime.ts, SKILL.md
+- Verification: typecheck, lint, 740 tests pass
 
 ## Verification
 
