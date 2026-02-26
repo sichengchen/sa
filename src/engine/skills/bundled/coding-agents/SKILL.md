@@ -1,6 +1,6 @@
 ---
 name: coding-agents
-description: Delegate coding tasks to Claude Code or Codex CLI agents. Covers when to delegate, tool parameters, background execution, esperkit project management integration, and result handling.
+description: Delegate coding tasks to Claude Code or Codex CLI agents. Use when: tasks involve complex code generation, multi-file refactoring, debugging, or benefits from an agentic coding assistant, or user explicitly asks for Claude Code or Codex. NOT for: simple answers, config changes, or simple tasks that can be handled directly.
 ---
 # Coding Agent Delegation
 
@@ -24,10 +24,10 @@ You can delegate complex coding tasks to external coding agents using the native
 
 | Tool | CLI | Provider | Best for |
 |------|-----|----------|----------|
-| `claude_code` | `claude --print` | Anthropic | Complex reasoning, multi-file refactors, debugging |
-| `codex` | `codex --quiet` | OpenAI | Code generation with OpenAI models |
+| `claude_code` | `claude --print` | Anthropic | Rapid development and debugging, systematic implementation, tasks with well-defined requirements |
+| `codex` | `codex --quiet` | OpenAI | Tasks with vague instructions or unclear requirements |
 
-If the user has no preference, default to `claude_code`. If the user explicitly asks for OpenAI or Codex, use `codex`.
+If the user has explicit preference, follow it.
 
 ## Tool Parameters
 

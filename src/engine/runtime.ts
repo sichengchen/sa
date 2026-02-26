@@ -82,12 +82,14 @@ You have persistent memory across sessions. Use it proactively:
 - Journal (no key): Session notes — what was discussed, decisions made, tasks completed.
 - MEMORY.md: You cannot write to this directly. It is curated by the user.`;
 
-const SKILLS_DIRECTIVE = `## Skills (mandatory)
-Before replying to each user message, scan the <available_skills> list below.
-- If exactly one skill clearly applies: call read_skill to load it, then follow its instructions.
-- If multiple could apply: choose the most specific one, then read and follow it.
-- If none clearly apply: do not read any skill.
-Never read more than one skill up front; only read additional skills if the first one directs you to.`;
+const SKILLS_DIRECTIVE = `## Skills
+You MUST follow these steps before every reply:
+1. Scan the <available_skills> list below against the user's message.
+2. If a skill matches: call read_skill immediately, then follow its instructions exactly.
+3. If multiple skills could match: pick the most specific one and read it.
+4. If no skill matches: proceed without reading any skill.
+NEVER skip this check. NEVER reply without first checking for a matching skill.
+Only read one skill up front; read additional skills only if the first one directs you to.`;
 
 function buildHeartbeat(router: ModelRouter): string {
   const now = new Date();
@@ -275,14 +277,14 @@ export async function createRuntime(): Promise<EngineRuntime> {
     saConfig.identity.systemPrompt,
     `\n${toolsSection}`,
     `\n${TOOL_CALL_STYLE}`,
+    `\n${MEMORY_GUIDE}`,
+    memoryContext ? `\n**Current memory context:**\n${memoryContext}` : "",
+    skillsBlock,
     `\n${REACTIONS_GUIDE}`,
     `\n${GROUP_CHAT_GUIDE}`,
     `\n${SAFETY_ADVISORY}`,
     userProfile ? `\n## User Profile\n${userProfile}` : "",
     `\n${heartbeat}`,
-    `\n${MEMORY_GUIDE}`,
-    memoryContext ? `\n**Current memory context:**\n${memoryContext}` : "",
-    skillsBlock,
   ]
     .filter(Boolean)
     .join("\n");
