@@ -26,6 +26,8 @@ export class TelegramConnector {
   /** Track last user message for emoji reactions */
   private lastUserMessageId: number | null = null;
   private lastUserChatId: number | null = null;
+  /** Pending user questions: chatId → questionId (for free-text responses) */
+  private pendingFreeTextQuestions = new Map<number, string>();
 
   constructor(client: EngineClient, options: TelegramConnectorOptions) {
     this.bot = new Bot(options.botToken);
@@ -227,6 +229,20 @@ export class TelegramConnector {
       await ctx.editMessageReplyMarkup({ reply_markup: undefined });
     });
 
+    // Question answer callback queries (multiple-choice)
+    this.bot.callbackQuery(/^answer:([^:]+):(.+)$/, async (ctx) => {
+      const questionId = ctx.match![1]!;
+      const answer = ctx.match![2]!;
+      try {
+        await this.client.question.answer.mutate({ id: questionId, answer });
+        await ctx.answerCallbackQuery({ text: "Answered" });
+        await ctx.editMessageText(`Answer: ${answer}`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        await ctx.answerCallbackQuery({ text: `Error: ${msg}` });
+      }
+    });
+
     // Message handler
     this.bot.on("message:text", async (ctx) => {
       if (!this.isAllowed(ctx.message.chat.id)) return;
@@ -234,6 +250,21 @@ export class TelegramConnector {
       let userText = ctx.message.text;
       // Skip commands already handled above
       if (userText.startsWith("/")) return;
+
+      // Check if this is a response to a pending free-text question
+      const chatId = ctx.message.chat.id;
+      const pendingQuestionId = this.pendingFreeTextQuestions.get(chatId);
+      if (pendingQuestionId) {
+        this.pendingFreeTextQuestions.delete(chatId);
+        try {
+          await this.client.question.answer.mutate({ id: pendingQuestionId, answer: userText });
+          await ctx.reply(`Answer recorded: ${userText.slice(0, 200)}`);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          await ctx.reply(`Failed to submit answer: ${msg}`);
+        }
+        return;
+      }
 
       // Group chat gate: only respond when @mentioned or replied to
       const botInfo = this.bot.botInfo;
@@ -309,6 +340,25 @@ export class TelegramConnector {
                     `Tool: ${event.name}\nApprove execution?`,
                     { reply_markup: keyboard },
                   );
+                  break;
+                }
+
+                case "user_question": {
+                  if (event.options && event.options.length > 0) {
+                    // Multiple-choice: inline keyboard buttons
+                    const qKeyboard = new InlineKeyboard();
+                    for (const opt of event.options) {
+                      qKeyboard.text(opt, `answer:${event.id}:${opt}`).row();
+                    }
+                    await ctx.reply(
+                      `❓ ${event.question}`,
+                      { reply_markup: qKeyboard },
+                    );
+                  } else {
+                    // Free-text: send question and wait for next message
+                    this.pendingFreeTextQuestions.set(ctx.message.chat.id, event.id);
+                    await ctx.reply(`❓ ${event.question}\n\n(Reply with your answer)`);
+                  }
                   break;
                 }
 
@@ -446,6 +496,20 @@ export class TelegramConnector {
                     `Tool: ${event.name}\nApprove execution?`,
                     { reply_markup: keyboard },
                   );
+                  break;
+                }
+
+                case "user_question": {
+                  if (event.options && event.options.length > 0) {
+                    const qKeyboard = new InlineKeyboard();
+                    for (const opt of event.options) {
+                      qKeyboard.text(opt, `answer:${event.id}:${opt}`).row();
+                    }
+                    await ctx.reply(`❓ ${event.question}`, { reply_markup: qKeyboard });
+                  } else {
+                    this.pendingFreeTextQuestions.set(ctx.message.chat.id, event.id);
+                    await ctx.reply(`❓ ${event.question}\n\n(Reply with your answer)`);
+                  }
                   break;
                 }
 

@@ -92,6 +92,22 @@ export class ChatSDKAdapter {
       }
     });
 
+    // Question answer button clicks
+    this.chat.onAction("answer", async (event) => {
+      if (!event.value) return;
+      // value format: "questionId:answer"
+      const sepIdx = event.value.indexOf(":");
+      if (sepIdx === -1) return;
+      const questionId = event.value.slice(0, sepIdx);
+      const answer = event.value.slice(sepIdx + 1);
+      try {
+        await this.client.question.answer.mutate({ id: questionId, answer });
+        await event.thread.post(`Answer: ${answer}`);
+      } catch {
+        await event.thread.post("Failed to submit answer.");
+      }
+    });
+
     this.chat.onAction("model", async (event) => {
       if (!event.value) return;
       try {
@@ -181,6 +197,27 @@ export class ChatSDKAdapter {
                 break;
               }
 
+              case "user_question": {
+                if (event.options && event.options.length > 0) {
+                  // Multiple-choice: post question with option buttons
+                  const optionsText = event.options.map((o, i) => `${i + 1}. ${o}`).join("\n");
+                  await thread.post(
+                    `**Question:** ${event.question}\n\n${optionsText}\n\n` +
+                    `Reply with: \`answer <number>\` or \`answer <text>\``,
+                  );
+                  // Store for text-based answer matching
+                  this.pendingFreeTextQuestions.set(thread.id, event.id);
+                  // Store options for number-based selection
+                  (this as any)._questionOptions = (this as any)._questionOptions ?? new Map();
+                  (this as any)._questionOptions.set(event.id, event.options);
+                } else {
+                  // Free-text: send question and wait for next message
+                  this.pendingFreeTextQuestions.set(thread.id, event.id);
+                  await thread.post(`**Question:** ${event.question}\n\nReply with your answer.`);
+                }
+                break;
+              }
+
               case "reaction": {
                 // React to the original message if possible
                 try {
@@ -230,8 +267,57 @@ export class ChatSDKAdapter {
   /** Pending tool approval IDs: short prefix → full toolCallId */
   private pendingApprovals = new Map<string, string>();
 
+  /** Pending free-text user questions: threadId → questionId */
+  private pendingFreeTextQuestions = new Map<string, string>();
+
   /** Handle text-based slash commands. Returns true if handled. */
   private async handleCommand(thread: Thread, text: string): Promise<boolean> {
+    // Text-based question answers
+    const answerMatch = text.match(/^answer\s+(.+)/i);
+    if (answerMatch) {
+      const questionId = this.pendingFreeTextQuestions.get(thread.id);
+      if (questionId) {
+        this.pendingFreeTextQuestions.delete(thread.id);
+        let answer = answerMatch[1]!.trim();
+
+        // Check for number-based selection from multiple-choice
+        const optionsMap = (this as any)._questionOptions as Map<string, string[]> | undefined;
+        if (optionsMap) {
+          const options = optionsMap.get(questionId);
+          if (options) {
+            const num = parseInt(answer);
+            if (!isNaN(num) && num >= 1 && num <= options.length) {
+              answer = options[num - 1]!;
+            }
+            optionsMap.delete(questionId);
+          }
+        }
+
+        try {
+          await this.client.question.answer.mutate({ id: questionId, answer });
+          await thread.post(`Answer: ${answer}`);
+        } catch {
+          await thread.post("Failed to submit answer.");
+        }
+        return true;
+      }
+    }
+
+    // Check if incoming message is a pending free-text question response (non-command)
+    const pendingQId = this.pendingFreeTextQuestions.get(thread.id);
+    if (pendingQId && !text.startsWith("/") && !text.match(/^(approve|reject)\s/i)) {
+      this.pendingFreeTextQuestions.delete(thread.id);
+      const optionsMap = (this as any)._questionOptions as Map<string, string[]> | undefined;
+      if (optionsMap) optionsMap.delete(pendingQId);
+      try {
+        await this.client.question.answer.mutate({ id: pendingQId, answer: text });
+        await thread.post(`Answer: ${text.slice(0, 200)}`);
+      } catch {
+        await thread.post("Failed to submit answer.");
+      }
+      return true;
+    }
+
     // Text-based approval commands
     const approveMatch = text.match(/^approve\s+(\w+)/i);
     if (approveMatch) {
