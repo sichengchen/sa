@@ -8,6 +8,7 @@ phase: 009-chat-sdk-and-agent-tools
 branch: feature/009-chat-sdk-and-agent-tools
 created: 2026-02-25
 shipped_at: 2026-02-26
+pr: https://github.com/sichengchen/sa/pull/31
 ---
 # Coding agents skill with esperkit integration
 
