@@ -255,6 +255,26 @@ export class ChatSDKAdapter {
       }
     }
 
+    if (text === "/stop") {
+      try {
+        const sessionId = this.activeSessions.get(thread.id);
+        if (sessionId) {
+          const result = await this.client.chat.stop.mutate({ sessionId });
+          await thread.post(result.cancelled ? "Stopped all running tasks." : "Nothing running.");
+        } else {
+          // No active session — try stopAll as fallback
+          const result = await this.client.chat.stopAll.mutate();
+          await thread.post(result.cancelled > 0
+            ? `Stopped ${result.cancelled} running agent(s).`
+            : "Nothing running.");
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        await thread.post(`Failed to stop: ${msg}`);
+      }
+      return true;
+    }
+
     if (text === "/new") {
       const prefix = `${this.config.connectorType}:${thread.channelId}`;
       const { session } = await this.client.session.create.mutate({

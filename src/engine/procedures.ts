@@ -414,6 +414,91 @@ export function createAppRouter(runtime: EngineRuntime) {
           }
         }),
 
+      /** Stop a running agent in a specific session */
+      stop: protectedProcedure
+        .input(z.object({ sessionId: z.string() }))
+        .mutation(({ input }): { cancelled: boolean } => {
+          const agent = sessionAgents.get(input.sessionId);
+          if (!agent) {
+            return { cancelled: false };
+          }
+          const cancelled = agent.abort();
+
+          // Resolve any pending approvals for this session (auto-reject)
+          for (const [toolCallId, meta] of pendingApprovalMeta.entries()) {
+            if (meta.sessionId === input.sessionId) {
+              const resolver = pendingApprovals.get(toolCallId);
+              if (resolver) {
+                resolver(false);
+                pendingApprovals.delete(toolCallId);
+              }
+              pendingApprovalMeta.delete(toolCallId);
+            }
+          }
+
+          // Resolve any pending escalations for this session
+          for (const [escId, pending] of pendingEscalations.entries()) {
+            if (pending.sessionId === input.sessionId) {
+              pending.resolve("deny");
+              pendingEscalations.delete(escId);
+            }
+          }
+
+          const session = runtime.sessions.getSession(input.sessionId);
+          auditLog(runtime, {
+            session: input.sessionId,
+            connector: session?.connectorType ?? "unknown",
+            event: "tool_call",
+            tool: "stop",
+            summary: cancelled ? "Agent stopped" : "No agent running",
+          });
+
+          return { cancelled };
+        }),
+
+      /** Stop all running agents across all sessions */
+      stopAll: protectedProcedure
+        .mutation((): { cancelled: number; total: number } => {
+          let cancelled = 0;
+          const total = sessionAgents.size;
+
+          for (const [sid, agent] of sessionAgents.entries()) {
+            if (agent.abort()) {
+              cancelled++;
+            }
+
+            // Resolve pending approvals for this session
+            for (const [toolCallId, meta] of pendingApprovalMeta.entries()) {
+              if (meta.sessionId === sid) {
+                const resolver = pendingApprovals.get(toolCallId);
+                if (resolver) {
+                  resolver(false);
+                  pendingApprovals.delete(toolCallId);
+                }
+                pendingApprovalMeta.delete(toolCallId);
+              }
+            }
+
+            // Resolve pending escalations for this session
+            for (const [escId, pending] of pendingEscalations.entries()) {
+              if (pending.sessionId === sid) {
+                pending.resolve("deny");
+                pendingEscalations.delete(escId);
+              }
+            }
+          }
+
+          auditLog(runtime, {
+            session: "global",
+            connector: "engine",
+            event: "tool_call",
+            tool: "stopAll",
+            summary: `Stopped ${cancelled}/${total} agents`,
+          });
+
+          return { cancelled, total };
+        }),
+
       /** Get conversation history for a session */
       history: protectedProcedure
         .input(z.object({ sessionId: z.string() }))

@@ -13,7 +13,7 @@ import type { Session } from "@sa/shared/types.js";
 
 type EngineClient = ReturnType<typeof createTuiClient>;
 
-const TUI_COMMANDS = ["/new", "/status", "/model", "/models", "/provider", "/sessions", "/switch"];
+const TUI_COMMANDS = ["/new", "/status", "/model", "/models", "/provider", "/sessions", "/switch", "/stop"];
 
 interface AppProps {
   client: EngineClient;
@@ -109,6 +109,26 @@ export function App({ client }: AppProps) {
           setSessionConnectorType("tui");
           addMessage({ role: "tool", content: `New session started: ${session.id.slice(0, 12)}`, toolName: "system" });
         } catch {}
+        return;
+      }
+
+      // Handle /stop command — abort current agent work
+      if (text === "/stop") {
+        try {
+          if (sessionId) {
+            const result = await client.chat.stop.mutate({ sessionId });
+            addMessage({
+              role: "tool",
+              content: result.cancelled ? "Stopped all running tasks." : "Nothing running.",
+              toolName: "system",
+            });
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          addMessage({ role: "error", content: msg });
+        }
+        setStreamingText("");
+        setIsStreaming(false);
         return;
       }
 

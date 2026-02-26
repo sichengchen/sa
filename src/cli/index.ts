@@ -132,6 +132,23 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     const { startLinearConnector } = await import("@sa/connectors/linear/index.js");
     await startLinearConnector(port);
   },
+  stop: async () => {
+    const { createTuiClient } = await import("@sa/connectors/tui/client.js");
+    try {
+      const client = createTuiClient();
+      const result = await client.chat.stopAll.mutate();
+      if (result.cancelled > 0) {
+        console.log(`Stopped ${result.cancelled} running agent(s) out of ${result.total} total.`);
+      } else {
+        console.log("No agents are currently running.");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`Failed to stop agents: ${msg}`);
+      console.error("Is the Engine running? Try 'sa engine status'.");
+      process.exit(1);
+    }
+  },
   discord: async (cmdArgs) => {
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3423;
     const { startDiscordConnector } = await import("@sa/connectors/discord/index.js");
@@ -149,6 +166,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     console.log("  config      Interactive configuration editor");
     console.log("  onboard     Run the onboarding wizard");
     console.log("  engine      Manage the Engine daemon (start/stop/status/logs/restart)");
+    console.log("  stop        Stop all running agent tasks");
     console.log("  discord     Start the Discord connector (webhook server on port 3423)");
     console.log("  slack       Start the Slack connector (webhook server on port 3420)");
     console.log("  teams       Start the Teams connector (webhook server on port 3421)");

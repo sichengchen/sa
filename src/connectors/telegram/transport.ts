@@ -99,6 +99,28 @@ export class TelegramConnector {
       await ctx.reply("New session started.");
     });
 
+    // /stop command — cancel running agent work
+    this.bot.command("stop", async (ctx) => {
+      if (!this.isAllowed(ctx.message!.chat.id)) return;
+      try {
+        const chatId = ctx.message!.chat.id;
+        const prefix = `telegram:${chatId}`;
+        const sessionId = this.activeSessions.get(prefix);
+        if (sessionId) {
+          const result = await this.client.chat.stop.mutate({ sessionId });
+          await ctx.reply(result.cancelled ? "Stopped all running tasks." : "Nothing running.");
+        } else {
+          const result = await this.client.chat.stopAll.mutate();
+          await ctx.reply(result.cancelled > 0
+            ? `Stopped ${result.cancelled} running agent(s).`
+            : "Nothing running.");
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        await ctx.reply(`Failed to stop: ${msg}`);
+      }
+    });
+
     // /status command
     this.bot.command("status", async (ctx) => {
       if (!this.isAllowed(ctx.message!.chat.id)) return;
@@ -432,6 +454,7 @@ export class TelegramConnector {
   async start(): Promise<void> {
     await this.bot.api.setMyCommands([
       { command: "new", description: "Start a new session" },
+      { command: "stop", description: "Stop all running tasks" },
       { command: "status", description: "Show engine status" },
       { command: "model", description: "List and switch models" },
       { command: "provider", description: "List configured providers" },
