@@ -44,6 +44,7 @@ Ship with SA at `src/engine/skills/bundled/`. Each subdirectory contains a `SKIL
 | Skill                | Purpose                                        |
 |----------------------|------------------------------------------------|
 | `sa`                 | Knowledge about SA itself (spec index)         |
+| `coding-agents`      | Delegate tasks to Claude Code / Codex CLI agents, esperkit integration |
 | `clawhub`            | Search, install, update skills from ClawHub    |
 | `skill-creator`      | Scaffold new custom skills                     |
 | `weather`            | Weather lookups via wttr.in and Open-Meteo     |
