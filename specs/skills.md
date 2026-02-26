@@ -118,15 +118,17 @@ Active skills are tracked via `getActiveSkills()` and can be formatted into the 
 The engine injects this mandatory directive into every system prompt when skills are present:
 
 ```
-## Skills (mandatory)
-Before replying to each user message, scan the <available_skills> list below.
-- If exactly one skill clearly applies: call read_skill to load it, then follow its instructions.
-- If multiple could apply: choose the most specific one, then read and follow it.
-- If none clearly apply: do not read any skill.
-Never read more than one skill up front; only read additional skills if the first one directs you to.
+## Skills
+You MUST follow these steps before every reply:
+1. Scan the <available_skills> list below against the user's message.
+2. If a skill matches: call read_skill immediately, then follow its instructions exactly.
+3. If multiple skills could match: pick the most specific one and read it.
+4. If no skill matches: proceed without reading any skill.
+NEVER skip this check. NEVER reply without first checking for a matching skill.
+Only read one skill up front; read additional skills only if the first one directs you to.
 ```
 
-This ensures the agent considers its skill library before responding, prevents loading overly broad skills when a narrow one exists, and keeps token usage under control.
+This ensures the agent always considers its skill library before responding, prevents loading overly broad skills when a narrow one exists, and keeps token usage under control.
 
 ---
 

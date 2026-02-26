@@ -146,14 +146,13 @@ Event filtering by `ToolPolicyManager`: verbosity levels (`verbose`/`minimal`/`s
 1. Identity prompt (from `IDENTITY.md`)
 2. Available Tools section (formatted list: `- toolName [dangerLevel]: summary`)
 3. Tool Call Style guide (safe/moderate/dangerous narration rules)
-4. Reactions guide (when to react with emoji vs. reply)
-5. Group Chat guide (name-prefixed messages, address by name)
-6. Safety advisory (no independent goals, human oversight)
-7. User Profile (from `USER.md`, if present)
-8. Session heartbeat (current date/time + active model name)
-9. Memory context (loaded from `~/.sa/memory/`)
-10. Skills directive (scan `<available_skills>`, `read_skill` before replying)
-11. Available skills list (name + description for each loaded skill)
+4. Memory guide + current memory context (from `~/.sa/memory/`)
+5. Skills directive + available skills list (`read_skill` before replying)
+6. Reactions guide (when to react with emoji vs. reply)
+7. Group Chat guide (name-prefixed messages, address by name)
+8. Safety advisory (no independent goals, human oversight)
+9. User Profile (from `USER.md`, if present)
+10. Session heartbeat (current date/time + active model name)
 
 ---
 
