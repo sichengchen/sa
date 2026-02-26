@@ -1,12 +1,13 @@
 ---
 id: 129
 title: fix: SA doesn't proactively read skills unless user explicitly asks
-status: active
+status: done
 type: fix
 priority: 1
 phase: 009-chat-sdk-and-agent-tools
 branch: fix/skill-pre-match
 created: 2026-02-26
+shipped_at: 2026-02-26
 ---
 # fix: SA doesn't proactively read skills unless user explicitly asks
 
