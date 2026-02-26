@@ -1,14 +1,14 @@
 ---
 id: 126
 title: /shutdown command — force SA engine stop with confirmation
-status: pending
+status: done
 type: feature
 priority: 2
 phase: 009-chat-sdk-and-agent-tools
 branch: feature/009-chat-sdk-and-agent-tools
 created: 2026-02-25
+shipped_at: 2026-02-26
 ---
-
 # /shutdown command — force SA engine stop with confirmation
 
 ## Context
@@ -40,6 +40,13 @@ SA needs a `/shutdown` command that fully stops the engine process (not just can
 - `src/connectors/tui/App.tsx` (modify — add `/shutdown` command with confirmation)
 - `src/connectors/telegram/transport.ts` (modify — add `/shutdown` command with confirmation)
 - `src/cli/index.ts` (modify — add `sa shutdown` command)
+
+## Progress
+- Added `engine.shutdown` tRPC procedure — stops all agents, sends SIGTERM without restart marker
+- Added `/shutdown` to ChatSDKAdapter, TUI, and Telegram connectors
+- Added `sa shutdown` CLI command
+- Modified: procedures.ts, adapter.ts, App.tsx, transport.ts, cli/index.ts
+- Verification: typecheck, lint, 740 tests pass
 
 ## Verification
 
