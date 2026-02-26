@@ -132,6 +132,11 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     const { startLinearConnector } = await import("@sa/connectors/linear/index.js");
     await startLinearConnector(port);
   },
+  discord: async (cmdArgs) => {
+    const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3423;
+    const { startDiscordConnector } = await import("@sa/connectors/discord/index.js");
+    await startDiscordConnector(port);
+  },
   __engine: async () => {
     await import("@sa/engine/index.js");
   },
@@ -144,6 +149,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     console.log("  config      Interactive configuration editor");
     console.log("  onboard     Run the onboarding wizard");
     console.log("  engine      Manage the Engine daemon (start/stop/status/logs/restart)");
+    console.log("  discord     Start the Discord connector (webhook server on port 3423)");
     console.log("  slack       Start the Slack connector (webhook server on port 3420)");
     console.log("  teams       Start the Teams connector (webhook server on port 3421)");
     console.log("  gchat       Start the Google Chat connector (webhook server on port 3422)");

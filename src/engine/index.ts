@@ -49,18 +49,8 @@ async function main() {
     });
   }
 
-  // Auto-start Discord connector if bot token is configured
-  const discordToken = process.env.DISCORD_TOKEN ?? secrets?.discordToken;
-  if (discordToken) {
-    const { DiscordConnector } = await import("@sa/connectors/discord/transport.js");
-    const connector = new DiscordConnector(client, {
-      botToken: discordToken,
-      allowedGuildId: process.env.DISCORD_GUILD_ID ?? secrets?.discordGuildId,
-    });
-    connector.start().catch((err) => {
-      console.error("Discord connector failed to start:", err);
-    });
-  }
+  // Discord connector now uses Chat SDK (webhook-based).
+  // Start it separately via `sa discord` to run the webhook server.
 
   // Graceful shutdown
   function shutdown() {
