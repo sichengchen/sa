@@ -1,6 +1,6 @@
 {
   "backlog_mode": "local",
-  "current_phase": "008-security-and-subagents",
+  "current_phase": "009-chat-sdk-and-agent-tools",
   "commands": {
     "test": "bun test",
     "lint": "bun run lint",
