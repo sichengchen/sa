@@ -74,3 +74,4 @@ Informed by explorations 008 (Subagents Support) and 011 (SA Security Model v2).
 - Plan 106 — Cron/webhook tool restrictions: Default tool allowlists for cron and webhook agents, per-task allowedTools config. Files: types.ts, defaults.ts, runtime.ts, procedures.ts, server.ts
 - Plan 107 — OS sandbox: Seatbelt sandbox for macOS exec commands, noop fallback for other platforms, integrated with exec fence config. Files: sandbox.ts, sandbox.test.ts, exec.ts, runtime.ts
 - Plan 111 — System spec docs in /specs with embedded access: Create specs/ directory with granular docs. Files: specs/, scripts/copy-specs.ts, package.json, read-skill.ts, registry.ts, SKILL.md, CONSTITUTION.md, CLAUDE.md
+- Plan 112 — fix: stale engine.token after restart causes auth failure: Add 5s timeout guard and rejection handler to shutdown so auth.cleanup() completes before exit. Files: index.ts, auth.ts

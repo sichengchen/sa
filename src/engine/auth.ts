@@ -78,6 +78,11 @@ export class AuthManager {
     this.webhookToken = randomBytes(TOKEN_BYTES).toString("hex");
     await writeFile(this.tokenFilePath, this.masterToken, { mode: 0o600 });
     await writeFile(this.webhookTokenFilePath, this.webhookToken, { mode: 0o600 });
+    // Verify write succeeded — defense against race with old engine cleanup
+    const written = readFileSync(this.tokenFilePath, "utf-8");
+    if (written !== this.masterToken) {
+      await writeFile(this.tokenFilePath, this.masterToken, { mode: 0o600 });
+    }
     return this.masterToken;
   }
 

@@ -67,7 +67,12 @@ async function main() {
     console.log("\nSA Engine shutting down...");
     try { unlinkSync(PID_FILE); } catch {}
     try { unlinkSync(URL_FILE); } catch {}
-    server.stop().then(() => process.exit(0));
+    // Force-exit after 5s if server.stop() hangs
+    const forceTimer = setTimeout(() => process.exit(1), 5000);
+    server.stop().then(
+      () => { clearTimeout(forceTimer); process.exit(0); },
+      () => { clearTimeout(forceTimer); process.exit(1); },
+    );
   }
 
   process.on("SIGINT", shutdown);
