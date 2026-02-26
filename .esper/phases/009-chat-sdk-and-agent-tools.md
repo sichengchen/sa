@@ -75,3 +75,8 @@ Happy project (github.com/slopus/happy) informs the coding agent tool design —
 - Plan 113 — ConnectorType expansion for Chat SDK platforms: Add "slack", "teams", "gchat", "github", "linear" to ConnectorTypeSchema. Files: types.ts, defaults.ts
 - Plan 114 — Chat SDK base adapter: Shared ChatSDKAdapter bridges Chat SDK events to SA's tRPC client. Files: adapter.ts, client.ts, formatter.ts, index.ts
 - Plan 123 — Coding agent subprocess infrastructure: Shared process manager for coding agent CLIs with auth probing, output parsing, timeout, background execution. Files: agent-subprocess.ts, agent-subprocess-types.ts, agent-subprocess.test.ts
+- Plan 115 — Slack connector via Chat SDK: Slack adapter with webhook server and `sa slack` CLI. Files: connectors/slack/
+- Plan 116 — Teams connector via Chat SDK: Teams adapter with webhook server and `sa teams` CLI. Files: connectors/teams/
+- Plan 117 — Google Chat connector via Chat SDK: GChat adapter with webhook server and `sa gchat` CLI. Files: connectors/gchat/
+- Plan 119 — GitHub connector via Chat SDK: GitHub adapter with webhook server and `sa github` CLI. Files: connectors/github/
+- Plan 120 — Linear connector via Chat SDK: Linear adapter with webhook server and `sa linear` CLI. Files: connectors/linear/
