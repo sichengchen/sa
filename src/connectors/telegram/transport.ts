@@ -99,6 +99,18 @@ export class TelegramConnector {
       await ctx.reply("New session started.");
     });
 
+    // /restart command — restart SA engine
+    this.bot.command("restart", async (ctx) => {
+      if (!this.isAllowed(ctx.message!.chat.id)) return;
+      try {
+        await ctx.reply("Restarting SA engine...");
+        await this.client.engine.restart.mutate();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        await ctx.reply(`Failed to restart: ${msg}`);
+      }
+    });
+
     // /stop command — cancel running agent work
     this.bot.command("stop", async (ctx) => {
       if (!this.isAllowed(ctx.message!.chat.id)) return;
@@ -455,6 +467,7 @@ export class TelegramConnector {
     await this.bot.api.setMyCommands([
       { command: "new", description: "Start a new session" },
       { command: "stop", description: "Stop all running tasks" },
+      { command: "restart", description: "Restart the SA engine" },
       { command: "status", description: "Show engine status" },
       { command: "model", description: "List and switch models" },
       { command: "provider", description: "List configured providers" },

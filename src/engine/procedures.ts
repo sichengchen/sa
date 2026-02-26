@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { writeFile, mkdir } from "node:fs/promises";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { router, publicProcedure, middleware } from "./trpc.js";
 import type { EngineRuntime } from "./runtime.js";
@@ -1126,6 +1127,46 @@ export function createAppRouter(runtime: EngineRuntime) {
       trigger: protectedProcedure.mutation(async () => {
         await runtime.scheduler.runTask("heartbeat");
         return { triggered: true, lastResult: heartbeatState.lastResult };
+      }),
+    }),
+
+    /** Engine lifecycle */
+    engine: router({
+      /** Restart the engine process */
+      restart: protectedProcedure.mutation((): { restarting: boolean } => {
+        // Stop all running agents first
+        for (const [sid, agent] of sessionAgents.entries()) {
+          agent.abort();
+          // Reject pending approvals
+          for (const [toolCallId, meta] of pendingApprovalMeta.entries()) {
+            if (meta.sessionId === sid) {
+              const resolver = pendingApprovals.get(toolCallId);
+              if (resolver) {
+                resolver(false);
+                pendingApprovals.delete(toolCallId);
+              }
+              pendingApprovalMeta.delete(toolCallId);
+            }
+          }
+        }
+
+        auditLog(runtime, {
+          session: "global",
+          connector: "engine",
+          event: "tool_call",
+          tool: "restart",
+          summary: "Engine restart requested",
+        });
+
+        // Write restart marker and schedule shutdown
+        const restartMarker = join(runtime.config.homeDir, "engine.restart");
+        writeFileSync(restartMarker, "");
+
+        setTimeout(() => {
+          process.kill(process.pid, "SIGTERM");
+        }, 200);
+
+        return { restarting: true };
       }),
     }),
 

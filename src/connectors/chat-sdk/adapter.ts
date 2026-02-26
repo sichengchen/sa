@@ -255,6 +255,17 @@ export class ChatSDKAdapter {
       }
     }
 
+    if (text === "/restart") {
+      try {
+        await thread.post("Restarting SA engine...");
+        await this.client.engine.restart.mutate();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        await thread.post(`Failed to restart: ${msg}`);
+      }
+      return true;
+    }
+
     if (text === "/stop") {
       try {
         const sessionId = this.activeSessions.get(thread.id);

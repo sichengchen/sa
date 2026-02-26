@@ -13,7 +13,7 @@ import type { Session } from "@sa/shared/types.js";
 
 type EngineClient = ReturnType<typeof createTuiClient>;
 
-const TUI_COMMANDS = ["/new", "/status", "/model", "/models", "/provider", "/sessions", "/switch", "/stop"];
+const TUI_COMMANDS = ["/new", "/stop", "/restart", "/status", "/model", "/models", "/provider", "/sessions", "/switch"];
 
 interface AppProps {
   client: EngineClient;
@@ -129,6 +129,20 @@ export function App({ client }: AppProps) {
         }
         setStreamingText("");
         setIsStreaming(false);
+        return;
+      }
+
+      // Handle /restart command — restart the engine
+      if (text === "/restart") {
+        try {
+          addMessage({ role: "tool", content: "Restarting SA engine...", toolName: "system" });
+          await client.engine.restart.mutate();
+          // Engine will shut down — exit TUI so user can reconnect
+          setTimeout(() => exit(), 500);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          addMessage({ role: "error", content: msg });
+        }
         return;
       }
 

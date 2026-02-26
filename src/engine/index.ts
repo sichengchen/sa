@@ -1,8 +1,9 @@
 #!/usr/bin/env bun
 
-import { writeFileSync, unlinkSync } from "node:fs";
+import { writeFileSync, unlinkSync, existsSync, openSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { spawn } from "node:child_process";
 import { createRuntime } from "./runtime.js";
 import { startServer } from "./server.js";
 import { createEngineClient } from "@sa/shared/client.js";
@@ -52,15 +53,34 @@ async function main() {
   // Discord connector now uses Chat SDK (webhook-based).
   // Start it separately via `sa discord` to run the webhook server.
 
-  // Graceful shutdown
+  // Graceful shutdown (with optional restart)
+  const RESTART_MARKER = join(saHome, "engine.restart");
+
   function shutdown() {
     console.log("\nSA Engine shutting down...");
+    const shouldRestart = existsSync(RESTART_MARKER);
+    if (shouldRestart) {
+      try { unlinkSync(RESTART_MARKER); } catch {}
+    }
     try { unlinkSync(PID_FILE); } catch {}
     try { unlinkSync(URL_FILE); } catch {}
     // Force-exit after 5s if server.stop() hangs
     const forceTimer = setTimeout(() => process.exit(1), 5000);
     server.stop().then(
-      () => { clearTimeout(forceTimer); process.exit(0); },
+      () => {
+        clearTimeout(forceTimer);
+        if (shouldRestart) {
+          const logFd = openSync(join(saHome, "engine.log"), "a");
+          const child = spawn(process.execPath, [process.argv[1]!, "__engine"], {
+            detached: true,
+            stdio: ["ignore", logFd, logFd],
+            env: { ...process.env },
+          });
+          child.unref();
+          console.log(`SA Engine restarting (new PID: ${child.pid})...`);
+        }
+        process.exit(0);
+      },
       () => { clearTimeout(forceTimer); process.exit(1); },
     );
   }

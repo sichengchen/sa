@@ -132,6 +132,33 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     const { startLinearConnector } = await import("@sa/connectors/linear/index.js");
     await startLinearConnector(port);
   },
+  restart: async () => {
+    const { createTuiClient } = await import("@sa/connectors/tui/client.js");
+    try {
+      const client = createTuiClient();
+      console.log("Restarting SA engine...");
+      await client.engine.restart.mutate();
+      // Wait for engine to come back up
+      let retries = 0;
+      while (retries < 30) {
+        await new Promise((r) => setTimeout(r, 500));
+        try {
+          const freshClient = createTuiClient();
+          await freshClient.health.ping.query();
+          console.log("SA engine restarted successfully.");
+          return;
+        } catch {
+          retries++;
+        }
+      }
+      console.log("SA engine restart initiated. It may still be starting up.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`Failed to restart: ${msg}`);
+      console.error("Is the Engine running? Try 'sa engine restart'.");
+      process.exit(1);
+    }
+  },
   stop: async () => {
     const { createTuiClient } = await import("@sa/connectors/tui/client.js");
     try {
@@ -167,6 +194,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     console.log("  onboard     Run the onboarding wizard");
     console.log("  engine      Manage the Engine daemon (start/stop/status/logs/restart)");
     console.log("  stop        Stop all running agent tasks");
+    console.log("  restart     Restart the SA engine");
     console.log("  discord     Start the Discord connector (webhook server on port 3423)");
     console.log("  slack       Start the Slack connector (webhook server on port 3420)");
     console.log("  teams       Start the Teams connector (webhook server on port 3421)");
