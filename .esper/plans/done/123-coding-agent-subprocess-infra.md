@@ -1,14 +1,14 @@
 ---
 id: 123
 title: Coding agent subprocess infrastructure
-status: pending
+status: done
 type: feature
 priority: 1
 phase: 009-chat-sdk-and-agent-tools
 branch: feature/009-chat-sdk-and-agent-tools
 created: 2026-02-25
+shipped_at: 2026-02-26
 ---
-
 # Coding agent subprocess infrastructure
 
 ## Context
@@ -76,3 +76,13 @@ This plan creates the shared infrastructure that both `claude_code` and `codex` 
 - Run: `bun test src/engine/tools/agent-subprocess.test.ts`
 - Expected: All tests pass — lifecycle, auth probing, timeout, abort
 - Edge cases: CLI not installed, CLI installed but not authenticated, CLI hangs, CLI produces non-UTF8 output
+
+## Progress
+- Created AgentSubprocess module with functional API (probeAuth, runSubprocess, runBackground)
+- Auth probing: claude CLI uses `auth status`, codex uses OPENAI_API_KEY env var check
+- Structured output: parses diff headers and Modified/Created patterns for filesModified
+- Background execution with handle-based polling via getBackgroundStatus
+- Timeout with SIGTERM → 5s grace → SIGKILL escalation
+- 14 unit tests covering: auth probe (not found, installed), run (success, error, timeout, workdir, env, diff parsing, summary), background (handle, completion, cleanup)
+- Modified: src/engine/tools/ (3 new files)
+- Verification: typecheck, lint, all 752 tests pass
