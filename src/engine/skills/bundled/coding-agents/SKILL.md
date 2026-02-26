@@ -85,7 +85,11 @@ claude_code({
 
 ## Project Management with esperkit
 
-**esperkit** (`npm install -g esperkit`) provides structured project management for coding agents. It manages development phases, plan files, and backlog items. When used with Claude Code or Codex, the coding agent uses `/esper:<command>` slash commands to drive the workflow.
+**esperkit** is an npm package that installs `/esper:*` slash commands into Claude Code as skills. These slash commands give coding agents structured project management — phases, plans, backlog, automated implementation, and verification.
+
+**Important**: SA does NOT run `esperkit` CLI commands directly (except for installing it). SA's role is to:
+1. Install esperkit into the target project if needed
+2. Send the user's task to the coding agent with instructions to use `/esper:*` slash commands
 
 ### When to Suggest esperkit
 
@@ -95,7 +99,7 @@ When a user asks you to delegate a coding task that involves:
 - Backlog management or task tracking
 - Any task where structured planning would help
 
-**Before incorporating esperkit into the coding task prompt**, use `ask_user` to check with the user:
+**Before incorporating esperkit**, use `ask_user` to check with the user:
 
 ```
 ask_user({
@@ -106,35 +110,67 @@ ask_user({
 
 ### If the User Says Yes
 
-Instruct the coding agent to use the `/esper:<command>` slash command series. These are Claude Code slash commands that drive the esperkit workflow:
+**Step 1: Install esperkit** (if not already installed in the project).
+
+Run this via `exec` to install the slash commands into the coding agent:
+
+```
+exec({ command: "cd /path/to/project && npx esperkit", danger: "moderate" })
+```
+
+This installs `/esper:*` skills into Claude Code's `~/.claude/skills/` directory so the coding agent can use them.
+
+**Step 2: Delegate the task** with instructions to use `/esper:*` slash commands.
+
+The coding agent receives slash commands as part of its task prompt. Key commands:
 
 | Slash command | Purpose |
 |---------------|---------|
-| `/esper:init` | Initialize esperkit in the project (first time only) |
-| `/esper:phase` | Define a new development phase |
-| `/esper:plan` | Add a feature plan to the backlog |
-| `/esper:fix` | Add a bug fix to the backlog |
-| `/esper:apply` | Start implementing the next plan |
+| `/esper:init <description>` | Initialize esperkit and define the project scope |
+| `/esper:phase <description>` | Define a new development phase with plans |
+| `/esper:plan <description>` | Add a feature plan to the phase backlog |
+| `/esper:fix <description>` | Add a bug fix plan to the backlog |
+| `/esper:backlog` | View pending and active plans |
+| `/esper:apply` | Start implementing the next pending plan |
+| `/esper:yolo` | Auto-implement all pending plans sequentially |
 | `/esper:continue` | Resume an interrupted implementation |
 | `/esper:finish` | Verify, archive, and complete the active plan |
-| `/esper:yolo` | Auto-implement all pending plans sequentially |
-| `/esper:backlog` | View pending and active plans |
-| `/esper:ship` | Push and open a PR for the phase |
+| `/esper:ship` | Push and open a PR |
+| `/esper:review` | Code review on branch diffs |
+| `/esper:audit` | Project health and quality audit |
 
-Example task prompt:
+Example — new project:
 
 ```
 claude_code({
-  task: "Initialize esperkit in this project with /esper:init, then use /esper:phase to define a phase for: [user's task description]. After the phase is defined with plans, use /esper:yolo to implement everything automatically.",
+  task: "/esper:init [user's task description]",
   workdir: "/path/to/project"
 })
 ```
 
-For a project that already has esperkit set up:
+Example — project already has esperkit, implement everything:
 
 ```
 claude_code({
-  task: "Use /esper:apply to start the next pending plan, implement it, then run /esper:finish to verify and archive.",
+  task: "/esper:yolo",
+  workdir: "/path/to/project"
+})
+```
+
+Example — add a plan and start building:
+
+```
+claude_code({
+  task: "/esper:plan [user's feature description]",
+  workdir: "/path/to/project"
+})
+```
+
+Then follow up with:
+
+```
+claude_code({
+  task: "/esper:apply",
   workdir: "/path/to/project"
 })
 ```
