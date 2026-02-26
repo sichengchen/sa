@@ -24,7 +24,7 @@ Or manage manually with `sa engine start/stop/restart/status/logs`.
 
 ## Architecture
 
-The **Engine** runs as a background daemon and owns the agent loop, tools, memory, skills, scheduler, audio transcription, and model routing. **Connectors** (Telegram, Discord) auto-start with the Engine when configured. The **TUI** is launched on-demand. **Webhook** endpoints (`/webhook/agent`, `/webhook/tasks/:slug`, `/webhook/heartbeat`) allow external systems to send messages, trigger automation tasks, and invoke heartbeat checks programmatically.
+The **Engine** runs as a background daemon and owns the agent loop, tools, memory, skills, scheduler, audio transcription, and model routing. **Connectors** (Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear) auto-start with the Engine when configured. The **TUI** is launched on-demand. **Webhook** endpoints (`/webhook/agent`, `/webhook/tasks/:slug`, `/webhook/heartbeat`) allow external systems to send messages, trigger automation tasks, and invoke heartbeat checks programmatically. Six connectors share a unified **Chat SDK adapter** — Telegram stays on Grammy.
 
 ## Development
 
@@ -57,6 +57,9 @@ sa engine stop          Stop the running Engine
 sa engine status        Show Engine status
 sa engine logs          Show recent Engine logs
 sa engine restart       Restart the Engine
+sa stop                 Force-cancel all running agent tasks
+sa restart              Restart the Engine via tRPC
+sa shutdown             Shut down the Engine gracefully
 sa help                 Show help
 ```
 

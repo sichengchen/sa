@@ -15,8 +15,15 @@ SA stores all configuration in a local directory (default: `~/.sa/`). Override w
 | `BRAVE_API_KEY` | Optional | Brave Search API key (enables `web_search`) |
 | `PERPLEXITY_API_KEY` | Optional | Perplexity API key (fallback for `web_search`) |
 | `TELEGRAM_BOT_TOKEN` | Optional | Telegram bot token |
+| `SLACK_BOT_TOKEN` | Optional | Slack bot token |
+| `SLACK_SIGNING_SECRET` | Optional | Slack request signing secret |
+| `TEAMS_APP_ID` | Optional | Microsoft Teams app ID |
+| `TEAMS_APP_PASSWORD` | Optional | Microsoft Teams app password |
+| `GCHAT_SERVICE_ACCOUNT` | Optional | Google Chat service account JSON |
 | `DISCORD_TOKEN` | Optional | Discord bot token |
 | `DISCORD_GUILD_ID` | Optional | Restrict Discord bot to a specific guild |
+| `GITHUB_TOKEN` | Optional | GitHub bot/app token |
+| `LINEAR_API_KEY` | Optional | Linear API key |
 | `SA_HOME` | Optional | Override config directory (default: `~/.sa/`) |
 | `SA_ENGINE_PORT` | Optional | Override Engine HTTP port (default `7420`; WS `7421`) |
 
@@ -74,7 +81,9 @@ Resolution order: environment variable > `secrets.enc` > `runtime.env`.
 
     // Per-connector tool approval mode -> security/approval-flow.md
     "toolApproval": {
-      "tui": "never", "telegram": "ask", "discord": "ask", "webhook": "never"
+      "tui": "never", "telegram": "ask", "slack": "ask", "teams": "ask",
+      "gchat": "ask", "discord": "ask", "github": "ask", "linear": "ask",
+      "webhook": "never"
     },
 
     "webhook": {
@@ -94,7 +103,9 @@ Resolution order: environment variable > `secrets.enc` > `runtime.env`.
 
     // Tool policy -> tools/README.md
     "toolPolicy": {
-      "verbosity": { "tui": "minimal", "telegram": "silent", "discord": "silent", "webhook": "silent" },
+      "verbosity": { "tui": "minimal", "telegram": "silent", "slack": "silent",
+        "teams": "silent", "gchat": "silent", "discord": "silent",
+        "github": "silent", "linear": "silent", "webhook": "silent" },
       "overrides": {
         "exec": { "dangerLevel": "dangerous", "report": "always" },
         "web_fetch": { "report": "never" }
@@ -305,8 +316,15 @@ Structure:
 | `botToken` | string | Telegram bot token |
 | `pairedChatId` | number | Telegram paired chat ID |
 | `pairingCode` | string | One-time pairing code |
+| `slackBotToken` | string | Slack bot token |
+| `slackSigningSecret` | string | Slack signing secret |
+| `teamsAppId` | string | Teams app ID |
+| `teamsAppPassword` | string | Teams app password |
+| `gchatServiceAccount` | string | Google Chat service account JSON |
 | `discordToken` | string | Discord bot token |
 | `discordGuildId` | string | Discord guild ID |
+| `githubToken` | string | GitHub bot/app token |
+| `linearApiKey` | string | Linear API key |
 
 Managed at runtime via `set_env_secret` tool.
 

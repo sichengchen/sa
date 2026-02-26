@@ -1,6 +1,6 @@
 # Tools Overview and Classification
 
-SA provides 19 built-in tools organized by danger level. The engine owns all
+SA provides 22 built-in tools organized by danger level. The engine owns all
 tool definitions; connectors never invoke tools directly.
 
 ## Tool Inventory
@@ -26,6 +26,9 @@ tool definitions; connectors never invoke tools directly.
 | 17 | notify           | safe       | Push notification to connectors      |
 | 18 | delegate         | moderate   | Delegate to sub-agent                |
 | 19 | delegate_status  | safe       | Check sub-agent status               |
+| 20 | ask_user         | safe       | Ask the user a clarifying question   |
+| 21 | claude_code      | moderate   | Delegate task to Claude Code CLI     |
+| 22 | codex            | moderate   | Delegate task to Codex CLI           |
 
 *exec uses hybrid classification — see [exec.md](exec.md).
 
@@ -113,12 +116,17 @@ Controls how much tool execution detail connectors display.
 
 ### Per-Connector Defaults
 
-| Connector | Default   |
-|-----------|-----------|
-| TUI       | minimal   |
-| Telegram  | silent    |
-| Discord   | silent    |
-| Webhook   | silent    |
+| Connector    | Default   |
+|--------------|-----------|
+| TUI          | minimal   |
+| Telegram     | silent    |
+| Discord      | silent    |
+| Slack        | silent    |
+| Teams        | silent    |
+| Google Chat  | silent    |
+| GitHub       | silent    |
+| Linear       | silent    |
+| Webhook      | silent    |
 
 ### Config Example
 

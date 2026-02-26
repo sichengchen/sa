@@ -1,45 +1,50 @@
 # Architecture Overview
 
-SA is a personal AI agent assistant. It runs as a **daemon (Engine)** that owns all state -- config, model router, tools, memory, skills, sessions, auth, and scheduler. Frontends (TUI, Telegram, Discord, Webhook) are stateless **Connectors** that communicate with the Engine over **tRPC** (HTTP + WebSocket) on `127.0.0.1:7420/7421`.
+SA is a personal AI agent assistant. It runs as a **daemon (Engine)** that owns all state -- config, model router, tools, memory, skills, sessions, auth, and scheduler. Frontends (TUI, Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear, Webhook) are stateless **Connectors** that communicate with the Engine over **tRPC** (HTTP + WebSocket) on `127.0.0.1:7420/7421`.
 
 ---
 
 ## High-level diagram
 
 ```text
-                           Frontends (stateless)
-                  +------+  +----------+  +---------+
-                  | TUI  |  | Telegram |  | Discord |
-                  +--+---+  +----+-----+  +----+----+
-                     |           |              |
-                     +-----+-----+-----+--------+
-                           |           |
-        tRPC (HTTP+WS)    |   REST/SSE |
-      127.0.0.1:7420/7421 |           |
-                     +-----+-----------+-----+
-                     |     Engine daemon      |
-                     |  +-----------------+   |
-                     |  | Agent           |   |     POST /webhook/agent
-                     |  |  chat loop      |   |     POST /webhook/tasks/:slug
-                     |  |  tool dispatch  |   |<--- POST /webhook/heartbeat
-                     |  |  approval flow  |   |
-                     |  +-----------------+   |
-                     |  | ModelRouter     |   |
-                     |  | ToolRegistry    |   |
-                     |  | SkillRegistry   |   |
-                     |  | MemoryManager   |   |
-                     |  | SessionManager  |   |
-                     |  | AuthManager     |   |
-                     |  | Scheduler       |   |
-                     |  | Transcriber     |   |
-                     |  +-----------------+   |
-                     +------------------------+
-                               |
-                       ~/.sa/  (file-based state)
-                       config.json, secrets.enc,
-                       IDENTITY.md, USER.md,
-                       HEARTBEAT.md, memory/,
-                       skills/, engine.*
+                              Frontends (stateless)
+        +------+  +----------+  +-------+  +-------+  +-------+
+        | TUI  |  | Telegram |  | Slack |  | Teams |  | GChat |
+        +--+---+  +----+-----+  +---+---+  +---+---+  +---+---+
+           |           |            |           |           |
+           |   +---------+  +----------+  +--------+  +--------+
+           |   | Discord |  |  GitHub  |  | Linear |  | Webhook|
+           |   +----+----+  +----+-----+  +----+---+  +----+---+
+           |        |            |             |            |
+           +--------+-----+-----+------+------+-----+------+
+                          |            |
+           tRPC (HTTP+WS) |   REST/SSE |
+         127.0.0.1:7420/7421           |
+                    +-----+------------+-----+
+                    |     Engine daemon      |
+                    |  +-----------------+   |
+                    |  | Agent           |   |     POST /webhook/agent
+                    |  |  chat loop      |   |     POST /webhook/tasks/:slug
+                    |  |  tool dispatch  |   |<--- POST /webhook/heartbeat
+                    |  |  approval flow  |   |
+                    |  |  ask_user flow  |   |
+                    |  +-----------------+   |
+                    |  | ModelRouter     |   |
+                    |  | ToolRegistry    |   |
+                    |  | SkillRegistry   |   |
+                    |  | MemoryManager   |   |
+                    |  | SessionManager  |   |
+                    |  | AuthManager     |   |
+                    |  | Scheduler       |   |
+                    |  | Transcriber     |   |
+                    |  +-----------------+   |
+                    +------------------------+
+                              |
+                      ~/.sa/  (file-based state)
+                      config.json, secrets.enc,
+                      IDENTITY.md, USER.md,
+                      HEARTBEAT.md, memory/,
+                      skills/, engine.*
 ```
 
 ---
@@ -52,11 +57,11 @@ SA is a personal AI agent assistant. It runs as a **daemon (Engine)** that owns 
 | Agent | `src/engine/agent/` | Conversation loop, streaming events, tool dispatch, tool approval, loop detection, result size guard |
 | Model Router | `src/engine/router/` | Provider/model config, active model switching, tier-based routing, alias resolution, fallback chains. Wraps `@mariozechner/pi-ai` |
 | Config | `src/engine/config/` | `IDENTITY.md`, `config.json` (v3), `USER.md`, `secrets.enc` loading/saving/migration |
-| Tools | `src/engine/tools/` | 19 built-in tools across three danger tiers. Exec classifier, tool policy manager, background process management |
+| Tools | `src/engine/tools/` | 22 built-in tools across three danger tiers. Exec classifier, tool policy manager, background process management, coding agent subprocess infra |
 | Memory | `src/engine/memory/` | Memory directory init, persistence helpers, context loading for system prompt |
 | Skills | `src/engine/skills/` | Skill discovery, loading (bundled + user), activation, prompt integration via `SKILL.md` |
 | Audio | `src/engine/audio/` | Audio transcription -- prefers local Whisper, falls back to cloud API |
-| Connectors | `src/connectors/` | TUI (Ink + React), Telegram (Grammy), Discord (Discord.js), shared stream handler |
+| Connectors | `src/connectors/` | TUI (Ink + React), Telegram (Grammy), Chat SDK connectors (Slack, Teams, Google Chat, Discord, GitHub, Linear), shared stream handler |
 | CLI | `src/cli/` | `sa` command entry point, daemon control, onboarding wizard, config editor |
 | Shared | `src/shared/` | Typed tRPC client factory, cross-layer types, connector base, markdown formatting |
 
@@ -72,7 +77,7 @@ SA is a personal AI agent assistant. It runs as a **daemon (Engine)** that owns 
 6. Validate provider API keys -- warn if any `apiKeyEnvVar` is missing
 7. `ModelRouter.fromConfig()` -- build provider/model registry, set default model, init tiers/aliases/fallbacks
 8. `SkillRegistry.loadAll()` -- load bundled + user-installed skills
-9. Build tools (19 total) -- 9 builtins + context-bound tools
+9. Build tools (22 total) -- builtins + context-bound tools (including coding agent tools)
 10. Assemble system prompt (11 components, see below)
 11. `createTranscriber()` -- local Whisper if available, else cloud API
 12. `SessionManager()` + `AuthManager.init()` -- generate master token
@@ -81,7 +86,7 @@ SA is a personal AI agent assistant. It runs as a **daemon (Engine)** that owns 
 15. `Scheduler.start()` -- register built-in heartbeat task
 16. Restore persisted cron tasks from `config.json`
 17. `startServer()` -- bind HTTP (7420) + WS (7421) listeners
-18. Auto-start connectors (Telegram, Discord) if tokens configured
+18. Auto-start connectors (Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear) if tokens configured
 
 ---
 
@@ -109,6 +114,7 @@ The `Agent` class implements the core chat loop. Each `agent.chat(userText)` cal
 | `tool_start` | `name`, `id` | Tool execution started |
 | `tool_end` | `name`, `id`, `content`, `isError` | Tool execution finished with result |
 | `tool_approval_request` | `name`, `id`, `args` | Connector must approve or reject |
+| `user_question` | `id`, `question`, `options?` | Agent asks user a clarifying question |
 | `reaction` | `emoji` | Emoji reaction to forward to IM connector |
 | `done` | `stopReason` | Chat turn complete |
 | `error` | `message` | Error occurred |
@@ -158,6 +164,8 @@ Event filtering by `ToolPolicyManager`: verbosity levels (`verbose`/`minimal`/`s
 | `health` | `ping` | query | Status, uptime, sessions, model, agentName. **Unauthenticated.** |
 | `chat` | `send` | mutation | Touch session, non-streaming send |
 | `chat` | `stream` | subscription | Stream `EngineEvent` values for a chat turn |
+| `chat` | `stop` | mutation | Cancel running agent work for a session |
+| `chat` | `stopAll` | mutation | Cancel all running agent work across sessions |
 | `chat` | `history` | query | Message history for a session |
 | `chat` | `transcribeAndSend` | subscription | Transcribe audio, then stream chat response |
 | `session` | `create` | mutation | Create a new session |
@@ -167,6 +175,7 @@ Event filtering by `ToolPolicyManager`: verbosity levels (`verbose`/`minimal`/`s
 | `tool` | `config` | query | Tool approval mode for a session |
 | `tool` | `approve` | mutation | Approve/reject a pending tool call |
 | `tool` | `acceptForSession` | mutation | Auto-approve tool for rest of session |
+| `question` | `answer` | mutation | Answer a pending agent question |
 | `model` | `list` | query | List all model configurations |
 | `model` | `active` | query | Get active model name |
 | `model` | `switch` | mutation | Switch active model (supports aliases) |
@@ -192,6 +201,8 @@ Event filtering by `ToolPolicyManager`: verbosity levels (`verbose`/`minimal`/`s
 | `heartbeat` | `status` | query | Heartbeat config, last result, main session ID |
 | `heartbeat` | `configure` | mutation | Update heartbeat enabled/interval |
 | `heartbeat` | `trigger` | mutation | Manually trigger heartbeat |
+| `engine` | `shutdown` | mutation | Gracefully shut down the engine |
+| `engine` | `restart` | mutation | Restart the engine (marker-based) |
 | `mainSession` | `info` | query | Main session metadata |
 
 ---
@@ -229,8 +240,12 @@ Event filtering by `ToolPolicyManager`: verbosity levels (`verbose`/`minimal`/`s
 - **One Agent per session**: conversation isolation. Main session persists across heartbeats; connector and cron sessions get fresh agents.
 - **Streaming-first**: agent yields events as they arrive from the LLM. tRPC subscriptions and SSE webhooks forward with minimal buffering.
 - **pi-ai abstraction**: unified streaming interface across Anthropic, OpenAI, Google, OpenRouter. Use type assertion `(getModel as (p: string, m: string) => Model<Api>)` for dynamic strings.
+- **Chat SDK adapter pattern**: six connectors (Slack, Teams, Google Chat, Discord, GitHub, Linear) share a single `ChatSDKAdapter` class that bridges Chat SDK events to SA's tRPC client. Platform-specific code is limited to adapter instantiation and webhook server setup.
 - **Skills are Markdown**: lightweight, version-controllable, shareable via ClawHub. No code execution in skill loading.
 - **Audio transcription**: prefers local Whisper, falls back to cloud API.
 - **Tool approval is per-connector**: TUI defaults to auto-approve; IM connectors default to `"ask"`.
+- **ask_user flow**: agent yields `user_question` event, blocks via `onAskUser` callback, resumes when connector forwards the answer via `question.answer` tRPC mutation. 10-minute timeout.
+- **Coding agent delegation**: `claude_code` and `codex` tools use the `AgentSubprocess` infrastructure for lifecycle management, auth probing, structured output, and background execution.
 - **Webhook tasks**: `{{payload}}` interpolation in prompt templates for external service integration.
 - **Cron persistence**: tasks survive restarts via `config.json` storage.
+- **Runtime control**: `/stop`, `/restart`, `/shutdown` commands available across all connectors for agent abort, engine restart, and shutdown.

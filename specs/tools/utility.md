@@ -15,8 +15,8 @@ Send an emoji reaction. Danger level: **safe**.
 |-----------|--------|----------|----------------------|
 | emoji     | string | yes      | Emoji to react with  |
 
-Sends an emoji reaction to IM connectors (Telegram, Discord). No-op for
-TUI connector.
+Sends an emoji reaction to IM connectors (Telegram, Slack, Teams, Google Chat,
+Discord, GitHub, Linear). No-op for TUI connector.
 
 ---
 
@@ -29,7 +29,7 @@ Push notification to connectors. Danger level: **safe**.
 | Parameter | Type   | Required | Default | Description                              |
 |-----------|--------|----------|---------|------------------------------------------|
 | message   | string | yes      | —       | Notification content (supports Markdown) |
-| connector | string | no       | "all"   | `"telegram"`, `"discord"`, or `"all"`    |
+| connector | string | no       | "all"   | Connector type or `"all"`                |
 
 ### Requirements
 

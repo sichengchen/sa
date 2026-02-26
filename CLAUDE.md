@@ -27,18 +27,18 @@ CLI (`src/cli/`)
   └─ sa onboard      → onboarding wizard
 
 Connectors (`src/connectors/`)      Engine (`src/engine/`)
-  ├─ tui/   (Ink + React)           ├─ runtime.ts     — bootstrap all subsystems
-  ├─ telegram/ (Grammy)      ←tRPC→ ├─ server.ts      — HTTP + WS server
-  └─ discord/  (Discord.js)         ├─ procedures.ts  — tRPC API surface
-                                    ├─ agent/         — chat loop + tool dispatch
-                                    ├─ router/        — model switching (pi-ai)
-                                    ├─ config/        — file-based config + secrets
-                                    ├─ memory/        — persistent memory files
-                                    ├─ skills/        — skill discovery + loading
-                                    ├─ tools/         — 9 built-in tools
-                                    ├─ sessions.ts    — per-connector sessions
-                                    ├─ auth.ts        — token management
-                                    └─ scheduler.ts   — heartbeat task
+  ├─ tui/      (Ink + React)         ├─ runtime.ts     — bootstrap all subsystems
+  ├─ telegram/ (Grammy)       ←tRPC→ ├─ server.ts      — HTTP + WS server
+  ├─ chat-sdk/ (shared adapter)      ├─ procedures.ts  — tRPC API surface
+  │   ├─ slack/                      ├─ agent/         — chat loop + tool dispatch
+  │   ├─ teams/                      ├─ router/        — model switching (pi-ai)
+  │   ├─ gchat/                      ├─ config/        — file-based config + secrets
+  │   ├─ discord/                    ├─ memory/        — persistent memory files
+  │   ├─ github/                     ├─ skills/        — skill discovery + loading
+  │   └─ linear/                     ├─ tools/         — 22 built-in tools
+  └─ webhook/                        ├─ sessions.ts    — per-connector sessions
+                                     ├─ auth.ts        — token management
+                                     └─ scheduler.ts   — heartbeat task
 
 Shared (`src/shared/`)
   ├─ types.ts       — EngineEvent, Session, ConnectorType
@@ -52,7 +52,7 @@ Shared (`src/shared/`)
 - **Engine owns all state** — config, model router, memory, skills, tools. Connectors are stateless frontends.
 - **File-based config** at `~/.sa/` (overridable via `SA_HOME`) — no database. Secrets are encrypted in `secrets.enc`.
 - **One Agent per session** — `SessionManager` maps `sessionId → Agent`. Each agent holds its own message history.
-- **Streaming events** — the agent yields `EngineEvent` types: `text_delta`, `thinking_delta`, `tool_start`, `tool_end`, `tool_approval_request`, `done`, `error`.
+- **Streaming events** — the agent yields `EngineEvent` types: `text_delta`, `thinking_delta`, `tool_start`, `tool_end`, `tool_approval_request`, `user_question`, `reaction`, `done`, `error`.
 - **Model routing** via `@mariozechner/pi-ai` — supports Anthropic, OpenAI, Google, OpenRouter, etc. The `ModelRouter` wraps pi-ai's `getModel()` and persists state to `config.json`.
 - **Skills** use the agentskills.io Markdown spec. Bundled skills live in `src/engine/skills/bundled/`, user-installed in `~/.sa/skills/`.
 

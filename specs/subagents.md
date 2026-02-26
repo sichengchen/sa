@@ -97,6 +97,9 @@ Sub-agents run with a hardened configuration compared to the parent agent:
 |--------------------------------|----------------------------------------------|
 | No `delegate` tool             | Prevents recursive sub-agent spawning        |
 | No `delegate_status` tool      | Sub-agents do not manage other sub-agents    |
+| No `claude_code` tool          | Sub-agents do not delegate to coding agents  |
+| No `codex` tool                | Sub-agents do not delegate to coding agents  |
+| No `ask_user` tool             | Sub-agents cannot ask the user questions     |
 | Auto-approve all tool calls    | Sub-agents run without user interaction      |
 | Memory write disabled (background) | Prevents unsupervised memory mutation    |
 | Eco tier model (default)       | Cost optimization for delegated tasks        |
@@ -110,7 +113,7 @@ Sub-agents receive a minimal system prompt:
 
 ### Tool Filtering
 
-1. `delegate` and `delegate_status` are always excluded.
+1. `delegate`, `delegate_status`, `claude_code`, `codex`, and `ask_user` are always excluded.
 2. If `memoryWrite` is false, `memory_write` and `memory_delete` are excluded.
 3. If a `tools` allowlist is provided, only those tools (minus the above exclusions) are available.
 

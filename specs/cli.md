@@ -24,6 +24,18 @@ Run the setup wizard. Walks through provider API key entry, model selection, Tel
 | `logs` | View recent engine daemon log output |
 | `restart` | Stop then start the engine |
 
+### `sa stop`
+
+Force-cancel all running agent tasks and tool calls. Sends `chat.stopAll` to the engine.
+
+### `sa restart`
+
+Restart the engine via the `engine.restart` tRPC procedure. The engine writes a restart marker file and exits; the CLI re-launches the daemon.
+
+### `sa shutdown`
+
+Shut down the engine gracefully via the `engine.shutdown` tRPC procedure.
+
 ### `sa audit`
 
 Security audit log viewer. Reads `~/.sa/audit.log` (NDJSON).
@@ -49,9 +61,15 @@ When chatting in the TUI:
 | Command | Description |
 |---|---|
 | `/new` | Start a new conversation. Destroys the current session and agent, then creates a fresh session under the `tui` prefix. |
+| `/stop` | Force-cancel all running agent tasks and tool calls for the current session |
+| `/restart` | Restart the SA engine (exits TUI for reconnect) |
+| `/shutdown` | Shut down the SA engine completely |
 | `/status` | Show engine status (uptime, active model, session count) |
 | `/model <name>` | Switch the active model. Supports aliases (e.g., `/model fast`). |
 | `/models` | List all configured models with provider and active status |
+| `/provider` | List configured providers with API key env var names |
+| `/sessions` | List active sessions and open session picker |
+| `/switch <id>` | Switch to a different session by ID prefix |
 
 ---
 
@@ -77,6 +95,8 @@ sa (no arguments)
        |     tool_start           -> show tool execution card
        |     tool_end             -> update tool card with result
        |     tool_approval_request -> prompt: [y]es / [n]o / [a]lways
+       |     user_question         -> show question UI (choice/free-text)
+       |     reaction              -> show emoji
        |     done                 -> mark turn complete
        |     error                -> display error message
        +-- On quit: session.destroy, disconnect

@@ -33,6 +33,8 @@ Access at runtime: `read_skill(name: "sa", path: "specs/README.md")`
 | [`tools/memory.md`](tools/memory.md) | Memory tools (write/search/read/delete) |
 | [`tools/web.md`](tools/web.md) | web_fetch + web_search |
 | [`tools/delegate.md`](tools/delegate.md) | delegate + delegate_status |
+| [`tools/ask-user.md`](tools/ask-user.md) | ask_user clarifying questions |
+| [`tools/coding-agents.md`](tools/coding-agents.md) | claude_code + codex (subprocess-based) |
 | [`tools/file-io.md`](tools/file-io.md) | read, write, edit |
 | [`tools/utility.md`](tools/utility.md) | reaction, notify, set_env_*, read_skill |
 

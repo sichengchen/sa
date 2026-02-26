@@ -31,8 +31,12 @@ Every tool declares a `dangerLevel` property that drives the approval flow.
 | `set_env_secret` | safe | Stores secrets (encrypted) |
 | `set_env_variable` | safe | Stores plain config vars |
 | `notify` | safe | Sends notifications to connectors |
+| `ask_user` | safe | Asks user a clarifying question |
 | `write` | moderate | Creates or overwrites files |
 | `edit` | moderate | Edits files in place |
+| `delegate` | moderate | Delegates work to a sub-agent |
+| `claude_code` | moderate | Delegates task to Claude Code CLI |
+| `codex` | moderate | Delegates task to Codex CLI |
 | `exec` | dangerous | Arbitrary shell command execution |
 | `exec_kill` | dangerous | Kills background processes |
 
@@ -49,7 +53,7 @@ Each connector type has an approval mode configured in
 | Mode | Default for | Behavior |
 |------|-------------|----------|
 | `"never"` | TUI, Webhook | Safe and moderate auto-approve. Dangerous still prompts. |
-| `"ask"` | Telegram, Discord | Same as `"never"` in practice -- moderate auto-approves, dangerous asks. |
+| `"ask"` | Telegram, Slack, Teams, GChat, Discord, GitHub, Linear | Same as `"never"` in practice -- moderate auto-approves, dangerous asks. |
 | `"always"` | — | Both moderate and dangerous prompt. Only safe auto-approves. |
 
 ---
@@ -94,7 +98,12 @@ same tool in that session auto-approve without prompting.
     "toolApproval": {
       "tui": "never",
       "telegram": "ask",
+      "slack": "ask",
+      "teams": "ask",
+      "gchat": "ask",
       "discord": "ask",
+      "github": "ask",
+      "linear": "ask",
       "webhook": "never"
     }
   }
