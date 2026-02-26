@@ -80,3 +80,5 @@ Happy project (github.com/slopus/happy) informs the coding agent tool design —
 - Plan 117 — Google Chat connector via Chat SDK: GChat adapter with webhook server and `sa gchat` CLI. Files: connectors/gchat/
 - Plan 119 — GitHub connector via Chat SDK: GitHub adapter with webhook server and `sa github` CLI. Files: connectors/github/
 - Plan 120 — Linear connector via Chat SDK: Linear adapter with webhook server and `sa linear` CLI. Files: connectors/linear/
+- Plan 118 — Discord connector migration to Chat SDK: Replace old Discord.js connector with Chat SDK version. Files: connectors/discord/
+- Plan 121 — /stop command: Add AbortController-based abort to Agent, `chat.stop`/`chat.stopAll` tRPC procedures, `/stop` in all connectors, `sa stop` CLI. Files: agent.ts, procedures.ts, adapter.ts, App.tsx, transport.ts, index.ts
