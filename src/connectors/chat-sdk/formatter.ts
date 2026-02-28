@@ -16,6 +16,7 @@ export const PLATFORM_LIMITS: Record<string, number> = {
   discord: 2000,  // Discord message limit
   github: 65536,  // GitHub comment limit
   linear: 10000,  // Linear comment limit
+  telegram: 4096, // Telegram message limit
 };
 
 /** Get the message length limit for a platform */

@@ -190,6 +190,11 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
       process.exit(1);
     }
   },
+  telegram: async (cmdArgs) => {
+    const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3426;
+    const { startTelegramConnector } = await import("@sa/connectors/telegram/index.js");
+    await startTelegramConnector(port);
+  },
   discord: async (cmdArgs) => {
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3423;
     const { startDiscordConnector } = await import("@sa/connectors/discord/index.js");
@@ -210,6 +215,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     console.log("  stop        Stop all running agent tasks");
     console.log("  restart     Restart the SA engine");
     console.log("  shutdown    Stop the SA engine completely");
+    console.log("  telegram    Start the Telegram connector (webhook server on port 3426)");
     console.log("  discord     Start the Discord connector (webhook server on port 3423)");
     console.log("  slack       Start the Slack connector (webhook server on port 3420)");
     console.log("  teams       Start the Teams connector (webhook server on port 3421)");

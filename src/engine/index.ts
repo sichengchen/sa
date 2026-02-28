@@ -6,7 +6,6 @@ import { homedir } from "node:os";
 import { spawn } from "node:child_process";
 import { createRuntime } from "./runtime.js";
 import { startServer } from "./server.js";
-import { createEngineClient } from "@sa/shared/client.js";
 
 const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
 const PID_FILE = join(saHome, "engine.pid");
@@ -26,32 +25,8 @@ async function main() {
   writeFileSync(PID_FILE, String(process.pid));
   writeFileSync(URL_FILE, httpUrl);
 
-  // Build a loopback tRPC client for connectors running in-process
-  const wsUrl = `ws://127.0.0.1:${server.port + 1}`;
-  const token = runtime.auth.getMasterToken();
-  const client = createEngineClient({ httpUrl, wsUrl, token });
-
-  // Auto-start Telegram connector if bot token is configured
-  const secrets = await runtime.config.loadSecrets();
-  const telegramToken = process.env.TELEGRAM_BOT_TOKEN ?? secrets?.botToken;
-  if (telegramToken) {
-    const { TelegramConnector } = await import("@sa/connectors/telegram/transport.js");
-    const connector = new TelegramConnector(client, {
-      botToken: telegramToken,
-      allowedChatId: secrets?.pairedChatId,
-      pairingCode: secrets?.pairingCode,
-      onPaired: async (chatId) => {
-        const current = (await runtime.config.loadSecrets()) ?? { apiKeys: {} };
-        await runtime.config.saveSecrets({ ...current, pairedChatId: chatId });
-      },
-    });
-    connector.start().catch((err) => {
-      console.error("Telegram connector failed to start:", err);
-    });
-  }
-
-  // Discord connector now uses Chat SDK (webhook-based).
-  // Start it separately via `sa discord` to run the webhook server.
+  // Chat SDK connectors (Telegram, Discord, Slack, etc.) run as separate
+  // webhook servers. Start them via `sa telegram`, `sa discord`, etc.
 
   // Graceful shutdown (with optional restart)
   const RESTART_MARKER = join(saHome, "engine.restart");
