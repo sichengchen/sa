@@ -231,6 +231,17 @@ describe("tRPC procedures (non-live)", () => {
       expect(status.mainSessionId).toStartWith("main:");
       expect(status.config.enabled).toBe(true);
     });
+
+    test("configure updates long heartbeat intervals via the scheduler cadence path", async () => {
+      const caller = createCaller();
+      const result = await caller.heartbeat.configure({ intervalMinutes: 120 });
+
+      expect(result.config.intervalMinutes).toBe(120);
+
+      const tasks = runtime.scheduler.list();
+      const heartbeat = tasks.find((task) => task.name === "heartbeat");
+      expect(heartbeat?.schedule).toBe("@every 120m");
+    });
   });
 
   describe("mainSession.info", () => {
