@@ -22,6 +22,12 @@ export interface ChatSDKAdapterConfig {
   platformName: string;
   /** Whether to attribute messages with sender names in group chats */
   attributeSender?: boolean;
+  /** Hook: handle tool approval request with platform-native UI. Return true if handled. */
+  onToolApprovalRequest?: (thread: Thread, toolName: string, toolCallId: string) => Promise<boolean>;
+  /** Hook: handle user question with platform-native UI. Return true if handled. */
+  onUserQuestion?: (thread: Thread, event: { id: string; question: string; options?: string[] }) => Promise<boolean>;
+  /** Hook: handle reaction with platform-native API. Return true if handled. */
+  onReaction?: (thread: Thread, emoji: string) => Promise<boolean>;
 }
 
 /**
@@ -193,37 +199,51 @@ export class ChatSDKAdapter {
               }
 
               case "tool_approval_request": {
-                await this.sendToolApprovalCard(thread, event.name, event.id);
+                const handled = this.config.onToolApprovalRequest
+                  ? await this.config.onToolApprovalRequest(thread, event.name, event.id)
+                  : false;
+                if (!handled) {
+                  await this.sendToolApprovalCard(thread, event.name, event.id);
+                }
                 break;
               }
 
               case "user_question": {
-                if (event.options && event.options.length > 0) {
-                  // Multiple-choice: post question with option buttons
-                  const optionsText = event.options.map((o, i) => `${i + 1}. ${o}`).join("\n");
-                  await thread.post(
-                    `**Question:** ${event.question}\n\n${optionsText}\n\n` +
-                    `Reply with: \`answer <number>\` or \`answer <text>\``,
-                  );
-                  // Store for text-based answer matching
-                  this.pendingFreeTextQuestions.set(thread.id, event.id);
-                  // Store options for number-based selection
-                  (this as any)._questionOptions = (this as any)._questionOptions ?? new Map();
-                  (this as any)._questionOptions.set(event.id, event.options);
-                } else {
-                  // Free-text: send question and wait for next message
-                  this.pendingFreeTextQuestions.set(thread.id, event.id);
-                  await thread.post(`**Question:** ${event.question}\n\nReply with your answer.`);
+                const qHandled = this.config.onUserQuestion
+                  ? await this.config.onUserQuestion(thread, event)
+                  : false;
+                if (!qHandled) {
+                  if (event.options && event.options.length > 0) {
+                    // Multiple-choice: post question with option buttons
+                    const optionsText = event.options.map((o, i) => `${i + 1}. ${o}`).join("\n");
+                    await thread.post(
+                      `**Question:** ${event.question}\n\n${optionsText}\n\n` +
+                      `Reply with: \`answer <number>\` or \`answer <text>\``,
+                    );
+                    // Store for text-based answer matching
+                    this.pendingFreeTextQuestions.set(thread.id, event.id);
+                    // Store options for number-based selection
+                    (this as any)._questionOptions = (this as any)._questionOptions ?? new Map();
+                    (this as any)._questionOptions.set(event.id, event.options);
+                  } else {
+                    // Free-text: send question and wait for next message
+                    this.pendingFreeTextQuestions.set(thread.id, event.id);
+                    await thread.post(`**Question:** ${event.question}\n\nReply with your answer.`);
+                  }
                 }
                 break;
               }
 
               case "reaction": {
-                // React to the original message if possible
-                try {
-                  await thread.post(event.emoji);
-                } catch {
-                  // Platform may not support this emoji — silently ignore
+                const rHandled = this.config.onReaction
+                  ? await this.config.onReaction(thread, event.emoji)
+                  : false;
+                if (!rHandled) {
+                  try {
+                    await thread.post(event.emoji);
+                  } catch {
+                    // Platform may not support this emoji — silently ignore
+                  }
                 }
                 break;
               }
