@@ -2,7 +2,7 @@
 
 ## Overview
 
-SA supports three automation mechanisms: **heartbeat**, **cron**, and **webhook tasks**. All create isolated agent sessions, dispatch prompts, and log results to `~/.sa/automation/`. Config lives in `config.json` under `runtime.heartbeat` and `runtime.automation`. Tasks persist across engine restarts.
+SA supports three automation mechanisms: **heartbeat**, **cron**, and **webhook tasks**. All log results to `~/.sa/automation/`. Config lives in `config.json` under `runtime.heartbeat` and `runtime.automation`. Tasks persist across engine restarts.
 
 ---
 
@@ -21,10 +21,13 @@ Agent-based periodic check running in the **main session**. The agent reads a us
 
 ### How It Works
 
-1. Scheduler fires every `intervalMinutes`. Health JSON written to `~/.sa/engine.heartbeat` on every cycle (pid, memory, timestamp).
-2. If `enabled` and a main agent exists, engine reads `~/.sa/HEARTBEAT.md`.
-3. Agent handles each checklist item; replies with exactly `HEARTBEAT_OK` if nothing needs attention.
-4. **Smart suppression**: if response equals the suppress token, result is marked `suppressed: true` and no notification is sent.
+1. Scheduler fires every `intervalMinutes`. Heartbeat uses a fixed minute interval, not cron step syntax, so values like `120` or `480` work correctly.
+2. Health JSON is written to `~/.sa/engine.heartbeat` on every cycle (pid, memory, timestamp).
+3. A heartbeat run log is written to `~/.sa/automation/heartbeat-<timestamp>.md` on every cycle.
+4. If `enabled` and a main agent exists, engine reads `~/.sa/HEARTBEAT.md`.
+5. Agent handles each checklist item; replies with exactly `HEARTBEAT_OK` if nothing needs attention.
+6. **Smart suppression**: if response equals the suppress token, result is marked `suppressed: true` and no notification is sent.
+7. If the response is not suppressed, SA attempts to push it through the `notify` tool (Telegram/Discord if configured) and also writes the result to the engine log.
 
 ### Checklist File (`~/.sa/HEARTBEAT.md`)
 
@@ -40,9 +43,9 @@ User-editable Markdown. Read fresh on each cycle. Default:
 
 | Procedure           | Type     | Description                                    |
 |---------------------|----------|------------------------------------------------|
-| `heartbeat.status`  | query    | Current config and last heartbeat result       |
-| `heartbeat.update`  | mutation | Update `enabled` and/or `intervalMinutes`      |
-| `heartbeat.trigger` | mutation | Manually trigger a heartbeat check             |
+| `heartbeat.status`    | query    | Current config and last heartbeat result     |
+| `heartbeat.configure` | mutation | Update `enabled` and/or `intervalMinutes`    |
+| `heartbeat.trigger`   | mutation | Manually trigger a heartbeat check           |
 
 ### HTTP Endpoint
 

@@ -237,6 +237,42 @@ describe("Scheduler", () => {
     expect(updated).toBe(false);
   });
 
+  test("tick respects intervalMinutes for cadence-based tasks", async () => {
+    let runs = 0;
+    scheduler.register({
+      name: "heartbeat",
+      schedule: "@every 120m",
+      intervalMinutes: 120,
+      handler: () => { runs++; },
+      builtin: true,
+    });
+
+    await scheduler.tick(new Date(2026, 1, 19, 10, 0));
+    expect(runs).toBe(0);
+
+    await scheduler.tick(new Date(2026, 1, 19, 11, 59));
+    expect(runs).toBe(0);
+
+    await scheduler.tick(new Date(2026, 1, 19, 12, 0));
+    expect(runs).toBe(1);
+  });
+
+  test("updateInterval changes cadence tasks without switching back to cron", () => {
+    scheduler.register({
+      name: "heartbeat",
+      schedule: "*/30 * * * *",
+      intervalMinutes: 30,
+      handler: () => {},
+      builtin: true,
+    });
+
+    const updated = scheduler.updateInterval("heartbeat", 120);
+    expect(updated).toBe(true);
+
+    const tasks = scheduler.list();
+    expect(tasks[0]!.schedule).toBe("@every 120m");
+  });
+
   test("updateSchedule resets lastRun so task can fire immediately", async () => {
     let ran = false;
     scheduler.register({

@@ -1179,7 +1179,7 @@ export function createAppRouter(runtime: EngineRuntime) {
           }
           if (input.intervalMinutes !== undefined) {
             heartbeatState.config.intervalMinutes = input.intervalMinutes;
-            runtime.scheduler.updateSchedule("heartbeat", `*/${input.intervalMinutes} * * * *`);
+            runtime.scheduler.updateInterval("heartbeat", input.intervalMinutes);
           }
           return { config: heartbeatState.config };
         }),
