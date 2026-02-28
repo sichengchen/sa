@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { HeartbeatConfig } from "./config/types.js";
 import { DEFAULT_HEARTBEAT } from "./config/defaults.js";
@@ -9,6 +9,8 @@ export interface ScheduledTask {
   name: string;
   /** Cron expression: "minute hour day month weekday" (5 fields) */
   schedule: string;
+  /** Optional fixed interval in minutes for cadence-based scheduling */
+  intervalMinutes?: number;
   /** Handler to execute */
   handler: () => Promise<void> | void;
   /** Whether this is a built-in task (cannot be removed via API) */
@@ -23,6 +25,12 @@ export interface ScheduledTask {
 
 interface RegisteredTask extends ScheduledTask {
   lastRun: number;
+}
+
+interface HeartbeatTaskOptions {
+  saHome: string;
+  mainAgent?: Agent | null;
+  notify?: (message: string) => Promise<void> | void;
 }
 
 /** Parse a cron field value (supports wildcards, numbers, and step syntax) */
@@ -106,8 +114,7 @@ export class Scheduler {
   }
 
   /** Manual tick — check and run matching tasks */
-  async tick(): Promise<void> {
-    const now = new Date();
+  async tick(now = new Date()): Promise<void> {
     const nowMinute = Math.floor(now.getTime() / 60_000);
     const toRemove: string[] = [];
 
@@ -115,7 +122,19 @@ export class Scheduler {
       // Skip if already ran this minute
       if (task.lastRun === nowMinute) continue;
 
-      if (matchesCron(task.schedule, now)) {
+      let shouldRun = false;
+      if (task.intervalMinutes !== undefined) {
+        if (task.lastRun === 0) {
+          // First scheduler tick establishes the cadence baseline.
+          task.lastRun = nowMinute;
+          continue;
+        }
+        shouldRun = (nowMinute - task.lastRun) >= task.intervalMinutes;
+      } else {
+        shouldRun = matchesCron(task.schedule, now);
+      }
+
+      if (shouldRun) {
         task.lastRun = nowMinute;
         try {
           await task.handler();
@@ -140,7 +159,18 @@ export class Scheduler {
     const task = this.tasks.get(name);
     if (!task) return false;
     task.schedule = schedule;
+    task.intervalMinutes = undefined;
     task.lastRun = 0; // Reset so the new schedule can fire immediately
+    return true;
+  }
+
+  /** Update the fixed interval of an existing task */
+  updateInterval(name: string, intervalMinutes: number): boolean {
+    const task = this.tasks.get(name);
+    if (!task) return false;
+    task.intervalMinutes = intervalMinutes;
+    task.schedule = formatIntervalSchedule(intervalMinutes);
+    task.lastRun = 0;
     return true;
   }
 
@@ -183,26 +213,53 @@ export const heartbeatState = {
   config: { ...DEFAULT_HEARTBEAT } as HeartbeatConfig,
 };
 
+function formatIntervalSchedule(intervalMinutes: number): string {
+  return intervalMinutes <= 59 ? `*/${intervalMinutes} * * * *` : `@every ${intervalMinutes}m`;
+}
+
+async function writeHeartbeatLog(saHome: string, healthData: HeartbeatResult): Promise<void> {
+  try {
+    const autoDir = join(saHome, "automation");
+    await mkdir(autoDir, { recursive: true });
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    const logContent = [
+      `# heartbeat - ${healthData.timestamp}`,
+      "## Result",
+      `- agentRan: ${healthData.agentRan}`,
+      `- suppressed: ${healthData.suppressed}`,
+      "## Response",
+      healthData.response || "(no response)",
+    ].join("\n");
+    await writeFile(join(autoDir, `heartbeat-${ts}.md`), logContent + "\n");
+  } catch {
+    // Logging failure is non-fatal
+  }
+}
+
 /** Create the agent-based heartbeat task.
  *  Writes a health JSON file every cycle AND runs the agent with the HEARTBEAT.md checklist.
  */
 export function createHeartbeatTask(
-  saHome: string,
-  mainAgent: Agent | null,
+  optionsOrSaHome: string | HeartbeatTaskOptions,
+  mainAgent: Agent | null = null,
   config?: Partial<HeartbeatConfig>,
 ): ScheduledTask {
+  const options = typeof optionsOrSaHome === "string"
+    ? { saHome: optionsOrSaHome, mainAgent }
+    : optionsOrSaHome;
   const hbConfig: HeartbeatConfig = { ...DEFAULT_HEARTBEAT, ...config };
   heartbeatState.config = hbConfig;
 
-  const schedule = `*/${hbConfig.intervalMinutes} * * * *`;
+  const schedule = formatIntervalSchedule(hbConfig.intervalMinutes);
 
   return {
     name: "heartbeat",
     schedule,
+    intervalMinutes: hbConfig.intervalMinutes,
     builtin: true,
     async handler() {
       // Always write the health file for daemon monitoring
-      const heartbeatFile = join(saHome, "engine.heartbeat");
+      const heartbeatFile = join(options.saHome, "engine.heartbeat");
       const healthData: HeartbeatResult = {
         timestamp: new Date().toISOString(),
         pid: process.pid,
@@ -211,15 +268,16 @@ export function createHeartbeatTask(
         suppressed: false,
       };
 
-      if (!hbConfig.enabled || !mainAgent) {
+      if (!hbConfig.enabled || !options.mainAgent) {
         healthData.agentRan = false;
         await writeFile(heartbeatFile, JSON.stringify(healthData) + "\n");
         heartbeatState.lastResult = healthData;
+        await writeHeartbeatLog(options.saHome, healthData);
         return;
       }
 
       // Read the checklist
-      const checklistPath = join(saHome, hbConfig.checklistPath ?? "HEARTBEAT.md");
+      const checklistPath = join(options.saHome, hbConfig.checklistPath ?? "HEARTBEAT.md");
       let checklist = "";
       try {
         checklist = await readFile(checklistPath, "utf-8");
@@ -238,7 +296,7 @@ export function createHeartbeatTask(
 
       let responseText = "";
       try {
-        for await (const event of mainAgent.chat(preamble)) {
+        for await (const event of options.mainAgent.chat(preamble)) {
           if (event.type === "text_delta") {
             responseText += event.delta;
           }
@@ -254,8 +312,16 @@ export function createHeartbeatTask(
 
       await writeFile(heartbeatFile, JSON.stringify(healthData) + "\n");
       heartbeatState.lastResult = healthData;
+      await writeHeartbeatLog(options.saHome, healthData);
 
       if (!healthData.suppressed && responseText.trim()) {
+        if (options.notify) {
+          try {
+            await options.notify(`Heartbeat\n\n${responseText.trim()}`);
+          } catch (err) {
+            console.error("[heartbeat] Notification error:", err);
+          }
+        }
         console.log(`[heartbeat] Agent report: ${responseText.trim().slice(0, 200)}`);
       }
     },
