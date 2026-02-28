@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
@@ -49,6 +49,12 @@ describe("Heartbeat task", () => {
     expect(task.schedule).toBe("*/30 * * * *");
   });
 
+  test("formats long intervals with a cadence schedule", () => {
+    const task = createHeartbeatTask(testDir, null, { ...DEFAULT_HEARTBEAT, intervalMinutes: 120 });
+    expect(task.schedule).toBe("@every 120m");
+    expect(task.intervalMinutes).toBe(120);
+  });
+
   test("skips agent when heartbeat is disabled", async () => {
     const task = createHeartbeatTask(testDir, null, { ...DEFAULT_HEARTBEAT, enabled: false });
     await task.handler();
@@ -78,6 +84,60 @@ describe("Heartbeat task", () => {
     await task.handler();
     expect(heartbeatState.lastResult).not.toBeNull();
     expect(heartbeatState.lastResult!.timestamp).toBeTruthy();
+  });
+
+  test("writes heartbeat logs to the automation directory", async () => {
+    const task = createHeartbeatTask(testDir, null);
+    await task.handler();
+
+    const files = await readdir(join(testDir, "automation"));
+    expect(files.some((name) => name.startsWith("heartbeat-") && name.endsWith(".md"))).toBe(true);
+  });
+
+  test("delivers unsuppressed agent output through the notify hook", async () => {
+    let notified = "";
+    const fakeAgent = {
+      async *chat() {
+        yield { type: "text_delta", delta: "Please check the background jobs." };
+      },
+    } as any;
+
+    const task = createHeartbeatTask({
+      saHome: testDir,
+      mainAgent: fakeAgent,
+      notify: async (message: string) => {
+        notified = message;
+      },
+    }, null, DEFAULT_HEARTBEAT);
+
+    await task.handler();
+
+    expect(heartbeatState.lastResult?.agentRan).toBe(true);
+    expect(heartbeatState.lastResult?.suppressed).toBe(false);
+    expect(notified).toContain("Heartbeat");
+    expect(notified).toContain("Please check the background jobs.");
+  });
+
+  test("does not notify when the agent returns the suppress token exactly", async () => {
+    let notifyCount = 0;
+    const fakeAgent = {
+      async *chat() {
+        yield { type: "text_delta", delta: "HEARTBEAT_OK" };
+      },
+    } as any;
+
+    const task = createHeartbeatTask({
+      saHome: testDir,
+      mainAgent: fakeAgent,
+      notify: async () => {
+        notifyCount++;
+      },
+    }, null, DEFAULT_HEARTBEAT);
+
+    await task.handler();
+
+    expect(heartbeatState.lastResult?.suppressed).toBe(true);
+    expect(notifyCount).toBe(0);
   });
 });
 

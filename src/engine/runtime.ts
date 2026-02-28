@@ -319,6 +319,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
 
   // Create the main agent (used by heartbeat and engine-level tasks)
   const mainAgent = new Agent({ router, tools, systemPrompt });
+  const notifyTool = tools.find((t) => t.name === "notify");
 
   // Ensure HEARTBEAT.md exists
   const heartbeatMdPath = join(saHome, saConfig.runtime.heartbeat?.checklistPath ?? "HEARTBEAT.md");
@@ -328,7 +329,18 @@ export async function createRuntime(): Promise<EngineRuntime> {
 
   // Initialize scheduler with agent-based heartbeat
   const scheduler = new Scheduler();
-  scheduler.register(createHeartbeatTask(saHome, mainAgent, saConfig.runtime.heartbeat));
+  scheduler.register(createHeartbeatTask({
+    saHome,
+    mainAgent,
+    notify: notifyTool
+      ? async (message: string) => {
+        const result = await notifyTool.execute({ message });
+        if (result.isError) {
+          console.warn("[heartbeat] Notify failed:", result.content);
+        }
+      }
+      : undefined,
+  }, null, saConfig.runtime.heartbeat));
 
   // Restore persisted cron tasks from config
   const cronTasks = saConfig.runtime.automation?.cronTasks ?? [];
