@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "spec_root": "specs",
+  "constitution_path": ".esper/CONSTITUTION.md",
+  "active_increment": null,
+  "active_increment_scope": [],
+  "workflow_mode": "atom",
+  "commands": {
+    "test": "bun test",
+    "lint": "bun run lint",
+    "typecheck": "bun run typecheck",
+    "dev": "bun run dev",
+    "build": "bun run build"
+  }
+}

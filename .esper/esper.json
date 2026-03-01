@@ -1,10 +1,19 @@
 {
+  "schema_version": 1,
   "backlog_mode": "local",
-  "current_phase": "009-chat-sdk-and-agent-tools",
+  "spec_root": "specs",
   "commands": {
     "test": "bun test",
     "lint": "bun run lint",
     "typecheck": "bun run typecheck",
-    "dev": ""
+    "dev": "bun run dev",
+    "build": "bun run build"
+  },
+  "workflow_defaults": {
+    "work_mode": "atom",
+    "commit_granularity": "per-increment",
+    "pr_policy": "explicit-only",
+    "validation_mode": "blocking",
+    "spec_sync": "proactive"
   }
 }

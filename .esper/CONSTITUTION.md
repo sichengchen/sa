@@ -1,39 +1,58 @@
-# SA (Sasa) — Constitution
+# SA Constitution
 
-## What This Is
-SA (nicknamed Sasa) is a personal AI agent assistant with minimalist design. It provides a local-first, self-hosted agent that communicates via a TUI (Ink) and instant messaging (Telegram), with tool-calling capabilities, long-term memory, and a configurable multi-provider model router. Built for a single power user as a daily-driver personal assistant.
+## Project Identity
 
-## What This Is NOT
-- **Not a SaaS or hosted service** — no multi-tenancy, billing, user management, or cloud hosting
-- **Not a full IDE or code editor** — it assists but does not replace your editor or Claude Code
-- **Not a chatbot framework** — it is a personal agent, not a platform for building chatbots for others
-- **Not a deployment platform** — it runs locally, not on servers for others
+**SA** (Sasa) is a personal AI agent assistant. It runs as a local daemon (Engine) that exposes a tRPC API, allowing multiple connectors — TUI, Telegram, Slack, Teams, Discord, Google Chat, GitHub, Linear, and webhooks — to interact with AI models through a unified interface.
 
-## Technical Decisions
-- **Stack**: TypeScript, Bun runtime, Ink (React) for TUI
-- **Architecture**: Monolithic single-process agent with modular subsystems (router, tools, memory, transports)
-- **Key dependencies**:
-  - `@mariozechner/pi-ai` (PI-mono) — unified multi-provider LLM API (Anthropic, OpenAI, Google, etc.)
-  - `ink` — React-based terminal UI
-  - `grammy` or `telegraf` — Telegram bot API
-- **Configuration**: Markdown files for identity/personality, JSON files for runtime config
-- **Model router**: Easy to configure, stores multiple model configurations, quick switching between models/providers
+SA gives technical enthusiasts a self-hosted, privacy-respecting AI assistant that lives across their communication channels.
+
+## What SA Is Not
+
+- **Not a hosted SaaS** — SA runs locally on the user's machine. There is no multi-tenant cloud service.
+- **Not a framework or library** — SA is an end-user product. Others do not build on top of it.
+- **Not an AI model** — SA orchestrates models (Anthropic, OpenAI, Google, OpenRouter, etc.) via pi-ai. It does not train or serve models.
+
+## Users
+
+Technical enthusiasts who want a self-hosted AI agent they can reach from their terminal, chat platforms, and automation workflows.
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Language | TypeScript (strict mode) |
+| Runtime | Bun |
+| Package manager | Bun |
+| Module system | ES modules |
+| RPC | tRPC (HTTP + WebSocket) |
+| TUI | Ink (React) |
+| Model routing | pi-ai (`@mariozechner/pi-ai`) |
+| Telegram | Grammy |
+| Chat platforms | Chat SDK (custom adapter) |
+| Testing | Bun built-in runner (Jest-compatible API) |
+| Linting | ESLint 10+ flat config |
+
+## Coding Standards
+
+- **Naming**: camelCase for variables/functions, PascalCase for types/classes, UPPER_SNAKE for constants.
+- **File structure**: co-locate tests (`*.test.ts`) alongside source files. Integration tests live in `tests/`.
+- **Imports**: ES module syntax only. No CommonJS.
+- **Error handling**: throw typed errors; avoid silent swallows. Validate at system boundaries (user input, external APIs).
+- **Patterns**: Engine owns all state; connectors are stateless. One Agent per session. Streaming via `EngineEvent` yields.
 
 ## Testing Strategy
-- **What gets tested**: Core logic (model router, tool execution, memory persistence) via unit tests; end-to-end flows (onboarding, chat loop, Telegram integration) via integration tests
-- **Tooling**: `bun:test` (built-in test runner)
-- **Commands**:
-  - `bun test` — run all tests
-  - `bun run lint` — lint
-  - `bun run typecheck` — type checking
-- See `TESTING.md` for detailed testing guidance and patterns.
 
-## Principles
-1. **Minimalism over features** — every feature must justify its complexity; less is more
-2. **Local-first, private by default** — all data stays on the user's machine; no telemetry, no cloud sync
-3. **Configuration as documents** — Markdown and JSON files are the source of truth, not databases
-4. **Single-user simplicity** — no auth, no permissions, no multi-user abstractions
-5. **Composable, not monolithic** — subsystems (router, tools, memory, transports) are loosely coupled and independently testable
-6. **`specs/` is the system manual** — single source of truth for all SA documentation. Copied into the SA skill at build time (`scripts/copy-specs.ts`), embedded in the binary. When features change, update the relevant spec doc in `specs/`.
-7. **Credentials and config through SA, not the shell** — When introducing features that require API keys or credentials: store secrets in `secrets.enc` (encrypted) via `set_env_secret`, store plain config in `config.json` via `set_env_variable`, inject both into `process.env` at engine startup, and update the bundled `sa` skill. Never use shell profiles (`.zshrc`, `.bashrc`, etc.).
-8. **Keep documentation current** — When features are added or changed, update the relevant spec file in `specs/`. The `SKILL.md` is a minimal index; all detailed docs live in `specs/`.
+- **Unit tests**: co-located `*.test.ts` files using Bun's built-in runner (`describe`, `it`, `expect`).
+- **Integration tests**: `tests/` directory for cross-module and E2E scenarios.
+- **Commands**: `bun test` (all), `bun test <path>` (single file).
+- **What gets tested**: core engine logic, tool dispatch, config parsing, model routing, security boundaries.
+
+## Scope Boundaries
+
+These will **never** be built in SA:
+
+- Multi-tenant hosting or user account management
+- Model training, fine-tuning, or serving
+- A public-facing API for third-party developers
+- Mobile native apps (connectors use existing chat platforms instead)
+- Billing, payments, or subscription management
