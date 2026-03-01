@@ -23,6 +23,72 @@ function mockRouter() {
   };
 }
 
+describe("Agent — retry context rebuild", () => {
+  it("passes sanitized history to stream on retry after retryable error", async () => {
+    let callCount = 0;
+    const capturedMessages: any[][] = [];
+
+    mock.module("@mariozechner/pi-ai", () => ({
+      stream: async function* (_model: any, context: any) {
+        callCount++;
+        // Capture a snapshot of context.messages for each call
+        capturedMessages.push([...context.messages]);
+
+        if (callCount === 1) {
+          // First call: yield a retryable error (thought_signature)
+          yield {
+            type: "error",
+            error: {
+              role: "assistant",
+              errorMessage: "thought_signature validation failed",
+              timestamp: Date.now(),
+            },
+          };
+        } else {
+          // Second call (retry): succeed
+          yield {
+            type: "done",
+            reason: "endTurn",
+            message: { role: "assistant", content: "ok", timestamp: Date.now() },
+          };
+        }
+      },
+    }));
+
+    const { Agent } = await import("./agent.js");
+
+    const agent = new Agent({
+      router: mockRouter() as any,
+      timeoutMs: 5000,
+      toolLoopDetection: false,
+    });
+
+    const events = await collectEvents(agent.chat("hello"));
+    const doneEvent = events.find((e) => e.type === "done");
+    expect(doneEvent).toBeDefined();
+
+    // stream was called twice: original + retry
+    expect(callCount).toBe(2);
+    expect(capturedMessages.length).toBe(2);
+
+    // The retry must receive a NEW sanitized array, not the original
+    // sanitizeHistoryForRetry always returns a fresh array
+    const firstMessages = capturedMessages[0];
+    const retryMessages = capturedMessages[1];
+
+    // Both should contain the user message
+    expect(retryMessages.length).toBeGreaterThanOrEqual(1);
+    expect(retryMessages[0].role).toBe("user");
+
+    // The retry messages should NOT contain any errorMessage entries
+    // (sanitizeHistoryForRetry strips assistant messages with errorMessage)
+    const errorMsgs = retryMessages.filter(
+      (m: any) => m.role === "assistant" && m.errorMessage,
+    );
+    expect(errorMsgs.length).toBe(0);
+  });
+});
+
 describe("Agent — timeout AbortController", () => {
   it("yields error when timeout fires between loop iterations (multi-tool rounds)", async () => {
     // The timeout check happens at the top of the while loop (between rounds)

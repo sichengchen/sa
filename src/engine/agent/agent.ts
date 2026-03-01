@@ -336,6 +336,7 @@ export class Agent {
                   // Don't push the error message into history — it would corrupt the conversation
                   // Sanitize history in case the error was caused by malformed messages
                   this.messages = sanitizeHistoryForRetry(this.messages);
+                  context.messages = this.messages;
                   shouldRetry = true;
                   lastError = errorMsg;
                   yield { type: "warning", message: `Provider error, retrying (${attempt}/${MAX_STREAM_RETRIES})...` };
