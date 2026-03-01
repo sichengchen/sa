@@ -1,6 +1,6 @@
 {
   "name": "sa",
-  "version": "2026.3.2",
+  "version": "2026.3.3",
   "description": "SA (Sasa) — Personal AI agent assistant",
   "type": "module",
   "main": "src/cli/index.ts",
