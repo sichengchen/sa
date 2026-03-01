@@ -50,19 +50,51 @@ function logStreamError(
 }
 
 /**
- * Sanitize message history for Gemini 3 retry.
- * Removes the failed error message and any assistant messages with tool calls
- * that lack thought signatures — these cause "Invalid Input" on replay.
+ * Sanitize message history for provider retry.
+ *
+ * 1. Removes assistant messages that carry `errorMessage` (failed attempts).
+ * 2. Removes orphaned toolResult messages whose toolCallId no longer matches
+ *    any ToolCall in a preceding assistant message. This prevents the
+ *    "Message has tool role, but there was no previous assistant message
+ *    with a tool call" error that providers emit when the history is malformed.
  */
 function sanitizeHistoryForRetry(messages: Message[]): Message[] {
-  const result: Message[] = [];
+  // Pass 1 — drop error assistant messages
+  const filtered: Message[] = [];
   for (const msg of messages) {
-    // Drop error messages (role "assistant" with errorMessage) — they were from the failed attempt
     if (msg.role === "assistant" && (msg as AssistantMessage).errorMessage) {
       continue;
     }
+    filtered.push(msg);
+  }
+
+  // Pass 2 — collect valid tool-call IDs from remaining assistant messages,
+  // then drop any toolResult whose ID is not in the set.
+  const validToolCallIds = new Set<string>();
+  for (const msg of filtered) {
+    if (msg.role === "assistant") {
+      const content = (msg as AssistantMessage).content;
+      if (Array.isArray(content)) {
+        for (const block of content) {
+          if (block && typeof block === "object" && "type" in block && block.type === "toolCall") {
+            validToolCallIds.add((block as ToolCall).id);
+          }
+        }
+      }
+    }
+  }
+
+  const result: Message[] = [];
+  for (const msg of filtered) {
+    if (msg.role === "toolResult") {
+      const tr = msg as ToolResultMessage;
+      if (!validToolCallIds.has(tr.toolCallId)) {
+        continue; // orphaned tool result — skip
+      }
+    }
     result.push(msg);
   }
+
   return result;
 }
 
