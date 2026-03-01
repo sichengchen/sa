@@ -2,10 +2,8 @@
   "schema_version": 1,
   "spec_root": "specs",
   "constitution_path": ".esper/CONSTITUTION.md",
-  "active_increment": "002-rebuild-stream-context-after-sanitizing-.md",
-  "active_increment_scope": [
-    "specs/engine.md"
-  ],
+  "active_increment": null,
+  "active_increment_scope": [],
   "workflow_mode": "atom",
   "commands": {
     "test": "bun test",

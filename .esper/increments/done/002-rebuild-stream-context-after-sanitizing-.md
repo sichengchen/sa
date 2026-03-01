@@ -1,12 +1,13 @@
 ---
 id: 2
 title: Rebuild stream context after sanitizing retry history
-status: active
+status: done
 type: fix
 lane: atomic
 priority: 1
 created: 2026-03-01
 spec: specs/engine.md
+finished_at: 2026-03-01
 ---
 # Rebuild stream context after sanitizing retry history
 
