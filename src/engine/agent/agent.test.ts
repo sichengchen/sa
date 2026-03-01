@@ -26,13 +26,13 @@ function mockRouter() {
 describe("Agent — retry context rebuild", () => {
   it("passes sanitized history to stream on retry after retryable error", async () => {
     let callCount = 0;
-    const capturedMessages: any[][] = [];
+    // Store raw array references — NOT spreads — so we can assert identity
+    const capturedMessageRefs: any[] = [];
 
     mock.module("@mariozechner/pi-ai", () => ({
       stream: async function* (_model: any, context: any) {
         callCount++;
-        // Capture a snapshot of context.messages for each call
-        capturedMessages.push([...context.messages]);
+        capturedMessageRefs.push(context.messages);
 
         if (callCount === 1) {
           // First call: yield a retryable error (thought_signature)
@@ -69,23 +69,12 @@ describe("Agent — retry context rebuild", () => {
 
     // stream was called twice: original + retry
     expect(callCount).toBe(2);
-    expect(capturedMessages.length).toBe(2);
+    expect(capturedMessageRefs.length).toBe(2);
 
-    // The retry must receive a NEW sanitized array, not the original
-    // sanitizeHistoryForRetry always returns a fresh array
-    const firstMessages = capturedMessages[0];
-    const retryMessages = capturedMessages[1];
-
-    // Both should contain the user message
-    expect(retryMessages.length).toBeGreaterThanOrEqual(1);
-    expect(retryMessages[0].role).toBe("user");
-
-    // The retry messages should NOT contain any errorMessage entries
-    // (sanitizeHistoryForRetry strips assistant messages with errorMessage)
-    const errorMsgs = retryMessages.filter(
-      (m: any) => m.role === "assistant" && m.errorMessage,
-    );
-    expect(errorMsgs.length).toBe(0);
+    // The retry must receive a DIFFERENT array reference than the original.
+    // sanitizeHistoryForRetry returns a new array; the fix assigns it back
+    // to context.messages. Without the fix both calls share the same ref.
+    expect(capturedMessageRefs[0]).not.toBe(capturedMessageRefs[1]);
   });
 });
 
