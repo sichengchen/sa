@@ -15,6 +15,8 @@ export interface OrchestrationConfig {
   resultRetentionMs?: number;
   /** Default sub-agent timeout in ms */
   defaultTimeoutMs?: number;
+  /** Optional session-scoped sub-agent factory */
+  createSubAgent?: (options: SubAgentOptions) => SubAgent;
 }
 
 export interface SubAgentStatus {
@@ -56,6 +58,7 @@ export class Orchestrator {
   private maxPerTurn: number;
   private resultRetentionMs: number;
   private defaultTimeoutMs?: number;
+  private createSubAgent?: (options: SubAgentOptions) => SubAgent;
   private turnSpawnCount = 0;
 
   private router: ModelRouter;
@@ -68,6 +71,7 @@ export class Orchestrator {
     this.maxPerTurn = config?.maxSubAgentsPerTurn ?? DEFAULT_MAX_PER_TURN;
     this.resultRetentionMs = config?.resultRetentionMs ?? DEFAULT_RETENTION_MS;
     this.defaultTimeoutMs = config?.defaultTimeoutMs;
+    this.createSubAgent = config?.createSubAgent;
   }
 
   /** Spawn a background sub-agent, return its ID immediately */
@@ -93,7 +97,9 @@ export class Orchestrator {
   }
 
   private startSubAgent(options: SubAgentOptions): void {
-    const subAgent = new SubAgent(this.router, this.tools, options);
+    const subAgent = this.createSubAgent
+      ? this.createSubAgent(options)
+      : new SubAgent(this.router, this.tools, options);
     const startedAt = Date.now();
 
     const promise = subAgent.run(options.task).then((result) => {

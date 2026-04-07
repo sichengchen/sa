@@ -40,13 +40,50 @@ export interface HeartbeatConfig {
   suppressToken: string;
 }
 
+export interface ContextFilesConfig {
+  enabled?: boolean;
+  maxFileChars?: number;
+  maxHintChars?: number;
+}
+
+export interface CheckpointsConfig {
+  enabled?: boolean;
+  maxSnapshots?: number;
+}
+
+export interface MCPServerToolFilterConfig {
+  include?: string[];
+  exclude?: string[];
+  resources?: boolean;
+  prompts?: boolean;
+}
+
+export interface MCPServerConfig {
+  enabled?: boolean;
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  headers?: Record<string, string>;
+  timeoutSeconds?: number;
+  connectTimeoutSeconds?: number;
+  tools?: MCPServerToolFilterConfig;
+}
+
+export interface DeliveryTarget {
+  connector?: string;
+  sessionId?: string;
+}
+
 /** A user-defined scheduled task */
 export interface CronTask {
+  id?: string;
   name: string;
   /** 5-field cron expression */
   schedule: string;
   prompt: string;
   enabled: boolean;
+  paused?: boolean;
   /** If true, auto-remove after first execution */
   oneShot?: boolean;
   /** Optional model override for this task */
@@ -55,10 +92,24 @@ export interface CronTask {
   runAt?: string;
   /** Tool allowlist — only these tools are available (default: CRON_DEFAULT_TOOLS) */
   allowedTools?: string[];
+  /** Named toolsets to expand into the allowed tool list */
+  allowedToolsets?: string[];
+  /** Skills injected into the job session */
+  skills?: string[];
+  /** Optional delivery target for the final response */
+  delivery?: DeliveryTarget;
+  scheduleKind?: "cron" | "interval" | "once";
+  intervalMinutes?: number;
+  lastRunAt?: string;
+  nextRunAt?: string | null;
+  lastStatus?: "success" | "error";
+  lastSummary?: string;
+  createdBySessionId?: string;
 }
 
 /** A user-defined webhook-triggered automation task */
 export interface WebhookTask {
+  id?: string;
   /** Human-readable task name */
   name: string;
   /** URL slug: /webhook/tasks/<slug> */
@@ -72,6 +123,16 @@ export interface WebhookTask {
   connector?: string;
   /** Tool allowlist — only these tools are available (default: WEBHOOK_DEFAULT_TOOLS) */
   allowedTools?: string[];
+  /** Named toolsets to expand into the allowed tool list */
+  allowedToolsets?: string[];
+  /** Skills injected into the task session */
+  skills?: string[];
+  /** Optional delivery target override */
+  delivery?: DeliveryTarget;
+  lastRunAt?: string;
+  lastStatus?: "success" | "error";
+  lastSummary?: string;
+  createdBySessionId?: string;
 }
 
 /** Automation configuration (cron + webhook tasks) */
@@ -168,6 +229,14 @@ export interface RuntimeConfig {
   heartbeat?: HeartbeatConfig;
   /** Automation configuration (cron tasks) */
   automation?: AutomationConfig;
+  /** Context file loading and progressive hint discovery */
+  contextFiles?: ContextFilesConfig;
+  /** Filesystem checkpoint safety net */
+  checkpoints?: CheckpointsConfig;
+  /** External MCP servers */
+  mcp?: {
+    servers?: Record<string, MCPServerConfig>;
+  };
   /** Orchestration (sub-agent) configuration */
   orchestration?: {
     /** Default model tier for sub-agents (default: "eco") */
@@ -182,6 +251,8 @@ export interface RuntimeConfig {
     maxSubAgentsPerTurn?: number;
     /** Result retention time in ms (default: 1_800_000 = 30 min) */
     resultRetentionMs?: number;
+    /** Whether delegated progress should be surfaced back to the parent session */
+    reportProgress?: boolean;
   };
 }
 

@@ -25,6 +25,14 @@ import { createTranscriber, type Transcriber } from "./audio/index.js";
 import { AuditLogger } from "./audit.js";
 import { SecurityModeManager } from "./security-mode.js";
 import { configureSandbox } from "./tools/exec.js";
+import { SessionArchiveManager } from "./session-archive.js";
+import { buildContextFilesPrompt } from "./context-files.js";
+import { CheckpointManager } from "./checkpoints.js";
+import { createSkillManageTool } from "./tools/skill-manage.js";
+import { mergeAllowedTools } from "./toolsets.js";
+import { createSessionToolEnvironment } from "./session-tool-environment.js";
+import { MCPManager } from "./mcp.js";
+import { computeNextRunAt } from "./automation-schedule.js";
 
 const SAFETY_ADVISORY = `## Safety
 You have no independent goals: do not pursue self-preservation, resource acquisition, or \
@@ -91,6 +99,11 @@ You MUST follow these steps before every reply:
 NEVER skip this check. NEVER reply without first checking for a matching skill.
 Only read one skill up front; read additional skills only if the first one directs you to.`;
 
+const SKILL_LEARNING_GUIDE = `## Skill Learning
+When you discover a non-trivial workflow, fix a tricky error, or complete a complex multi-step task, save the reusable approach with skill_manage.
+If you notice a skill is outdated, wrong, or incomplete, patch it immediately with skill_manage instead of silently working around it.
+Skills are procedural memory: prefer saving repeatable workflows there instead of burying them in ordinary chat history.`;
+
 function buildHeartbeat(router: ModelRouter): string {
   const now = new Date();
   const dateStr = now.toISOString().replace("T", " ").slice(0, 19) + " UTC";
@@ -104,6 +117,9 @@ export interface EngineRuntime {
   config: ConfigManager;
   router: ModelRouter;
   memory: MemoryManager;
+  archive: SessionArchiveManager;
+  checkpoints: CheckpointManager;
+  mcp: MCPManager;
   tools: ToolImpl[];
   systemPrompt: string;
   sessions: SessionManager;
@@ -131,6 +147,13 @@ export async function createRuntime(): Promise<EngineRuntime> {
   const memoryDir = join(config.homeDir, saConfig.runtime.memory.directory);
   const memory = new MemoryManager(memoryDir);
   await memory.init();
+
+  const archive = new SessionArchiveManager(config.homeDir);
+  await archive.init();
+
+  const checkpoints = new CheckpointManager(config.homeDir, saConfig.runtime.checkpoints);
+  const mcp = new MCPManager(saConfig.runtime.mcp?.servers);
+  await mcp.init();
 
   // Apply search weights from config
   const searchConfig = saConfig.runtime.memory.search;
@@ -226,10 +249,12 @@ export async function createRuntime(): Promise<EngineRuntime> {
     createMemoryReadTool(memory),
     createMemoryDeleteTool(memory),
     createReadSkillTool(skills),
+    createSkillManageTool({ homeDir: config.homeDir, registry: skills }),
     createSetEnvSecretTool(config),
     createSetEnvVariableTool(config),
     createNotifyTool(secrets),
     askUserTool,
+    ...mcp.getTools(),
   ];
 
   // Create shared orchestrator for background sub-agent execution
@@ -268,6 +293,11 @@ export async function createRuntime(): Promise<EngineRuntime> {
   const toolsSection = formatToolsSection(tools);
   const heartbeat = buildHeartbeat(router);
   const memoryContext = await memory.loadContext();
+  const contextFilesPrompt = saConfig.runtime.contextFiles?.enabled === false
+    ? ""
+    : await buildContextFilesPrompt(process.env.TERMINAL_CWD ?? process.cwd(), {
+      maxFileChars: saConfig.runtime.contextFiles?.maxFileChars,
+    });
 
   const skillsBlock = skills.size > 0
     ? `\n${SKILLS_DIRECTIVE}\n\n${formatSkillsDiscovery(skills.getMetadataList())}`
@@ -280,6 +310,8 @@ export async function createRuntime(): Promise<EngineRuntime> {
     `\n${MEMORY_GUIDE}`,
     memoryContext ? `\n**Current memory context:**\n${memoryContext}` : "",
     skillsBlock,
+    `\n${SKILL_LEARNING_GUIDE}`,
+    contextFilesPrompt ? `\n${contextFilesPrompt}` : "",
     `\n${REACTIONS_GUIDE}`,
     `\n${GROUP_CHAT_GUIDE}`,
     `\n${SAFETY_ADVISORY}`,
@@ -349,13 +381,47 @@ export async function createRuntime(): Promise<EngineRuntime> {
     scheduler.register({
       name: task.name,
       schedule: task.schedule,
+      scheduleKind: task.scheduleKind,
+      intervalMinutes: task.intervalMinutes,
+      runAt: task.runAt,
+      paused: task.paused,
       prompt: task.prompt,
       oneShot: task.oneShot,
       async handler() {
         const session = sessions.create(`cron:${task.name}`, "cron");
-        const allowedTools = task.allowedTools ?? CRON_DEFAULT_TOOLS;
-        const filteredTools = tools.filter((t) => allowedTools.includes(t.name));
-        const agent = new Agent({ router, tools: filteredTools, systemPrompt, modelOverride: task.model });
+        const allowedTools = mergeAllowedTools(
+          tools,
+          task.allowedTools ?? CRON_DEFAULT_TOOLS,
+          task.allowedToolsets,
+        ) ?? CRON_DEFAULT_TOOLS;
+        const toolEnvironment = createSessionToolEnvironment({
+          baseTools: tools.filter((tool) => allowedTools.includes(tool.name)),
+          checkpointManager: checkpoints,
+          maxContextHintChars: saConfig.runtime.contextFiles?.maxHintChars,
+          delegation: {
+            router,
+            defaultTimeoutMs: saConfig.runtime.orchestration?.defaultTimeoutMs,
+            memoryWriteDefault: saConfig.runtime.orchestration?.memoryWriteDefault,
+            maxConcurrent: saConfig.runtime.orchestration?.maxConcurrent,
+            maxSubAgentsPerTurn: saConfig.runtime.orchestration?.maxSubAgentsPerTurn,
+            resultRetentionMs: saConfig.runtime.orchestration?.resultRetentionMs,
+          },
+        });
+        toolEnvironment.newTurn();
+
+        const skillSections: string[] = [];
+        for (const skillName of task.skills ?? []) {
+          const content = await skills.getContent(skillName);
+          if (content) {
+            skillSections.push(`## Skill: ${skillName}\n${content}`);
+          }
+        }
+
+        const taskSystemPrompt = skillSections.length > 0
+          ? `${systemPrompt}\n\n## Attached Skills\n${skillSections.join("\n\n")}`
+          : systemPrompt;
+
+        const agent = new Agent({ router, tools: toolEnvironment.tools, systemPrompt: taskSystemPrompt, modelOverride: task.model });
         let responseText = "";
         try {
           for await (const event of agent.chat(task.prompt)) {
@@ -363,12 +429,47 @@ export async function createRuntime(): Promise<EngineRuntime> {
           }
         } catch (err) {
           responseText = `Error: ${err instanceof Error ? err.message : String(err)}`;
+        } finally {
+          await archive.syncSession(session, agent.getMessages());
+          sessions.destroySession(session.id);
         }
+        if (task.delivery?.connector && notifyTool) {
+          try {
+            await notifyTool.execute({ message: responseText, connector: task.delivery.connector });
+          } catch {
+            // Delivery failure is non-fatal.
+          }
+        }
+        const configFile = config.getConfigFile();
+        const automation = configFile.runtime.automation ?? { cronTasks: [], webhookTasks: [] };
+        const lastRunAt = new Date().toISOString();
+        automation.cronTasks = automation.cronTasks.map((item) => item.name === task.name ? {
+          ...item,
+          lastRunAt,
+          nextRunAt: computeNextRunAt({
+            schedule: item.schedule,
+            scheduleKind: item.scheduleKind,
+            intervalMinutes: item.intervalMinutes,
+            runAt: item.runAt,
+            lastRunAt,
+            oneShot: item.oneShot,
+          }),
+          lastStatus: responseText.startsWith("Error:") ? "error" : "success",
+          lastSummary: responseText.slice(0, 200) || "(no response)",
+        } : item);
+        await config.saveConfig({
+          ...configFile,
+          runtime: { ...configFile.runtime, automation },
+        });
         console.log(`[cron] Task "${task.name}" completed: ${responseText.slice(0, 100)}`);
+        return {
+          status: responseText.startsWith("Error:") ? "error" as const : "success" as const,
+          summary: responseText.slice(0, 200),
+        };
       },
       onComplete: task.oneShot ? async (taskName) => {
         const configFile = config.getConfigFile();
-        const automation = configFile.runtime.automation ?? { cronTasks: [] };
+        const automation = configFile.runtime.automation ?? { cronTasks: [], webhookTasks: [] };
         automation.cronTasks = automation.cronTasks.filter((t) => t.name !== taskName);
         await config.saveConfig({
           ...configFile,
@@ -387,6 +488,9 @@ export async function createRuntime(): Promise<EngineRuntime> {
     config,
     router,
     memory,
+    archive,
+    checkpoints,
+    mcp,
     tools,
     systemPrompt,
     sessions,

@@ -122,6 +122,17 @@ Full details: `specs/security/exec-fence.md`.
 
 ---
 
+## Automatic Checkpoints
+
+When filesystem checkpoints are enabled, SA automatically snapshots the target
+working directory before destructive `exec` commands such as `rm`, `mv`,
+in-place `sed`, shell redirection (`>`), and dangerous git restore/reset style
+operations. Checkpoints are deduplicated per working directory per agent turn
+and can be inspected or restored via the `checkpoint.*` tRPC procedures or the
+TUI `/rollback` commands.
+
+---
+
 ## Sandbox
 
 On supported platforms, exec runs commands inside an OS-level sandbox

@@ -3,16 +3,23 @@ import { join } from "node:path";
 import type { HeartbeatConfig } from "./config/types.js";
 import { DEFAULT_HEARTBEAT } from "./config/defaults.js";
 import type { Agent } from "./agent/index.js";
+import { computeNextRunAt, isTaskDue } from "./automation-schedule.js";
 
 /** A scheduled task definition */
 export interface ScheduledTask {
   name: string;
   /** Cron expression: "minute hour day month weekday" (5 fields) */
   schedule: string;
+  /** Parsed schedule kind */
+  scheduleKind?: "cron" | "interval" | "once";
   /** Optional fixed interval in minutes for cadence-based scheduling */
   intervalMinutes?: number;
+  /** Absolute one-shot run time */
+  runAt?: string;
+  /** Whether scheduling is paused without deleting the task */
+  paused?: boolean;
   /** Handler to execute */
-  handler: () => Promise<void> | void;
+  handler: () => Promise<{ status?: "success" | "error"; summary?: string } | void> | { status?: "success" | "error"; summary?: string } | void;
   /** Whether this is a built-in task (cannot be removed via API) */
   builtin?: boolean;
   /** Optional prompt to send to agent (for user-defined tasks) */
@@ -25,6 +32,10 @@ export interface ScheduledTask {
 
 interface RegisteredTask extends ScheduledTask {
   lastRun: number;
+  lastRunAt?: string;
+  nextRunAt?: string | null;
+  lastStatus?: "success" | "error";
+  lastSummary?: string;
 }
 
 interface HeartbeatTaskOptions {
@@ -77,7 +88,11 @@ export class Scheduler {
 
   /** Register a recurring task */
   register(task: ScheduledTask): void {
-    this.tasks.set(task.name, { ...task, lastRun: 0 });
+    this.tasks.set(task.name, {
+      ...task,
+      lastRun: 0,
+      nextRunAt: computeNextRunAt(task),
+    });
   }
 
   /** Remove a task by name (cannot remove built-in tasks) */
@@ -90,12 +105,33 @@ export class Scheduler {
   }
 
   /** List all registered tasks */
-  list(): Array<{ name: string; schedule: string; builtin: boolean; prompt?: string }> {
+  list(): Array<{
+    name: string;
+    schedule: string;
+    builtin: boolean;
+    prompt?: string;
+    scheduleKind?: "cron" | "interval" | "once";
+    intervalMinutes?: number;
+    runAt?: string;
+    paused?: boolean;
+    lastRunAt?: string;
+    nextRunAt?: string | null;
+    lastStatus?: "success" | "error";
+    lastSummary?: string;
+  }> {
     return Array.from(this.tasks.values()).map((t) => ({
       name: t.name,
       schedule: t.schedule,
       builtin: t.builtin ?? false,
       prompt: t.prompt,
+      scheduleKind: t.scheduleKind,
+      intervalMinutes: t.intervalMinutes,
+      runAt: t.runAt,
+      paused: t.paused,
+      lastRunAt: t.lastRunAt,
+      nextRunAt: t.nextRunAt,
+      lastStatus: t.lastStatus,
+      lastSummary: t.lastSummary,
     }));
   }
 
@@ -121,26 +157,21 @@ export class Scheduler {
     for (const task of this.tasks.values()) {
       // Skip if already ran this minute
       if (task.lastRun === nowMinute) continue;
+      if (task.paused) continue;
 
-      let shouldRun = false;
-      if (task.intervalMinutes !== undefined) {
-        if (task.lastRun === 0) {
-          // First scheduler tick establishes the cadence baseline.
-          task.lastRun = nowMinute;
-          continue;
-        }
-        shouldRun = (nowMinute - task.lastRun) >= task.intervalMinutes;
-      } else {
-        shouldRun = matchesCron(task.schedule, now);
-      }
-
-      if (shouldRun) {
+      if (isTaskDue(task, now)) {
         task.lastRun = nowMinute;
+        task.lastRunAt = now.toISOString();
         try {
-          await task.handler();
+          const result = await task.handler();
+          task.lastStatus = result?.status ?? "success";
+          task.lastSummary = result?.summary;
         } catch (err) {
+          task.lastStatus = "error";
+          task.lastSummary = err instanceof Error ? err.message : String(err);
           console.error(`[scheduler] Task "${task.name}" failed:`, err);
         }
+        task.nextRunAt = computeNextRunAt(task, now);
         if (task.oneShot) {
           toRemove.push(task.name);
           task.onComplete?.(task.name);
@@ -159,8 +190,11 @@ export class Scheduler {
     const task = this.tasks.get(name);
     if (!task) return false;
     task.schedule = schedule;
+    task.scheduleKind = "cron";
     task.intervalMinutes = undefined;
+    task.runAt = undefined;
     task.lastRun = 0; // Reset so the new schedule can fire immediately
+    task.nextRunAt = computeNextRunAt(task);
     return true;
   }
 
@@ -169,8 +203,33 @@ export class Scheduler {
     const task = this.tasks.get(name);
     if (!task) return false;
     task.intervalMinutes = intervalMinutes;
+    task.scheduleKind = "interval";
     task.schedule = formatIntervalSchedule(intervalMinutes);
+    task.runAt = undefined;
     task.lastRun = 0;
+    task.nextRunAt = computeNextRunAt(task);
+    return true;
+  }
+
+  /** Update an existing one-shot task's run time */
+  updateRunAt(name: string, runAt: string): boolean {
+    const task = this.tasks.get(name);
+    if (!task) return false;
+    task.scheduleKind = "once";
+    task.runAt = runAt;
+    task.intervalMinutes = undefined;
+    task.schedule = `@once ${runAt}`;
+    task.lastRun = 0;
+    task.nextRunAt = computeNextRunAt(task);
+    return true;
+  }
+
+  /** Pause or resume a task without unregistering it */
+  setPaused(name: string, paused: boolean): boolean {
+    const task = this.tasks.get(name);
+    if (!task) return false;
+    task.paused = paused;
+    task.nextRunAt = paused ? null : computeNextRunAt(task);
     return true;
   }
 
@@ -179,8 +238,15 @@ export class Scheduler {
     const task = this.tasks.get(name);
     if (!task) return false;
     try {
-      await task.handler();
+      const now = new Date();
+      task.lastRunAt = now.toISOString();
+      const result = await task.handler();
+      task.lastStatus = result?.status ?? "success";
+      task.lastSummary = result?.summary;
+      task.nextRunAt = computeNextRunAt(task, now);
     } catch (err) {
+      task.lastStatus = "error";
+      task.lastSummary = err instanceof Error ? err.message : String(err);
       console.error(`[scheduler] Task "${task.name}" failed:`, err);
     }
     if (task.oneShot) {

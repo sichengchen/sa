@@ -22,6 +22,8 @@ export interface SubAgentOptions {
   timeoutMs?: number;
   /** Whether this sub-agent can write/delete memory (default: true for sync, false for background) */
   memoryWrite?: boolean;
+  /** Optional focused system prompt override */
+  systemPrompt?: string;
 }
 
 export interface SubAgentResult {
@@ -68,7 +70,7 @@ export class SubAgent {
     this.agent = new Agent({
       router,
       tools: filteredTools,
-      systemPrompt: SUBAGENT_SYSTEM_PROMPT,
+      systemPrompt: options.systemPrompt ?? SUBAGENT_SYSTEM_PROMPT,
       modelOverride,
       timeoutMs: options.timeoutMs ?? DEFAULT_SUBAGENT_TIMEOUT_MS,
       // Auto-approve all tool calls — subagent runs without user interaction

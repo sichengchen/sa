@@ -1,6 +1,6 @@
 # Sessions
 
-SA uses a structured session system to isolate conversations across connectors, scheduled tasks, and webhook invocations. Every interaction runs inside a session. The `SessionManager` class (`src/engine/sessions.ts`) owns all session state in memory.
+SA uses a structured session system to isolate conversations across connectors, scheduled tasks, and webhook invocations. Every interaction runs inside a session. The `SessionManager` class (`src/engine/sessions.ts`) owns the live in-memory session registry, while `SessionArchiveManager` (`src/engine/session-archive.ts`) persists transcripts, compact summaries, and full-text search metadata to disk.
 
 ---
 
@@ -115,8 +115,29 @@ All connectors support `/new` to start a fresh session under the same prefix:
 1. **Creation** -- connector calls `session.create` via tRPC. SessionManager allocates ID, returns Session.
 2. **Agent binding** -- on first `chat.stream`, `getSessionAgent()` lazily creates an Agent with system prompt, model router, tools, and approval callback. Cached in `sessionAgents` map.
 3. **Active use** -- each message calls `touchSession()`. Agent accumulates conversation history.
-4. **Resumption** -- on reconnect, connector calls `session.getLatest` with its prefix to pick up where it left off.
-5. **Destruction** -- triggered by `/new` (TUI), explicit `session.destroy`, or engine shutdown. Removes agent, session-level overrides, and session from SessionManager.
+4. **Archive sync** -- after completed turns, on explicit history reads, and before session destruction, the engine snapshots the current transcript into `session-archive.sqlite`.
+5. **Resumption** -- on reconnect, connector calls `session.getLatest` with its prefix to pick up where it left off.
+6. **Destruction** -- triggered by `/new` (TUI), explicit `session.destroy`, or engine shutdown. Removes agent, session-level overrides, and session from SessionManager. Archived history remains queryable.
+
+---
+
+## Persistent Archive
+
+Archived sessions are stored in `~/.sa/session-archive.sqlite`.
+
+### Stored data
+
+- Full message transcript with role, content, timestamp, and tool name when applicable
+- Compact per-session preview and summary
+- FTS5 search document built from summary + transcript excerpts
+
+### Behavior
+
+- `chat.history` first returns live agent history when a session is active.
+- If the live agent no longer exists, `chat.history` falls back to the archive.
+- `session.list` still returns only live sessions.
+- `session.listArchived` returns recent archived sessions.
+- `session.search` searches archived transcripts and summaries.
 
 ---
 

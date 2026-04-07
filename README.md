@@ -24,7 +24,7 @@ Or manage manually with `sa engine start/stop/restart/status/logs`.
 
 ## Architecture
 
-The **Engine** runs as a background daemon and owns the agent loop, tools, memory, skills, scheduler, audio transcription, and model routing. **Connectors** (Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear) auto-start with the Engine when configured. The **TUI** is launched on-demand. **Webhook** endpoints (`/webhook/agent`, `/webhook/tasks/:slug`, `/webhook/heartbeat`) allow external systems to send messages, trigger automation tasks, and invoke heartbeat checks programmatically. Six connectors share a unified **Chat SDK adapter** — Telegram stays on Grammy.
+The **Engine** runs as a background daemon and owns the agent loop, tools, memory, session archive, checkpoints, skills, MCP integrations, scheduler, audio transcription, and model routing. **Connectors** (Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear) auto-start with the Engine when configured. The **TUI** is launched on-demand. **Webhook** endpoints (`/webhook/agent`, `/webhook/tasks/:slug`, `/webhook/heartbeat`) allow external systems to send messages, trigger automation tasks, and invoke heartbeat checks programmatically. Six connectors share a unified **Chat SDK adapter** — Telegram stays on Grammy.
 
 ## Development
 
@@ -67,6 +67,7 @@ sa help                 Show help
 
 - Bundled skills ship in `src/engine/skills/bundled/`
 - User-installed/local skills live in `~/.sa/skills/<skill-name>/SKILL.md`
+- The agent can create and patch reusable user skills through the `skill_manage` tool
 
 ## Documentation
 
@@ -94,6 +95,8 @@ Config lives in `~/.sa/` by default. Override with `SA_HOME`.
   .salt             # local salt used for secrets encryption key derivation
   memory/           # persistent memory files
   skills/           # installed skills
+  checkpoints/      # shadow git repos used for rollback checkpoints
+  session-archive.sqlite # persisted session transcripts + search index
   engine.url        # Engine discovery file (written at startup)
   engine.pid        # Engine PID file
   engine.token      # Engine auth token file

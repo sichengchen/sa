@@ -239,6 +239,7 @@ describe("Scheduler", () => {
 
   test("tick respects intervalMinutes for cadence-based tasks", async () => {
     let runs = 0;
+    const registeredAt = new Date();
     scheduler.register({
       name: "heartbeat",
       schedule: "@every 120m",
@@ -247,13 +248,13 @@ describe("Scheduler", () => {
       builtin: true,
     });
 
-    await scheduler.tick(new Date(2026, 1, 19, 10, 0));
+    await scheduler.tick(new Date(registeredAt.getTime()));
     expect(runs).toBe(0);
 
-    await scheduler.tick(new Date(2026, 1, 19, 11, 59));
+    await scheduler.tick(new Date(registeredAt.getTime() + 119 * 60_000));
     expect(runs).toBe(0);
 
-    await scheduler.tick(new Date(2026, 1, 19, 12, 0));
+    await scheduler.tick(new Date(registeredAt.getTime() + 121 * 60_000));
     expect(runs).toBe(1);
   });
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-SA supports three automation mechanisms: **heartbeat**, **cron**, and **webhook tasks**. All log results to `~/.sa/automation/`. Config lives in `config.json` under `runtime.heartbeat` and `runtime.automation`. Tasks persist across engine restarts.
+SA supports three automation mechanisms: **heartbeat**, **cron**, and **webhook tasks**. All log results to `~/.sa/automation/`. Config lives in `config.json` under `runtime.heartbeat` and `runtime.automation`. Tasks persist across engine restarts and now track run metadata (`lastRunAt`, `nextRunAt`, `lastStatus`, `lastSummary`).
 
 ---
 
@@ -55,22 +55,43 @@ User-editable Markdown. Read fresh on each cycle. Default:
 
 ## Cron Dispatch
 
-Scheduled tasks on 5-field cron expressions. Each dispatches a prompt to a fresh, isolated agent session.
+Scheduled tasks dispatch a prompt to a fresh, isolated agent session. SA accepts classic cron expressions, natural-language cadence strings such as `every 2h`, short delays like `30m`, and absolute ISO timestamps for one-shot tasks.
 
 ### Task Fields
 
-| Field      | Type    | Required | Description                                              |
-|------------|---------|----------|----------------------------------------------------------|
-| `name`     | string  | yes      | Unique task identifier                                   |
-| `schedule` | string  | yes      | 5-field cron (minute hour day month weekday)             |
-| `prompt`   | string  | yes      | Prompt sent to the agent                                 |
-| `enabled`  | boolean | no       | Whether active (default: true)                           |
-| `oneShot`  | boolean | no       | Auto-remove after first execution                        |
-| `model`    | string  | no       | Model override                                           |
+| Field            | Type      | Required | Description |
+|------------------|-----------|----------|-------------|
+| `name`           | string    | yes      | Unique task identifier |
+| `schedule`       | string    | yes      | Cron expression, `every 2h`, `30m`, or ISO timestamp |
+| `prompt`         | string    | yes      | Prompt sent to the agent |
+| `enabled`        | boolean   | no       | Whether active (default: true) |
+| `paused`         | boolean   | no       | Pause without deleting the task |
+| `oneShot`        | boolean   | no       | Auto-remove after first execution |
+| `model`          | string    | no       | Model override |
+| `allowedTools`   | string[]  | no       | Explicit tool allowlist |
+| `allowedToolsets`| string[]  | no       | Toolset names expanded at runtime |
+| `skills`         | string[]  | no       | Skills injected into the task system prompt |
+| `delivery`       | object    | no       | Optional connector/session delivery target |
+| `scheduleKind`   | enum      | no       | Derived scheduler mode: `cron`, `interval`, or `once` |
+| `intervalMinutes`| number    | no       | Derived fixed interval for cadence schedules |
+| `runAt`          | string    | no       | Absolute timestamp for one-shot tasks |
+| `lastRunAt`      | string    | no       | Last execution timestamp |
+| `nextRunAt`      | string    | no       | Next scheduled execution timestamp |
+| `lastStatus`     | string    | no       | Last execution status: `success` or `error` |
+| `lastSummary`    | string    | no       | Compact summary of the last run |
 
-### Cron Expression Syntax
+### Schedule Syntax
 
-`minute hour day month weekday` -- supports `*`, `*/N`, comma-separated values.
+SA normalizes four schedule forms:
+
+| Input              | Meaning |
+|--------------------|---------|
+| `0 9 * * *`        | Cron: daily at 09:00 |
+| `every 2h`         | Fixed interval every 120 minutes |
+| `30m`              | One-shot run 30 minutes from now |
+| `2026-04-07T15:30:00Z` | One-shot run at an absolute time |
+
+Cron expressions use `minute hour day month weekday` and support `*`, `*/N`, and comma-separated values.
 
 | Expression       | Meaning                            |
 |------------------|------------------------------------|
@@ -99,9 +120,13 @@ Each run writes to `~/.sa/automation/daily-summary-2026-02-22T09-00-00-000Z.md` 
 
 | Procedure     | Type     | Description                                   |
 |---------------|----------|-----------------------------------------------|
-| `cron.list`   | query    | List all tasks (built-in + user)              |
-| `cron.add`    | mutation | Add a scheduled task                          |
-| `cron.remove` | mutation | Remove a user task by name                    |
+| `cron.list`   | query    | List all tasks (built-in + user) with runtime metadata |
+| `cron.add`    | mutation | Add a scheduled task |
+| `cron.update` | mutation | Update schedule, prompt, tools, skills, or delivery |
+| `cron.pause`  | mutation | Pause a task without deleting it |
+| `cron.resume` | mutation | Resume a paused task |
+| `cron.run`    | mutation | Trigger a task immediately |
+| `cron.remove` | mutation | Remove a user task by name |
 
 Built-in tasks (heartbeat) cannot be removed via `cron.remove`.
 
@@ -113,14 +138,21 @@ Event-driven tasks triggered by HTTP POST from external systems. Each has a URL 
 
 ### Task Fields
 
-| Field       | Type    | Required | Description                                                |
-|-------------|---------|----------|------------------------------------------------------------|
-| `name`      | string  | yes      | Human-readable name                                        |
-| `slug`      | string  | yes      | URL slug (alphanumeric, hyphens, underscores)              |
-| `prompt`    | string  | yes      | Prompt template; `{{payload}}` replaced with request body  |
-| `enabled`   | boolean | yes      | Whether active                                             |
-| `model`     | string  | no       | Model override                                             |
-| `connector` | string  | no       | Deliver response via `"telegram"` or `"discord"`           |
+| Field            | Type      | Required | Description |
+|------------------|-----------|----------|-------------|
+| `name`           | string    | yes      | Human-readable name |
+| `slug`           | string    | yes      | URL slug (alphanumeric, hyphens, underscores) |
+| `prompt`         | string    | yes      | Prompt template; `{{payload}}` replaced with request body |
+| `enabled`        | boolean   | yes      | Whether active |
+| `model`          | string    | no       | Model override |
+| `connector`      | string    | no       | Legacy delivery connector |
+| `allowedTools`   | string[]  | no       | Explicit tool allowlist |
+| `allowedToolsets`| string[]  | no       | Toolset names expanded at runtime |
+| `skills`         | string[]  | no       | Skills injected into the task system prompt |
+| `delivery`       | object    | no       | Optional delivery target override |
+| `lastRunAt`      | string    | no       | Last execution timestamp |
+| `lastStatus`     | string    | no       | Last execution status |
+| `lastSummary`    | string    | no       | Compact summary of the last run |
 
 ### HTTP Endpoint
 
@@ -134,9 +166,9 @@ Event-driven tasks triggered by HTTP POST from external systems. Each has a URL 
 
 When `connector` is set, the `notify` tool pushes the response to the specified connector. Notification failure is non-fatal.
 
-### Session & Logging
+### Session, Logging, and Delivery
 
-Session ID: `webhook:<slug>`. Fresh agent per run. Logs written to `~/.sa/automation/`.
+Session ID: `webhook:<slug>`. Fresh agent per run. Logs written to `~/.sa/automation/`. Delivery prefers `task.delivery.connector` and falls back to the legacy `connector` field.
 
 ### Persistence
 

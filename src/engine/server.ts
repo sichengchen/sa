@@ -12,6 +12,8 @@ import { heartbeatState } from "./scheduler.js";
 import { Agent } from "./agent/index.js";
 import { frameAsData } from "./agent/content-frame.js";
 import { WEBHOOK_DEFAULT_TOOLS } from "./config/defaults.js";
+import { mergeAllowedTools } from "./toolsets.js";
+import { createSessionToolEnvironment } from "./session-tool-environment.js";
 
 const DEFAULT_PORT = 7420;
 
@@ -214,8 +216,41 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
 
   // Dispatch to isolated agent session with restricted tools
   const session = runtime.sessions.create(`webhook:${slug}`, "webhook");
-  const allowedTools = task.allowedTools ?? WEBHOOK_DEFAULT_TOOLS;
-  const agent = runtime.createAgent(undefined, task.model, allowedTools);
+  const allowedTools = mergeAllowedTools(
+    runtime.tools,
+    task.allowedTools ?? WEBHOOK_DEFAULT_TOOLS,
+    task.allowedToolsets,
+  ) ?? WEBHOOK_DEFAULT_TOOLS;
+  const toolEnvironment = createSessionToolEnvironment({
+    baseTools: runtime.tools.filter((tool) => allowedTools.includes(tool.name)),
+    checkpointManager: runtime.checkpoints,
+    maxContextHintChars: runtime.config.getConfigFile().runtime.contextFiles?.maxHintChars,
+    delegation: {
+      router: runtime.router,
+      defaultTimeoutMs: runtime.config.getConfigFile().runtime.orchestration?.defaultTimeoutMs,
+      memoryWriteDefault: runtime.config.getConfigFile().runtime.orchestration?.memoryWriteDefault,
+      maxConcurrent: runtime.config.getConfigFile().runtime.orchestration?.maxConcurrent,
+      maxSubAgentsPerTurn: runtime.config.getConfigFile().runtime.orchestration?.maxSubAgentsPerTurn,
+      resultRetentionMs: runtime.config.getConfigFile().runtime.orchestration?.resultRetentionMs,
+    },
+  });
+  toolEnvironment.newTurn();
+  const skillSections: string[] = [];
+  for (const skillName of task.skills ?? []) {
+    const content = await runtime.skills.getContent(skillName);
+    if (content) {
+      skillSections.push(`## Skill: ${skillName}\n${content}`);
+    }
+  }
+  const systemPrompt = skillSections.length > 0
+    ? `${runtime.systemPrompt}\n\n## Attached Skills\n${skillSections.join("\n\n")}`
+    : runtime.systemPrompt;
+  const agent = new Agent({
+    router: runtime.router,
+    tools: toolEnvironment.tools,
+    systemPrompt,
+    modelOverride: task.model,
+  });
   let responseText = "";
 
   try {
@@ -224,7 +259,12 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
     }
   } catch (err) {
     responseText = `Error: ${err instanceof Error ? err.message : String(err)}`;
+  } finally {
+    await runtime.archive.syncSession(session, agent.getMessages());
+    runtime.sessions.destroySession(session.id);
   }
+
+  const taskStatus = responseText.startsWith("Error:") ? "error" as const : "success" as const;
 
   // Log result
   const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
@@ -241,11 +281,12 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
   }
 
   // Deliver to connector if configured
-  if (task.connector) {
+  const connector = task.delivery?.connector ?? task.connector;
+  if (connector) {
     const notifyTool = runtime.tools.find((t) => t.name === "notify");
     if (notifyTool) {
       try {
-        await notifyTool.execute({ message: responseText, connector: task.connector });
+        await notifyTool.execute({ message: responseText, connector });
       } catch {
         // Notification failure is non-fatal
       }
@@ -253,6 +294,27 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
   }
 
   console.log(`[webhook] Task "${task.name}" (${slug}) completed: ${responseText.slice(0, 100)}`);
+
+  // Persist run metadata
+  const refreshedConfig = runtime.config.getConfigFile();
+  const webhookTasks = refreshedConfig.runtime.automation?.webhookTasks ?? [];
+  const lastRunAt = new Date().toISOString();
+  const updatedWebhookTasks = webhookTasks.map((item) => item.slug === slug ? {
+    ...item,
+    lastRunAt,
+    lastStatus: taskStatus,
+    lastSummary: responseText.slice(0, 200) || "(no response)",
+  } : item);
+  await runtime.config.saveConfig({
+    ...refreshedConfig,
+    runtime: {
+      ...refreshedConfig.runtime,
+      automation: {
+        cronTasks: refreshedConfig.runtime.automation?.cronTasks ?? [],
+        webhookTasks: updatedWebhookTasks,
+      },
+    },
+  });
 
   return new Response(
     JSON.stringify({ slug, task: task.name, response: responseText, sessionId: session.id }),

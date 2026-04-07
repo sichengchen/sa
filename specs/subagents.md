@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `delegate` tool spawns sub-agents for parallel or background task execution. Sub-agents are lightweight child agents that run with restricted capabilities -- no recursive delegation, auto-approved tool calls, and configurable memory access. They enable the parent agent to offload work without blocking the main conversation.
+The `delegate` tool spawns sub-agents for parallel or background task execution. Sub-agents are lightweight child agents that run with restricted capabilities -- no recursive delegation, auto-approved tool calls, configurable memory access, and isolated wrapped tool environments. Each parent session owns its own orchestration queue, so `delegate_status` only sees child work from the current parent session.
 
 ---
 
@@ -89,6 +89,19 @@ When memory write is disabled, the `memory_write` and `memory_delete` tools are 
 
 ---
 
+## Isolation Model
+
+Each sub-agent now gets:
+
+- A fresh wrapped tool environment rather than the parent's shared tool instances
+- Its own context-file hint tracker and checkpoint turn state
+- The same workspace root as the parent session injected into the sub-agent system prompt
+- A session-local background queue and result registry
+
+This keeps delegation state scoped to the parent session while preserving the parent's tool policy and working-directory fence.
+
+---
+
 ## Security Restrictions
 
 Sub-agents run with a hardened configuration compared to the parent agent:
@@ -107,9 +120,11 @@ Sub-agents run with a hardened configuration compared to the parent agent:
 
 ### System Prompt
 
-Sub-agents receive a minimal system prompt:
+Sub-agents receive a focused system prompt:
 
-> You are a focused sub-agent executing a specific task. Complete the task efficiently using available tools. Be concise in your response -- return only the result, not narration about your process.
+> You are a focused sub-agent executing a specific delegated task.
+> Workspace path: `<parent working dir>`
+> You have an isolated tool environment and should only return the concrete result, notable findings, and touched files.
 
 ### Tool Filtering
 
