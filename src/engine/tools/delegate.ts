@@ -17,6 +17,8 @@ export interface DelegateToolDeps {
   memoryWriteDefault?: boolean;
   /** Get the orchestrator for background execution (lazy init) */
   getOrchestrator?: () => Orchestrator;
+  /** Optional factory for session-scoped sub-agents */
+  createSubAgent?: (options: ConstructorParameters<typeof SubAgent>[2]) => SubAgent;
 }
 
 export function createDelegateTool(deps: DelegateToolDeps): ToolImpl {
@@ -109,7 +111,15 @@ export function createDelegateTool(deps: DelegateToolDeps): ToolImpl {
       }
 
       // Synchronous mode (default)
-      const subAgent = new SubAgent(deps.router, deps.tools, {
+      const subAgent = deps.createSubAgent
+        ? deps.createSubAgent({
+          id: subAgentId,
+          task: singleTask,
+          modelOverride: model,
+          tools: toolsFilter,
+          timeoutMs: deps.defaultTimeoutMs,
+        })
+        : new SubAgent(deps.router, deps.tools, {
         id: subAgentId,
         task: singleTask,
         modelOverride: model,

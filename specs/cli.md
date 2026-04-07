@@ -70,6 +70,11 @@ When chatting in the TUI:
 | `/provider` | List configured providers with API key env var names |
 | `/sessions` | List active sessions and open session picker |
 | `/switch <id>` | Switch to a different session by ID prefix |
+| `/search <query>` | Search archived session transcripts and summaries, then print matching session IDs in the TUI |
+| `/history <id>` | Show the transcript for a live session or an archived session without switching the active chat |
+| `/rollback` | List recent filesystem checkpoints for the current working directory |
+| `/rollback diff <hash>` | Show the diff between the current working tree and a checkpoint |
+| `/rollback <hash> [file]` | Restore the full working tree or a single file from a checkpoint |
 
 ---
 

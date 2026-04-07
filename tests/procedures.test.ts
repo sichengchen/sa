@@ -15,6 +15,9 @@ import { AuditLogger } from "@sa/engine/audit.js";
 import { SecurityModeManager } from "@sa/engine/security-mode.js";
 import type { EngineRuntime } from "@sa/engine/runtime.js";
 import type { KnownProvider } from "@mariozechner/pi-ai";
+import { SessionArchiveManager } from "@sa/engine/session-archive.js";
+import { CheckpointManager } from "@sa/engine/checkpoints.js";
+import { MCPManager } from "@sa/engine/mcp.js";
 
 let testDir: string;
 let runtime: EngineRuntime;
@@ -64,6 +67,11 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
   const sessions = new SessionManager();
   const auth = new AuthManager(saHome);
   await auth.init();
+  const archive = new SessionArchiveManager(saHome);
+  await archive.init();
+  const checkpoints = new CheckpointManager(saHome, { enabled: true, maxSnapshots: 10 });
+  const mcp = new MCPManager(undefined, saHome);
+  await mcp.init();
 
   const mainSession = sessions.create("main", "engine");
   const skills = new SkillRegistry();
@@ -74,6 +82,9 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
     config,
     router,
     memory: { init: async () => {}, loadContext: async () => "", persist: async () => {} } as any,
+    archive,
+    checkpoints,
+    mcp,
     tools: [],
     systemPrompt: "Test agent.",
     sessions,
@@ -150,6 +161,29 @@ describe("tRPC procedures (non-live)", () => {
     });
   });
 
+  describe("session.search / chat.history archive fallback", () => {
+    test("searches persisted session transcripts and reads archived history after destroy", async () => {
+      const caller = createCaller();
+      const { session } = await caller.session.create({ connectorType: "tui", prefix: "tui" });
+
+      await runtime.archive.syncSession(session, [
+        { role: "user", content: "Debug the failing cron task", timestamp: 100 } as any,
+        { role: "assistant", content: "The cron task is failing because CONFIG_PATH is missing.", timestamp: 101 } as any,
+      ]);
+
+      const results = await caller.session.search({ query: "cron task", limit: 5 });
+      expect(results.some((entry) => entry.sessionId === session.id)).toBe(true);
+
+      const destroyed = await caller.session.destroy({ sessionId: session.id });
+      expect(destroyed.destroyed).toBe(true);
+
+      const history = await caller.chat.history({ sessionId: session.id });
+      expect(history.archived).toBe(true);
+      expect(history.messages).toHaveLength(2);
+      expect((history.messages[0] as any).content).toContain("Debug the failing cron task");
+    });
+  });
+
   describe("session.destroy", () => {
     test("destroys a session", async () => {
       const caller = createCaller();
@@ -166,6 +200,36 @@ describe("tRPC procedures (non-live)", () => {
       const caller = createCaller();
       const result = await caller.session.destroy({ sessionId: "nonexistent" });
       expect(result.destroyed).toBe(false);
+    });
+  });
+
+  describe("checkpoint procedures", () => {
+    test("lists checkpoints for a working directory", async () => {
+      const currentRuntime = runtime;
+      const currentHome = currentRuntime.config.homeDir;
+      const caller = createAppRouter(currentRuntime).createCaller(createContext({ rawToken: masterToken }));
+      const workdir = join(currentHome, "workspace");
+      await mkdir(workdir, { recursive: true });
+
+      const listed = await caller.checkpoint.list({ workingDir: workdir });
+      expect(listed.workingDir).toBe(workdir);
+      expect(Array.isArray(listed.checkpoints)).toBe(true);
+    });
+  });
+
+  describe("toolset / mcp procedures", () => {
+    test("lists builtin toolsets and empty MCP state in the minimal runtime", async () => {
+      const caller = createCaller();
+
+      const toolsets = await caller.toolset.list();
+      expect(toolsets.some((toolset) => toolset.name === "file")).toBe(true);
+      expect(toolsets.some((toolset) => toolset.name === "delegation")).toBe(true);
+
+      const servers = await caller.mcp.listServers();
+      expect(servers).toEqual([]);
+
+      const tools = await caller.mcp.listTools();
+      expect(tools).toEqual([]);
     });
   });
 

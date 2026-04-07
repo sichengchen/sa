@@ -28,6 +28,7 @@ export { createDelegateStatusTool } from "./delegate-status.js";
 export { createClaudeCodeTool } from "./claude-code.js";
 export { createCodexTool } from "./codex.js";
 export { askUserTool } from "./ask-user.js";
+export { createSkillManageTool } from "./skill-manage.js";
 
 export function getBuiltinTools(): ToolImpl[] {
   return [readTool, writeTool, editTool, execTool, execStatusTool, execKillTool, webSearchTool, reactionTool];

@@ -77,6 +77,15 @@ export const DEFAULT_CONFIG: SAConfigFile = {
       enabled: true,
       preferLocal: true,
     },
+    contextFiles: {
+      enabled: true,
+      maxFileChars: 20_000,
+      maxHintChars: 8_000,
+    },
+    checkpoints: {
+      enabled: true,
+      maxSnapshots: 50,
+    },
     urlPolicy: {
       additionalBlockedHosts: [],
       allowedExceptions: [],
@@ -94,6 +103,22 @@ export const DEFAULT_CONFIG: SAConfigFile = {
         webhook: "silent",
       },
       overrides: {},
+    },
+    automation: {
+      cronTasks: [],
+      webhookTasks: [],
+    },
+    mcp: {
+      servers: {},
+    },
+    orchestration: {
+      defaultTier: "eco",
+      defaultTimeoutMs: 120_000,
+      memoryWriteDefault: false,
+      maxConcurrent: 3,
+      maxSubAgentsPerTurn: 10,
+      resultRetentionMs: 1_800_000,
+      reportProgress: true,
     },
   },
   providers: [

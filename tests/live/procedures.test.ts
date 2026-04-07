@@ -14,6 +14,11 @@ import type { EngineRuntime } from "@sa/engine/runtime.js";
 import type { EngineEvent } from "@sa/shared/types.js";
 import { makeLiveRouter, describeLive } from "../helpers/live-model.js";
 import { echoTool } from "../helpers/test-tools.js";
+import { SessionArchiveManager } from "@sa/engine/session-archive.js";
+import { AuditLogger } from "@sa/engine/audit.js";
+import { SecurityModeManager } from "@sa/engine/security-mode.js";
+import { CheckpointManager } from "@sa/engine/checkpoints.js";
+import { MCPManager } from "@sa/engine/mcp.js";
 
 let testDir: string;
 let runtime: EngineRuntime;
@@ -51,6 +56,11 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
   const sessions = new SessionManager();
   const auth = new AuthManager(saHome);
   await auth.init();
+  const archive = new SessionArchiveManager(saHome);
+  await archive.init();
+  const checkpoints = new CheckpointManager(saHome, { enabled: true, maxSnapshots: 10 });
+  const mcp = new MCPManager(undefined, saHome);
+  await mcp.init();
 
   const mainSession = sessions.create("main", "engine");
   const skills = new SkillRegistry();
@@ -63,6 +73,9 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
     config,
     router,
     memory: { init: async () => {}, loadContext: async () => "", persist: async () => {} } as any,
+    archive,
+    checkpoints,
+    mcp,
     tools,
     systemPrompt: "Reply briefly. When asked to use a tool, use it without explanation.",
     sessions,
@@ -70,6 +83,8 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
     skills,
     scheduler,
     transcriber: { transcribe: async () => "", backend: null } as any,
+    audit: new AuditLogger(saHome),
+    securityMode: new SecurityModeManager(),
     agentName: "Test",
     mainSessionId: mainSession.id,
     createAgent(onToolApproval, modelOverride?: string) {

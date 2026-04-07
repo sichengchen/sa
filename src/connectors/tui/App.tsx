@@ -14,7 +14,7 @@ import type { Session } from "@sa/shared/types.js";
 
 type EngineClient = ReturnType<typeof createTuiClient>;
 
-const TUI_COMMANDS = ["/new", "/stop", "/restart", "/shutdown", "/status", "/model", "/models", "/provider", "/sessions", "/switch"];
+const TUI_COMMANDS = ["/new", "/stop", "/restart", "/shutdown", "/status", "/model", "/models", "/provider", "/sessions", "/switch", "/search", "/history", "/rollback"];
 
 interface AppProps {
   client: EngineClient;
@@ -268,6 +268,143 @@ export function App({ client }: AppProps) {
             { id: nextId(), role: "tool", content: `Switched to session ${match.id.slice(0, 8)} [${match.connectorType}]`, toolName: "system" },
             ...historyMessages,
           ]);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          addMessage({ role: "error", content: msg });
+        }
+        return;
+      }
+
+      // Handle /search <query> — search archived session transcripts
+      if (text.startsWith("/search ")) {
+        const query = text.slice(8).trim();
+        if (!query) {
+          addMessage({ role: "error", content: "Usage: /search <query>" });
+          return;
+        }
+        try {
+          const results = await client.session.search.query({ query, limit: 5 });
+          if (results.length === 0) {
+            addMessage({ role: "tool", content: `No archived sessions matched: ${query}`, toolName: "system" });
+            return;
+          }
+
+          const lines = results.map((result: any, index: number) => {
+            const snippet = (result.snippet || result.preview || result.summary || "").replace(/\s+/g, " ").trim();
+            return `${index + 1}. ${result.sessionId} [${result.connectorType}] ${snippet}`;
+          });
+          addMessage({
+            role: "tool",
+            content: `Archive search for "${query}":\n${lines.join("\n")}\n\nUse /history <session-id> to inspect one result.`,
+            toolName: "system",
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          addMessage({ role: "error", content: msg });
+        }
+        return;
+      }
+
+      // Handle /history <id> — load history from a live or archived session without switching
+      if (text.startsWith("/history ")) {
+        const target = text.slice(9).trim();
+        if (!target) {
+          addMessage({ role: "error", content: "Usage: /history <session-id>" });
+          return;
+        }
+        try {
+          const history = await client.chat.history.query({ sessionId: target });
+          if ((history.messages as any[]).length === 0) {
+            addMessage({ role: "tool", content: `No history found for session: ${target}`, toolName: "system" });
+            return;
+          }
+
+          const historyMessages: ChatMessage[] = (history.messages as any[]).map((m: any) => ({
+            id: nextId(),
+            role: m.role === "assistant" ? "assistant" : m.role === "user" ? "user" : "tool",
+            content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+            toolName: typeof m.toolName === "string" ? m.toolName : undefined,
+          }));
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: nextId(),
+              role: "tool",
+              content: `${history.archived ? "Opened archived history" : "Opened live history"} for ${target}`,
+              toolName: "system",
+            },
+            ...historyMessages,
+          ]);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          addMessage({ role: "error", content: msg });
+        }
+        return;
+      }
+
+      // Handle /rollback, /rollback diff <hash>, /rollback <hash> [file]
+      if (text === "/rollback" || text.startsWith("/rollback ")) {
+        const rest = text === "/rollback" ? "" : text.slice(10).trim();
+        try {
+          if (!rest) {
+            const result = await client.checkpoint.list.query({ sessionId: sessionId ?? undefined });
+            if (result.checkpoints.length === 0) {
+              addMessage({ role: "tool", content: `No checkpoints found for ${result.workingDir}`, toolName: "system" });
+              return;
+            }
+            const lines = result.checkpoints.slice(0, 10).map((entry: any) => (
+              `${entry.shortHash} ${new Date(entry.timestamp).toLocaleString()} ${entry.reason} (${entry.filesChanged}f +${entry.insertions}/-${entry.deletions})`
+            ));
+            addMessage({
+              role: "tool",
+              content: `Checkpoints for ${result.workingDir}:\n${lines.join("\n")}\n\nUse /rollback diff <hash> or /rollback <hash> [file].`,
+              toolName: "system",
+            });
+            return;
+          }
+
+          if (rest.startsWith("diff ")) {
+            const hash = rest.slice(5).trim();
+            if (!hash) {
+              addMessage({ role: "error", content: "Usage: /rollback diff <hash>" });
+              return;
+            }
+            const result = await client.checkpoint.diff.query({ sessionId: sessionId ?? undefined, commitHash: hash });
+            if (!result.success) {
+              addMessage({ role: "error", content: result.error ?? "Failed to diff checkpoint." });
+              return;
+            }
+            addMessage({
+              role: "tool",
+              content: `Checkpoint diff ${hash}:\n${(result.diff ?? "(no diff)").slice(0, 4000)}`,
+              toolName: "system",
+            });
+            return;
+          }
+
+          const [commitHash, ...fileParts] = rest.split(/\s+/);
+          if (!commitHash) {
+            addMessage({ role: "error", content: "Usage: /rollback <hash> [file]" });
+            return;
+          }
+          const filePath = fileParts.length > 0 ? fileParts.join(" ") : undefined;
+          const result = await client.checkpoint.restore.mutate({
+            sessionId: sessionId ?? undefined,
+            commitHash,
+            filePath,
+          });
+          if (!result.success) {
+            addMessage({ role: "error", content: result.error ?? "Rollback failed." });
+            return;
+          }
+          addMessage({
+            role: "tool",
+            content: filePath
+              ? `Restored ${filePath} from checkpoint ${commitHash}.`
+              : `Restored working tree from checkpoint ${commitHash}.`,
+            toolName: "system",
+          });
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           addMessage({ role: "error", content: msg });

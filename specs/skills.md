@@ -111,6 +111,21 @@ When called with an optional `path` parameter, load a sub-file within the skill 
 
 Active skills are tracked via `getActiveSkills()` and can be formatted into the prompt with `formatActiveSkills()`.
 
+### skill_manage Tool
+
+SA also ships a writable companion tool, `skill_manage`, for turning successful workflows into reusable skills under `~/.sa/skills/`.
+
+Supported actions:
+
+- `create` — create a new user skill with full `SKILL.md` content
+- `edit` — replace the entire `SKILL.md`
+- `patch` — exact single-occurrence text replacement within `SKILL.md`
+- `delete` — remove a user skill
+- `write_file` — write supporting files under `references/`, `templates/`, `scripts/`, or `assets/`
+- `remove_file` — remove a supporting file from one of those directories
+
+The tool refuses to edit bundled or embedded skills directly; only writable user skills under `~/.sa/skills/` are mutable.
+
 ---
 
 ## SKILLS_DIRECTIVE
@@ -129,6 +144,8 @@ Only read one skill up front; read additional skills only if the first one direc
 ```
 
 This ensures the agent always considers its skill library before responding, prevents loading overly broad skills when a narrow one exists, and keeps token usage under control.
+
+The runtime also injects a **Skill Learning** guide instructing the agent to save non-trivial reusable workflows with `skill_manage` and patch outdated skills instead of repeatedly working around them in chat.
 
 ---
 
@@ -154,7 +171,7 @@ After installation, the skill is discovered on the next registry reload.
 3. Optionally add `scripts/`, `references/`, or `assets/` directories alongside `SKILL.md`. Reference them from the body using `{baseDir}/scripts/foo.sh`.
 4. The skill is discovered on the next engine restart or registry reload.
 
-The bundled `skill-creator` skill can guide the agent through this process interactively.
+The bundled `skill-creator` skill can guide the agent through this process interactively, and the `skill_manage` tool can create or patch these skills directly.
 
 ---
 

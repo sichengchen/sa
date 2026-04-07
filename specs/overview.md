@@ -57,9 +57,12 @@ SA is a personal AI agent assistant. It runs as a **daemon (Engine)** that owns 
 | Agent | `src/engine/agent/` | Conversation loop, streaming events, tool dispatch, tool approval, loop detection, result size guard |
 | Model Router | `src/engine/router/` | Provider/model config, active model switching, tier-based routing, alias resolution, fallback chains. Wraps `@mariozechner/pi-ai` |
 | Config | `src/engine/config/` | `IDENTITY.md`, `config.json` (v3), `USER.md`, `secrets.enc` loading/saving/migration |
-| Tools | `src/engine/tools/` | 22 built-in tools across three danger tiers. Exec classifier, tool policy manager, background process management, coding agent subprocess infra |
+| Tools | `src/engine/tools/` | 23 built-in tools plus dynamic `mcp_*` tools. Exec classifier, tool policy manager, background process management, coding agent subprocess infra |
 | Memory | `src/engine/memory/` | Memory directory init, persistence helpers, context loading for system prompt |
+| Session archive | `src/engine/session-archive.ts` | Persist session transcripts, compact summaries, archive-backed history lookup, FTS search |
+| Checkpoints | `src/engine/checkpoints.ts` | Shadow-git filesystem snapshots, diff, and rollback for mutating tool calls |
 | Skills | `src/engine/skills/` | Skill discovery, loading (bundled + user), activation, prompt integration via `SKILL.md` |
+| MCP | `src/engine/mcp.ts` | Connect configured MCP servers, surface remote tools, resources, and prompts |
 | Audio | `src/engine/audio/` | Audio transcription -- prefers local Whisper, falls back to cloud API |
 | Connectors | `src/connectors/` | TUI (Ink + React), Telegram (Grammy), Chat SDK connectors (Slack, Teams, Google Chat, Discord, GitHub, Linear), shared stream handler |
 | CLI | `src/cli/` | `sa` command entry point, daemon control, onboarding wizard, config editor |
@@ -72,21 +75,24 @@ SA is a personal AI agent assistant. It runs as a **daemon (Engine)** that owns 
 1. Spawn detached Bun process (`src/engine/index.ts`)
 2. `ConfigManager.load()` -- load or create `~/.sa/config.json` (v3), `IDENTITY.md`
 3. `MemoryManager.init()` -- ensure `~/.sa/memory/` exists
-4. Inject `runtime.env` -- plain env vars from config (env vars take precedence)
-5. `config.loadSecrets()` -- decrypt `secrets.enc`, inject API keys into `process.env`
-6. Validate provider API keys -- warn if any `apiKeyEnvVar` is missing
-7. `ModelRouter.fromConfig()` -- build provider/model registry, set default model, init tiers/aliases/fallbacks
-8. `SkillRegistry.loadAll()` -- load bundled + user-installed skills
-9. Build tools (22 total) -- builtins + context-bound tools (including coding agent tools)
-10. Assemble system prompt (11 components, see below)
-11. `createTranscriber()` -- local Whisper if available, else cloud API
-12. `SessionManager()` + `AuthManager.init()` -- generate master token
-13. Create main session (`main:<uuid8>`) and main agent
-14. Ensure `HEARTBEAT.md` exists
-15. `Scheduler.start()` -- register built-in heartbeat task
-16. Restore persisted cron tasks from `config.json`
-17. `startServer()` -- bind HTTP (7420) + WS (7421) listeners
-18. Auto-start connectors (Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear) if tokens configured
+4. `SessionArchiveManager.init()` -- open `~/.sa/session-archive.sqlite`
+5. Inject `runtime.env` -- plain env vars from config (env vars take precedence)
+6. `config.loadSecrets()` -- decrypt `secrets.enc`, inject API keys into `process.env`
+7. Validate provider API keys -- warn if any `apiKeyEnvVar` is missing
+8. `ModelRouter.fromConfig()` -- build provider/model registry, set default model, init tiers/aliases/fallbacks
+9. `SkillRegistry.loadAll()` -- load bundled + user-installed skills
+10. `CheckpointManager()` -- prepare per-turn snapshotting for mutating tools
+11. `MCPManager.init()` -- connect configured MCP servers and discover remote tools/resources/prompts
+12. Build tools (23 built-ins + any dynamic `mcp_*` tools)
+13. Assemble system prompt (12 components, see below)
+14. `createTranscriber()` -- local Whisper if available, else cloud API
+15. `SessionManager()` + `AuthManager.init()` -- generate master token
+16. Create main session (`main:<uuid8>`) and main agent
+17. Ensure `HEARTBEAT.md` exists
+18. `Scheduler.start()` -- register built-in heartbeat task
+19. Restore persisted cron tasks from `config.json`
+20. `startServer()` -- bind HTTP (7420) + WS (7421) listeners
+21. Auto-start connectors (Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear) if tokens configured
 
 ---
 
@@ -102,6 +108,18 @@ The `Agent` class implements the core chat loop. Each `agent.chat(userText)` cal
 
 **Loop detection**: warn at 10 repeated calls, block at 20, circuit-break at 30.
 **Result size guard**: truncate tool results exceeding 400,000 chars.
+
+---
+
+## Context Enrichment
+
+Before a normal chat turn reaches the model, SA enriches the user message in three stages:
+
+1. **Project context files**: the runtime auto-loads the nearest `.sa.md`, `SA.md`, `AGENTS.md`, `CLAUDE.md`, or `.cursorrules` file into the system prompt. As tools move into subdirectories, matching context files are appended as tool-result hints.
+2. **Inline `@` references**: `chat.stream` expands `@file:path[:start-end]`, `@folder:path`, `@diff`, `@staged`, and `@url:https://...` into attached context blocks before the model sees the turn.
+3. **Memory context**: after reference expansion, SA queries persistent memory using the expanded message and prepends any relevant `<memory_context>` block.
+
+`@` references are constrained to the active workspace root and warn instead of expanding when a path escapes the workspace or hits a blocked secret location.
 
 ---
 
@@ -148,11 +166,13 @@ Event filtering by `ToolPolicyManager`: verbosity levels (`verbose`/`minimal`/`s
 3. Tool Call Style guide (safe/moderate/dangerous narration rules)
 4. Memory guide + current memory context (from `~/.sa/memory/`)
 5. Skills directive + available skills list (`read_skill` before replying)
-6. Reactions guide (when to react with emoji vs. reply)
-7. Group Chat guide (name-prefixed messages, address by name)
-8. Safety advisory (no independent goals, human oversight)
-9. User Profile (from `USER.md`, if present)
-10. Session heartbeat (current date/time + active model name)
+6. Skill learning guide (`skill_manage` for reusable workflows)
+7. Project context files (`.sa.md`, `SA.md`, `AGENTS.md`, `CLAUDE.md`, `.cursorrules`) if discovered
+8. Reactions guide (when to react with emoji vs. reply)
+9. Group Chat guide (name-prefixed messages, address by name)
+10. Safety advisory (no independent goals, human oversight)
+11. User Profile (from `USER.md`, if present)
+12. Session heartbeat (current date/time + active model name)
 
 ---
 
@@ -170,7 +190,19 @@ Event filtering by `ToolPolicyManager`: verbosity levels (`verbose`/`minimal`/`s
 | `session` | `create` | mutation | Create a new session |
 | `session` | `getLatest` | query | Most recently active session for a prefix |
 | `session` | `list` | query | List all active sessions |
+| `session` | `listArchived` | query | List recent archived sessions |
+| `session` | `search` | query | Search archived session transcripts and summaries |
 | `session` | `destroy` | mutation | Destroy session and agent |
+| `checkpoint` | `list` | query | List rollback checkpoints for a session or working directory |
+| `checkpoint` | `diff` | query | Diff current working tree against a checkpoint |
+| `checkpoint` | `restore` | mutation | Restore a checkpoint, optionally for one file |
+| `toolset` | `list` | query | List builtin and dynamic toolsets |
+| `mcp` | `listServers` | query | List configured MCP servers and connection state |
+| `mcp` | `listTools` | query | List connected MCP tools |
+| `mcp` | `listPrompts` | query | List prompts from an MCP server |
+| `mcp` | `getPrompt` | query | Resolve an MCP prompt to concrete content |
+| `mcp` | `listResources` | query | List resources from an MCP server |
+| `mcp` | `readResource` | query | Read a resource from an MCP server |
 | `tool` | `config` | query | Tool approval mode for a session |
 | `tool` | `approve` | mutation | Approve/reject a pending tool call |
 | `tool` | `acceptForSession` | mutation | Auto-approve tool for rest of session |
@@ -188,10 +220,15 @@ Event filtering by `ToolPolicyManager`: verbosity levels (`verbose`/`minimal`/`s
 | `provider` | `remove` | mutation | Remove a provider |
 | `skill` | `list` | query | List loaded skills with activation status |
 | `skill` | `activate` | mutation | Activate a skill by name |
+| `skill` | `reload` | mutation | Reload bundled and user skills from disk |
 | `auth` | `pair` | mutation | Device-flow pairing. **Unauthenticated.** |
 | `auth` | `code` | query | Generate one-time pairing code. **Unauthenticated.** |
 | `cron` | `list` | query | List scheduled tasks |
 | `cron` | `add` | mutation | Add a cron task |
+| `cron` | `update` | mutation | Update a cron task in place |
+| `cron` | `pause` | mutation | Pause a cron task without deleting it |
+| `cron` | `resume` | mutation | Resume a paused cron task |
+| `cron` | `run` | mutation | Trigger a cron task immediately |
 | `cron` | `remove` | mutation | Remove a user-defined cron task |
 | `webhookTask` | `list` | query | List webhook tasks |
 | `webhookTask` | `add` | mutation | Add a webhook task |
@@ -222,6 +259,7 @@ Event filtering by `ToolPolicyManager`: verbosity levels (`verbose`/`minimal`/`s
     journal/
   skills/               User-installed skills
     .registry.json      ClawHub install metadata
+  session-archive.sqlite Persisted session transcripts + FTS search index
   automation/           Cron and webhook task logs
   engine.url            Discovery file: HTTP URL
   engine.pid            Daemon PID
@@ -237,6 +275,7 @@ Event filtering by `ToolPolicyManager`: verbosity levels (`verbose`/`minimal`/`s
 - **Daemon + connector split**: one runtime state, multiple frontends. Closing TUI does not stop the engine.
 - **File-based config**: no database. `config.json` v3 is the single source of truth.
 - **One Agent per session**: conversation isolation. Main session persists across heartbeats; connector and cron sessions get fresh agents.
+- **Session archive**: completed turns are synced to a local SQLite archive so `chat.history` survives agent teardown and archived sessions can be searched by content.
 - **Streaming-first**: agent yields events as they arrive from the LLM. tRPC subscriptions and SSE webhooks forward with minimal buffering.
 - **pi-ai abstraction**: unified streaming interface across Anthropic, OpenAI, Google, OpenRouter. Use type assertion `(getModel as (p: string, m: string) => Model<Api>)` for dynamic strings.
 - **Chat SDK adapter pattern**: six connectors (Slack, Teams, Google Chat, Discord, GitHub, Linear) share a single `ChatSDKAdapter` class that bridges Chat SDK events to SA's tRPC client. Platform-specific code is limited to adapter instantiation and webhook server setup.

@@ -1,7 +1,8 @@
 # Tools Overview and Classification
 
-SA provides 22 built-in tools organized by danger level. The engine owns all
-tool definitions; connectors never invoke tools directly.
+SA provides 23 built-in tools organized by danger level, plus dynamic `mcp_*`
+tools discovered from configured MCP servers. The engine owns all tool
+definitions; connectors never invoke tools directly.
 
 ## Tool Inventory
 
@@ -21,16 +22,20 @@ tool definitions; connectors never invoke tools directly.
 | 12 | memory_read      | safe       | Read memory entry by key or date     |
 | 13 | memory_delete    | safe       | Delete topic memory entry            |
 | 14 | read_skill       | safe       | Load and activate a skill            |
-| 15 | set_env_secret   | safe       | Store encrypted secret               |
-| 16 | set_env_variable | safe       | Set plain env var                    |
-| 17 | notify           | safe       | Push notification to connectors      |
-| 18 | delegate         | moderate   | Delegate to sub-agent                |
-| 19 | delegate_status  | safe       | Check sub-agent status               |
-| 20 | ask_user         | safe       | Ask the user a clarifying question   |
-| 21 | claude_code      | moderate   | Delegate task to Claude Code CLI     |
-| 22 | codex            | moderate   | Delegate task to Codex CLI           |
+| 15 | skill_manage     | moderate   | Create and patch reusable user skills |
+| 16 | set_env_secret   | safe       | Store encrypted secret               |
+| 17 | set_env_variable | safe       | Set plain env var                    |
+| 18 | notify           | safe       | Push notification to connectors      |
+| 19 | delegate         | moderate   | Delegate to sub-agent                |
+| 20 | delegate_status  | safe       | Check sub-agent status               |
+| 21 | ask_user         | safe       | Ask the user a clarifying question   |
+| 22 | claude_code      | moderate   | Delegate task to Claude Code CLI     |
+| 23 | codex            | moderate   | Delegate task to Codex CLI           |
 
 *exec uses hybrid classification — see [exec.md](exec.md).
+
+Dynamic MCP tools are surfaced with the prefix `mcp_<server>_<tool>` and are
+also grouped into dynamic toolsets such as `mcp:filesystem`.
 
 ---
 
