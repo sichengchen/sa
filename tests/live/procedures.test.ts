@@ -81,6 +81,10 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
     checkpoints,
     mcp,
     tools,
+    promptEngine: {
+      buildBasePrompt: async () => "Reply briefly. When asked to use a tool, use it without explanation.",
+      buildSessionPrompt: async () => "Reply briefly. When asked to use a tool, use it without explanation.",
+    } as any,
     systemPrompt: "Reply briefly. When asked to use a tool, use it without explanation.",
     sessions,
     auth,

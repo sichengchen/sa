@@ -53,6 +53,7 @@ function formatArgsForIM(toolName: string, args: Record<string, unknown>): strin
 
 /** Per-session agent instances */
 const sessionAgents = new Map<string, Agent>();
+const sessionPromptState = new Map<string, { value: string }>();
 const sessionToolEnvironments = new Map<string, SessionToolEnvironment>();
 const activeRunsBySession = new Map<string, string>();
 
@@ -373,10 +374,46 @@ export function createAppRouter(runtime: EngineRuntime) {
     return sessionDir ?? process.env.TERMINAL_CWD ?? process.cwd();
   }
 
+  function getSessionPrompt(sessionId: string): { value: string } {
+    let state = sessionPromptState.get(sessionId);
+    if (!state) {
+      state = { value: runtime.systemPrompt };
+      sessionPromptState.set(sessionId, state);
+    }
+    return state;
+  }
+
+  async function refreshSessionPrompt(
+    sessionId: string,
+    input: {
+      trigger: string;
+      connectorType: string;
+      overlay?: string;
+      attachedSkills?: string[];
+    },
+  ): Promise<string> {
+    const promptState = getSessionPrompt(sessionId);
+    const liveMessages = sessionAgents.get(sessionId)?.getMessages() ?? runtime.store.getSessionMessages(sessionId);
+    try {
+      promptState.value = await runtime.promptEngine.buildSessionPrompt({
+        sessionId,
+        connectorType: input.connectorType,
+        trigger: input.trigger,
+        overlay: input.overlay,
+        attachedSkills: input.attachedSkills,
+        messages: liveMessages,
+      });
+    } catch {
+      promptState.value = runtime.systemPrompt;
+    }
+    return promptState.value;
+  }
+
   /** Get or create an Agent for a session */
   function getSessionAgent(sessionId: string): Agent {
     let agent = sessionAgents.get(sessionId);
     if (!agent) {
+      const promptState = getSessionPrompt(sessionId);
       const toolEnvironment = createSessionToolEnvironment({
         baseTools: runtime.tools,
         checkpointManager: runtime.checkpoints,
@@ -401,7 +438,7 @@ export function createAppRouter(runtime: EngineRuntime) {
       agent = new Agent({
         router: runtime.router,
         tools: toolEnvironment.tools,
-        getSystemPrompt: () => runtime.systemPrompt,
+        getSystemPrompt: () => promptState.value,
         onAskUser,
         onToolApproval: async (toolName, toolCallId, args) => {
           const mode = getApprovalMode(sessionId);
@@ -641,6 +678,10 @@ export function createAppRouter(runtime: EngineRuntime) {
             // Memory context fetch failed — continue without it
           }
 
+          await refreshSessionPrompt(input.sessionId, {
+            trigger: "chat",
+            connectorType,
+          });
           const runId = startRun(input.sessionId, "chat", chatMessage);
           let finalStatus: "completed" | "failed" | "interrupted" = "completed";
           let finalStopReason: string | undefined;
@@ -835,6 +876,10 @@ export function createAppRouter(runtime: EngineRuntime) {
           const agent = getSessionAgent(input.sessionId);
           const connectorType = session.connectorType as ConnectorType;
           sessionToolEnvironments.get(input.sessionId)?.newTurn();
+          await refreshSessionPrompt(input.sessionId, {
+            trigger: "audio_transcription",
+            connectorType,
+          });
           const runId = startRun(input.sessionId, "audio_transcription", transcript);
           let finalStatus: "completed" | "failed" | "interrupted" = "completed";
           let finalStopReason: string | undefined;
@@ -945,6 +990,7 @@ export function createAppRouter(runtime: EngineRuntime) {
             event: "session_destroy",
           });
           sessionAgents.delete(input.sessionId);
+          sessionPromptState.delete(input.sessionId);
           sessionToolEnvironments.delete(input.sessionId);
           sessionToolOverrides.delete(input.sessionId);
           sessionSecurityOverrides.delete(input.sessionId);

@@ -39,21 +39,6 @@ export function buildDelegationOptions(runtime: EngineRuntime) {
   };
 }
 
-export async function buildAttachedSkillsPrompt(runtime: EngineRuntime, skillNames?: string[]): Promise<string> {
-  if (!skillNames || skillNames.length === 0) {
-    return "";
-  }
-
-  const sections: string[] = [];
-  for (const skillName of skillNames) {
-    const content = await runtime.skills.getContent(skillName);
-    if (!content) continue;
-    sections.push(`## Skill: ${skillName}\n${content}`);
-  }
-
-  return sections.length > 0 ? `## Attached Skills\n${sections.join("\n\n")}` : "";
-}
-
 export async function runAutomationAgent(
   runtime: EngineRuntime,
   task: AutomationTaskRunInput,
@@ -73,10 +58,17 @@ export async function runAutomationAgent(
   });
   toolEnvironment.newTurn();
 
-  const attachedSkills = await buildAttachedSkillsPrompt(runtime, task.skills);
-  const systemPrompt = attachedSkills
-    ? `${runtime.systemPrompt}\n\n${attachedSkills}`
-    : runtime.systemPrompt;
+  const systemPrompt = await runtime.promptEngine.buildSessionPrompt({
+    sessionId: session.id,
+    connectorType: task.connectorType,
+    trigger: "automation",
+    attachedSkills: task.skills,
+    overlay: [
+      `Automation task: ${task.name}`,
+      `Delivery mode: ${task.connectorType}`,
+      "Complete the requested task directly. Assume the operator will review the archived transcript and result summary after completion.",
+    ].join("\n"),
+  });
   const agent = new Agent({
     router: runtime.router,
     tools: toolEnvironment.tools,
@@ -101,6 +93,7 @@ export async function runAutomationAgent(
     status = "error";
     responseText = `Error: ${error instanceof Error ? error.message : String(error)}`;
   } finally {
+    runtime.store.syncSessionMessages(session.id, agent.getMessages());
     await runtime.archive.syncSession(session, agent.getMessages());
     runtime.sessions.destroySession(session.id);
   }
