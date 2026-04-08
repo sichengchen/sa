@@ -2,7 +2,7 @@
 
 ## Overview
 
-SA uses the **Agent Skills** specification ([agentskills.io](https://agentskills.io)) to extend the agent's capabilities through prompt-level instructions. Skills are Markdown files named `SKILL.md` with YAML frontmatter. They teach the agent how to perform specific tasks using existing tools -- they are not tools themselves.
+Esperta Base uses the **Agent Skills** specification ([agentskills.io](https://agentskills.io)) to extend the agent's capabilities through prompt-level instructions. Skills are Markdown files named `SKILL.md` with YAML frontmatter. They teach the agent how to perform specific tasks using existing tools -- they are not tools themselves.
 
 When a user message arrives, the agent inspects an `<available_skills>` catalog injected into its system prompt, identifies the most relevant skill, loads its full content via the `read_skill` tool, and follows its instructions. This lazy-loading design keeps the system prompt compact while making a large library of domain knowledge available on demand.
 
@@ -35,15 +35,15 @@ The body supports `{baseDir}` interpolation. At load time, `{baseDir}` is replac
 
 ## Skill Types
 
-SA discovers skills from three sources, in priority order:
+Esperta Base discovers skills from three sources, in priority order:
 
 ### 1. Bundled Skills
 
-Ship with SA at `src/engine/skills/bundled/`. Each subdirectory contains a `SKILL.md` and optional supporting files.
+Ship with Esperta Base at `src/engine/skills/bundled/`. Each subdirectory contains a `SKILL.md` and optional supporting files.
 
 | Skill                | Purpose                                        |
 |----------------------|------------------------------------------------|
-| `sa`                 | Knowledge about SA itself (spec index)         |
+| `sa`                 | Knowledge about Esperta Base itself (spec index) |
 | `coding-agents`      | Delegate tasks to Claude Code / Codex CLI agents, esperkit integration |
 | `clawhub`            | Search, install, update skills from ClawHub    |
 | `skill-creator`      | Scaffold new custom skills                     |
@@ -118,7 +118,7 @@ Active skills are tracked via `getActiveSkills()` and can be formatted into the 
 
 ### skill_manage Tool
 
-SA also ships a writable companion tool, `skill_manage`, for turning successful workflows into reusable skills under `~/.sa/skills/`.
+Esperta Base also ships a writable companion tool, `skill_manage`, for turning successful workflows into reusable skills under `~/.sa/skills/`.
 
 Supported actions:
 
@@ -184,7 +184,7 @@ The bundled `skill-creator` skill can guide the agent through this process inter
 
 ## Embedded Skills (Binary Builds)
 
-When SA is compiled into a single binary, bundled skills are not available on disk. The build process handles this:
+When Esperta Base is compiled into a single binary, bundled skills are not available on disk. The build process handles this:
 
 1. `scripts/embed-skills.ts` reads every `.md` file from `src/engine/skills/bundled/*/`.
 2. Generates `src/engine/skills/embedded-skills.generated.ts` exporting a `Record<string, Record<string, string>>` mapping directory names to `{ relative path -> content }`.

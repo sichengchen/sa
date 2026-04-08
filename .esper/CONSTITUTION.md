@@ -1,16 +1,16 @@
-# SA Constitution
+# Esperta Base Constitution
 
 ## Project Identity
 
-**SA** (Sasa) is a personal AI agent assistant. It runs as a local daemon (Engine) that exposes a tRPC API, allowing multiple connectors — TUI, Telegram, Slack, Teams, Discord, Google Chat, GitHub, Linear, and webhooks — to interact with AI models through a unified interface.
+**Esperta Base** is a personal AI agent assistant. It runs as a local daemon (Engine) that exposes a tRPC API, allowing multiple connectors — TUI, Telegram, Slack, Teams, Discord, Google Chat, GitHub, Linear, and webhooks — to interact with AI models through a unified interface.
 
-SA gives technical enthusiasts a self-hosted, privacy-respecting AI assistant that lives across their communication channels.
+Esperta Base gives technical enthusiasts a self-hosted, privacy-respecting AI assistant that lives across their communication channels.
 
-## What SA Is Not
+## What Esperta Base Is Not
 
-- **Not a hosted SaaS** — SA runs locally on the user's machine. There is no multi-tenant cloud service.
-- **Not a framework or library** — SA is an end-user product. Others do not build on top of it.
-- **Not an AI model** — SA orchestrates models (Anthropic, OpenAI, Google, OpenRouter, etc.) via pi-ai. It does not train or serve models.
+- **Not a hosted SaaS** — Esperta Base runs locally on the user's machine. There is no multi-tenant cloud service.
+- **Not a framework or library** — Esperta Base is an end-user product. Others do not build on top of it.
+- **Not an AI model** — Esperta Base orchestrates models (Anthropic, OpenAI, Google, OpenRouter, etc.) via pi-ai. It does not train or serve models.
 
 ## Users
 
@@ -49,7 +49,7 @@ Technical enthusiasts who want a self-hosted AI agent they can reach from their 
 
 ## Scope Boundaries
 
-These will **never** be built in SA:
+These will **never** be built in Esperta Base:
 
 - Multi-tenant hosting or user account management
 - Model training, fine-tuning, or serving

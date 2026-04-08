@@ -1,7 +1,7 @@
 # Memory Tools
 
 Four tools for persistent, searchable agent memory. Memory is stored in the
-SA home directory (`~/.sa/memory/`).
+Esperta Base home directory (`~/.sa/memory/`).
 
 ---
 

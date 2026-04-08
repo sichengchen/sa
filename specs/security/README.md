@@ -1,6 +1,6 @@
 # Security
 
-SA is a single-user, localhost-only personal agent. Its security model is
+Esperta Base is a single-user, localhost-only personal agent. Its security model is
 designed around three principles:
 
 1. **Defense in depth for tool execution** -- layered classification, approval,
@@ -61,7 +61,7 @@ designed around three principles:
 
 ## Known Limitations
 
-1. **No filesystem sandboxing** -- exec commands can read/write any file the SA
+1. **No filesystem sandboxing** -- exec commands can read/write any file the Esperta Base
    process user can access (mitigated by the exec fence and OS sandbox on macOS).
 2. **No network sandboxing** -- exec commands can make arbitrary network requests.
 3. **Machine fingerprint as key material** -- if hostname or username changes,

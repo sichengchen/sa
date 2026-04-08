@@ -1,6 +1,6 @@
 # Tools Overview and Classification
 
-SA provides 23 built-in tools organized by danger level, plus dynamic `mcp_*`
+Esperta Base provides 23 built-in tools organized by danger level, plus dynamic `mcp_*`
 tools discovered from configured MCP servers. The engine owns all tool
 definitions; connectors never invoke tools directly.
 

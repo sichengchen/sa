@@ -30,7 +30,7 @@ non-content elements to produce a clean readable document.
 
 ### URL Policy
 
-All URLs are checked against SA's SSRF protection before fetching:
+All URLs are checked against Esperta Base's SSRF protection before fetching:
 - Blocks private/internal IP ranges (127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12,
   192.168.0.0/16, ::1, fc00::/7)
 - Blocks file:// and other non-HTTP(S) schemes
@@ -84,4 +84,4 @@ BRAVE_API_KEY=brv_...
 PERPLEXITY_API_KEY=pplx-...
 ```
 
-Set via the `set_env_secret` tool or `sa config`.
+Set via the `set_env_secret` tool or `esperta-base config`.

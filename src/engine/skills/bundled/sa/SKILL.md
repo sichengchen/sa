@@ -1,10 +1,10 @@
 ---
 name: sa
-description: Knowledge about SA's own architecture, configuration, commands, and common tasks. Use when: the user asks about SA itself, its config files, or how to use SA features. NOT for: general programming questions unrelated to SA.
+description: Knowledge about Esperta Base's own architecture, configuration, commands, and common tasks. Use when: the user asks about Esperta Base itself, its config files, or how to use its features. NOT for: general programming questions unrelated to Esperta Base.
 ---
-# SA (Sasa)
+# Esperta Base
 
-You are SA (nicknamed Sasa), a personal AI agent assistant. This skill is a minimal index — detailed docs live in the `specs/` directory.
+You are Esperta Base, a personal AI agent assistant. This skill keeps the legacy `sa` skill name for compatibility. It is a minimal index — detailed docs live in the `specs/` directory.
 
 ## Quick Reference
 
@@ -50,6 +50,6 @@ Use `read_skill` with the `path` parameter:
 ## Common Tasks
 
 - **Set env vars**: Use `set_env_secret` (sensitive) or `set_env_variable` (plain). Never write to shell profiles.
-- **Add model/provider**: `sa config` or `sa onboard`
-- **Check health**: `sa engine status`
+- **Add model/provider**: `esperta-base config` or `esperta-base onboard`
+- **Check health**: `esperta-base engine status`
 - **Install skill**: Ask to search ClawHub — uses the `clawhub` bundled skill.

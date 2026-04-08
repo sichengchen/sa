@@ -11,7 +11,7 @@
 ## Setup
 
 ```bash
-git clone <repo-url> sa && cd sa
+git clone <repo-url> esperta-base && cd esperta-base
 bun install
 cp .env.example .env   # fill at least one provider API key
 ```
@@ -88,7 +88,7 @@ Three tiers, all using Bun's built-in test runner (Jest-compatible API).
 
 **CI** (`ci.yml`) -- runs on push/PR to `main`: TruffleHog secret scan + lint + typecheck + test + build.
 
-**Release** (`release.yml`) -- triggered by `v*` tag: build `sa-darwin` binary, create GitHub Release, update Homebrew tap.
+**Release** (`release.yml`) -- triggered by `v*` tag: build `esperta-base-darwin` binary, create GitHub Release, update Homebrew tap.
 
 ---
 
@@ -106,8 +106,8 @@ bun run scripts/version.ts --push # bump + tag + push (triggers release)
 ## Homebrew Tap
 
 ```bash
-brew tap sichengchen/tap && brew install sa
-brew services start sa   # optional: engine as background service
+brew tap sichengchen/tap && brew install esperta-base
+brew services start esperta-base   # optional: engine as background service
 ```
 
 ---
@@ -139,5 +139,5 @@ Configured in `tsconfig.json`, resolved by Bun. Always include `.js` extension i
 ## Debugging
 
 - **SA_HOME override**: `SA_HOME=/tmp/sa-debug bun run dev` for isolated testing.
-- **Engine logs**: `sa engine logs` or `tail -f ~/.sa/engine.log`.
+- **Engine logs**: `esperta-base engine logs` or `tail -f ~/.sa/engine.log`.
 - **Single test**: `bun test src/engine/tools/exec.test.ts` or `bun test --grep "pattern"`.

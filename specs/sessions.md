@@ -1,6 +1,6 @@
 # Sessions
 
-SA uses a structured session system to isolate conversations across connectors, scheduled tasks, and webhook invocations. Every interaction runs inside a session. The `SessionManager` class (`src/engine/sessions.ts`) owns the live in-memory session registry, while `SessionArchiveManager` (`src/engine/session-archive.ts`) persists transcripts, compact summaries, and full-text search metadata to disk.
+Esperta Base uses a structured session system to isolate conversations across connectors, scheduled tasks, and webhook invocations. Every interaction runs inside a session. The `SessionManager` class (`src/engine/sessions.ts`) owns the live in-memory session registry, while `SessionArchiveManager` (`src/engine/session-archive.ts`) persists transcripts, compact summaries, and full-text search metadata to disk.
 
 ---
 

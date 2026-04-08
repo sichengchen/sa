@@ -2,7 +2,7 @@
 
 ## Overview
 
-SA supports three automation mechanisms: **heartbeat**, **cron**, and **webhook tasks**. All log results to `~/.sa/automation/`. Config lives in `config.json` under `runtime.heartbeat` and `runtime.automation`. Tasks persist across engine restarts and now track run metadata (`lastRunAt`, `nextRunAt`, `lastStatus`, `lastSummary`).
+Esperta Base supports three automation mechanisms: **heartbeat**, **cron**, and **webhook tasks**. All log results to `~/.sa/automation/`. Config lives in `config.json` under `runtime.heartbeat` and `runtime.automation`. Tasks persist across engine restarts and now track run metadata (`lastRunAt`, `nextRunAt`, `lastStatus`, `lastSummary`).
 
 ---
 
@@ -27,7 +27,7 @@ Agent-based periodic check running in the **main session**. The agent reads a us
 4. If `enabled` and a main agent exists, engine reads `~/.sa/HEARTBEAT.md`.
 5. Agent handles each checklist item; replies with exactly `HEARTBEAT_OK` if nothing needs attention.
 6. **Smart suppression**: if response equals the suppress token, result is marked `suppressed: true` and no notification is sent.
-7. If the response is not suppressed, SA attempts to push it through the `notify` tool (Telegram/Discord if configured) and also writes the result to the engine log.
+7. If the response is not suppressed, Esperta Base attempts to push it through the `notify` tool (Telegram/Discord if configured) and also writes the result to the engine log.
 
 ### Checklist File (`~/.sa/HEARTBEAT.md`)
 
@@ -55,7 +55,7 @@ User-editable Markdown. Read fresh on each cycle. Default:
 
 ## Cron Dispatch
 
-Scheduled tasks dispatch a prompt to a fresh, isolated agent session. SA accepts classic cron expressions, natural-language cadence strings such as `every 2h`, short delays like `30m`, and absolute ISO timestamps for one-shot tasks.
+Scheduled tasks dispatch a prompt to a fresh, isolated agent session. Esperta Base accepts classic cron expressions, natural-language cadence strings such as `every 2h`, short delays like `30m`, and absolute ISO timestamps for one-shot tasks.
 
 ### Task Fields
 
@@ -82,7 +82,7 @@ Scheduled tasks dispatch a prompt to a fresh, isolated agent session. SA accepts
 
 ### Schedule Syntax
 
-SA normalizes four schedule forms:
+Esperta Base normalizes four schedule forms:
 
 | Input              | Meaning |
 |--------------------|---------|
