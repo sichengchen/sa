@@ -128,7 +128,7 @@ export function validateExecPaths(
     if (expanded === saHome || expanded.startsWith(saHome + "/")) {
       return {
         layer: "exec_fence",
-        detail: `Access to SA home directory is always denied: ${p}`,
+        detail: `Access to Esperta Base home directory is always denied: ${p}`,
         resource: p,
       };
     }

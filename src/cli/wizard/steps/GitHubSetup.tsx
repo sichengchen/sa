@@ -83,7 +83,7 @@ export function GitHubSetup({ onNext, onBack, currentValues }: GitHubSetupProps)
     <Box flexDirection="column" padding={1}>
       <Text bold color="cyan">GitHub Bot Setup (optional)</Text>
       <Text />
-      <Text>To use SA via GitHub (issue/PR mentions), create a GitHub App or use a PAT.</Text>
+      <Text>To use Esperta Base via GitHub (issue/PR mentions), create a GitHub App or use a PAT.</Text>
       <Text>Enter the token, or leave empty to skip.</Text>
       <Text />
       <Box>

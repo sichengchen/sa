@@ -13,15 +13,15 @@ export function Welcome({ onNext }: WelcomeProps) {
   return (
     <Box flexDirection="column" padding={1}>
       <Text bold color="cyan">
-        Welcome to SA (Sasa)
+        Welcome to Esperta Base
       </Text>
       <Text />
       <Text>
-        SA (Sasa) is your personal AI agent assistant.
+        Esperta Base is your personal AI agent assistant.
       </Text>
       <Text />
       <Text>
-        SA runs as a background Engine with thin Connectors for TUI,
+        Esperta Base runs as a background Engine with thin Connectors for TUI,
         Telegram, and Discord. This wizard will help you set up:
       </Text>
       <Text> 1. Agent identity and personality</Text>

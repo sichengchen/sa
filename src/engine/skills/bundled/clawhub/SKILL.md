@@ -8,7 +8,7 @@ You can help the user find, install, and update agent skills from the ClawHub re
 
 ## Commands
 
-Use `exec` to run ClawHub CLI commands. The `--workdir` flag must point to the SA home directory so skills are installed into `~/.sa/skills/`.
+Use `exec` to run ClawHub CLI commands. The `--workdir` flag must point to the Esperta Base home directory so skills are installed into `~/.sa/skills/`.
 
 ### Search
 

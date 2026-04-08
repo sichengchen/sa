@@ -2,7 +2,7 @@
  * exec tool — shell command execution
  *
  * Security model:
- * - Commands run as the SA process user (no privilege isolation)
+ * - Commands run as the Esperta Base process user (no privilege isolation)
  * - Approval is enforced by the 3-tier danger classification + exec classifier
  * - Sensitive env vars (API keys, tokens, secrets) are stripped by default
  * - Output is capped at 1MB to prevent OOM from chatty commands
@@ -59,7 +59,7 @@ const SENSITIVE_ENV_PATTERNS = [
 
 /**
  * Create a sanitized copy of process.env that strips sensitive variables.
- * API keys, tokens, and SA-internal vars are removed to prevent leakage.
+ * API keys, tokens, and Esperta Base-internal vars are removed to prevent leakage.
  */
 export function sanitizeEnv(
   baseEnv: Record<string, string | undefined>,

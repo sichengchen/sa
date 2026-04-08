@@ -32,7 +32,7 @@ export function App({ client }: AppProps) {
   const [showSessionPicker, setShowSessionPicker] = useState(false);
   const [models, setModels] = useState<ModelConfig[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [agentName, setAgentName] = useState("SA");
+  const [agentName, setAgentName] = useState("Esperta Base");
   const [sessionConnectorType, setSessionConnectorType] = useState("tui");
   const [pendingApproval, setPendingApproval] = useState<{
     toolName: string;
@@ -141,7 +141,7 @@ export function App({ client }: AppProps) {
       // Handle /shutdown command — stop the engine completely
       if (text === "/shutdown") {
         try {
-          addMessage({ role: "tool", content: "Shutting down SA engine...", toolName: "system" });
+          addMessage({ role: "tool", content: "Shutting down Esperta Base engine...", toolName: "system" });
           await client.engine.shutdown.mutate();
           setTimeout(() => exit(), 500);
         } catch (err) {
@@ -154,7 +154,7 @@ export function App({ client }: AppProps) {
       // Handle /restart command — restart the engine
       if (text === "/restart") {
         try {
-          addMessage({ role: "tool", content: "Restarting SA engine...", toolName: "system" });
+          addMessage({ role: "tool", content: "Restarting Esperta Base engine...", toolName: "system" });
           await client.engine.restart.mutate();
           // Engine will shut down — exit TUI so user can reconnect
           setTimeout(() => exit(), 500);

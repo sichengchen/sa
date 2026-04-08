@@ -44,7 +44,7 @@ Default deny list:
 
 | Path | Rationale |
 |------|-----------|
-| `~/.sa` | SA config, secrets, tokens |
+| `~/.sa` | Esperta Base config, secrets, tokens |
 | `~/.ssh` | SSH keys |
 | `~/.gnupg` | GPG keys |
 | `~/.aws` | AWS credentials |

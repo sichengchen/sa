@@ -2,7 +2,7 @@
  * URL policy — SSRF protection for web_fetch.
  *
  * Blocks requests to localhost, private ranges, cloud metadata endpoints,
- * SA engine ports, and dangerous schemes.
+ * Esperta Base engine ports, and dangerous schemes.
  */
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ const BLOCKED_HOST_PATTERNS: RegExp[] = [
 ];
 
 const BLOCKED_SCHEMES = new Set(["file", "ftp", "gopher", "ldap", "dict", "data"]);
-const BLOCKED_PORTS = new Set([7420, 7421]); // SA engine ports
+const BLOCKED_PORTS = new Set([7420, 7421]); // Esperta Base engine ports
 const FORBIDDEN_HEADERS = new Set([
   "authorization",
   "cookie",

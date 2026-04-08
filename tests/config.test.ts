@@ -22,7 +22,7 @@ describe("ConfigManager", () => {
       const mgr = new ConfigManager(emptyDir);
       const config = await mgr.load();
 
-      expect(config.identity.name).toBe("SA (Sasa)");
+      expect(config.identity.name).toBe("Esperta Base");
       expect(config.identity.personality).toContain("helpful");
       expect(config.identity.systemPrompt).toContain("personal AI agent");
       expect(config.runtime.activeModel).toBe("sonnet");

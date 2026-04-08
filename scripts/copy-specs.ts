@@ -2,6 +2,7 @@
 /**
  * Copies specs/ → src/engine/skills/bundled/sa/specs/ so that
  * embed-skills.ts picks them up for single-binary builds.
+ * The bundled skill keeps the legacy `sa` directory name for compatibility.
  * No-op if specs/ doesn't exist.
  */
 import { existsSync, rmSync, cpSync } from "node:fs";

@@ -1,6 +1,6 @@
-# SA Specs
+# Esperta Base Specs
 
-SA system manual -- single source of truth for architecture, tools, security, and operations.
+Esperta Base system manual -- single source of truth for architecture, tools, security, and operations.
 
 Access at runtime: `read_skill(name: "sa", path: "specs/README.md")`
 

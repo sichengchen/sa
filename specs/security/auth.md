@@ -68,7 +68,7 @@ const authMiddleware = middleware(async ({ ctx, next }) => {
 
 ## Authorization Model
 
-Authentication only proves that a token is valid. SA also enforces a second
+Authentication only proves that a token is valid. Esperta Base also enforces a second
 authorization step based on token type:
 
 | Token type | Scope |

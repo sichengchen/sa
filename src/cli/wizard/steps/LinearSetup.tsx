@@ -83,7 +83,7 @@ export function LinearSetup({ onNext, onBack, currentValues }: LinearSetupProps)
     <Box flexDirection="column" padding={1}>
       <Text bold color="cyan">Linear Bot Setup (optional)</Text>
       <Text />
-      <Text>To use SA via Linear (issue mentions), generate an API key at linear.app/settings/api.</Text>
+      <Text>To use Esperta Base via Linear (issue mentions), generate an API key at linear.app/settings/api.</Text>
       <Text>Enter the API key, or leave empty to skip.</Text>
       <Text />
       <Box>

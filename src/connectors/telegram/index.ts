@@ -1,7 +1,7 @@
 /**
- * Telegram connector for SA — uses Chat SDK's Telegram adapter.
+ * Telegram connector for Esperta Base — uses Chat SDK's Telegram adapter.
  *
- * Replaces the old Grammy-based connector. Bridges Telegram events to SA's
+ * Replaces the old Grammy-based connector. Bridges Telegram events to Esperta Base's
  * engine via the shared ChatSDKAdapter. Uses webhook mode.
  *
  * Note: Audio transcription (voice messages) is not yet supported via
@@ -27,7 +27,7 @@ export function createTelegramConnector(options: TelegramConnectorOptions = {}) 
     const missing = getMissingCredentials();
     throw new Error(
       `Telegram connector requires: ${missing.join(", ")}. ` +
-      `Store them via \`sa config\` or the set_env_secret tool.`,
+      `Store them via \`esperta-base config\` or the \`sa config\` alias, or use the set_env_secret tool.`,
     );
   }
 
@@ -35,7 +35,7 @@ export function createTelegramConnector(options: TelegramConnectorOptions = {}) 
   const pairingCode = options.pairingCode ?? process.env.SA_TELEGRAM_PAIRING_CODE;
 
   const chat = new Chat({
-    userName: "sa",
+    userName: "esperta-base",
     adapters: {
       telegram: createTelegramAdapter({
         botToken: process.env.TELEGRAM_BOT_TOKEN!,
@@ -127,7 +127,7 @@ export async function startTelegramConnector(port = 3426): Promise<void> {
       if (url.pathname === "/api/webhooks/telegram" && request.method === "POST") {
         return webhookHandler(request);
       }
-      return new Response("SA Telegram Connector", { status: 200 });
+      return new Response("Esperta Base Telegram Connector", { status: 200 });
     },
   });
 

@@ -1,26 +1,26 @@
 <img width="2000" height="506" alt="Frame 7-2" src="https://github.com/user-attachments/assets/16e538f9-7e0a-4594-b9f0-2979675e1aa3" />
 
-# SA (Sasa)
+# Esperta Base
 
-Yet another personal AI assistant.
+Personal AI agent assistant.
 
 ## Install
 
 ```bash
-brew install sichengchen/tap/sa
+brew install sichengchen/tap/esperta-base
 ```
 
-Update with `brew upgrade sa`.
+Update with `brew upgrade esperta-base`.
 
 ### Service
 
 ```bash
-brew services start sa     # start engine, auto-start on login
-brew services stop sa      # stop engine
-brew services restart sa   # restart
+brew services start esperta-base     # start engine, auto-start on login
+brew services stop esperta-base      # stop engine
+brew services restart esperta-base   # restart
 ```
 
-Or manage manually with `sa engine start/stop/restart/status/logs`.
+Or manage manually with `esperta-base engine start/stop/restart/status/logs`.
 
 ## Architecture
 
@@ -29,8 +29,8 @@ The **Engine** runs as a background daemon and owns the agent loop, tools, memor
 ## Development
 
 ```bash
-git clone https://github.com/sichengchen/sa.git
-cd sa
+git clone https://github.com/sichengchen/esperta-base.git
+cd esperta-base
 bun install
 bun run dev            # starts Engine (if needed) + opens TUI
 ```
@@ -46,21 +46,23 @@ On first run, an onboarding wizard configures identity, model/provider settings,
 | `bun run typecheck` | TypeScript check |
 | `bun run version:bump` | Bump CalVer + tag |
 
-## SA CLI
+## Esperta Base CLI
+
+Preferred command: `esperta-base`. Compatibility alias: `sa`.
 
 ```text
-sa                      Start Engine (if needed) and open the TUI
-sa onboard              Run the onboarding wizard
-sa config               Open interactive config editor (providers/models/connectors/memory)
-sa engine start         Start the Engine as a background daemon
-sa engine stop          Stop the running Engine
-sa engine status        Show Engine status
-sa engine logs          Show recent Engine logs
-sa engine restart       Restart the Engine
-sa stop                 Force-cancel all running agent tasks
-sa restart              Restart the Engine via tRPC
-sa shutdown             Shut down the Engine gracefully
-sa help                 Show help
+esperta-base                      Start Engine (if needed) and open the TUI
+esperta-base onboard              Run the onboarding wizard
+esperta-base config               Open interactive config editor (providers/models/connectors/memory)
+esperta-base engine start         Start the Engine as a background daemon
+esperta-base engine stop          Stop the running Engine
+esperta-base engine status        Show Engine status
+esperta-base engine logs          Show recent Engine logs
+esperta-base engine restart       Restart the Engine
+esperta-base stop                 Force-cancel all running agent tasks
+esperta-base restart              Restart the Engine via tRPC
+esperta-base shutdown             Shut down the Engine gracefully
+esperta-base help                 Show help
 ```
 
 ## Skills

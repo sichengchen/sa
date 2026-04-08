@@ -17,14 +17,14 @@ Runtime: **Bun** (not Node). Package manager: **Bun**. Module system: **ES modul
 
 ## Architecture
 
-SA is a personal AI agent assistant. It runs as a **daemon (Engine)** that connectors talk to over **tRPC** (HTTP + WebSocket on `127.0.0.1:7420/7421`).
+Esperta Base is a personal AI agent assistant. It runs as a **daemon (Engine)** that connectors talk to over **tRPC** (HTTP + WebSocket on `127.0.0.1:7420/7421`).
 
 ```
 CLI (`src/cli/`)
-  ├─ sa              → detect first run → wizard or TUI
-  ├─ sa engine       → start / stop / status / logs / restart
-  ├─ sa config       → interactive config editor
-  └─ sa onboard      → onboarding wizard
+  ├─ esperta-base              → detect first run → wizard or TUI
+  ├─ esperta-base engine       → start / stop / status / logs / restart
+  ├─ esperta-base config       → interactive config editor
+  └─ esperta-base onboard      → onboarding wizard
 
 Connectors (`src/connectors/`)      Engine (`src/engine/`)
   ├─ tui/      (Ink + React)         ├─ runtime.ts     — bootstrap all subsystems
@@ -80,7 +80,7 @@ engine.url, engine.pid, engine.token, engine.log, engine.heartbeat
 
 ## Documentation
 
-System docs live in `specs/` — the single source of truth. At build time, `scripts/copy-specs.ts` copies them into the SA bundled skill for embedding in the binary. See `specs/README.md` for the full index.
+System docs live in `specs/` — the single source of truth. At build time, `scripts/copy-specs.ts` copies them into the bundled `sa` compatibility skill for embedding in the binary. See `specs/README.md` for the full index.
 
 ## ESLint
 

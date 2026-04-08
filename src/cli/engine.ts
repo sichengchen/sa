@@ -8,6 +8,8 @@ const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
 const PID_FILE = join(saHome, "engine.pid");
 const URL_FILE = join(saHome, "engine.url");
 const LOG_FILE = join(saHome, "engine.log");
+const CLI_NAME = "esperta-base";
+const ENGINE_NAME = "Esperta Base Engine";
 
 function isProcessAlive(pid: number): boolean {
   try {
@@ -34,7 +36,7 @@ async function cleanStaleFiles(): Promise<void> {
 async function start(): Promise<void> {
   const existingPid = await readPid();
   if (existingPid && isProcessAlive(existingPid)) {
-    console.log(`SA Engine is already running (PID ${existingPid}).`);
+    console.log(`${ENGINE_NAME} is already running (PID ${existingPid}).`);
     return;
   }
 
@@ -52,7 +54,7 @@ async function start(): Promise<void> {
   child.unref();
 
   if (!child.pid) {
-    console.error("Failed to start SA Engine.");
+    console.error(`Failed to start ${ENGINE_NAME}.`);
     process.exit(1);
   }
 
@@ -60,12 +62,12 @@ async function start(): Promise<void> {
   await new Promise((r) => setTimeout(r, 1500));
 
   if (!isProcessAlive(child.pid)) {
-    console.error("SA Engine failed to start. Check logs: sa engine logs");
+    console.error(`${ENGINE_NAME} failed to start. Check logs: ${CLI_NAME} engine logs`);
     await cleanStaleFiles();
     process.exit(1);
   }
 
-  console.log(`SA Engine started (PID ${child.pid}).`);
+  console.log(`${ENGINE_NAME} started (PID ${child.pid}).`);
 
   if (existsSync(URL_FILE)) {
     const url = await readFile(URL_FILE, "utf-8");
@@ -76,7 +78,7 @@ async function start(): Promise<void> {
 async function stop(): Promise<void> {
   const pid = await readPid();
   if (!pid || !isProcessAlive(pid)) {
-    console.log("SA Engine is not running.");
+    console.log(`${ENGINE_NAME} is not running.`);
     await cleanStaleFiles();
     return;
   }
@@ -94,19 +96,19 @@ async function stop(): Promise<void> {
   }
 
   await cleanStaleFiles();
-  console.log("SA Engine stopped.");
+  console.log(`${ENGINE_NAME} stopped.`);
 }
 
 async function status(): Promise<void> {
   const pid = await readPid();
 
   if (!pid || !isProcessAlive(pid)) {
-    console.log("SA Engine: stopped");
+    console.log(`${ENGINE_NAME}: stopped`);
     if (pid) await cleanStaleFiles();
     return;
   }
 
-  console.log(`SA Engine: running (PID ${pid})`);
+  console.log(`${ENGINE_NAME}: running (PID ${pid})`);
 
   if (existsSync(URL_FILE)) {
     const url = (await readFile(URL_FILE, "utf-8")).trim();
@@ -153,8 +155,8 @@ export async function engineCommand(args: string[]): Promise<void> {
   const action = args[0];
 
   if (!action || action === "--help" || action === "-h") {
-    console.log("SA Engine — daemon management\n");
-    console.log("Usage: sa engine <action>\n");
+    console.log(`${ENGINE_NAME} — daemon management\n`);
+    console.log(`Usage: ${CLI_NAME} engine <action>\n`);
     console.log("Actions:");
     console.log("  start     Start the Engine as a background daemon");
     console.log("  stop      Stop the running Engine");

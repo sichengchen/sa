@@ -36,7 +36,7 @@ export function Wizard({ homeDir, onComplete, existingConfig }: WizardProps) {
     existingConfig
       ? { ...existingConfig }
       : {
-          name: "Sasa",
+          name: "Esperta Base",
           personality: "Helpful, concise, and proactive personal assistant",
           userName: "",
           timezone: "",
@@ -433,7 +433,7 @@ ${recurringContext}
       return (
         <Box padding={1}>
           <Text bold color="green">
-            Setup complete! Run `sa` to start.
+            Setup complete! Run `esperta-base` to start.
           </Text>
         </Box>
       );

@@ -374,8 +374,8 @@ export async function startServer(runtime: EngineRuntime, options: EngineServerO
   // Write discovery files for CLI and Connectors
   await writeFile(join(saHome, "engine.url"), httpUrl);
 
-  console.log(`SA Engine listening on ${httpUrl}`);
-  console.log(`SA Engine WS on ws://${hostname}:${port + 1}`);
+  console.log(`Esperta Base Engine listening on ${httpUrl}`);
+  console.log(`Esperta Base Engine WS on ws://${hostname}:${port + 1}`);
 
   return {
     port,

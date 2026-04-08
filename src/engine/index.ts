@@ -16,11 +16,11 @@ const port = process.env.SA_ENGINE_PORT
   : undefined;
 
 async function main() {
-  console.log("SA Engine bootstrapping...");
+  console.log("Esperta Base Engine bootstrapping...");
   const runtime = await createRuntime();
   const server = await startServer(runtime, { port });
 
-  // Write discovery files so `sa engine status` works regardless of how we were started
+  // Write discovery files so `esperta-base engine status` works regardless of how we were started
   const httpUrl = `http://127.0.0.1:${server.port}`;
   writeFileSync(PID_FILE, String(process.pid));
   writeFileSync(URL_FILE, httpUrl);
@@ -32,7 +32,7 @@ async function main() {
   const RESTART_MARKER = join(saHome, "engine.restart");
 
   function shutdown() {
-    console.log("\nSA Engine shutting down...");
+    console.log("\nEsperta Base Engine shutting down...");
     const shouldRestart = existsSync(RESTART_MARKER);
     if (shouldRestart) {
       try { unlinkSync(RESTART_MARKER); } catch {}
@@ -52,7 +52,7 @@ async function main() {
             env: { ...process.env },
           });
           child.unref();
-          console.log(`SA Engine restarting (new PID: ${child.pid})...`);
+          console.log(`Esperta Base Engine restarting (new PID: ${child.pid})...`);
         }
         process.exit(0);
       },
@@ -65,6 +65,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("SA Engine failed to start:", err);
+  console.error("Esperta Base Engine failed to start:", err);
   process.exit(1);
 });

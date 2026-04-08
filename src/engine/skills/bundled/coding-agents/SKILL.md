@@ -16,7 +16,7 @@ You can delegate complex coding tasks to external coding agents using the native
 
 **Do NOT delegate** when:
 - You can handle the task directly (simple answers, config changes, memory notes)
-- The task requires SA-specific tools (remember, notify, SA-related skills)
+- The task requires Esperta Base-specific tools (remember, notify, Esperta Base-related skills)
 - The user is asking a question, not requesting code changes
 - The change is small enough to describe in a single edit
 
@@ -87,7 +87,7 @@ claude_code({
 
 **esperkit** is an npm package that installs `/esper:*` slash commands into Claude Code as skills. These slash commands give coding agents structured project management — phases, plans, backlog, automated implementation, and verification.
 
-**Important**: SA does NOT run `esperkit` CLI commands directly (except for installing it). SA's role is to:
+**Important**: Esperta Base does NOT run `esperkit` CLI commands directly (except for installing it). Esperta Base's role is to:
 1. Install esperkit into the target project if needed
 2. Send the user's task to the coding agent with instructions to use `/esper:*` slash commands
 
@@ -206,8 +206,8 @@ After receiving a result:
 
 Both tools probe for CLI authentication automatically:
 
-- **claude_code**: Checks for OAuth session (`claude auth status`), falls back to `ANTHROPIC_API_KEY` from SA secrets
-- **codex**: Checks for auth, falls back to `OPENAI_API_KEY` from SA secrets
+- **claude_code**: Checks for OAuth session (`claude auth status`), falls back to `ANTHROPIC_API_KEY` from Esperta Base secrets
+- **codex**: Checks for auth, falls back to `OPENAI_API_KEY` from Esperta Base secrets
 
 If auth fails, the tool returns clear setup instructions. You can help the user store API keys via `set_env_secret`.
 
@@ -215,6 +215,6 @@ If auth fails, the tool returns clear setup instructions. You can help the user 
 
 - **One-shot only** — each invocation is independent; coding agents do not share context between calls
 - **No streaming** — you get the full output when the task completes
-- **No interactive mode** — SA cannot pipe stdin to subprocesses
+- **No interactive mode** — Esperta Base cannot pipe stdin to subprocesses
 - **Timeouts** — 5 minutes for foreground, 30 minutes for background tasks
 - **Output cap** — stdout/stderr capped at 2MB each

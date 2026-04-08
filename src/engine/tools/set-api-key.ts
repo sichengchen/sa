@@ -34,7 +34,7 @@ export function createSetEnvSecretTool(config: ConfigManager): ToolImpl {
   return {
     name: "set_env_secret",
     description:
-      "Store a sensitive value (API key, token, password) in SA's encrypted vault (secrets.enc). " +
+      "Store a sensitive value (API key, token, password) in Esperta Base's encrypted vault (secrets.enc). " +
       "The value is injected as an environment variable immediately and persists across restarts.",
     summary:
       "Store a secret (API key, token) encrypted in secrets.enc. " +
@@ -80,7 +80,7 @@ export function createSetEnvVariableTool(config: ConfigManager): ToolImpl {
   return {
     name: "set_env_variable",
     description:
-      "Set a non-sensitive environment variable in SA's config (config.json runtime.env). " +
+      "Set a non-sensitive environment variable in Esperta Base's config (config.json runtime.env). " +
       "The value is injected immediately and persists across restarts. " +
       "Do NOT use for secrets — use set_env_secret instead.",
     summary:

@@ -1,6 +1,6 @@
 # Configuration
 
-SA stores all configuration in a local directory (default: `~/.sa/`). Override with `SA_HOME`.
+Esperta Base stores all configuration in a local directory (default: `~/.sa/`). Override with `SA_HOME`.
 
 ---
 

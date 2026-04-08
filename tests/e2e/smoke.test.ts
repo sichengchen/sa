@@ -23,7 +23,7 @@ describe("E2E smoke test", () => {
     // 1. Config initializes with defaults
     const config = new ConfigManager(testHome);
     const saConfig = await config.load();
-    expect(saConfig.identity.name).toBe("SA (Sasa)");
+    expect(saConfig.identity.name).toBe("Esperta Base");
 
     // 2. Memory initializes
     const memoryDir = join(testHome, saConfig.runtime.memory.directory);

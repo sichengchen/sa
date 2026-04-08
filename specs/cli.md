@@ -2,19 +2,21 @@
 
 ## CLI commands
 
-### `sa` (no arguments)
+Preferred CLI name: `esperta-base`. Compatibility alias: `sa`.
+
+### `esperta-base` (no arguments)
 
 Detect first run. If `~/.sa/config.json` does not exist, run the onboarding wizard. Otherwise, start the engine daemon (if not running), wait for `/health` to respond, pair with the engine, create a TUI session, and open the Ink-based terminal UI.
 
-### `sa config`
+### `esperta-base config`
 
 Interactive configuration editor. Provides menus for editing providers, models, connectors, runtime settings, and automation tasks.
 
-### `sa onboard`
+### `esperta-base onboard`
 
 Run the setup wizard. Walks through provider API key entry, model selection, Telegram/Discord pairing, and identity configuration.
 
-### `sa engine <subcommand>`
+### `esperta-base engine <subcommand>`
 
 | Subcommand | Description |
 |---|---|
@@ -24,19 +26,19 @@ Run the setup wizard. Walks through provider API key entry, model selection, Tel
 | `logs` | View recent engine daemon log output |
 | `restart` | Stop then start the engine |
 
-### `sa stop`
+### `esperta-base stop`
 
 Force-cancel all running agent tasks and tool calls. Sends `chat.stopAll` to the engine.
 
-### `sa restart`
+### `esperta-base restart`
 
 Restart the engine via the `engine.restart` tRPC procedure. The engine writes a restart marker file and exits; the CLI re-launches the daemon.
 
-### `sa shutdown`
+### `esperta-base shutdown`
 
 Shut down the engine gracefully via the `engine.shutdown` tRPC procedure.
 
-### `sa audit`
+### `esperta-base audit`
 
 Security audit log viewer. Reads `~/.sa/audit.log` (NDJSON).
 
@@ -48,7 +50,7 @@ Security audit log viewer. Reads `~/.sa/audit.log` (NDJSON).
 | `--since <duration>` | Entries from the last duration (e.g., `1h`, `30m`, `7d`) |
 | `--json` | Output raw JSON instead of table format |
 
-### `sa help`
+### `esperta-base help`
 
 Show available commands and usage.
 
@@ -62,8 +64,8 @@ When chatting in the TUI:
 |---|---|
 | `/new` | Start a new conversation. Destroys the current session and agent, then creates a fresh session under the `tui` prefix. |
 | `/stop` | Force-cancel all running agent tasks and tool calls for the current session |
-| `/restart` | Restart the SA engine (exits TUI for reconnect) |
-| `/shutdown` | Shut down the SA engine completely |
+| `/restart` | Restart the Esperta Base engine (exits TUI for reconnect) |
+| `/shutdown` | Shut down the Esperta Base engine completely |
 | `/status` | Show engine status (uptime, active model, session count) |
 | `/model <name>` | Switch the active model. Supports aliases (e.g., `/model fast`). |
 | `/models` | List all configured models with provider and active status |
@@ -81,7 +83,7 @@ When chatting in the TUI:
 ## TUI flow
 
 ```text
-sa (no arguments)
+esperta-base (no arguments)
   |
   +-- If no ~/.sa/config.json: run onboarding wizard
   +-- ensureEngine()
@@ -113,43 +115,43 @@ sa (no arguments)
 
 ### Setting environment variables
 
-**Never write to shell profiles** (`.zshrc`, `.bashrc`) or dotenv files. Use SA's built-in tools:
+**Never write to shell profiles** (`.zshrc`, `.bashrc`) or dotenv files. Use Esperta Base's built-in tools:
 
 - `set_env_secret` -- for sensitive values (API keys, tokens). Stored encrypted in `secrets.enc`.
 - `set_env_variable` -- for non-sensitive values (feature flags, paths). Stored in `config.json`.
 
 Both take effect immediately and persist across engine restarts.
 
-For interactive key management: `sa config`
+For interactive key management: `esperta-base config`
 
 ### Adding a model
 
 ```
-sa config -> Models -> + Add new model
+esperta-base config -> Models -> + Add new model
 ```
 
-Or re-run the wizard: `sa onboard`
+Or re-run the wizard: `esperta-base onboard`
 
 ### Adding a provider
 
 ```
-sa config -> Providers -> + Add new provider
+esperta-base config -> Providers -> + Add new provider
 ```
 
 ### Checking health
 
 ```bash
-sa engine status
+esperta-base engine status
 curl -s http://127.0.0.1:7420/health
 ```
 
 ### Updating bot tokens
 
 ```
-sa config -> Connectors -> edit token
+esperta-base config -> Connectors -> edit token
 ```
 
-Or re-run: `sa onboard`
+Or re-run: `esperta-base onboard`
 
 ### Installing a skill from ClawHub
 

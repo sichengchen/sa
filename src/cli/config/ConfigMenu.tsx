@@ -152,7 +152,7 @@ function ConfigMenuScreen({ config, onSelect, onExit }: ConfigMenuScreenProps) {
   return (
     <Box flexDirection="column" padding={1}>
       <Text bold color="cyan">
-        SA Configuration
+        Esperta Base Configuration
       </Text>
       <Text />
       {MENU_ITEMS.map((item, i) => {

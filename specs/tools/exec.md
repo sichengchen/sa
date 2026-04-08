@@ -124,7 +124,7 @@ Full details: `specs/security/exec-fence.md`.
 
 ## Automatic Checkpoints
 
-When filesystem checkpoints are enabled, SA automatically snapshots the target
+When filesystem checkpoints are enabled, Esperta Base automatically snapshots the target
 working directory before destructive `exec` commands such as `rm`, `mv`,
 in-place `sed`, shell redirection (`>`), and dangerous git restore/reset style
 operations. Checkpoints are deduplicated per working directory per agent turn

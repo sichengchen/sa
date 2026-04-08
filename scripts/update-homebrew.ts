@@ -15,8 +15,8 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 
 const TAP_REPO = "sichengchen/homebrew-tap";
-const FORMULA_PATH = "Formula/sa.rb";
-const SA_REPO = "sichengchen/sa";
+const FORMULA_PATH = "Formula/esperta-base.rb";
+const APP_REPO = "sichengchen/esperta-base";
 
 const token = process.env.TAP_GITHUB_TOKEN;
 if (!token) {
@@ -31,7 +31,7 @@ const version = pkg.version as string;
 
 // Read checksum from local artifact file
 const checksumContent = readFileSync(
-  resolve(import.meta.dir, "..", "artifacts", "sa-darwin.sha256"),
+  resolve(import.meta.dir, "..", "artifacts", "esperta-base-darwin.sha256"),
   "utf-8",
 );
 const sha = checksumContent.trim().split(/\s+/)[0];
@@ -40,29 +40,30 @@ console.log(`Version: ${version}`);
 console.log(`SHA256: ${sha}`);
 
 // Generate formula content
-const formula = `class Sa < Formula
+const formula = `class EspertaBase < Formula
   desc "Personal AI agent assistant"
-  homepage "https://github.com/${SA_REPO}"
+  homepage "https://github.com/${APP_REPO}"
   version "${version}"
   license "MIT"
 
-  url "https://github.com/${SA_REPO}/releases/download/v${version}/sa-darwin"
+  url "https://github.com/${APP_REPO}/releases/download/v${version}/esperta-base-darwin"
   sha256 "${sha}"
 
   depends_on "oven-sh/bun/bun"
 
   def install
-    bin.install "sa-darwin" => "sa"
+    bin.install "esperta-base-darwin" => "esperta-base"
+    bin.install "esperta-base-darwin" => "sa"
   end
 
   service do
-    run [opt_bin/"sa", "engine", "start"]
+    run [opt_bin/"esperta-base", "engine", "start"]
     working_dir Dir.home
     environment_variables SA_HOME: "\#{Dir.home}/.sa", PATH: "\#{HOMEBREW_PREFIX}/bin:\#{HOMEBREW_PREFIX}/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
   end
 
   test do
-    assert_match version.to_s, shell_output("\#{bin}/sa --version 2>&1", 1)
+    assert_match version.to_s, shell_output("\#{bin}/esperta-base --version 2>&1", 1)
   end
 end
 `;
@@ -84,7 +85,7 @@ if (getRes.ok) {
 
 // Commit the formula via the Contents API
 const body: Record<string, string> = {
-  message: `sa ${version}`,
+  message: `esperta-base ${version}`,
   content: Buffer.from(formula).toString("base64"),
 };
 if (fileSha) body.sha = fileSha;
