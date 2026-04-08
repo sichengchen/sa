@@ -7,7 +7,7 @@ const TRAILING_PUNCTUATION = /[.,;!?]+$/;
 const MAX_INJECTED_CHARS = 80_000;
 const SOFT_WARNING_CHARS = 40_000;
 const MAX_FOLDER_ENTRIES = 200;
-const SECRET_PATH_FRAGMENTS = ["/.ssh", "/.aws", "/.gnupg", "/.kube", "/.docker", "/.config/gh", "/.sa"];
+const SECRET_PATH_FRAGMENTS = ["/.ssh", "/.aws", "/.gnupg", "/.kube", "/.docker", "/.config/gh", "/.aria"];
 
 export interface ContextReference {
   raw: string;

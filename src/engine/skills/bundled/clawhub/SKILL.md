@@ -8,7 +8,7 @@ You can help the user find, install, and update agent skills from the ClawHub re
 
 ## Commands
 
-Use `exec` to run ClawHub CLI commands. The `--workdir` flag must point to the Esperta Base home directory so skills are installed into `~/.sa/skills/`.
+Use `exec` to run ClawHub CLI commands. The `--workdir` flag must point to the Aria home directory so skills are installed into `~/.aria/skills/`.
 
 ### Search
 
@@ -23,13 +23,13 @@ exec(command: "clawhub search '<query>'", danger: "safe")
 Install a skill by its ClawHub slug (e.g. `steipete/apple-notes`):
 
 ```
-exec(command: "clawhub install '<slug>' --workdir ~/.sa --no-input", danger: "moderate")
+exec(command: "clawhub install '<slug>' --workdir ~/.aria --no-input", danger: "moderate")
 ```
 
 To install a specific version:
 
 ```
-exec(command: "clawhub install '<slug>' --version <version> --workdir ~/.sa --no-input", danger: "moderate")
+exec(command: "clawhub install '<slug>' --version <version> --workdir ~/.aria --no-input", danger: "moderate")
 ```
 
 ### Update
@@ -38,10 +38,10 @@ Check for and apply updates to installed ClawHub skills:
 
 ```
 # Update all installed skills
-exec(command: "clawhub update --all --workdir ~/.sa --no-input", danger: "moderate")
+exec(command: "clawhub update --all --workdir ~/.aria --no-input", danger: "moderate")
 
 # Update a specific skill
-exec(command: "clawhub update '<slug>' --workdir ~/.sa --no-input", danger: "moderate")
+exec(command: "clawhub update '<slug>' --workdir ~/.aria --no-input", danger: "moderate")
 ```
 
 ### List installed
@@ -49,7 +49,7 @@ exec(command: "clawhub update '<slug>' --workdir ~/.sa --no-input", danger: "mod
 Show locally installed ClawHub skills:
 
 ```
-exec(command: "clawhub list --workdir ~/.sa", danger: "safe")
+exec(command: "clawhub list --workdir ~/.aria", danger: "safe")
 ```
 
 ## When to use
@@ -73,7 +73,7 @@ exec(command: "clawhub list --workdir ~/.sa", danger: "safe")
 
 ## Notes
 
-- Skills are installed to `~/.sa/skills/<name>/` and automatically discovered by the skill registry
+- Skills are installed to `~/.aria/skills/<name>/` and automatically discovered by the skill registry
 - Installed skills override bundled skills of the same name
 - The ClawHub registry is at clawhub.ai — all searches use vector embeddings for relevance
 - The `clawhub` CLI must be installed (`npm i -g clawhub` or `pnpm add -g clawhub`)

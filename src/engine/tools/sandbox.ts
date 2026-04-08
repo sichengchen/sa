@@ -152,7 +152,7 @@ export class NoopSandbox implements Sandbox {
 
   wrap(command: string[], _opts: SandboxOptions): string[] {
     if (!noopWarned) {
-      console.warn("[esperta-base] OS sandbox unavailable on this platform. Relying on application-level exec fence.");
+      console.warn("[aria] OS sandbox unavailable on this platform. Relying on application-level exec fence.");
       noopWarned = true;
     }
     return command;

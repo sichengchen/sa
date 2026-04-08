@@ -1,6 +1,5 @@
 import { writeFile, unlink, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { homedir } from "node:os";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { WebSocketServer } from "ws";
@@ -10,6 +9,7 @@ import type { EngineRuntime } from "./runtime.js";
 import { heartbeatState } from "./scheduler.js";
 import { frameAsData } from "./agent/content-frame.js";
 import { deliverAutomationResult, logAutomationResult, runAutomationAgent } from "./automation.js";
+import { RUNTIME_NAME, getRuntimeHome } from "@sa/shared/brand.js";
 
 const DEFAULT_PORT = 7420;
 
@@ -307,7 +307,7 @@ export interface EngineServer {
 export async function startServer(runtime: EngineRuntime, options: EngineServerOptions = {}): Promise<EngineServer> {
   const port = options.port ?? DEFAULT_PORT;
   const hostname = options.hostname ?? "127.0.0.1";
-  const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
+  const saHome = getRuntimeHome();
 
   const appRouter = createAppRouter(runtime);
 
@@ -374,8 +374,8 @@ export async function startServer(runtime: EngineRuntime, options: EngineServerO
   // Write discovery files for CLI and Connectors
   await writeFile(join(saHome, "engine.url"), httpUrl);
 
-  console.log(`Esperta Base Engine listening on ${httpUrl}`);
-  console.log(`Esperta Base Engine WS on ws://${hostname}:${port + 1}`);
+  console.log(`${RUNTIME_NAME} listening on ${httpUrl}`);
+  console.log(`${RUNTIME_NAME} WS on ws://${hostname}:${port + 1}`);
 
   return {
     port,

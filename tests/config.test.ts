@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { ConfigManager, DEFAULT_CONFIG } from "@sa/engine/config/index.js";
+import { ConfigManager } from "@sa/engine/config/index.js";
 import { writeFile, rm, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -22,9 +22,9 @@ describe("ConfigManager", () => {
       const mgr = new ConfigManager(emptyDir);
       const config = await mgr.load();
 
-      expect(config.identity.name).toBe("Esperta Base");
+      expect(config.identity.name).toBe("Esperta Aria");
       expect(config.identity.personality).toContain("helpful");
-      expect(config.identity.systemPrompt).toContain("personal AI agent");
+      expect(config.identity.systemPrompt).toContain("local-first agent platform runtime");
       expect(config.runtime.activeModel).toBe("sonnet");
       expect(config.providers).toHaveLength(1);
       expect(config.providers[0].id).toBe("anthropic");

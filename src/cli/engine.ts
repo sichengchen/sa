@@ -1,15 +1,13 @@
 import { readFile, writeFile, unlink } from "node:fs/promises";
 import { existsSync, openSync } from "node:fs";
 import { join } from "node:path";
-import { homedir } from "node:os";
 import { spawn } from "node:child_process";
+import { CLI_NAME, HOME_ENV_VAR, RUNTIME_NAME, getRuntimeHome } from "@sa/shared/brand.js";
 
-const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
+const saHome = getRuntimeHome();
 const PID_FILE = join(saHome, "engine.pid");
 const URL_FILE = join(saHome, "engine.url");
 const LOG_FILE = join(saHome, "engine.log");
-const CLI_NAME = "esperta-base";
-const ENGINE_NAME = "Esperta Base Engine";
 
 function isProcessAlive(pid: number): boolean {
   try {
@@ -36,7 +34,7 @@ async function cleanStaleFiles(): Promise<void> {
 async function start(): Promise<void> {
   const existingPid = await readPid();
   if (existingPid && isProcessAlive(existingPid)) {
-    console.log(`${ENGINE_NAME} is already running (PID ${existingPid}).`);
+    console.log(`${RUNTIME_NAME} is already running (PID ${existingPid}).`);
     return;
   }
 
@@ -48,13 +46,13 @@ async function start(): Promise<void> {
   const child = spawn(process.execPath, [process.argv[1], "__engine"], {
     detached: true,
     stdio: ["ignore", logFd, logFd],
-    env: { ...process.env, SA_HOME: saHome },
+    env: { ...process.env, [HOME_ENV_VAR]: saHome },
   });
 
   child.unref();
 
   if (!child.pid) {
-    console.error(`Failed to start ${ENGINE_NAME}.`);
+    console.error(`Failed to start ${RUNTIME_NAME}.`);
     process.exit(1);
   }
 
@@ -62,12 +60,12 @@ async function start(): Promise<void> {
   await new Promise((r) => setTimeout(r, 1500));
 
   if (!isProcessAlive(child.pid)) {
-    console.error(`${ENGINE_NAME} failed to start. Check logs: ${CLI_NAME} engine logs`);
+    console.error(`${RUNTIME_NAME} failed to start. Check logs: ${CLI_NAME} engine logs`);
     await cleanStaleFiles();
     process.exit(1);
   }
 
-  console.log(`${ENGINE_NAME} started (PID ${child.pid}).`);
+  console.log(`${RUNTIME_NAME} started (PID ${child.pid}).`);
 
   if (existsSync(URL_FILE)) {
     const url = await readFile(URL_FILE, "utf-8");
@@ -78,7 +76,7 @@ async function start(): Promise<void> {
 async function stop(): Promise<void> {
   const pid = await readPid();
   if (!pid || !isProcessAlive(pid)) {
-    console.log(`${ENGINE_NAME} is not running.`);
+    console.log(`${RUNTIME_NAME} is not running.`);
     await cleanStaleFiles();
     return;
   }
@@ -96,19 +94,19 @@ async function stop(): Promise<void> {
   }
 
   await cleanStaleFiles();
-  console.log(`${ENGINE_NAME} stopped.`);
+  console.log(`${RUNTIME_NAME} stopped.`);
 }
 
 async function status(): Promise<void> {
   const pid = await readPid();
 
   if (!pid || !isProcessAlive(pid)) {
-    console.log(`${ENGINE_NAME}: stopped`);
+    console.log(`${RUNTIME_NAME}: stopped`);
     if (pid) await cleanStaleFiles();
     return;
   }
 
-  console.log(`${ENGINE_NAME}: running (PID ${pid})`);
+  console.log(`${RUNTIME_NAME}: running (PID ${pid})`);
 
   if (existsSync(URL_FILE)) {
     const url = (await readFile(URL_FILE, "utf-8")).trim();
@@ -155,14 +153,14 @@ export async function engineCommand(args: string[]): Promise<void> {
   const action = args[0];
 
   if (!action || action === "--help" || action === "-h") {
-    console.log(`${ENGINE_NAME} — daemon management\n`);
+    console.log(`${RUNTIME_NAME} — daemon management\n`);
     console.log(`Usage: ${CLI_NAME} engine <action>\n`);
     console.log("Actions:");
-    console.log("  start     Start the Engine as a background daemon");
-    console.log("  stop      Stop the running Engine");
-    console.log("  status    Show Engine status");
-    console.log("  logs      Show recent Engine logs");
-    console.log("  restart   Restart the Engine");
+    console.log("  start     Start the runtime as a background daemon");
+    console.log("  stop      Stop the running runtime");
+    console.log("  status    Show runtime status");
+    console.log("  logs      Show recent runtime logs");
+    console.log("  restart   Restart the runtime");
     return;
   }
 

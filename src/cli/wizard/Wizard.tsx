@@ -36,7 +36,7 @@ export function Wizard({ homeDir, onComplete, existingConfig }: WizardProps) {
     existingConfig
       ? { ...existingConfig }
       : {
-          name: "Esperta Base",
+          name: "Esperta Aria",
           personality: "Helpful, concise, and proactive personal assistant",
           userName: "",
           timezone: "",
@@ -206,7 +206,7 @@ ${recurringContext}
         pairingCode: data.pairingCode,
       });
 
-      // Copy selected bundled skills into ~/.sa/skills/
+      // Copy selected bundled skills into ~/.aria/skills/
       if (data.selectedSkills && data.selectedSkills.length > 0) {
         const skillsDir = join(homeDir, "skills");
         await mkdir(skillsDir, { recursive: true });
@@ -433,7 +433,7 @@ ${recurringContext}
       return (
         <Box padding={1}>
           <Text bold color="green">
-            Setup complete! Run `esperta-base` to start.
+            Setup complete! Run `aria` to start.
           </Text>
         </Box>
       );

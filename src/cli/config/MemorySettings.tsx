@@ -118,7 +118,7 @@ export function MemorySettings({ config, onSave, onBack }: MemorySettingsProps) 
   });
 
   const editLabels: Record<string, { title: string; hint: string }> = {
-    "edit-directory": { title: "Memory Directory", hint: "Relative to ~/.sa/ — default: memory" },
+    "edit-directory": { title: "Memory Directory", hint: "Relative to ~/.aria/ — default: memory" },
     "edit-search-results": { title: "Max Search Results", hint: "Number of results returned by memory search (default: 10)" },
     "edit-vector-weight": { title: "Vector Weight", hint: "0.0–1.0 — text weight auto-fills to complement (default: 0.6)" },
     "edit-decay-halflife": { title: "Temporal Decay Half-Life", hint: "Days until journal score halves (default: 30)" },

@@ -82,7 +82,7 @@ function decrypt(raw: string, key: Buffer): SecretsFile {
 }
 
 /**
- * Load and decrypt secrets from ~/.sa/secrets.enc.
+ * Load and decrypt secrets from ~/.aria/secrets.enc.
  * Tries the current key derivation first, then falls back to legacy (hostname-only)
  * for migration. If legacy succeeds, re-encrypts with the new derivation.
  * Returns null if the file is missing or cannot be decrypted.
@@ -108,7 +108,7 @@ export async function loadSecrets(homeDir: string): Promise<SecretsFile | null> 
     const secrets = decrypt(raw, legacyKey);
 
     // Legacy decryption succeeded — re-encrypt with new derivation
-    console.warn("[esperta-base] Migrating secrets.enc to improved key derivation...");
+    console.warn("[aria] Migrating secrets.enc to improved key derivation...");
     const newKey = deriveKey(salt);
     const reEncrypted = encrypt(secrets, newKey);
     await writeFile(secretsPath, reEncrypted);
@@ -120,12 +120,12 @@ export async function loadSecrets(homeDir: string): Promise<SecretsFile | null> 
   }
 
   console.warn(
-    "[esperta-base] Warning: secrets.enc could not be decrypted (file may be corrupted or from a different machine) — falling back to environment variables"
+    "[aria] Warning: secrets.enc could not be decrypted (file may be corrupted or from a different machine) — falling back to environment variables"
   );
   return null;
 }
 
-/** Encrypt and save secrets to ~/.sa/secrets.enc (chmod 600). */
+/** Encrypt and save secrets to ~/.aria/secrets.enc (chmod 600). */
 export async function saveSecrets(
   homeDir: string,
   secrets: SecretsFile

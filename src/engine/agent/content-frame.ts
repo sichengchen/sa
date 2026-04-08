@@ -51,23 +51,23 @@ export function redactSecrets(text: string): string {
 // ---------------------------------------------------------------------------
 
 const HOME = process.env.HOME ?? process.env.USERPROFILE ?? "";
-const SA_HOME_RESOLVED = process.env.SA_HOME
-  ? process.env.SA_HOME
+const ARIA_HOME_RESOLVED = process.env.ARIA_HOME
+  ? process.env.ARIA_HOME
   : HOME
-    ? `${HOME}/.sa`
+    ? `${HOME}/.aria`
     : "";
 
 /**
- * Mask Esperta Base internal paths: replace `~/.sa/...` and resolved SA_HOME paths
- * with `[SA_HOME]/...`.
+ * Mask Aria internal paths: replace `~/.aria/...` and resolved runtime-home paths
+ * with `[ARIA_HOME]/...`.
  */
 export function maskPaths(text: string): string {
   let result = text;
-  if (SA_HOME_RESOLVED) {
-    result = result.replaceAll(SA_HOME_RESOLVED, "[SA_HOME]");
+  if (ARIA_HOME_RESOLVED) {
+    result = result.replaceAll(ARIA_HOME_RESOLVED, HOME_PLACEHOLDER);
   }
   // Also handle the tilde form
-  result = result.replace(/~\/\.sa\b/g, "[SA_HOME]");
+  result = result.replace(/~\/\.aria\b/g, HOME_PLACEHOLDER);
   return result;
 }
 
@@ -98,7 +98,7 @@ export function truncateStackTraces(text: string, maxFrames = 3): string {
 /**
  * Full sanitization pipeline for tool results:
  * 1. Redact API keys
- * 2. Mask Esperta Base paths
+ * 2. Mask Aria runtime paths
  * 3. Truncate stack traces
  */
 export function sanitizeContent(text: string): string {
@@ -107,3 +107,4 @@ export function sanitizeContent(text: string): string {
   result = truncateStackTraces(result);
   return result;
 }
+import { HOME_PLACEHOLDER } from "@sa/shared/brand.js";

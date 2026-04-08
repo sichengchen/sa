@@ -78,9 +78,9 @@ describe("redactSecrets", () => {
 });
 
 describe("maskPaths", () => {
-  it("masks ~/.sa/ paths", () => {
-    const text = "Config at ~/.sa/config.json";
-    expect(maskPaths(text)).toBe("Config at [SA_HOME]/config.json");
+  it("masks ~/.aria/ paths", () => {
+    const text = "Config at ~/.aria/config.json";
+    expect(maskPaths(text)).toBe("Config at [ARIA_HOME]/config.json");
   });
 
   it("does not mask unrelated paths", () => {
@@ -119,11 +119,11 @@ describe("truncateStackTraces", () => {
 
 describe("sanitizeContent", () => {
   it("applies all sanitization steps", () => {
-    const text = "Error at ~/.sa/config.json: sk-ant-api03-abcdefghijklmnopqrst";
+    const text = "Error at ~/.aria/config.json: sk-ant-api03-abcdefghijklmnopqrst";
     const result = sanitizeContent(text);
-    expect(result).toContain("[SA_HOME]");
+    expect(result).toContain("[ARIA_HOME]");
     expect(result).toContain("[REDACTED]");
     expect(result).not.toContain("sk-ant");
-    expect(result).not.toContain("~/.sa/");
+    expect(result).not.toContain("~/.aria/");
   });
 });

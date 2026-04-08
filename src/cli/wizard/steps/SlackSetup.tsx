@@ -82,7 +82,7 @@ export function SlackSetup({ onNext, onBack, currentValues }: SlackSetupProps) {
     <Box flexDirection="column" padding={1}>
       <Text bold color="cyan">Slack Bot Setup (optional)</Text>
       <Text />
-      <Text>To use Esperta Base via Slack, create an app at api.slack.com/apps.</Text>
+      <Text>To use Esperta Aria via Slack, create an app at api.slack.com/apps.</Text>
       <Text>Enter the bot token (xoxb-...), or leave empty to skip.</Text>
       <Text />
       <Box>

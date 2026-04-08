@@ -17,8 +17,7 @@ const CONTEXT_INVISIBLE_CHARS = [
 ];
 
 const CONTEXT_PRIORITY = [
-  ".sa.md",
-  "SA.md",
+  ".aria.md",
   "AGENTS.md",
   "agents.md",
   "CLAUDE.md",

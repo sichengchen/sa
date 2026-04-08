@@ -1,5 +1,5 @@
 /**
- * Linear connector for Esperta Base — uses Chat SDK's Linear adapter.
+ * Linear connector for Esperta Aria — uses Chat SDK's Linear adapter.
  *
  * Handles mentions and reactions in Linear issues/comments.
  * Linear does not support streaming — responses are posted after completion.
@@ -20,12 +20,12 @@ export function createLinearConnector(options: LinearConnectorOptions = {}) {
     const missing = getMissingCredentials();
     throw new Error(
       `Linear connector requires: ${missing.join(", ")}. ` +
-      `Store them via \`esperta-base config\` or the \`sa config\` alias, or use the set_env_secret tool.`,
+      "Store them via `aria config` or use the set_env_secret tool.",
     );
   }
 
   const chat = new Chat({
-    userName: "esperta-base",
+    userName: "aria",
     adapters: {
       linear: createLinearAdapter(),
     },
@@ -55,7 +55,7 @@ export async function startLinearConnector(port = 3425): Promise<void> {
       if (url.pathname === "/api/webhooks/linear" && request.method === "POST") {
         return webhookHandler(request);
       }
-      return new Response("Esperta Base Linear Connector", { status: 200 });
+      return new Response("Esperta Aria Linear Connector", { status: 200 });
     },
   });
 

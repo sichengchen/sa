@@ -61,7 +61,7 @@ export function createNotifyTool(secrets: SecretsFile | null): ToolImpl {
           }
         } else if (target === "telegram") {
           return {
-            content: "Telegram not configured. Set bot token and paired chat ID via `esperta-base onboard` or `set_env_secret`.",
+            content: "Telegram not configured. Set bot token and paired chat ID via `aria onboard` or `set_env_secret`.",
             isError: true,
           };
         }
@@ -101,7 +101,7 @@ export function createNotifyTool(secrets: SecretsFile | null): ToolImpl {
       }
 
       if (results.length === 0 && errors.length === 0) {
-        return { content: "No connectors configured for notifications. Set up Telegram or Discord via `esperta-base onboard`." };
+        return { content: "No connectors configured for notifications. Set up Telegram or Discord via `aria onboard`." };
       }
 
       const parts: string[] = [];

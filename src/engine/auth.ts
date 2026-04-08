@@ -2,7 +2,7 @@ import { randomBytes, timingSafeEqual } from "node:crypto";
 import { writeFile, unlink } from "node:fs/promises";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { homedir } from "node:os";
+import { getRuntimeHome } from "@sa/shared/brand.js";
 
 const TOKEN_BYTES = 32;
 const DEFAULT_PAIRING_CODE_LENGTH = 8;
@@ -64,7 +64,7 @@ export class AuthManager {
   private pairingCodeLength: number;
 
   constructor(saHome?: string, securityConfig?: AuthSecurityConfig) {
-    this.saHome = saHome ?? process.env.SA_HOME ?? join(homedir(), ".sa");
+    this.saHome = saHome ?? getRuntimeHome();
     this.tokenFilePath = join(this.saHome, "engine.token");
     this.webhookTokenFilePath = join(this.saHome, "engine.webhook-token");
     this.sessionTTLMs = (securityConfig?.sessionTTL ?? 86400) * 1000;
@@ -135,7 +135,7 @@ export class AuthManager {
       return { success: false, error: `Too many failed pairing attempts. Try again in ${remaining}s.` };
     }
 
-    // Master token (local Connectors read from ~/.sa/engine.token)
+    // Master token (local connectors read from ~/.aria/engine.token)
     if (this.masterToken && safeCompare(credential, this.masterToken)) {
       const sessionToken = randomBytes(TOKEN_BYTES).toString("hex");
       this.pairedTokens.set(sessionToken, {
@@ -230,7 +230,7 @@ export class AuthManager {
 
   /** Read master token from file (used by Connectors) */
   static readTokenFromFile(saHome?: string): string | null {
-    const home = saHome ?? process.env.SA_HOME ?? join(homedir(), ".sa");
+    const home = saHome ?? getRuntimeHome();
     const path = join(home, "engine.token");
     if (!existsSync(path)) return null;
     return readFileSync(path, "utf-8").trim();

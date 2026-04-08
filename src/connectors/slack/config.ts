@@ -2,7 +2,7 @@
  * Slack connector configuration.
  *
  * Chat SDK auto-detects credentials from env vars.
- * Esperta Base stores them in secrets.enc via set_env_secret.
+ * Esperta Aria stores them in secrets.enc via set_env_secret.
  */
 
 /** Required env vars for Slack connector */

@@ -34,7 +34,7 @@ export interface HeartbeatConfig {
   enabled: boolean;
   /** Interval in minutes between heartbeat checks (default: 30) */
   intervalMinutes: number;
-  /** Path to the heartbeat checklist file relative to SA_HOME (default: "HEARTBEAT.md") */
+  /** Path to the heartbeat checklist file relative to ARIA_HOME (default: "HEARTBEAT.md") */
   checklistPath?: string;
   /** Token the agent returns to indicate nothing needs attention (default: "HEARTBEAT_OK") */
   suppressToken: string;
@@ -202,7 +202,7 @@ export interface RuntimeConfig {
     exec?: {
       /** Allowed working directories (default: ["~/projects", "/tmp"]) */
       fence?: string[];
-      /** Always-denied paths (default: ["~/.sa", "~/.ssh", "~/.gnupg", "~/.aws", "~/.config/gcloud"]) */
+      /** Always-denied paths (default: ["~/.aria", "~/.ssh", "~/.gnupg", "~/.aws", "~/.config/gcloud"]) */
       alwaysDeny?: string[];
     };
     /** Default security mode for new sessions */

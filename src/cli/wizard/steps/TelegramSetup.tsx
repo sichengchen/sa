@@ -129,7 +129,7 @@ export function TelegramSetup({ onNext, onBack, currentValues }: TelegramSetupPr
       </Text>
       <Text />
       <Text>
-        To use Esperta Base via Telegram, create a bot with @BotFather and enter the token.
+        To use Esperta Aria via Telegram, create a bot with @BotFather and enter the token.
       </Text>
       <Text>Leave empty to skip — you can set it up later.</Text>
       <Text />

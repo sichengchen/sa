@@ -13,15 +13,15 @@ export function Welcome({ onNext }: WelcomeProps) {
   return (
     <Box flexDirection="column" padding={1}>
       <Text bold color="cyan">
-        Welcome to Esperta Base
+        Welcome to Esperta Aria
       </Text>
       <Text />
       <Text>
-        Esperta Base is your personal AI agent assistant.
+        Esperta Aria is your local-first agent runtime.
       </Text>
       <Text />
       <Text>
-        Esperta Base runs as a background Engine with thin Connectors for TUI,
+        Aria Runtime runs in the background with thin connectors for TUI,
         Telegram, and Discord. This wizard will help you set up:
       </Text>
       <Text> 1. Agent identity and personality</Text>

@@ -31,14 +31,14 @@ describe("sanitizeEnv", () => {
     expect(env.USER).toBe("testuser");
   });
 
-  it("strips env vars starting with SA_", () => {
+  it("strips env vars starting with ARIA_", () => {
     const env = sanitizeEnv({
-      SA_HOME: "/home/.sa",
-      SA_DEBUG: "1",
+      ARIA_HOME: "/home/.aria",
+      ARIA_DEBUG: "1",
       EDITOR: "vim",
     });
-    expect(env.SA_HOME).toBeUndefined();
-    expect(env.SA_DEBUG).toBeUndefined();
+    expect(env.ARIA_HOME).toBeUndefined();
+    expect(env.ARIA_DEBUG).toBeUndefined();
     expect(env.EDITOR).toBe("vim");
   });
 

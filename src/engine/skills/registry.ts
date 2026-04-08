@@ -1,5 +1,4 @@
 import { join, dirname, resolve } from "node:path";
-import { homedir } from "node:os";
 import { existsSync } from "node:fs";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -7,6 +6,7 @@ import { scanSkillDirectory, loadSkillContent, parseEmbeddedSkills, loadEmbedded
 import { EMBEDDED_SKILLS } from "./embedded-skills.generated.js";
 import type { SkillMetadata, LoadedSkill } from "./types.js";
 import { isPathInside } from "../path-boundary.js";
+import { getRuntimeHome } from "@sa/shared/brand.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const BUNDLED_SKILLS_DIR = join(__dirname, "bundled");
@@ -18,7 +18,7 @@ export class SkillRegistry {
   /** Scan all skill directories and register metadata */
   async loadAll(saHome?: string): Promise<void> {
     this.skills.clear();
-    const home = saHome ?? process.env.SA_HOME ?? join(homedir(), ".sa");
+    const home = saHome ?? getRuntimeHome();
     const skillsDir = join(home, "skills");
 
     // Scan bundled skills — filesystem first, embedded fallback for single-binary builds

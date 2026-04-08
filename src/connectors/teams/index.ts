@@ -1,5 +1,5 @@
 /**
- * Microsoft Teams connector for Esperta Base — uses Chat SDK's Teams adapter.
+ * Microsoft Teams connector for Esperta Aria — uses Chat SDK's Teams adapter.
  */
 
 import { Chat } from "chat";
@@ -17,12 +17,12 @@ export function createTeamsConnector(options: TeamsConnectorOptions = {}) {
     const missing = getMissingCredentials();
     throw new Error(
       `Teams connector requires: ${missing.join(", ")}. ` +
-      `Store them via \`esperta-base config\` or the \`sa config\` alias, or use the set_env_secret tool.`,
+      "Store them via `aria config` or use the set_env_secret tool.",
     );
   }
 
   const chat = new Chat({
-    userName: "esperta-base",
+    userName: "aria",
     adapters: {
       teams: createTeamsAdapter(),
     },
@@ -53,7 +53,7 @@ export async function startTeamsConnector(port = 3421): Promise<void> {
       if (url.pathname === "/api/webhooks/teams" && request.method === "POST") {
         return webhookHandler(request);
       }
-      return new Response("Esperta Base Teams Connector", { status: 200 });
+      return new Response("Esperta Aria Teams Connector", { status: 200 });
     },
   });
 

@@ -1,10 +1,10 @@
 import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { homedir } from "node:os";
 import type { Identity, RuntimeConfig, SAConfig, SAConfigFile, SecretsFile } from "./types.js";
 import { DEFAULT_IDENTITY_MD, DEFAULT_CONFIG } from "./defaults.js";
 import { loadSecrets as _loadSecrets, saveSecrets as _saveSecrets } from "./secrets.js";
+import { PRODUCT_NAME, getRuntimeHome } from "@sa/shared/brand.js";
 
 export class ConfigManager {
   readonly homeDir: string;
@@ -12,7 +12,7 @@ export class ConfigManager {
   private configFile: SAConfigFile | null = null;
 
   constructor(homeDir?: string) {
-    this.homeDir = homeDir ?? process.env.SA_HOME ?? join(homedir(), ".sa");
+    this.homeDir = homeDir ?? getRuntimeHome();
   }
 
   async load(): Promise<SAConfig> {
@@ -159,7 +159,7 @@ export class ConfigManager {
 
 function parseIdentityMd(md: string): Identity {
   const nameMatch = md.match(/^#\s+(.+)/m);
-  const name = nameMatch ? nameMatch[1].trim() : "Esperta Base";
+  const name = nameMatch ? nameMatch[1].trim() : PRODUCT_NAME;
 
   const personalityMatch = md.match(
     /##\s+Personality\s*\n([\s\S]*?)(?=\n##|\n$|$)/
