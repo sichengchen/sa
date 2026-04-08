@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "sa",
+      "name": "aria",
       "dependencies": {
         "@chat-adapter/discord": "^4.15.0",
         "@chat-adapter/gchat": "^4.15.0",

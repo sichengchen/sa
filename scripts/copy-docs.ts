@@ -12,8 +12,6 @@ const SRC = join(ROOT, "docs");
 const DEST = join(ROOT, "src", "engine", "skills", "bundled", "aria", "docs");
 const LEGACY_DESTS = [
   join(ROOT, "src", "engine", "skills", "bundled", "aria", "specs"),
-  join(ROOT, "src", "engine", "skills", "bundled", "sa", "specs"),
-  join(ROOT, "src", "engine", "skills", "bundled", "sa", "docs"),
 ];
 
 if (!existsSync(SRC)) {
