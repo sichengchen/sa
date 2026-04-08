@@ -6,14 +6,14 @@ export function createMemoryReadTool(memory: MemoryManager): ToolImpl {
   return {
     name: "memory_read",
     description:
-      "Read the full content of a specific memory file by topic key or journal date.",
+      "Read the full content of a specific memory file by project memory key or journal date.",
     summary:
       "Read a memory entry by key or journal date. Use after memory_search to get full context.",
     dangerLevel: "safe",
     parameters: Type.Object({
       key: Type.String({
         description:
-          'Topic key (e.g. "user-preferences") or journal date (e.g. "2026-02-22")',
+          'Project memory key (e.g. "user-preferences") or journal date (e.g. "2026-02-22")',
       }),
       layer: Type.Optional(
         Type.Union([

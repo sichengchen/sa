@@ -6,9 +6,9 @@ export function createMemoryWriteTool(memory: MemoryManager): ToolImpl {
   return {
     name: "memory_write",
     description:
-      "Write to persistent memory. With a key: saves/updates a topic file. Without a key: appends to today's journal.",
+      "Write to persistent memory. With a key: saves or updates project memory. Without a key: appends to today's journal.",
     summary:
-      "Write to persistent memory — topic files (with key) or daily journal (without key).",
+      "Write to persistent memory — project memory (with key) or daily journal (without key).",
     dangerLevel: "safe",
     parameters: Type.Object({
       content: Type.String({
@@ -17,13 +17,13 @@ export function createMemoryWriteTool(memory: MemoryManager): ToolImpl {
       key: Type.Optional(
         Type.String({
           description:
-            "Topic key (e.g. 'user-preferences', 'project-context'). Omit to append to today's journal.",
+            "Project memory key (e.g. 'user-preferences', 'project-context'). Omit to append to today's journal.",
         }),
       ),
       type: Type.Optional(
-        Type.Union([Type.Literal("topic"), Type.Literal("journal")], {
+        Type.Union([Type.Literal("project"), Type.Literal("journal")], {
           description:
-            'Write target: "topic" (default if key provided) or "journal" (default if no key)',
+            'Write target: "project" (default if key provided) or "journal" (default if no key)',
         }),
       ),
       layer: Type.Optional(
@@ -41,7 +41,7 @@ export function createMemoryWriteTool(memory: MemoryManager): ToolImpl {
     async execute(args) {
       const content = args.content as string;
       const key = args.key as string | undefined;
-      const writeType = (args.type as string | undefined) ?? (key ? "topic" : "journal");
+      const writeType = (args.type as string | undefined) ?? (key ? "project" : "journal");
       const layer = args.layer as "profile" | "project" | "operational" | "journal" | undefined;
 
       try {
@@ -50,7 +50,7 @@ export function createMemoryWriteTool(memory: MemoryManager): ToolImpl {
           const date = new Date().toISOString().slice(0, 10);
           return { content: `Appended to journal: ${date}` };
         }
-        const resolvedLayer = layer ?? (writeType === "topic" ? "project" : "project");
+        const resolvedLayer = layer ?? "project";
         await memory.saveLayer(resolvedLayer, key, content);
         return {
           content: resolvedLayer === "project"

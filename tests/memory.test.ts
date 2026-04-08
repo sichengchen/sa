@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { MemoryManager } from "@sa/engine/memory/index.js";
+import { MemoryManager } from "@aria/engine/memory/index.js";
 import { writeFile, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -250,13 +250,12 @@ describe("MemoryManager — Journal", () => {
   });
 });
 
-describe("MemoryManager — Reindex and migration", () => {
-  test("reindex picks up externally created topic files", async () => {
+describe("MemoryManager — Reindex behavior", () => {
+  test("reindex picks up externally created project memory files", async () => {
     const mgr = new MemoryManager(testDir);
     await mgr.init();
 
-    // Create a topic file externally (simulating migration)
-    await writeFile(join(testDir, "topics", "external.md"), "Externally created memory file.");
+    await writeFile(join(testDir, "project", "external.md"), "Externally created memory file.");
     await mgr.reindex();
 
     const results = await mgr.searchIndex("externally created");

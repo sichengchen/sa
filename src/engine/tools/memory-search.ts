@@ -18,7 +18,6 @@ export function createMemorySearchTool(memory: MemoryManager): ToolImpl {
         Type.Union(
           [
             Type.Literal("all"),
-            Type.Literal("topics"),
             Type.Literal("project"),
             Type.Literal("profile"),
             Type.Literal("operational"),
@@ -38,9 +37,7 @@ export function createMemorySearchTool(memory: MemoryManager): ToolImpl {
     }),
     async execute(args) {
       const query = args.query as string;
-      // Map legacy "topics" → "project" for the internal API
-      const sourceRaw = (args.source as string | undefined) ?? "all";
-      const sourceType = sourceRaw === "topics" ? "project" : sourceRaw;
+      const sourceType = ((args.source as string | undefined) ?? "all");
       const limit = (args.limit as number | undefined) ?? 5;
 
       try {

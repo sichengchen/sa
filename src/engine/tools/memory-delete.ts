@@ -6,13 +6,13 @@ export function createMemoryDeleteTool(memory: MemoryManager): ToolImpl {
   return {
     name: "memory_delete",
     description:
-      "Delete a topic memory entry by key. Only works on topic files, not journal or MEMORY.md.",
+      "Delete a project memory entry by key. Only works on layer files, not journal or MEMORY.md.",
     summary:
-      "Delete a memory topic by key. Cannot delete journal entries or MEMORY.md.",
+      "Delete project or layered memory by key. Cannot delete journal entries or MEMORY.md.",
     dangerLevel: "safe",
     parameters: Type.Object({
       key: Type.String({
-        description: "The topic key to delete (e.g. 'user-preferences')",
+        description: "The project memory key to delete (e.g. 'user-preferences')",
       }),
       layer: Type.Optional(
         Type.Union([

@@ -23,7 +23,7 @@ afterEach(async () => {
 });
 
 describe("memory_write tool", () => {
-  it("saves topic with key", async () => {
+  it("saves project memory with key", async () => {
     const tool = createMemoryWriteTool(memory);
     const result = await tool.execute({ key: "greeting", content: "Hello world" });
     expect(result.content).toBe("Saved memory: greeting");
@@ -48,9 +48,9 @@ describe("memory_write tool", () => {
     expect(result.content).toContain("Appended to journal:");
   });
 
-  it("saves topic when key and type: topic provided", async () => {
+  it("saves project memory when key and type: project provided", async () => {
     const tool = createMemoryWriteTool(memory);
-    const result = await tool.execute({ key: "prefs", content: "Dark mode", type: "topic" });
+    const result = await tool.execute({ key: "prefs", content: "Dark mode", type: "project" });
     expect(result.content).toBe("Saved memory: prefs");
   });
 });
@@ -63,12 +63,12 @@ describe("memory_search tool", () => {
   });
 
   it("returns matching entries with source attribution", async () => {
-    await memory.save("project", "Esperta Base is a personal AI assistant");
+    await memory.save("project", "Esperta Aria is a local-first agent platform");
     await memory.save("unrelated", "weather forecast today");
     const tool = createMemorySearchTool(memory);
-    const result = await tool.execute({ query: "personal AI" });
+    const result = await tool.execute({ query: "local-first agent" });
     expect(result.content).toContain("project/project.md");
-    expect(result.content).toContain("Esperta Base is a personal AI assistant");
+    expect(result.content).toContain("Esperta Aria is a local-first agent platform");
     expect(result.content).toContain("score:");
   });
 
@@ -84,13 +84,13 @@ describe("memory_search tool", () => {
   });
 
   it("filters by source type", async () => {
-    await memory.save("topic-note", "Meeting notes about project");
+    await memory.save("project-note", "Meeting notes about project");
     await memory.appendJournal("Had a meeting about project X");
     const tool = createMemorySearchTool(memory);
 
-    const topicResult = await tool.execute({ query: "meeting", source: "topics" });
-    expect(topicResult.content).toContain("project/");
-    expect(topicResult.content).not.toContain("journal/");
+    const projectResult = await tool.execute({ query: "meeting", source: "project" });
+    expect(projectResult.content).toContain("project/");
+    expect(projectResult.content).not.toContain("journal/");
   });
 
   it("filters by explicit layered sources", async () => {
@@ -107,7 +107,7 @@ describe("memory_search tool", () => {
 });
 
 describe("memory_read tool", () => {
-  it("reads topic by key", async () => {
+  it("reads project memory by key", async () => {
     await memory.save("greeting", "Hello world");
     const tool = createMemoryReadTool(memory);
     const result = await tool.execute({ key: "greeting" });
@@ -121,7 +121,7 @@ describe("memory_read tool", () => {
     expect(result.content).toContain("Today's entry");
   });
 
-  it("returns not-found for missing topic", async () => {
+  it("returns not-found for missing project memory", async () => {
     const tool = createMemoryReadTool(memory);
     const result = await tool.execute({ key: "nonexistent" });
     expect(result.content).toBe("No memory found for key: nonexistent");
@@ -142,7 +142,7 @@ describe("memory_read tool", () => {
 });
 
 describe("memory_delete tool", () => {
-  it("deletes existing topic", async () => {
+  it("deletes existing project memory", async () => {
     await memory.save("temp", "temporary data");
     const tool = createMemoryDeleteTool(memory);
     const result = await tool.execute({ key: "temp" });

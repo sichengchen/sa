@@ -1,4 +1,4 @@
-import { readFile, writeFile, readdir, unlink, mkdir, stat, appendFile, rename } from "node:fs/promises";
+import { readFile, writeFile, readdir, unlink, mkdir, stat, appendFile } from "node:fs/promises";
 import { join, basename } from "node:path";
 import { existsSync } from "node:fs";
 import { Database } from "bun:sqlite";
@@ -9,8 +9,6 @@ const MAX_MEMORY_LINES = 200;
 const MAX_LAYER_ENTRIES = 8;
 const MAX_LAYER_ENTRY_CHARS = 400;
 const MAX_RETRIEVAL_SNIPPET_CHARS = 300;
-const LEGACY_TOPICS_DIR = "topics";
-
 const LAYER_DIRECTORY_MAP: Record<Exclude<MemoryLayer, "journal">, string> = {
   profile: "profile",
   project: "project",
@@ -109,7 +107,6 @@ export class MemoryManager {
   private memoryDir: string;
   private profileDir: string;
   private projectDir: string;
-  private legacyTopicsDir: string;
   private operationalDir: string;
   private journalDir: string;
   private db: Database | null = null;
@@ -127,7 +124,6 @@ export class MemoryManager {
     this.memoryDir = memoryDir;
     this.profileDir = join(memoryDir, LAYER_DIRECTORY_MAP.profile);
     this.projectDir = join(memoryDir, LAYER_DIRECTORY_MAP.project);
-    this.legacyTopicsDir = join(memoryDir, LEGACY_TOPICS_DIR);
     this.operationalDir = join(memoryDir, LAYER_DIRECTORY_MAP.operational);
     this.journalDir = join(memoryDir, "journal");
   }
@@ -138,8 +134,6 @@ export class MemoryManager {
     await mkdir(this.projectDir, { recursive: true });
     await mkdir(this.operationalDir, { recursive: true });
     await mkdir(this.journalDir, { recursive: true });
-    await mkdir(this.legacyTopicsDir, { recursive: true });
-    await this.migrateLegacyTopics();
 
     const mainPath = join(this.memoryDir, "MEMORY.md");
     if (!existsSync(mainPath)) {
@@ -222,7 +216,7 @@ export class MemoryManager {
     return sections.join("\n\n");
   }
 
-  /** Save or update a topic memory entry. Writes to topics/<key>.md and updates index. */
+  /** Save or update a project memory entry. Writes to project/<key>.md and updates index. */
   async save(key: string, content: string): Promise<void> {
     await this.saveLayer("project", key, content);
   }
@@ -334,7 +328,7 @@ export class MemoryManager {
     return this.applyTemporalDecay(merged.slice(0, maxResults));
   }
 
-  /** Read a specific memory entry by topic key */
+  /** Read a specific memory entry by project memory key */
   async get(key: string): Promise<string | null> {
     return this.getLayer("project", key);
   }
@@ -346,7 +340,7 @@ export class MemoryManager {
     return readFile(filePath, "utf-8");
   }
 
-  /** Delete a memory entry by topic key */
+  /** Delete a memory entry by project memory key */
   async delete(key: string): Promise<boolean> {
     return this.deleteLayer("project", key);
   }
@@ -361,7 +355,7 @@ export class MemoryManager {
     return true;
   }
 
-  /** List all topic memory keys */
+  /** List all project memory keys */
   async list(): Promise<string[]> {
     return this.listLayer("project");
   }
@@ -465,7 +459,6 @@ export class MemoryManager {
   /** Full re-index of all memory files. Clears stale entries, indexes all current files. */
   async reindex(): Promise<void> {
     if (!this.db) return;
-    await this.migrateLegacyTopics();
 
     // Collect all current sources from filesystem
     const currentSources = new Map<string, { type: SearchResult["sourceType"]; path: string }>();
@@ -476,7 +469,7 @@ export class MemoryManager {
       currentSources.set("MEMORY.md", { type: "memory", path: mainPath });
     }
 
-    // topics/
+    // layer-backed memory files
     for (const [layer, dirName] of Object.entries(LAYER_DIRECTORY_MAP) as Array<[Exclude<MemoryLayer, "journal">, string]>) {
       const fullDir = join(this.memoryDir, dirName);
       if (!existsSync(fullDir)) continue;
@@ -856,22 +849,5 @@ export class MemoryManager {
     }
 
     return snippets.length > 0 ? `## ${title}\n${snippets.join("\n")}` : "";
-  }
-
-  private async migrateLegacyTopics(): Promise<void> {
-    if (!existsSync(this.legacyTopicsDir)) {
-      return;
-    }
-
-    const files = await readdir(this.legacyTopicsDir);
-    for (const file of files) {
-      if (!file.endsWith(".md")) continue;
-      const source = join(this.legacyTopicsDir, file);
-      const destination = join(this.projectDir, file);
-      if (existsSync(destination)) {
-        continue;
-      }
-      await rename(source, destination);
-    }
   }
 }

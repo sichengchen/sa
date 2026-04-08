@@ -16,11 +16,11 @@ import { LinearSetup, type LinearSetupData } from "./steps/LinearSetup.js";
 import { SkillSetup, type SkillSetupData } from "./steps/SkillSetup.js";
 import { UserProfile, type UserProfileData } from "./steps/UserProfile.js";
 import { Confirm, type WizardData } from "./steps/Confirm.js";
-import { saveSecrets } from "@sa/engine/config/secrets.js";
-import { BUNDLED_SKILLS_DIR } from "@sa/engine/skills/registry.js";
-import { EMBEDDED_SKILLS } from "@sa/engine/skills/embedded-skills.generated.js";
-import type { ModelConfig, ProviderConfig } from "@sa/engine/router/types.js";
-import type { ModelTier } from "@sa/engine/router/task-types.js";
+import { saveSecrets } from "@aria/engine/config/secrets.js";
+import { BUNDLED_SKILLS_DIR } from "@aria/engine/skills/registry.js";
+import { EMBEDDED_SKILLS } from "@aria/engine/skills/embedded-skills.generated.js";
+import type { ModelConfig, ProviderConfig } from "@aria/engine/router/types.js";
+import type { ModelTier } from "@aria/engine/router/task-types.js";
 
 type Step = "welcome" | "identity" | "profile" | "model" | "telegram" | "discord" | "slack" | "teams" | "gchat" | "github" | "linear" | "skills" | "confirm" | "done";
 
@@ -68,7 +68,7 @@ export function Wizard({ homeDir, onComplete, existingConfig }: WizardProps) {
   const handleConfirm = useCallback(async () => {
     try {
       await mkdir(homeDir, { recursive: true });
-      await mkdir(join(homeDir, "memory", "topics"), { recursive: true });
+      await mkdir(join(homeDir, "memory", "project"), { recursive: true });
       await mkdir(join(homeDir, "memory", "journal"), { recursive: true });
 
       // Write IDENTITY.md

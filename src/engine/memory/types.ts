@@ -9,7 +9,7 @@ export type MemoryLayer = "profile" | "project" | "operational" | "journal";
 
 /** A ranked search result from the memory index. */
 export interface SearchResult {
-  /** File path relative to memory dir (e.g. "topics/user-address.md") */
+  /** File path relative to memory dir (e.g. "project/user-address.md") */
   source: string;
   /** Source classification */
   sourceType: "memory" | "profile" | "project" | "operational" | "journal";
