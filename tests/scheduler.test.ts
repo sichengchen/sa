@@ -319,7 +319,7 @@ describe("Scheduler", () => {
 });
 
 describe("createHeartbeatTask", () => {
-  const testHome = join(tmpdir(), "sa-test-heartbeat-" + Date.now());
+  const testHome = join(tmpdir(), "aria-test-heartbeat-" + Date.now());
 
   beforeEach(async () => {
     await mkdir(testHome, { recursive: true });

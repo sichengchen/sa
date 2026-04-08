@@ -8,7 +8,7 @@ import { SessionManager } from "@aria/engine/sessions.js";
 let testDir: string;
 
 beforeEach(async () => {
-  testDir = await mkdtemp(join(tmpdir(), "sa-cron-test-"));
+  testDir = await mkdtemp(join(tmpdir(), "aria-cron-test-"));
 });
 
 afterEach(async () => {

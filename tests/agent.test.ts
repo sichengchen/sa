@@ -10,7 +10,7 @@ import { tmpdir } from "node:os";
 // Mock the stream module
 import * as streamModule from "@mariozechner/pi-ai";
 
-const testDir = join(tmpdir(), "sa-test-agent-" + Date.now());
+const testDir = join(tmpdir(), "aria-test-agent-" + Date.now());
 
 function setupRouter(): ModelRouter {
   return ModelRouter.fromConfig({

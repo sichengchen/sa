@@ -10,7 +10,7 @@ describe("AuthManager", () => {
   let auth: AuthManager;
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "sa-auth-test-"));
+    dir = await mkdtemp(join(tmpdir(), "aria-auth-test-"));
     auth = new AuthManager(dir);
     await auth.init();
   });

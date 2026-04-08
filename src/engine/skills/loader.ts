@@ -5,7 +5,7 @@ import type { SkillMetadata } from "./types.js";
 
 /**
  * In-memory cache for embedded skill content.
- * Keys are "embedded:<skillName>/<relativePath>" (e.g. "embedded:sa/SKILL.md").
+ * Keys are "embedded:<skillName>/<relativePath>" (e.g. "embedded:aria/SKILL.md").
  * Values are file content (full content for non-SKILL.md, body-only for SKILL.md).
  */
 const embeddedContentCache = new Map<string, string>();

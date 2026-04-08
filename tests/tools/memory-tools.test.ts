@@ -12,7 +12,7 @@ let tmpDir: string;
 let memory: MemoryManager;
 
 beforeEach(async () => {
-  tmpDir = await mkdtemp(join(tmpdir(), "sa-memory-tools-test-"));
+  tmpDir = await mkdtemp(join(tmpdir(), "aria-memory-tools-test-"));
   memory = new MemoryManager(tmpDir);
   await memory.init();
 });

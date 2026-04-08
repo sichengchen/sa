@@ -4,7 +4,7 @@ import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-const testDir = join(tmpdir(), "sa-integration-memory-" + Date.now());
+const testDir = join(tmpdir(), "aria-integration-memory-" + Date.now());
 
 afterEach(async () => {
   await rm(testDir, { recursive: true, force: true });

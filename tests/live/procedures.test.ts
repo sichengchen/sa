@@ -118,7 +118,7 @@ async function createLiveTestRuntime(runtimeHome: string): Promise<EngineRuntime
 
 describeLive("tRPC procedures — live LLM tests", () => {
   beforeEach(async () => {
-    testDir = await mkdtemp(join(tmpdir(), "sa-live-procedures-test-"));
+    testDir = await mkdtemp(join(tmpdir(), "aria-live-procedures-test-"));
     runtime = await createLiveTestRuntime(testDir);
     masterToken = runtime.auth.getMasterToken();
   });

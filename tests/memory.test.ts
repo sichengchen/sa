@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
 
-const testDir = join(tmpdir(), "sa-test-memory-" + Date.now());
+const testDir = join(tmpdir(), "aria-test-memory-" + Date.now());
 
 beforeEach(async () => {
   await rm(testDir, { recursive: true, force: true });

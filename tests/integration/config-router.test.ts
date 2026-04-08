@@ -5,7 +5,7 @@ import { rm, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-const testHome = join(tmpdir(), "sa-integration-config-" + Date.now());
+const testHome = join(tmpdir(), "aria-integration-config-" + Date.now());
 
 beforeEach(async () => {
   await rm(testHome, { recursive: true, force: true });

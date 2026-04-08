@@ -84,7 +84,7 @@ describe("maskPaths", () => {
   });
 
   it("does not mask unrelated paths", () => {
-    const text = "/usr/local/bin/sa";
+    const text = "/usr/local/bin/aria";
     expect(maskPaths(text)).toBe(text);
   });
 });

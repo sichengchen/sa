@@ -10,7 +10,7 @@ describe("SessionArchiveManager", () => {
   let archive: SessionArchiveManager;
 
   beforeEach(async () => {
-    homeDir = await mkdtemp(join(tmpdir(), "sa-session-archive-test-"));
+    homeDir = await mkdtemp(join(tmpdir(), "aria-session-archive-test-"));
     archive = new SessionArchiveManager(homeDir);
     await archive.init();
   });

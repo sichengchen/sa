@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { readFileSync } from "node:fs";
 
-const testDir = join(tmpdir(), "sa-test-tools-" + Date.now());
+const testDir = join(tmpdir(), "aria-test-tools-" + Date.now());
 
 beforeEach(async () => {
   await mkdir(testDir, { recursive: true });

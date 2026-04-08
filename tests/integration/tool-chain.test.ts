@@ -7,7 +7,7 @@ import { rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-const testDir = join(tmpdir(), "sa-integration-tools-" + Date.now());
+const testDir = join(tmpdir(), "aria-integration-tools-" + Date.now());
 
 beforeEach(async () => {
   await mkdir(testDir, { recursive: true });

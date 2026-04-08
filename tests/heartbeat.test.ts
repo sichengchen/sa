@@ -10,7 +10,7 @@ import { SessionManager } from "@aria/engine/sessions.js";
 let testDir: string;
 
 beforeEach(async () => {
-  testDir = await mkdtemp(join(tmpdir(), "sa-heartbeat-test-"));
+  testDir = await mkdtemp(join(tmpdir(), "aria-heartbeat-test-"));
   // Reset heartbeat state
   heartbeatState.lastResult = null;
   heartbeatState.config = { ...DEFAULT_HEARTBEAT };

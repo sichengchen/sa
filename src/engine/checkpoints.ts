@@ -142,7 +142,7 @@ export class CheckpointManager {
     if (!init.ok) {
       throw new Error(init.stderr || "git init failed");
     }
-    this.runGit(["config", "user.email", "sa@local"], shadowRepo, workingDir);
+    this.runGit(["config", "user.email", "aria@local"], shadowRepo, workingDir);
     this.runGit(["config", "user.name", "Aria Checkpoint"], shadowRepo, workingDir);
     await mkdir(resolve(shadowRepo, "info"), { recursive: true });
     await writeFile(resolve(shadowRepo, "info", "exclude"), DEFAULT_EXCLUDES.join("\n") + "\n");

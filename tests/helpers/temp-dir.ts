@@ -20,7 +20,7 @@ export function withTempDir(fn: (getDir: () => string) => void): void {
   let dir = "";
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "sa-test-"));
+    dir = await mkdtemp(join(tmpdir(), "aria-test-"));
   });
 
   afterEach(async () => {

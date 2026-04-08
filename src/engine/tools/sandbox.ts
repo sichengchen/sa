@@ -118,7 +118,7 @@ export class SeatbeltSandbox implements Sandbox {
     const profile = generateSeatbeltProfile(opts);
 
     // Write profile to temp file
-    this.tempDir = mkdtempSync(join(tmpdir(), "sa-sandbox-"));
+    this.tempDir = mkdtempSync(join(tmpdir(), "aria-sandbox-"));
     this.profilePath = join(this.tempDir, "profile.sb");
     writeFileSync(this.profilePath, profile);
 

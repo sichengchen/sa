@@ -12,7 +12,7 @@ import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-const testHome = join(tmpdir(), "sa-e2e-smoke-" + Date.now());
+const testHome = join(tmpdir(), "aria-e2e-smoke-" + Date.now());
 
 afterEach(async () => {
   await rm(testHome, { recursive: true, force: true });
@@ -107,12 +107,12 @@ describe("E2E smoke test", () => {
   test("config persistence across manager instances", async () => {
     // First instance creates defaults
     const config1 = new ConfigManager(testHome);
-    const saConfig1 = await config1.load();
+    const ariaConfig1 = await config1.load();
     await config1.setConfig("activeModel", "custom-model");
 
     // Second instance loads persisted config
     const config2 = new ConfigManager(testHome);
-    const saConfig2 = await config2.load();
-    expect(saConfig2.runtime.activeModel).toBe("custom-model");
+    const ariaConfig2 = await config2.load();
+    expect(ariaConfig2.runtime.activeModel).toBe("custom-model");
   });
 });

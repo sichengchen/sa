@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
 
-const testHome = join(tmpdir(), "sa-test-auth-" + Date.now());
+const testHome = join(tmpdir(), "aria-test-auth-" + Date.now());
 
 beforeEach(async () => {
   await mkdir(testHome, { recursive: true });

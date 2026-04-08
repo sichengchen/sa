@@ -56,9 +56,9 @@ describe("Webhook prompt interpolation", () => {
   test("replaces {{payload}} with JSON body", () => {
     const result = interpolatePrompt(
       "Process this event: {{payload}}",
-      '{"event":"push","repo":"sa"}',
+      '{"event":"push","repo":"aria"}',
     );
-    expect(result).toBe('Process this event: {"event":"push","repo":"sa"}');
+    expect(result).toBe('Process this event: {"event":"push","repo":"aria"}');
   });
 
   test("replaces multiple occurrences", () => {

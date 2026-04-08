@@ -142,7 +142,7 @@ async function createTestRuntime(runtimeHome: string): Promise<EngineRuntime> {
 }
 
 beforeEach(async () => {
-  testDir = await mkdtemp(join(tmpdir(), "sa-procedures-test-"));
+  testDir = await mkdtemp(join(tmpdir(), "aria-procedures-test-"));
   runtime = await createTestRuntime(testDir);
   masterToken = runtime.auth.getMasterToken();
 });

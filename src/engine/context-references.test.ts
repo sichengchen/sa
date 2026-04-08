@@ -7,7 +7,7 @@ import { parseContextReferences, preprocessContextReferences } from "./context-r
 let workspaceDir: string;
 
 beforeEach(async () => {
-  workspaceDir = await mkdtemp(join(tmpdir(), "sa-context-refs-"));
+  workspaceDir = await mkdtemp(join(tmpdir(), "aria-context-refs-"));
 });
 
 afterEach(async () => {
@@ -55,7 +55,7 @@ describe("preprocessContextReferences", () => {
   });
 
   test("warns when a file reference escapes the active workspace", async () => {
-    const outsideDir = await mkdtemp(join(tmpdir(), "sa-context-refs-outside-"));
+    const outsideDir = await mkdtemp(join(tmpdir(), "aria-context-refs-outside-"));
     try {
       const outsideFile = join(outsideDir, "secret.txt");
       await writeFile(outsideFile, "top secret\n");
