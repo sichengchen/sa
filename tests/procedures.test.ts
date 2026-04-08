@@ -90,6 +90,10 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
     checkpoints,
     mcp,
     tools: [],
+    promptEngine: {
+      buildBasePrompt: async () => "Test agent.",
+      buildSessionPrompt: async () => "Test agent.",
+    } as any,
     systemPrompt: "Test agent.",
     sessions,
     auth,
@@ -308,7 +312,7 @@ describe("tRPC procedures (non-live)", () => {
       const caller = createCaller();
 
       const toolsets = await caller.toolset.list();
-      expect(toolsets.some((toolset) => toolset.name === "file")).toBe(true);
+      expect(toolsets.some((toolset) => toolset.name === "files")).toBe(true);
       expect(toolsets.some((toolset) => toolset.name === "delegation")).toBe(true);
 
       const servers = await caller.mcp.listServers();

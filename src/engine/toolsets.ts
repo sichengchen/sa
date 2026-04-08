@@ -4,53 +4,75 @@ export interface ToolsetDefinition {
   name: string;
   description: string;
   tools: string[];
+  executionEnvironment?: "local" | "connector" | "hybrid" | "mcp";
+  approvalPolicy?: "mostly_safe" | "mixed" | "operator_gated" | "connector_gated";
+  auditDomain?: string;
 }
 
 const BUILTIN_TOOLSET_DEFINITIONS: ToolsetDefinition[] = [
   {
-    name: "file",
+    name: "files",
     description: "Read and modify files in the local workspace.",
     tools: ["read", "write", "edit"],
+    executionEnvironment: "local",
+    approvalPolicy: "mixed",
+    auditDomain: "filesystem",
   },
   {
-    name: "exec",
+    name: "terminal",
     description: "Run local shell commands and manage background processes.",
-    tools: ["exec", "exec_status", "exec_kill"],
+    tools: ["exec", "exec_status", "exec_kill", "set_env_secret", "set_env_variable"],
+    executionEnvironment: "local",
+    approvalPolicy: "operator_gated",
+    auditDomain: "terminal",
   },
   {
     name: "web",
     description: "Fetch URLs and run web searches.",
     tools: ["web_fetch", "web_search"],
+    executionEnvironment: "hybrid",
+    approvalPolicy: "mostly_safe",
+    auditDomain: "web",
   },
   {
     name: "memory",
     description: "Read, search, write, and delete persistent memory.",
     tools: ["memory_search", "memory_read", "memory_write", "memory_delete"],
+    executionEnvironment: "local",
+    approvalPolicy: "mixed",
+    auditDomain: "memory",
   },
   {
     name: "skills",
     description: "Read and manage reusable skills.",
     tools: ["read_skill", "skill_manage"],
+    executionEnvironment: "local",
+    approvalPolicy: "mixed",
+    auditDomain: "skills",
   },
   {
-    name: "env",
-    description: "Manage environment variables and encrypted secrets.",
-    tools: ["set_env_secret", "set_env_variable"],
-  },
-  {
-    name: "notify",
-    description: "Notify users or react in chat connectors.",
-    tools: ["notify", "reaction"],
+    name: "communication",
+    description: "Notify users, react in connectors, and ask follow-up questions.",
+    tools: ["notify", "reaction", "ask_user"],
+    executionEnvironment: "connector",
+    approvalPolicy: "connector_gated",
+    auditDomain: "communication",
   },
   {
     name: "delegation",
-    description: "Delegate work to sub-agents or coding agents.",
-    tools: ["delegate", "delegate_status", "claude_code", "codex"],
+    description: "Delegate work to sub-agents and inspect delegated execution.",
+    tools: ["delegate", "delegate_status"],
+    executionEnvironment: "hybrid",
+    approvalPolicy: "operator_gated",
+    auditDomain: "delegation",
   },
   {
-    name: "interaction",
-    description: "Ask the user clarifying questions.",
-    tools: ["ask_user"],
+    name: "coding",
+    description: "Use external coding agents for implementation assistance.",
+    tools: ["claude_code", "codex"],
+    executionEnvironment: "local",
+    approvalPolicy: "operator_gated",
+    auditDomain: "coding",
   },
 ];
 
@@ -93,6 +115,9 @@ export function buildDynamicToolsets(tools: ToolImpl[]): ToolsetDefinition[] {
     name: `mcp:${serverName}`,
     description: `External MCP tools provided by server "${serverName}".`,
     tools: toolNames.sort(),
+    executionEnvironment: "mcp",
+    approvalPolicy: "operator_gated",
+    auditDomain: "mcp",
   }));
 }
 
