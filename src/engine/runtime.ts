@@ -244,7 +244,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
   }
 
   const sessions = new SessionManager(store);
-  const auth = new AuthManager(runtimeHome, ariaConfig.runtime.security);
+  const auth = new AuthManager(runtimeHome, ariaConfig.runtime.security, store);
   await auth.init();
   const audit = new AuditLogger(runtimeHome);
   const securityMode = new SecurityModeManager(ariaConfig.runtime.security);

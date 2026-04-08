@@ -138,7 +138,7 @@ describe("PromptEngine", () => {
 
     await promptEngine.buildBasePrompt();
 
-    const db = new Database(join(testDir, "aria.sqlite"), { readonly: true });
+    const db = new Database(join(testDir, "aria.db"), { readonly: true });
     const row = db
       .prepare("SELECT COUNT(*) AS count FROM prompt_cache")
       .get() as { count: number };

@@ -92,7 +92,7 @@ describe("OperationalStore", () => {
     await reopened.init();
     reopened.close();
 
-    const db = new Database(join(testDir, "aria.sqlite"), { readonly: true });
+    const db = new Database(join(testDir, "aria.db"), { readonly: true });
     const run = db
       .prepare("SELECT status, error_message FROM runs WHERE run_id = ?")
       .get("run-1") as { status: string; error_message: string };
@@ -162,7 +162,7 @@ describe("OperationalStore", () => {
     });
     store.close();
 
-    const db = new Database(join(testDir, "aria.sqlite"), { readonly: true });
+    const db = new Database(join(testDir, "aria.db"), { readonly: true });
     const run = db
       .prepare("SELECT status, stop_reason FROM runs WHERE run_id = ?")
       .get("run-2") as { status: string; stop_reason: string };
@@ -332,7 +332,7 @@ describe("OperationalStore", () => {
     expect(store.listSessions().some((session) => session.id === "tui:durable-session")).toBe(false);
     store.close();
 
-    const db = new Database(join(testDir, "aria.sqlite"), { readonly: true });
+    const db = new Database(join(testDir, "aria.db"), { readonly: true });
     const sessionRow = db
       .prepare("SELECT destroyed_at FROM sessions WHERE session_id = ?")
       .get("tui:durable-session") as { destroyed_at: number };
@@ -420,6 +420,41 @@ describe("OperationalStore", () => {
         errorMessage: null,
       },
     ]);
+
+    reopened.close();
+  });
+
+  test("persists hashed auth session tokens and pairing codes", async () => {
+    const store = new OperationalStore(testDir);
+    await store.init();
+    const now = Date.now();
+
+    store.upsertAuthSessionToken({
+      tokenHash: "token-hash-1",
+      connectorId: "telegram:123",
+      connectorType: "telegram",
+      pairedAt: now,
+      ttlMs: 60_000,
+    });
+    store.replacePairingCode({
+      codeHash: "pairing-hash-1",
+      createdAt: now,
+      expiresAt: now + 60_000,
+    });
+    store.close();
+
+    const reopened = new OperationalStore(testDir);
+    await reopened.init();
+
+    expect(reopened.getAuthSessionToken("token-hash-1", now + 500)).toEqual({
+      tokenHash: "token-hash-1",
+      connectorId: "telegram:123",
+      connectorType: "telegram",
+      pairedAt: now,
+      ttlMs: 60_000,
+    });
+    expect(reopened.consumePairingCode("pairing-hash-1", now + 500)).toBe("ok");
+    expect(reopened.consumePairingCode("pairing-hash-1", now + 501)).toBe("missing");
 
     reopened.close();
   });

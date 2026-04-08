@@ -52,6 +52,14 @@ export interface PromptCacheRecord {
   updatedAt: number;
 }
 
+export interface AuthSessionTokenRecord {
+  tokenHash: string;
+  connectorId: string;
+  connectorType: string;
+  pairedAt: number;
+  ttlMs: number;
+}
+
 export interface AutomationTaskRecord {
   taskId: string;
   taskType: AutomationTaskType;
@@ -170,6 +178,21 @@ CREATE TABLE IF NOT EXISTS session_mcp_servers (
   PRIMARY KEY (session_id, server_name)
 );
 
+CREATE TABLE IF NOT EXISTS auth_session_tokens (
+  token_hash TEXT PRIMARY KEY,
+  connector_id TEXT NOT NULL,
+  connector_type TEXT NOT NULL,
+  paired_at INTEGER NOT NULL,
+  ttl_ms INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS auth_pairing_codes (
+  code_hash TEXT PRIMARY KEY,
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  consumed_at INTEGER
+);
+
 CREATE TABLE IF NOT EXISTS automation_tasks (
   task_id TEXT PRIMARY KEY,
   task_type TEXT NOT NULL,
@@ -214,6 +237,8 @@ CREATE INDEX IF NOT EXISTS idx_approvals_session_created ON approvals(session_id
 CREATE INDEX IF NOT EXISTS idx_session_summaries_updated ON session_summaries(updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_prompt_cache_scope_updated ON prompt_cache(scope, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_session_mcp_servers_updated ON session_mcp_servers(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_auth_session_tokens_paired ON auth_session_tokens(paired_at DESC);
+CREATE INDEX IF NOT EXISTS idx_auth_pairing_codes_expires ON auth_pairing_codes(expires_at DESC);
 CREATE INDEX IF NOT EXISTS idx_automation_tasks_type_name ON automation_tasks(task_type, name);
 CREATE INDEX IF NOT EXISTS idx_automation_runs_task_started ON automation_runs(task_id, started_at DESC);
 `;
@@ -238,7 +263,7 @@ export class OperationalStore {
   private db: Database | null = null;
 
   constructor(homeDir: string) {
-    this.dbPath = join(homeDir, "aria.sqlite");
+    this.dbPath = join(homeDir, "aria.db");
   }
 
   async init(): Promise<void> {
@@ -249,6 +274,7 @@ export class OperationalStore {
     this.db.exec(SCHEMA_SQL);
     this.ensureColumn("sessions", "destroyed_at", "INTEGER");
     this.markInterruptedState();
+    this.pruneAuthState();
   }
 
   close(): void {
@@ -304,6 +330,20 @@ export class OperationalStore {
           completed_at = COALESCE(completed_at, ?),
           error_message = COALESCE(error_message, 'Runtime restarted before automation run completion')
       WHERE status = 'running'
+    `).run(now);
+  }
+
+  pruneAuthState(now = Date.now()): void {
+    const db = this.getDb();
+    db.prepare(`
+      DELETE FROM auth_session_tokens
+      WHERE ttl_ms > 0
+        AND paired_at + ttl_ms <= ?
+    `).run(now);
+    db.prepare(`
+      DELETE FROM auth_pairing_codes
+      WHERE consumed_at IS NOT NULL
+         OR expires_at <= ?
     `).run(now);
   }
 
@@ -739,6 +779,120 @@ export class OperationalStore {
         input.metadata ? JSON.stringify(input.metadata) : null,
         input.updatedAt ?? Date.now(),
       );
+  }
+
+  upsertAuthSessionToken(input: {
+    tokenHash: string;
+    connectorId: string;
+    connectorType: string;
+    pairedAt?: number;
+    ttlMs: number;
+  }): void {
+    this.getDb()
+      .prepare(`
+        INSERT INTO auth_session_tokens (
+          token_hash, connector_id, connector_type, paired_at, ttl_ms
+        ) VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(token_hash) DO UPDATE SET
+          connector_id = excluded.connector_id,
+          connector_type = excluded.connector_type,
+          paired_at = excluded.paired_at,
+          ttl_ms = excluded.ttl_ms
+      `)
+      .run(
+        input.tokenHash,
+        input.connectorId,
+        input.connectorType,
+        input.pairedAt ?? Date.now(),
+        input.ttlMs,
+      );
+  }
+
+  getAuthSessionToken(tokenHash: string, now = Date.now()): AuthSessionTokenRecord | undefined {
+    const row = this.getDb()
+      .prepare(`
+        SELECT token_hash, connector_id, connector_type, paired_at, ttl_ms
+        FROM auth_session_tokens
+        WHERE token_hash = ?
+      `)
+      .get(tokenHash) as Record<string, unknown> | undefined;
+
+    if (!row) return undefined;
+
+    const ttlMs = Number(row.ttl_ms);
+    const pairedAt = Number(row.paired_at);
+    if (ttlMs > 0 && pairedAt + ttlMs <= now) {
+      this.deleteAuthSessionToken(tokenHash);
+      return undefined;
+    }
+
+    return {
+      tokenHash: String(row.token_hash),
+      connectorId: String(row.connector_id),
+      connectorType: String(row.connector_type),
+      pairedAt,
+      ttlMs,
+    };
+  }
+
+  deleteAuthSessionToken(tokenHash: string): boolean {
+    const result = this.getDb()
+      .prepare("DELETE FROM auth_session_tokens WHERE token_hash = ?")
+      .run(tokenHash);
+    return result.changes > 0;
+  }
+
+  replacePairingCode(input: {
+    codeHash: string;
+    createdAt?: number;
+    expiresAt: number;
+  }): void {
+    const createdAt = input.createdAt ?? Date.now();
+    const db = this.getDb();
+    const tx = db.transaction(() => {
+      db.prepare("DELETE FROM auth_pairing_codes").run();
+      db.prepare(`
+        INSERT INTO auth_pairing_codes (
+          code_hash, created_at, expires_at, consumed_at
+        ) VALUES (?, ?, ?, NULL)
+      `).run(input.codeHash, createdAt, input.expiresAt);
+    });
+    tx();
+  }
+
+  consumePairingCode(codeHash: string, now = Date.now()): "ok" | "expired" | "missing" {
+    const row = this.getDb()
+      .prepare(`
+        SELECT code_hash, expires_at, consumed_at
+        FROM auth_pairing_codes
+        WHERE code_hash = ?
+      `)
+      .get(codeHash) as Record<string, unknown> | undefined;
+
+    if (!row) {
+      return "missing";
+    }
+
+    if (row.consumed_at != null) {
+      this.getDb().prepare("DELETE FROM auth_pairing_codes WHERE code_hash = ?").run(codeHash);
+      return "missing";
+    }
+
+    if (Number(row.expires_at) <= now) {
+      this.getDb().prepare("DELETE FROM auth_pairing_codes WHERE code_hash = ?").run(codeHash);
+      return "expired";
+    }
+
+    this.getDb()
+      .prepare(`
+        UPDATE auth_pairing_codes
+        SET consumed_at = ?
+        WHERE code_hash = ?
+          AND consumed_at IS NULL
+      `)
+      .run(now, codeHash);
+    this.pruneAuthState(now);
+    return "ok";
   }
 
   getSessionMcpServerEnabled(sessionId: string, serverName: string): boolean | undefined {
