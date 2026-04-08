@@ -58,7 +58,7 @@ Durable automation inspection for task state and recent runs.
 | Subcommand | Description |
 |---|---|
 | `list` | Show heartbeat, cron, and webhook tasks with status and next run |
-| `runs [task]` | Show recent automation executions, optionally filtered by task ID, name, or slug |
+| `runs [task]` | Show recent automation executions, including retry attempts and delivery status |
 
 ### `aria memory`
 
@@ -97,7 +97,7 @@ When chatting in the TUI:
 | `/search <query>` | Search archived session transcripts and summaries, then print matching session IDs in the TUI |
 | `/history <id>` | Show the transcript for a live session or an archived session without switching the active chat |
 | `/automation` | Show durable automation tasks and their current status |
-| `/runs [task]` | Show recent automation executions, optionally filtered to one task |
+| `/runs [task]` | Show recent automation executions, including retry attempts and delivery status |
 | `/approvals [all]` | Show pending approval requests for the current session or globally |
 | `/memory` | Inspect layered memory, read specific entries, or search memory |
 | `/audit [all|N]` | Inspect recent audit entries for the current session or globally |

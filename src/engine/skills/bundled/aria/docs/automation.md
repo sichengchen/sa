@@ -2,7 +2,7 @@
 
 ## Overview
 
-Esperta Aria supports three automation mechanisms: **heartbeat**, **cron**, and **webhook tasks**. All log results to `~/.aria/automation/`. Config lives in `config.json` under `runtime.heartbeat` and `runtime.automation`. Tasks persist across engine restarts and now track run metadata (`lastRunAt`, `nextRunAt`, `lastStatus`, `lastSummary`).
+Esperta Aria supports three automation mechanisms: **heartbeat**, **cron**, and **webhook tasks**. All log results to `~/.aria/automation/`. Config lives in `config.json` under `runtime.heartbeat` and `runtime.automation`. Tasks persist across engine restarts and now track run metadata (`lastRunAt`, `nextRunAt`, `lastStatus`, `lastSummary`). Individual automation runs also persist attempt counts and delivery outcomes in the operational store.
 
 ---
 
@@ -71,6 +71,7 @@ Scheduled tasks dispatch a prompt to a fresh, isolated agent session. Esperta Ar
 | `allowedTools`   | string[]  | no       | Explicit tool allowlist |
 | `allowedToolsets`| string[]  | no       | Toolset names expanded at runtime |
 | `skills`         | string[]  | no       | Skills injected into the task system prompt |
+| `retryPolicy`    | object    | no       | Retry config: `maxAttempts`, `delaySeconds` |
 | `delivery`       | object    | no       | Optional connector delivery target |
 | `scheduleKind`   | enum      | no       | Derived scheduler mode: `cron`, `interval`, or `once` |
 | `intervalMinutes`| number    | no       | Derived fixed interval for cadence schedules |
@@ -112,9 +113,33 @@ Session ID: `cron:<taskName>:<id>`. Fresh agent per run -- no shared history.
 
 Persisted in `config.json` at `runtime.automation.cronTasks`. Re-registered on engine startup through the same execution path used by `cron.add`, so restored tasks keep the same logging, delivery, and metadata updates as newly added tasks.
 
+### Retry Policy
+
+Failed cron runs can retry automatically. `retryPolicy.maxAttempts` includes the
+initial attempt, and `retryPolicy.delaySeconds` controls the pause between
+attempts.
+
+```json
+{
+  "retryPolicy": {
+    "maxAttempts": 3,
+    "delaySeconds": 30
+  }
+}
+```
+
 ### Result Logging
 
 Each run writes to `~/.aria/automation/daily-summary-2026-02-22T09-00-00-000Z.md` (prompt, response, tool calls).
+
+### Durable Run Metadata
+
+Each persisted automation run records:
+
+- `attemptNumber` and `maxAttempts`
+- `deliveryStatus` (`not_requested`, `delivered`, `failed`)
+- `deliveryError` when delivery fails
+- `deliveryAttemptedAt` timestamp
 
 ### tRPC API
 
@@ -148,6 +173,7 @@ Event-driven tasks triggered by HTTP POST from external systems. Each has a URL 
 | `allowedTools`   | string[]  | no       | Explicit tool allowlist |
 | `allowedToolsets`| string[]  | no       | Toolset names expanded at runtime |
 | `skills`         | string[]  | no       | Skills injected into the task system prompt |
+| `retryPolicy`    | object    | no       | Retry config: `maxAttempts`, `delaySeconds` |
 | `delivery`       | object    | no       | Optional delivery target override |
 | `lastRunAt`      | string    | no       | Last execution timestamp |
 | `lastStatus`     | string    | no       | Last execution status |
@@ -163,11 +189,11 @@ Event-driven tasks triggered by HTTP POST from external systems. Each has a URL 
 
 ### Connector Delivery
 
-When `delivery.connector` is set, the `notify` tool pushes the response to the specified connector. Notification failure is non-fatal.
+When `delivery.connector` is set, the `notify` tool pushes the final response to the specified connector. Delivery success or failure is persisted with the automation run.
 
 ### Session, Logging, and Delivery
 
-Session ID: `webhook:<slug>:<id>`. Fresh agent per run. Logs written to `~/.aria/automation/`. Delivery uses `task.delivery.connector`.
+Session ID: `webhook:<slug>:<id>`. Fresh agent per attempt. Logs written to `~/.aria/automation/`. Delivery uses `task.delivery.connector` after the final attempt completes.
 
 ### Persistence
 

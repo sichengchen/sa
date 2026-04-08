@@ -129,7 +129,8 @@ Resolution order: environment variable > `secrets.enc` > `runtime.env`.
       "cronTasks": [
         { "name": "daily-summary", "schedule": "0 9 * * *",
           "prompt": "Summarize yesterday and list today's priorities.",
-          "enabled": true, "model": "sonnet" },
+          "enabled": true, "model": "sonnet",
+          "retryPolicy": { "maxAttempts": 3, "delaySeconds": 30 } },
         { "name": "one-time-reminder", "schedule": "30 14 * * *",
           "prompt": "Remind me about the 3pm meeting.",
           "enabled": true, "oneShot": true }
@@ -138,6 +139,7 @@ Resolution order: environment variable > `secrets.enc` > `runtime.env`.
         { "name": "deploy-notify", "slug": "deploy",
           "prompt": "Deploy event: {{payload}}. Summarize.",
           "enabled": true, "model": "haiku",
+          "retryPolicy": { "maxAttempts": 2, "delaySeconds": 10 },
           "delivery": { "connector": "telegram" } }
       ]
     }

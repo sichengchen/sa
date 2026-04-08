@@ -31,6 +31,13 @@ Each automation declares:
 5. Results, summaries, retries, and deliveries are persisted.
 6. Operators can inspect, pause, rerun, cancel, or mute the automation from any frontend surface.
 
+## Current Runtime Behavior
+
+- Cron and webhook tasks can declare retry policy with `maxAttempts` and `delaySeconds`.
+- Each attempt gets its own durable automation run record.
+- The final attempt records delivery target, delivery status, and delivery error.
+- Operator surfaces can inspect retries and delivery history through the shared automation queries.
+
 ## Operator Experience
 
 Automation results surface as inbox-style runtime items rather than hidden log files. Operators can inspect:
