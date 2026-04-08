@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import type { Identity, RuntimeConfig, AriaConfig, AriaConfigFile, SecretsFile } from "./types.js";
@@ -44,61 +44,22 @@ export class ConfigManager {
 
   private async loadConfigFile(): Promise<AriaConfigFile> {
     const configPath = join(this.homeDir, "config.json");
-    const modelsPath = join(this.homeDir, "models.json");
 
     if (existsSync(configPath)) {
       const raw = await readFile(configPath, "utf-8");
       const parsed = JSON.parse(raw);
 
-      // v3 merged config — use directly
       if (parsed.version === 3) {
         return parsed as AriaConfigFile;
       }
 
-      // Legacy config.json (no version field = pre-v3 RuntimeConfig)
-      // Check if models.json also exists for migration
-      if (existsSync(modelsPath)) {
-        const modelsRaw = await readFile(modelsPath, "utf-8");
-        const models = JSON.parse(modelsRaw);
-        const merged = this.migrateToV3(parsed as RuntimeConfig, models);
-        await this.writeConfigFile(merged);
-        // Remove legacy models.json after migration
-        await rm(modelsPath, { force: true });
-        return merged;
-      }
-
-      // Legacy config.json without models.json — create defaults for models
-      const merged = this.migrateToV3(parsed as RuntimeConfig, null);
-      await this.writeConfigFile(merged);
-      return merged;
+      throw new Error(
+        "Unsupported config.json format. Esperta Aria only supports config.json version 3.",
+      );
     }
 
-    // No config.json at all — if models.json exists alone, migrate it
-    if (existsSync(modelsPath)) {
-      const modelsRaw = await readFile(modelsPath, "utf-8");
-      const models = JSON.parse(modelsRaw);
-      const merged = this.migrateToV3(DEFAULT_CONFIG.runtime, models);
-      await this.writeConfigFile(merged);
-      await rm(modelsPath, { force: true });
-      return merged;
-    }
-
-    // Fresh install — write defaults
     await this.writeConfigFile(DEFAULT_CONFIG);
     return { ...DEFAULT_CONFIG };
-  }
-
-  private migrateToV3(
-    runtime: RuntimeConfig,
-    models: { version?: number; default?: string; providers?: any[]; models?: any[] } | null,
-  ): AriaConfigFile {
-    return {
-      version: 3,
-      runtime,
-      providers: models?.providers ?? DEFAULT_CONFIG.providers,
-      models: models?.models ?? DEFAULT_CONFIG.models,
-      defaultModel: models?.default ?? DEFAULT_CONFIG.defaultModel,
-    };
   }
 
   private async writeConfigFile(config: AriaConfigFile): Promise<void> {

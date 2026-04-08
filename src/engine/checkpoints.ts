@@ -146,7 +146,7 @@ export class CheckpointManager {
     this.runGit(["config", "user.name", "Aria Checkpoint"], shadowRepo, workingDir);
     await mkdir(resolve(shadowRepo, "info"), { recursive: true });
     await writeFile(resolve(shadowRepo, "info", "exclude"), DEFAULT_EXCLUDES.join("\n") + "\n");
-    await writeFile(resolve(shadowRepo, "SA_WORKDIR"), `${resolve(workingDir)}\n`);
+    await writeFile(resolve(shadowRepo, "ARIA_WORKDIR"), `${resolve(workingDir)}\n`);
   }
 
   private async takeSnapshot(workingDir: string, reason: string): Promise<boolean> {

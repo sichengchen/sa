@@ -69,7 +69,7 @@ export function createNotifyTool(secrets: SecretsFile | null): ToolImpl {
 
       // Discord
       if (target === "all" || target === "discord") {
-        const channelId = process.env.SA_DISCORD_NOTIFY_CHANNEL;
+        const channelId = process.env.ARIA_DISCORD_NOTIFY_CHANNEL;
         if (secrets?.discordToken && channelId) {
           try {
             const resp = await fetch(
@@ -94,7 +94,7 @@ export function createNotifyTool(secrets: SecretsFile | null): ToolImpl {
           }
         } else if (target === "discord") {
           return {
-            content: "Discord not configured. Set discord token and SA_DISCORD_NOTIFY_CHANNEL.",
+            content: "Discord not configured. Set discord token and ARIA_DISCORD_NOTIFY_CHANNEL.",
             isError: true,
           };
         }

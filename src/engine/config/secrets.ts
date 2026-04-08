@@ -43,11 +43,6 @@ function deriveKey(salt: Buffer): Buffer {
   return scryptSync(machineFingerprint(), salt, 32, SCRYPT_PARAMS) as Buffer;
 }
 
-/** Legacy key derivation (hostname-only) for migration from pre-v5.1 secrets. */
-function deriveKeyLegacy(salt: Buffer): Buffer {
-  return scryptSync(hostname(), salt, 32) as Buffer;
-}
-
 /** Encrypt a SecretsFile and return the JSON string to be stored on disk. */
 function encrypt(secrets: SecretsFile, key: Buffer): string {
   const iv = randomBytes(16);
@@ -83,8 +78,6 @@ function decrypt(raw: string, key: Buffer): SecretsFile {
 
 /**
  * Load and decrypt secrets from ~/.aria/secrets.enc.
- * Tries the current key derivation first, then falls back to legacy (hostname-only)
- * for migration. If legacy succeeds, re-encrypts with the new derivation.
  * Returns null if the file is missing or cannot be decrypted.
  */
 export async function loadSecrets(homeDir: string): Promise<SecretsFile | null> {
@@ -94,35 +87,15 @@ export async function loadSecrets(homeDir: string): Promise<SecretsFile | null> 
   const salt = await getSalt(homeDir);
   const raw = await readFile(secretsPath, "utf-8");
 
-  // Try current derivation
   try {
     const key = deriveKey(salt);
     return decrypt(raw, key);
   } catch {
-    // Current derivation failed — try legacy migration
+    console.warn(
+      "[aria] Warning: secrets.enc could not be decrypted (file may be corrupted, from a different machine, or from an unsupported legacy runtime) — recreate secrets or use environment variables"
+    );
+    return null;
   }
-
-  // Try legacy (hostname-only) derivation for migration
-  try {
-    const legacyKey = deriveKeyLegacy(salt);
-    const secrets = decrypt(raw, legacyKey);
-
-    // Legacy decryption succeeded — re-encrypt with new derivation
-    console.warn("[aria] Migrating secrets.enc to improved key derivation...");
-    const newKey = deriveKey(salt);
-    const reEncrypted = encrypt(secrets, newKey);
-    await writeFile(secretsPath, reEncrypted);
-    await chmod(secretsPath, 0o600);
-
-    return secrets;
-  } catch {
-    // Both derivations failed
-  }
-
-  console.warn(
-    "[aria] Warning: secrets.enc could not be decrypted (file may be corrupted or from a different machine) — falling back to environment variables"
-  );
-  return null;
 }
 
 /** Encrypt and save secrets to ~/.aria/secrets.enc (chmod 600). */
@@ -139,4 +112,4 @@ export async function saveSecrets(
 }
 
 // Exported for testing only
-export const _internal = { deriveKey, deriveKeyLegacy, encrypt, decrypt, machineFingerprint };
+export const _internal = { deriveKey, encrypt, decrypt, machineFingerprint };

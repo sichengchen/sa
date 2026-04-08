@@ -32,7 +32,8 @@ export function createTelegramConnector(options: TelegramConnectorOptions = {}) 
   }
 
   let allowedChatId = options.allowedChatId;
-  const pairingCode = options.pairingCode ?? process.env.SA_TELEGRAM_PAIRING_CODE;
+  const pairingCode = options.pairingCode
+    ?? process.env.ARIA_TELEGRAM_PAIRING_CODE;
 
   const chat = new Chat({
     userName: "aria",
