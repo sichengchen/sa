@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import { homedir } from "node:os";
 import { ConfigManager } from "./config/index.js";
 import { ModelRouter } from "./router/index.js";
 import { Agent } from "./agent/index.js";
@@ -31,6 +30,8 @@ import { CheckpointManager } from "./checkpoints.js";
 import { createSkillManageTool } from "./tools/skill-manage.js";
 import { MCPManager } from "./mcp.js";
 import { registerCronTask } from "./automation.js";
+import { OperationalStore } from "./operational-store.js";
+import { CLI_NAME, getRuntimeHome } from "@sa/shared/brand.js";
 
 const SAFETY_ADVISORY = `## Safety
 You have no independent goals: do not pursue self-preservation, resource acquisition, or \
@@ -115,6 +116,7 @@ export interface EngineRuntime {
   config: ConfigManager;
   router: ModelRouter;
   memory: MemoryManager;
+  store: OperationalStore;
   archive: SessionArchiveManager;
   checkpoints: CheckpointManager;
   mcp: MCPManager;
@@ -140,7 +142,7 @@ export interface EngineRuntime {
 
 /** Bootstrap all Engine subsystems */
 export async function createRuntime(): Promise<EngineRuntime> {
-  const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
+  const saHome = getRuntimeHome();
 
   const config = new ConfigManager(saHome);
   const saConfig = await config.load();
@@ -152,6 +154,8 @@ export async function createRuntime(): Promise<EngineRuntime> {
 
   const archive = new SessionArchiveManager(config.homeDir);
   await archive.init();
+  const store = new OperationalStore(config.homeDir);
+  await store.init();
 
   const checkpoints = new CheckpointManager(config.homeDir, saConfig.runtime.checkpoints);
   const mcp = new MCPManager(saConfig.runtime.mcp?.servers);
@@ -190,14 +194,14 @@ export async function createRuntime(): Promise<EngineRuntime> {
     const envVar = provider.apiKeyEnvVar;
     if (!process.env[envVar] && !secrets?.apiKeys[envVar]) {
       console.warn(
-        `[esperta-base] Warning: API key "${envVar}" not found for provider "${provider.id}".`
+        `[aria] Warning: API key "${envVar}" not found for provider "${provider.id}".`
       );
       console.warn(
-        `[esperta-base]   Store it with: esperta-base onboard (or set_env_secret tool)`
+        `[aria]   Store it with: ${CLI_NAME} onboard (or set_env_secret tool)`
       );
       if (process.platform === "darwin") {
         console.warn(
-          `[esperta-base]   Note: brew services does not inherit shell env vars — keys must be in secrets.enc`
+          "[aria]   Note: launchd services do not inherit shell env vars — keys must be in secrets.enc"
         );
       }
     }
@@ -234,7 +238,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
         model: embCfg.model,
       });
     } catch (err) {
-      console.warn("[esperta-base] Failed to initialize embeddings:", err instanceof Error ? err.message : String(err));
+      console.warn("[aria] Failed to initialize embeddings:", err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -343,7 +347,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
     console.log(`Audio transcription: ${transcriber.backend}`);
   }
 
-  const sessions = new SessionManager();
+  const sessions = new SessionManager(store);
   const auth = new AuthManager(saHome, saConfig.runtime.security);
   await auth.init();
   const audit = new AuditLogger(saHome);
@@ -395,6 +399,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
     config,
     router,
     memory,
+    store,
     archive,
     checkpoints,
     mcp,
@@ -418,6 +423,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
       scheduler.stop();
       await mcp.close();
       archive.close();
+      store.close();
       memory.close();
       await auth.cleanup();
     },
@@ -440,7 +446,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
     registerCronTask(runtime, task);
   }
   if (cronTasks.length > 0) {
-    console.log(`[esperta-base] Restored ${cronTasks.filter((t) => t.enabled).length} cron task(s)`);
+    console.log(`[aria] Restored ${cronTasks.filter((t) => t.enabled).length} cron task(s)`);
   }
 
   scheduler.start();

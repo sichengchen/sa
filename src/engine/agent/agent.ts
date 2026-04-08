@@ -429,6 +429,11 @@ export class Agent {
     return this.messages;
   }
 
+  /** Replace the current conversation history with persisted messages. */
+  hydrateHistory(messages: readonly Message[]): void {
+    this.messages = Array.from(messages);
+  }
+
   /** Clear conversation history */
   clearHistory(): void {
     this.messages = [];

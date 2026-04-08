@@ -19,6 +19,7 @@ import { AuditLogger } from "@sa/engine/audit.js";
 import { SecurityModeManager } from "@sa/engine/security-mode.js";
 import { CheckpointManager } from "@sa/engine/checkpoints.js";
 import { MCPManager } from "@sa/engine/mcp.js";
+import { OperationalStore } from "@sa/engine/operational-store.js";
 
 let testDir: string;
 let runtime: EngineRuntime;
@@ -53,7 +54,9 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
   await config.load();
 
   const router = makeLiveRouter();
-  const sessions = new SessionManager();
+  const store = new OperationalStore(saHome);
+  await store.init();
+  const sessions = new SessionManager(store);
   const auth = new AuthManager(saHome);
   await auth.init();
   const archive = new SessionArchiveManager(saHome);
@@ -73,6 +76,7 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
     config,
     router,
     memory: { init: async () => {}, loadContext: async () => "", persist: async () => {} } as any,
+    store,
     archive,
     checkpoints,
     mcp,
@@ -92,6 +96,7 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
     },
     async close() {
       scheduler.stop();
+      store.close();
       archive.close();
       await auth.cleanup();
     },
