@@ -20,11 +20,15 @@ import { preprocessContextReferences } from "./context-references.js";
 import type { CronTask } from "./config/types.js";
 import { computeNextRunAt, parseScheduleInput } from "./automation-schedule.js";
 import { listToolsets } from "./toolsets.js";
+import { buildToolCapabilityCatalog, resolveCapabilityPolicyDecision } from "./capability-policy.js";
 import {
   buildDelegationOptions,
+  deleteWebhookTaskRecord,
   registerCronTask,
   persistCronTask,
   removeCronTaskFromConfig,
+  upsertHeartbeatTaskRecord,
+  upsertWebhookTaskRecord,
   updateCronTaskState,
 } from "./automation.js";
 
@@ -145,9 +149,37 @@ export function createAppRouter(runtime: EngineRuntime) {
     runtime.config.getConfigFile().runtime.toolPolicy,
     builtinLevels,
   );
+  const capabilityCatalog = buildToolCapabilityCatalog(runtime.tools, runtime.mcp);
 
   function getDangerLevel(toolName: string): DangerLevel {
     return policyManager.getDangerLevel(toolName);
+  }
+
+  function getCapability(toolName: string) {
+    return capabilityCatalog.get(toolName);
+  }
+
+  function withEventMeta<T extends Omit<EngineEvent, "sessionId" | "timestamp" | "runId" | "parentRunId" | "connectorType" | "source" | "taskId">>(
+    event: T,
+    meta: {
+      sessionId: string;
+      connectorType: ConnectorType;
+      runId?: string;
+      source: string;
+      parentRunId?: string | null;
+      taskId?: string;
+    },
+  ): EngineEvent {
+    return {
+      ...event,
+      sessionId: meta.sessionId,
+      connectorType: meta.connectorType,
+      runId: meta.runId,
+      parentRunId: meta.parentRunId,
+      source: meta.source,
+      taskId: meta.taskId,
+      timestamp: Date.now(),
+    } as unknown as EngineEvent;
   }
 
   /** Resolve effective danger level — applies exec hybrid classification */
@@ -394,6 +426,7 @@ export function createAppRouter(runtime: EngineRuntime) {
   ): Promise<string> {
     const promptState = getSessionPrompt(sessionId);
     const liveMessages = sessionAgents.get(sessionId)?.getMessages() ?? runtime.store.getSessionMessages(sessionId);
+    const sessionTools = sessionToolEnvironments.get(sessionId)?.tools;
     try {
       promptState.value = await runtime.promptEngine.buildSessionPrompt({
         sessionId,
@@ -402,6 +435,7 @@ export function createAppRouter(runtime: EngineRuntime) {
         overlay: input.overlay,
         attachedSkills: input.attachedSkills,
         messages: liveMessages,
+        tools: sessionTools,
       });
     } catch {
       promptState.value = runtime.systemPrompt;
@@ -414,8 +448,9 @@ export function createAppRouter(runtime: EngineRuntime) {
     let agent = sessionAgents.get(sessionId);
     if (!agent) {
       const promptState = getSessionPrompt(sessionId);
+      const sessionBaseTools = runtime.mcp.filterToolsForSession(runtime.tools, sessionId);
       const toolEnvironment = createSessionToolEnvironment({
-        baseTools: runtime.tools,
+        baseTools: sessionBaseTools,
         checkpointManager: runtime.checkpoints,
         maxContextHintChars: runtime.config.getConfigFile().runtime.contextFiles?.maxHintChars,
         delegation: buildDelegationOptions(runtime),
@@ -443,6 +478,7 @@ export function createAppRouter(runtime: EngineRuntime) {
         onToolApproval: async (toolName, toolCallId, args) => {
           const mode = getApprovalMode(sessionId);
           const level = getEffectiveDangerLevel(toolName, args);
+          const decision = resolveCapabilityPolicyDecision(getCapability(toolName), level, mode);
           const overrides = sessionToolOverrides.get(sessionId);
 
           if (level === "safe") {
@@ -457,7 +493,7 @@ export function createAppRouter(runtime: EngineRuntime) {
             return true;
           }
 
-          if (level === "dangerous" || mode === "always") {
+          if (decision.approvalRequired) {
             return new Promise<boolean>((resolve) => {
               pendingApprovals.set(toolCallId, resolve);
               setTimeout(() => {
@@ -492,24 +528,35 @@ export function createAppRouter(runtime: EngineRuntime) {
     approvalMode: ToolApprovalMode,
     runId: string,
     sessionId?: string,
+    source = "chat",
   ): AsyncGenerator<EngineEvent> {
     const isIM = connectorType !== "tui";
     const sid = sessionId ?? "unknown";
+    const toolEventMeta = new Map<string, ReturnType<typeof resolveCapabilityPolicyDecision>>();
 
     for await (const event of events) {
       switch (event.type) {
         case "text_delta":
+          yield withEventMeta(event, { sessionId: sid, connectorType, runId, source });
+          break;
         case "thinking_delta":
+          yield withEventMeta(event, { sessionId: sid, connectorType, runId, source });
+          break;
         case "done":
+          yield withEventMeta(event, { sessionId: sid, connectorType, runId, source });
+          break;
         case "error":
-          yield event;
+          yield withEventMeta(event, { sessionId: sid, connectorType, runId, source });
           break;
         case "user_question":
-          yield event;
+          yield withEventMeta(event, { sessionId: sid, connectorType, runId, source });
           break;
         case "tool_start": {
           const dangerLevel = getEffectiveDangerLevel(event.name, event.args);
           const ctx: ToolEventContext = { toolName: event.name, dangerLevel };
+          const capability = getCapability(event.name);
+          const decision = resolveCapabilityPolicyDecision(capability, dangerLevel, approvalMode);
+          toolEventMeta.set(event.id, decision);
 
           runtime.store.recordToolCallStart({
             toolCallId: event.id,
@@ -524,8 +571,16 @@ export function createAppRouter(runtime: EngineRuntime) {
             session: sid,
             connector: connectorType,
             event: "tool_call",
+            run: runId,
             tool: event.name,
+            toolset: decision.toolsetName,
+            backend: decision.executionBackend,
             danger: dangerLevel,
+            approval: decision.policyDecision,
+            capabilityScope: decision.capabilityScope,
+            isolation: decision.isolationBoundary,
+            mcpServer: decision.mcpServer,
+            mcpTrust: decision.mcpTrust,
             command: event.name === "exec" && typeof event.args.command === "string" ? event.args.command : undefined,
             url: event.name === "web_fetch" && typeof event.args.url === "string" ? event.args.url : undefined,
           });
@@ -533,13 +588,21 @@ export function createAppRouter(runtime: EngineRuntime) {
           if (!policyManager.shouldEmitToolStart(connectorType, ctx)) break;
           if (isIM) {
             const argsStr = formatArgsForIM(event.name, event.args);
-            yield { type: "tool_end", name: event.name, id: event.id, content: argsStr, isError: false };
+            yield withEventMeta(
+              { type: "tool_end", name: event.name, id: event.id, content: argsStr, isError: false },
+              { sessionId: sid, connectorType, runId, source },
+            );
           } else {
-            yield { type: "tool_start", name: event.name, id: event.id };
+            yield withEventMeta(
+              { type: "tool_start", name: event.name, id: event.id },
+              { sessionId: sid, connectorType, runId, source },
+            );
           }
           break;
         }
         case "tool_end": {
+          const decision = toolEventMeta.get(event.id)
+            ?? resolveCapabilityPolicyDecision(getCapability(event.name), getDangerLevel(event.name), approvalMode);
           runtime.store.recordToolCallEnd({
             toolCallId: event.id,
             status: event.result.isError ? "failed" : "completed",
@@ -551,33 +614,48 @@ export function createAppRouter(runtime: EngineRuntime) {
             session: sid,
             connector: connectorType,
             event: "tool_result",
+            run: runId,
             tool: event.name,
+            toolset: decision.toolsetName,
+            backend: decision.executionBackend,
+            approval: decision.policyDecision,
+            capabilityScope: decision.capabilityScope,
+            isolation: decision.isolationBoundary,
+            mcpServer: decision.mcpServer,
+            mcpTrust: decision.mcpTrust,
             summary: event.result.content.slice(0, 200),
           });
 
           // Intercept reaction tool — emit a reaction event for connectors
           if (event.name === "reaction" && event.result.content.startsWith("__reaction__:")) {
             const emoji = event.result.content.slice("__reaction__:".length);
-            yield { type: "reaction", emoji };
+            yield withEventMeta(
+              { type: "reaction", emoji },
+              { sessionId: sid, connectorType, runId, source },
+            );
           } else {
             const ctx: ToolEventContext = {
               toolName: event.name,
-              dangerLevel: getDangerLevel(event.name),
+              dangerLevel: decision.dangerLevel,
               isError: event.result.isError,
             };
             if (policyManager.shouldEmitToolEnd(connectorType, ctx)) {
-              yield {
+              yield withEventMeta({
                 type: "tool_end",
                 name: event.name,
                 id: event.id,
                 content: event.result.content,
                 isError: event.result.isError ?? false,
-              };
+              }, { sessionId: sid, connectorType, runId, source });
             }
           }
+          toolEventMeta.delete(event.id);
           break;
         }
         case "tool_approval_request": {
+          const dangerLevel = getEffectiveDangerLevel(event.name, event.args);
+          const decision = resolveCapabilityPolicyDecision(getCapability(event.name), dangerLevel, approvalMode);
+          toolEventMeta.set(event.id, decision);
           pendingApprovalMeta.set(event.id, {
             sessionId: sid,
             toolName: event.name,
@@ -593,15 +671,15 @@ export function createAppRouter(runtime: EngineRuntime) {
           });
           const ctx: ToolEventContext = {
             toolName: event.name,
-            dangerLevel: getEffectiveDangerLevel(event.name, event.args),
+            dangerLevel,
           };
           if (!policyManager.shouldEmitApproval(connectorType, ctx, approvalMode)) break;
-          yield {
+          yield withEventMeta({
             type: "tool_approval_request",
             name: event.name,
             id: event.id,
             args: event.args,
-          };
+          }, { sessionId: sid, connectorType, runId, source });
           break;
         }
       }
@@ -641,7 +719,10 @@ export function createAppRouter(runtime: EngineRuntime) {
           try {
             session = requireOwnedSession(ctx, input.sessionId);
           } catch (err) {
-            yield { type: "error", message: err instanceof Error ? err.message : String(err) };
+            yield withEventMeta(
+              { type: "error", message: err instanceof Error ? err.message : String(err) },
+              { sessionId: input.sessionId, connectorType: (ctx.connectorType as ConnectorType) ?? "engine", source: "chat" },
+            );
             return;
           }
 
@@ -694,6 +775,7 @@ export function createAppRouter(runtime: EngineRuntime) {
               getApprovalMode(input.sessionId),
               runId,
               input.sessionId,
+              "chat",
             )) {
               if (event.type === "done") {
                 finalStopReason = event.stopReason;
@@ -707,7 +789,10 @@ export function createAppRouter(runtime: EngineRuntime) {
             const message = err instanceof Error ? err.message : String(err);
             finalStatus = "failed";
             finalErrorMessage = message;
-            yield { type: "error", message };
+            yield withEventMeta(
+              { type: "error", message },
+              { sessionId: input.sessionId, connectorType, runId, source: "chat" },
+            );
           } finally {
             finishRun(input.sessionId, runId, {
               status: finalStatus,
@@ -841,13 +926,19 @@ export function createAppRouter(runtime: EngineRuntime) {
           try {
             session = requireOwnedSession(ctx, input.sessionId);
           } catch (err) {
-            yield { type: "error", message: err instanceof Error ? err.message : String(err) };
+            yield withEventMeta(
+              { type: "error", message: err instanceof Error ? err.message : String(err) },
+              { sessionId: input.sessionId, connectorType: (ctx.connectorType as ConnectorType) ?? "engine", source: "audio_transcription" },
+            );
             return;
           }
 
           const audioConfig = runtime.config.getConfigFile().runtime.audio;
           if (audioConfig && !audioConfig.enabled) {
-            yield { type: "error", message: "Audio transcription is disabled in config" };
+            yield withEventMeta(
+              { type: "error", message: "Audio transcription is disabled in config" },
+              { sessionId: input.sessionId, connectorType: session.connectorType as ConnectorType, source: "audio_transcription" },
+            );
             return;
           }
 
@@ -860,17 +951,29 @@ export function createAppRouter(runtime: EngineRuntime) {
             transcript = await runtime.transcriber.transcribe(audioBuffer, input.format);
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
-            yield { type: "error", message: `Transcription failed: ${message}` };
+            yield withEventMeta(
+              { type: "error", message: `Transcription failed: ${message}` },
+              { sessionId: input.sessionId, connectorType: session.connectorType as ConnectorType, source: "audio_transcription" },
+            );
             return;
           }
 
           if (!transcript.trim()) {
-            yield { type: "error", message: "Transcription produced empty text" };
+            yield withEventMeta(
+              { type: "error", message: "Transcription produced empty text" },
+              { sessionId: input.sessionId, connectorType: session.connectorType as ConnectorType, source: "audio_transcription" },
+            );
             return;
           }
 
           // Yield transcript as metadata before streaming the response
-          yield { type: "text_delta", delta: "", transcript };
+          yield {
+            ...withEventMeta(
+              { type: "text_delta", delta: "" },
+              { sessionId: input.sessionId, connectorType: session.connectorType as ConnectorType, source: "audio_transcription" },
+            ),
+            transcript,
+          };
 
           // Process transcript as a normal chat message
           const agent = getSessionAgent(input.sessionId);
@@ -891,6 +994,7 @@ export function createAppRouter(runtime: EngineRuntime) {
               getApprovalMode(input.sessionId),
               runId,
               input.sessionId,
+              "audio_transcription",
             )) {
               if (event.type === "done") {
                 finalStopReason = event.stopReason;
@@ -904,7 +1008,10 @@ export function createAppRouter(runtime: EngineRuntime) {
             const message = err instanceof Error ? err.message : String(err);
             finalStatus = "failed";
             finalErrorMessage = message;
-            yield { type: "error", message };
+            yield withEventMeta(
+              { type: "error", message },
+              { sessionId: input.sessionId, connectorType, runId, source: "audio_transcription" },
+            );
           } finally {
             finishRun(input.sessionId, runId, {
               status: finalStatus,
@@ -1075,10 +1182,41 @@ export function createAppRouter(runtime: EngineRuntime) {
         return runtime.mcp.listServers();
       }),
 
+      listSessionServers: protectedProcedure
+        .input(z.object({ sessionId: z.string() }))
+        .query(({ ctx, input }) => {
+          requireOwnedSession(ctx, input.sessionId);
+          return runtime.mcp.listSessionServers(input.sessionId);
+        }),
+
+      setSessionServer: protectedProcedure
+        .input(z.object({
+          sessionId: z.string(),
+          server: z.string(),
+          enabled: z.boolean(),
+        }))
+        .mutation(({ ctx, input }) => {
+          requireOwnedSession(ctx, input.sessionId);
+          const servers = runtime.mcp.listServers();
+          const server = servers.find((item) => item.name === input.server);
+          if (!server) {
+            throw new TRPCError({ code: "NOT_FOUND", message: `Unknown MCP server: ${input.server}` });
+          }
+          if (!isMasterCall(ctx) && server.sessionAvailability === "admin_only") {
+            throw new TRPCError({ code: "FORBIDDEN", message: `MCP server "${input.server}" requires the master token` });
+          }
+          runtime.mcp.setSessionServerEnabled(input.sessionId, input.server, input.enabled);
+          return {
+            sessionId: input.sessionId,
+            server: input.server,
+            enabled: input.enabled,
+          };
+        }),
+
       listTools: adminProcedure
-        .input(z.object({ server: z.string().optional() }).optional())
+        .input(z.object({ server: z.string().optional(), sessionId: z.string().optional() }).optional())
         .query(({ input }) => {
-          return runtime.mcp.listTools(input?.server);
+          return runtime.mcp.listTools(input?.server, input?.sessionId);
         }),
 
       listPrompts: adminProcedure
@@ -1684,6 +1822,7 @@ export function createAppRouter(runtime: EngineRuntime) {
               },
             },
           });
+          upsertWebhookTaskRecord(runtime, tasks[tasks.length - 1]!);
 
           return { added: true, slug: input.slug };
         }),
@@ -1733,6 +1872,7 @@ export function createAppRouter(runtime: EngineRuntime) {
               },
             },
           });
+          upsertWebhookTaskRecord(runtime, task);
 
           return { updated: true, slug: input.slug };
         }),
@@ -1761,8 +1901,29 @@ export function createAppRouter(runtime: EngineRuntime) {
               },
             },
           });
+          deleteWebhookTaskRecord(runtime, input.slug);
 
           return { removed: true };
+        }),
+    }),
+
+    /** Durable automation runtime state */
+    automation: router({
+      list: adminProcedure
+        .input(z.object({
+          type: z.enum(["heartbeat", "cron", "webhook"]).optional(),
+        }).optional())
+        .query(({ input }) => {
+          return runtime.store.listAutomationTasks(input?.type);
+        }),
+
+      runs: adminProcedure
+        .input(z.object({
+          taskId: z.string().optional(),
+          limit: z.number().int().min(1).max(100).optional(),
+        }).optional())
+        .query(({ input }) => {
+          return runtime.store.listAutomationRuns(input?.taskId, input?.limit ?? 20);
         }),
     }),
 
@@ -1791,12 +1952,30 @@ export function createAppRouter(runtime: EngineRuntime) {
             heartbeatState.config.intervalMinutes = input.intervalMinutes;
             runtime.scheduler.updateInterval("heartbeat", input.intervalMinutes);
           }
+          const heartbeatTask = runtime.scheduler.list().find((task) => task.name === "heartbeat");
+          upsertHeartbeatTaskRecord(runtime, {
+            enabled: heartbeatState.config.enabled,
+            intervalMinutes: heartbeatState.config.intervalMinutes,
+            nextRunAt: heartbeatTask?.nextRunAt ?? null,
+            lastRunAt: heartbeatTask?.lastRunAt ?? null,
+            lastStatus: heartbeatTask?.lastStatus === "success" ? "success" : heartbeatTask?.lastStatus === "error" ? "error" : null,
+            lastSummary: heartbeatTask?.lastSummary ?? null,
+          });
           return { config: heartbeatState.config };
         }),
 
       /** Manually trigger a heartbeat check (runs only heartbeat, not all cron jobs) */
       trigger: adminProcedure.mutation(async () => {
         await runtime.scheduler.runTask("heartbeat");
+        const heartbeatTask = runtime.scheduler.list().find((task) => task.name === "heartbeat");
+        upsertHeartbeatTaskRecord(runtime, {
+          enabled: heartbeatState.config.enabled,
+          intervalMinutes: heartbeatState.config.intervalMinutes,
+          nextRunAt: heartbeatTask?.nextRunAt ?? null,
+          lastRunAt: heartbeatTask?.lastRunAt ?? null,
+          lastStatus: heartbeatTask?.lastStatus === "success" ? "success" : heartbeatTask?.lastStatus === "error" ? "error" : null,
+          lastSummary: heartbeatTask?.lastSummary ?? null,
+        });
         return { triggered: true, lastResult: heartbeatState.lastResult };
       }),
     }),

@@ -4,6 +4,10 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { CompatibilityCallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import type { ToolImpl, DangerLevel, ToolResult } from "./agent/types.js";
 import type { MCPServerConfig, MCPServerToolFilterConfig } from "./config/types.js";
+import type { OperationalStore } from "./operational-store.js";
+
+export type MCPServerTrust = NonNullable<MCPServerConfig["trust"]>;
+export type MCPServerSessionAvailability = NonNullable<MCPServerConfig["sessionAvailability"]>;
 
 interface MCPToolDefinition {
   originalName: string;
@@ -27,11 +31,18 @@ export interface MCPServerStatus {
   enabled: boolean;
   connected: boolean;
   transport: "stdio" | "http" | "unknown";
+  trust: MCPServerTrust;
+  sessionAvailability: MCPServerSessionAvailability;
+  defaultSessionEnabled: boolean;
   toolCount: number;
   promptCount: number;
   resourceCount: number;
   instructions?: string;
   error?: string;
+}
+
+export interface MCPSessionServerStatus extends MCPServerStatus {
+  sessionEnabled: boolean;
 }
 
 export interface MCPPromptReference {
@@ -152,6 +163,30 @@ function isToolAllowed(toolName: string, filter?: MCPServerToolFilterConfig): bo
   return true;
 }
 
+function resolveTrust(config: MCPServerConfig): MCPServerTrust {
+  return config.trust ?? "prompt";
+}
+
+function resolveSessionAvailability(config: MCPServerConfig): MCPServerSessionAvailability {
+  if (config.sessionAvailability) {
+    return config.sessionAvailability;
+  }
+
+  const trust = resolveTrust(config);
+  switch (trust) {
+    case "trusted":
+      return "all";
+    case "prompt":
+      return "session_opt_in";
+    case "blocked":
+      return "admin_only";
+  }
+}
+
+function isSessionEnabledByDefault(config: MCPServerConfig): boolean {
+  return resolveSessionAvailability(config) === "all" && resolveTrust(config) !== "blocked";
+}
+
 function resolveTransport(config: MCPServerConfig, cwd: string) {
   if (config.command) {
     return {
@@ -196,25 +231,56 @@ function dedupeToolName(serverName: string, originalName: string, used: Set<stri
 export class MCPManager {
   private readonly serverConfigs: Record<string, MCPServerConfig>;
   private readonly cwd: string;
+  private readonly store?: OperationalStore;
   private readonly connections = new Map<string, MCPServerConnection>();
   private readonly statuses = new Map<string, MCPServerStatus>();
+  private readonly toolToServer = new Map<string, string>();
 
-  constructor(serverConfigs: Record<string, MCPServerConfig> | undefined, cwd = process.env.TERMINAL_CWD ?? process.cwd()) {
+  constructor(
+    serverConfigs: Record<string, MCPServerConfig> | undefined,
+    cwd = process.env.TERMINAL_CWD ?? process.cwd(),
+    store?: OperationalStore,
+  ) {
     this.serverConfigs = serverConfigs ?? {};
     this.cwd = cwd;
+    this.store = store;
   }
 
   async init(): Promise<void> {
     for (const [name, config] of Object.entries(this.serverConfigs)) {
+      const trust = resolveTrust(config);
+      const sessionAvailability = resolveSessionAvailability(config);
+      const defaultSessionEnabled = isSessionEnabledByDefault(config);
+
       if (config.enabled === false) {
         this.statuses.set(name, {
           name,
           enabled: false,
           connected: false,
           transport: config.command ? "stdio" : config.url ? "http" : "unknown",
+          trust,
+          sessionAvailability,
+          defaultSessionEnabled,
           toolCount: 0,
           promptCount: 0,
           resourceCount: 0,
+        });
+        continue;
+      }
+
+      if (trust === "blocked") {
+        this.statuses.set(name, {
+          name,
+          enabled: true,
+          connected: false,
+          transport: config.command ? "stdio" : config.url ? "http" : "unknown",
+          trust,
+          sessionAvailability,
+          defaultSessionEnabled,
+          toolCount: 0,
+          promptCount: 0,
+          resourceCount: 0,
+          error: "Blocked by MCP trust policy",
         });
         continue;
       }
@@ -268,6 +334,9 @@ export class MCPManager {
           enabled: true,
           connected: true,
           transport,
+          trust,
+          sessionAvailability,
+          defaultSessionEnabled,
           toolCount: tools.length,
           promptCount,
           resourceCount,
@@ -280,6 +349,9 @@ export class MCPManager {
           enabled: true,
           connected: false,
           transport: config.command ? "stdio" : config.url ? "http" : "unknown",
+          trust,
+          sessionAvailability,
+          defaultSessionEnabled,
           toolCount: 0,
           promptCount: 0,
           resourceCount: 0,
@@ -302,8 +374,10 @@ export class MCPManager {
 
   getTools(): ToolImpl[] {
     const tools: ToolImpl[] = [];
+    this.toolToServer.clear();
     for (const connection of this.connections.values()) {
       for (const tool of connection.tools) {
+        this.toolToServer.set(tool.toolName, connection.name);
         tools.push({
           name: tool.toolName,
           description: `${tool.description} [MCP server: ${connection.name}]`,
@@ -335,7 +409,21 @@ export class MCPManager {
     return Array.from(this.statuses.values()).sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  listTools(serverName?: string): Array<{ server: string; name: string; toolName: string; description: string; dangerLevel: DangerLevel }> {
+  listSessionServers(sessionId: string): MCPSessionServerStatus[] {
+    return this.listServers().map((status) => ({
+      ...status,
+      sessionEnabled: this.isServerEnabledForSession(status.name, sessionId),
+    }));
+  }
+
+  listTools(serverName?: string, sessionId?: string): Array<{
+    server: string;
+    name: string;
+    toolName: string;
+    description: string;
+    dangerLevel: DangerLevel;
+    sessionEnabled: boolean;
+  }> {
     const connections = serverName ? [this.getConnection(serverName)] : Array.from(this.connections.values());
     return connections
       .flatMap((connection) => connection.tools.map((tool) => ({
@@ -344,8 +432,47 @@ export class MCPManager {
         toolName: tool.toolName,
         description: tool.description,
         dangerLevel: tool.dangerLevel,
+        sessionEnabled: sessionId ? this.isServerEnabledForSession(connection.name, sessionId) : true,
       })))
+      .filter((tool) => sessionId ? tool.sessionEnabled : true)
       .sort((a, b) => a.toolName.localeCompare(b.toolName));
+  }
+
+  getServerForTool(toolName: string): string | undefined {
+    return this.toolToServer.get(toolName);
+  }
+
+  isServerEnabledForSession(serverName: string, sessionId: string): boolean {
+    const status = this.statuses.get(serverName);
+    if (!status || !status.connected) {
+      return false;
+    }
+
+    const override = this.store?.getSessionMcpServerEnabled(sessionId, serverName);
+    switch (status.sessionAvailability) {
+      case "all":
+        return override ?? true;
+      case "session_opt_in":
+      case "admin_only":
+        return override ?? false;
+    }
+  }
+
+  setSessionServerEnabled(sessionId: string, serverName: string, enabled: boolean): void {
+    if (!this.statuses.has(serverName)) {
+      throw new Error(`Unknown MCP server: ${serverName}`);
+    }
+    this.store?.setSessionMcpServerEnabled(sessionId, serverName, enabled);
+  }
+
+  filterToolsForSession(tools: ToolImpl[], sessionId: string): ToolImpl[] {
+    return tools.filter((tool) => {
+      const serverName = this.getServerForTool(tool.name);
+      if (!serverName) {
+        return true;
+      }
+      return this.isServerEnabledForSession(serverName, sessionId);
+    });
   }
 
   async listPrompts(serverName: string): Promise<MCPPromptReference[]> {

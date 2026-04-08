@@ -361,6 +361,65 @@ describe("tRPC procedures (non-live)", () => {
     });
   });
 
+  describe("automation procedures", () => {
+    test("lists durable tasks and task runs from the operational store", async () => {
+      const caller = createCaller();
+      await caller.cron.add({
+        name: "digest",
+        schedule: "0 8 * * *",
+        prompt: "Send a digest",
+      });
+
+      const task = runtime.store.getAutomationTaskByName("cron", "digest");
+      expect(task).toBeDefined();
+      runtime.store.recordAutomationRunStart({
+        taskRunId: "task-run-procedures-1",
+        taskId: task!.taskId,
+        taskType: "cron",
+        taskName: "digest",
+        sessionId: "cron:digest:test",
+        runId: "run-procedures-1",
+        trigger: "cron",
+        promptText: "Send a digest",
+        startedAt: 100,
+      });
+      runtime.store.finishAutomationRun({
+        taskRunId: "task-run-procedures-1",
+        status: "success",
+        responseText: "Digest sent.",
+        summary: "Digest sent.",
+        completedAt: 101,
+      });
+
+      const tasks = await caller.automation.list({ type: "cron" });
+      expect(tasks.some((item) => item.name === "digest")).toBe(true);
+
+      const runs = await caller.automation.runs({ taskId: task!.taskId, limit: 5 });
+      expect(runs).toHaveLength(1);
+      expect(runs[0]!.taskName).toBe("digest");
+      expect(runs[0]!.status).toBe("success");
+    });
+  });
+
+  describe("interaction protocol metadata", () => {
+    test("includes durable event identity on streamed errors", async () => {
+      const caller = createCaller();
+      const events: any[] = [];
+      const gen = await caller.chat.stream({ sessionId: "missing-session", message: "hello" });
+      for await (const event of gen) {
+        events.push(event);
+      }
+
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
+        type: "error",
+        sessionId: "missing-session",
+        source: "chat",
+      });
+      expect(typeof events[0].timestamp).toBe("number");
+    });
+  });
+
   describe("model.list", () => {
     test("returns configured models", async () => {
       const caller = createCaller();

@@ -7,6 +7,8 @@ import type { Session } from "@sa/shared/types.js";
 export type RunStatus = "running" | "completed" | "failed" | "cancelled" | "interrupted";
 export type ToolCallStatus = "running" | "completed" | "failed" | "cancelled" | "interrupted";
 export type ApprovalStatus = "pending" | "approved" | "denied" | "allow_session" | "interrupted";
+export type AutomationTaskType = "heartbeat" | "cron" | "webhook";
+export type AutomationRunStatus = "running" | "success" | "error" | "cancelled" | "interrupted";
 
 export interface RunRecord {
   runId: string;
@@ -37,13 +39,48 @@ export interface PromptCacheRecord {
   updatedAt: number;
 }
 
+export interface AutomationTaskRecord {
+  taskId: string;
+  taskType: AutomationTaskType;
+  name: string;
+  slug?: string | null;
+  enabled: boolean;
+  paused: boolean;
+  config: Record<string, unknown>;
+  createdAt: number;
+  updatedAt: number;
+  lastRunAt?: string | null;
+  nextRunAt?: string | null;
+  lastStatus?: AutomationRunStatus | null;
+  lastSummary?: string | null;
+}
+
+export interface AutomationRunRecord {
+  taskRunId: string;
+  taskId: string;
+  taskType: AutomationTaskType;
+  taskName: string;
+  sessionId?: string | null;
+  runId?: string | null;
+  trigger: string;
+  status: AutomationRunStatus;
+  promptText: string;
+  responseText?: string | null;
+  summary?: string | null;
+  startedAt: number;
+  completedAt?: number | null;
+  deliveryTarget?: Record<string, unknown> | null;
+  errorMessage?: string | null;
+}
+
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS sessions (
   session_id TEXT PRIMARY KEY,
   connector_type TEXT NOT NULL,
   connector_id TEXT NOT NULL,
   created_at INTEGER NOT NULL,
-  last_active_at INTEGER NOT NULL
+  last_active_at INTEGER NOT NULL,
+  destroyed_at INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -112,6 +149,50 @@ CREATE TABLE IF NOT EXISTS prompt_cache (
   updated_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS session_mcp_servers (
+  session_id TEXT NOT NULL REFERENCES sessions(session_id) ON DELETE CASCADE,
+  server_name TEXT NOT NULL,
+  enabled INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (session_id, server_name)
+);
+
+CREATE TABLE IF NOT EXISTS automation_tasks (
+  task_id TEXT PRIMARY KEY,
+  task_type TEXT NOT NULL,
+  name TEXT NOT NULL,
+  slug TEXT,
+  enabled INTEGER NOT NULL,
+  paused INTEGER NOT NULL DEFAULT 0,
+  config_json TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  last_run_at TEXT,
+  next_run_at TEXT,
+  last_status TEXT,
+  last_summary TEXT,
+  UNIQUE(task_type, name),
+  UNIQUE(task_type, slug)
+);
+
+CREATE TABLE IF NOT EXISTS automation_runs (
+  task_run_id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL REFERENCES automation_tasks(task_id) ON DELETE CASCADE,
+  task_type TEXT NOT NULL,
+  task_name TEXT NOT NULL,
+  session_id TEXT,
+  run_id TEXT,
+  trigger TEXT NOT NULL,
+  status TEXT NOT NULL,
+  prompt_text TEXT NOT NULL,
+  response_text TEXT,
+  summary TEXT,
+  started_at INTEGER NOT NULL,
+  completed_at INTEGER,
+  delivery_target_json TEXT,
+  error_message TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_sessions_last_active ON sessions(last_active_at DESC);
 CREATE INDEX IF NOT EXISTS idx_messages_session_idx ON messages(session_id, message_index);
 CREATE INDEX IF NOT EXISTS idx_runs_session_started ON runs(session_id, started_at DESC);
@@ -119,6 +200,9 @@ CREATE INDEX IF NOT EXISTS idx_tool_calls_run ON tool_calls(run_id, started_at A
 CREATE INDEX IF NOT EXISTS idx_approvals_session_created ON approvals(session_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_session_summaries_updated ON session_summaries(updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_prompt_cache_scope_updated ON prompt_cache(scope, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_session_mcp_servers_updated ON session_mcp_servers(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_automation_tasks_type_name ON automation_tasks(task_type, name);
+CREATE INDEX IF NOT EXISTS idx_automation_runs_task_started ON automation_runs(task_id, started_at DESC);
 `;
 
 function ensureTimestamp(value: unknown): number {
@@ -150,6 +234,7 @@ export class OperationalStore {
     this.db.exec("PRAGMA journal_mode=WAL");
     this.db.exec("PRAGMA foreign_keys=ON");
     this.db.exec(SCHEMA_SQL);
+    this.ensureColumn("sessions", "destroyed_at", "INTEGER");
     this.markInterruptedState();
   }
 
@@ -199,19 +284,38 @@ export class OperationalStore {
           resolution = COALESCE(resolution, 'interrupted')
       WHERE status = 'pending'
     `).run(now);
+
+    db.prepare(`
+      UPDATE automation_runs
+      SET status = 'interrupted',
+          completed_at = COALESCE(completed_at, ?),
+          error_message = COALESCE(error_message, 'Runtime restarted before automation run completion')
+      WHERE status = 'running'
+    `).run(now);
+  }
+
+  private ensureColumn(tableName: string, columnName: string, columnDefinition: string): void {
+    const columns = this.getDb()
+      .prepare(`PRAGMA table_info(${tableName})`)
+      .all() as Array<{ name: string }>;
+    if (columns.some((column) => column.name === columnName)) {
+      return;
+    }
+    this.getDb().exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`);
   }
 
   upsertSession(session: Session): void {
     const db = this.getDb();
     db.prepare(`
       INSERT INTO sessions (
-        session_id, connector_type, connector_id, created_at, last_active_at
-      ) VALUES (?, ?, ?, ?, ?)
+        session_id, connector_type, connector_id, created_at, last_active_at, destroyed_at
+      ) VALUES (?, ?, ?, ?, ?, NULL)
       ON CONFLICT(session_id) DO UPDATE SET
         connector_type = excluded.connector_type,
         connector_id = excluded.connector_id,
         created_at = excluded.created_at,
-        last_active_at = excluded.last_active_at
+        last_active_at = excluded.last_active_at,
+        destroyed_at = NULL
     `).run(
       session.id,
       session.connectorType,
@@ -227,6 +331,7 @@ export class OperationalStore {
         SELECT session_id, connector_type, connector_id, created_at, last_active_at
         FROM sessions
         WHERE session_id = ?
+          AND destroyed_at IS NULL
       `)
       .get(sessionId) as Record<string, unknown> | undefined;
 
@@ -238,6 +343,7 @@ export class OperationalStore {
       .prepare(`
         SELECT session_id, connector_type, connector_id, created_at, last_active_at
         FROM sessions
+        WHERE destroyed_at IS NULL
         ORDER BY last_active_at DESC, created_at DESC
       `)
       .all() as Array<Record<string, unknown>>;
@@ -251,6 +357,7 @@ export class OperationalStore {
         SELECT session_id, connector_type, connector_id, created_at, last_active_at
         FROM sessions
         WHERE session_id LIKE ?
+          AND destroyed_at IS NULL
         ORDER BY last_active_at DESC, created_at DESC
       `)
       .all(`${prefix}:%`) as Array<Record<string, unknown>>;
@@ -264,6 +371,7 @@ export class OperationalStore {
         SELECT session_id, connector_type, connector_id, created_at, last_active_at
         FROM sessions
         WHERE session_id LIKE ?
+          AND destroyed_at IS NULL
         ORDER BY last_active_at DESC, created_at DESC
         LIMIT 1
       `)
@@ -274,8 +382,13 @@ export class OperationalStore {
 
   destroySession(sessionId: string): boolean {
     const result = this.getDb()
-      .prepare("DELETE FROM sessions WHERE session_id = ?")
-      .run(sessionId);
+      .prepare(`
+        UPDATE sessions
+        SET destroyed_at = COALESCE(destroyed_at, ?)
+        WHERE session_id = ?
+          AND destroyed_at IS NULL
+      `)
+      .run(Date.now(), sessionId);
     return result.changes > 0;
   }
 
@@ -569,5 +682,266 @@ export class OperationalStore {
         input.metadata ? JSON.stringify(input.metadata) : null,
         input.updatedAt ?? Date.now(),
       );
+  }
+
+  getSessionMcpServerEnabled(sessionId: string, serverName: string): boolean | undefined {
+    const row = this.getDb()
+      .prepare(`
+        SELECT enabled
+        FROM session_mcp_servers
+        WHERE session_id = ? AND server_name = ?
+      `)
+      .get(sessionId, serverName) as { enabled: number } | undefined;
+
+    if (!row) return undefined;
+    return row.enabled === 1;
+  }
+
+  listSessionMcpServers(sessionId: string): Record<string, boolean> {
+    const rows = this.getDb()
+      .prepare(`
+        SELECT server_name, enabled
+        FROM session_mcp_servers
+        WHERE session_id = ?
+      `)
+      .all(sessionId) as Array<{ server_name: string; enabled: number }>;
+
+    const result: Record<string, boolean> = {};
+    for (const row of rows) {
+      result[row.server_name] = row.enabled === 1;
+    }
+    return result;
+  }
+
+  setSessionMcpServerEnabled(
+    sessionId: string,
+    serverName: string,
+    enabled: boolean,
+    updatedAt = Date.now(),
+  ): void {
+    this.getDb()
+      .prepare(`
+        INSERT INTO session_mcp_servers (
+          session_id, server_name, enabled, updated_at
+        ) VALUES (?, ?, ?, ?)
+        ON CONFLICT(session_id, server_name) DO UPDATE SET
+          enabled = excluded.enabled,
+          updated_at = excluded.updated_at
+      `)
+      .run(sessionId, serverName, enabled ? 1 : 0, updatedAt);
+  }
+
+  upsertAutomationTask(input: {
+    taskId: string;
+    taskType: AutomationTaskType;
+    name: string;
+    slug?: string | null;
+    enabled: boolean;
+    paused?: boolean;
+    config: Record<string, unknown>;
+    createdAt?: number;
+    updatedAt?: number;
+    lastRunAt?: string | null;
+    nextRunAt?: string | null;
+    lastStatus?: AutomationRunStatus | null;
+    lastSummary?: string | null;
+  }): void {
+    const createdAt = input.createdAt ?? Date.now();
+    const updatedAt = input.updatedAt ?? createdAt;
+    this.getDb()
+      .prepare(`
+        INSERT INTO automation_tasks (
+          task_id, task_type, name, slug, enabled, paused, config_json,
+          created_at, updated_at, last_run_at, next_run_at, last_status, last_summary
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(task_id) DO UPDATE SET
+          task_type = excluded.task_type,
+          name = excluded.name,
+          slug = excluded.slug,
+          enabled = excluded.enabled,
+          paused = excluded.paused,
+          config_json = excluded.config_json,
+          created_at = excluded.created_at,
+          updated_at = excluded.updated_at,
+          last_run_at = excluded.last_run_at,
+          next_run_at = excluded.next_run_at,
+          last_status = excluded.last_status,
+          last_summary = excluded.last_summary
+      `)
+      .run(
+        input.taskId,
+        input.taskType,
+        input.name,
+        input.slug ?? null,
+        input.enabled ? 1 : 0,
+        input.paused ? 1 : 0,
+        JSON.stringify(input.config),
+        createdAt,
+        updatedAt,
+        input.lastRunAt ?? null,
+        input.nextRunAt ?? null,
+        input.lastStatus ?? null,
+        input.lastSummary ?? null,
+      );
+  }
+
+  listAutomationTasks(taskType?: AutomationTaskType): AutomationTaskRecord[] {
+    const rows = (taskType
+      ? this.getDb()
+        .prepare(`
+          SELECT task_id, task_type, name, slug, enabled, paused, config_json,
+                 created_at, updated_at, last_run_at, next_run_at, last_status, last_summary
+          FROM automation_tasks
+          WHERE task_type = ?
+          ORDER BY task_type ASC, name ASC
+        `)
+        .all(taskType)
+      : this.getDb()
+        .prepare(`
+          SELECT task_id, task_type, name, slug, enabled, paused, config_json,
+                 created_at, updated_at, last_run_at, next_run_at, last_status, last_summary
+          FROM automation_tasks
+          ORDER BY task_type ASC, name ASC
+        `)
+        .all()) as Array<Record<string, unknown>>;
+
+    return rows.map((row) => ({
+      taskId: String(row.task_id),
+      taskType: String(row.task_type) as AutomationTaskType,
+      name: String(row.name),
+      slug: row.slug != null ? String(row.slug) : null,
+      enabled: Number(row.enabled) === 1,
+      paused: Number(row.paused) === 1,
+      config: JSON.parse(String(row.config_json)) as Record<string, unknown>,
+      createdAt: Number(row.created_at),
+      updatedAt: Number(row.updated_at),
+      lastRunAt: row.last_run_at != null ? String(row.last_run_at) : null,
+      nextRunAt: row.next_run_at != null ? String(row.next_run_at) : null,
+      lastStatus: row.last_status != null ? String(row.last_status) as AutomationRunStatus : null,
+      lastSummary: row.last_summary != null ? String(row.last_summary) : null,
+    }));
+  }
+
+  getAutomationTaskByName(taskType: AutomationTaskType, name: string): AutomationTaskRecord | undefined {
+    return this.listAutomationTasks(taskType).find((task) => task.name === name);
+  }
+
+  getAutomationTaskBySlug(slug: string): AutomationTaskRecord | undefined {
+    return this.listAutomationTasks("webhook").find((task) => task.slug === slug);
+  }
+
+  deleteAutomationTask(taskId: string): boolean {
+    const result = this.getDb()
+      .prepare("DELETE FROM automation_tasks WHERE task_id = ?")
+      .run(taskId);
+    return result.changes > 0;
+  }
+
+  recordAutomationRunStart(input: {
+    taskRunId: string;
+    taskId: string;
+    taskType: AutomationTaskType;
+    taskName: string;
+    sessionId?: string | null;
+    runId?: string | null;
+    trigger: string;
+    promptText: string;
+    deliveryTarget?: Record<string, unknown>;
+    startedAt?: number;
+  }): void {
+    this.getDb()
+      .prepare(`
+        INSERT INTO automation_runs (
+          task_run_id, task_id, task_type, task_name, session_id, run_id, trigger,
+          status, prompt_text, response_text, summary, started_at, completed_at,
+          delivery_target_json, error_message
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, NULL, ?, NULL)
+      `)
+      .run(
+        input.taskRunId,
+        input.taskId,
+        input.taskType,
+        input.taskName,
+        input.sessionId ?? null,
+        input.runId ?? null,
+        input.trigger,
+        "running",
+        input.promptText,
+        input.startedAt ?? Date.now(),
+        input.deliveryTarget ? JSON.stringify(input.deliveryTarget) : null,
+      );
+  }
+
+  finishAutomationRun(input: {
+    taskRunId: string;
+    status: Exclude<AutomationRunStatus, "running">;
+    responseText?: string | null;
+    summary?: string | null;
+    completedAt?: number;
+    errorMessage?: string | null;
+  }): void {
+    this.getDb()
+      .prepare(`
+        UPDATE automation_runs
+        SET status = ?,
+            response_text = ?,
+            summary = ?,
+            completed_at = ?,
+            error_message = ?
+        WHERE task_run_id = ?
+      `)
+      .run(
+        input.status,
+        input.responseText ?? null,
+        input.summary ?? null,
+        input.completedAt ?? Date.now(),
+        input.errorMessage ?? null,
+        input.taskRunId,
+      );
+  }
+
+  listAutomationRuns(taskId?: string, limit = 20): AutomationRunRecord[] {
+    const rows = (taskId
+      ? this.getDb()
+        .prepare(`
+          SELECT task_run_id, task_id, task_type, task_name, session_id, run_id, trigger,
+                 status, prompt_text, response_text, summary, started_at, completed_at,
+                 delivery_target_json, error_message
+          FROM automation_runs
+          WHERE task_id = ?
+          ORDER BY started_at DESC
+          LIMIT ?
+        `)
+        .all(taskId, limit)
+      : this.getDb()
+        .prepare(`
+          SELECT task_run_id, task_id, task_type, task_name, session_id, run_id, trigger,
+                 status, prompt_text, response_text, summary, started_at, completed_at,
+                 delivery_target_json, error_message
+          FROM automation_runs
+          ORDER BY started_at DESC
+          LIMIT ?
+        `)
+        .all(limit)) as Array<Record<string, unknown>>;
+
+    return rows.map((row) => ({
+      taskRunId: String(row.task_run_id),
+      taskId: String(row.task_id),
+      taskType: String(row.task_type) as AutomationTaskType,
+      taskName: String(row.task_name),
+      sessionId: row.session_id != null ? String(row.session_id) : null,
+      runId: row.run_id != null ? String(row.run_id) : null,
+      trigger: String(row.trigger),
+      status: String(row.status) as AutomationRunStatus,
+      promptText: String(row.prompt_text),
+      responseText: row.response_text != null ? String(row.response_text) : null,
+      summary: row.summary != null ? String(row.summary) : null,
+      startedAt: Number(row.started_at),
+      completedAt: row.completed_at != null ? Number(row.completed_at) : null,
+      deliveryTarget: row.delivery_target_json != null
+        ? JSON.parse(String(row.delivery_target_json)) as Record<string, unknown>
+        : null,
+      errorMessage: row.error_message != null ? String(row.error_message) : null,
+    }));
   }
 }

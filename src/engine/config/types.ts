@@ -67,6 +67,10 @@ export interface MCPServerConfig {
   headers?: Record<string, string>;
   timeoutSeconds?: number;
   connectTimeoutSeconds?: number;
+  /** Trust level assigned to the server registration */
+  trust?: "trusted" | "prompt" | "blocked";
+  /** Whether the server is available by default in all sessions or requires explicit opt-in */
+  sessionAvailability?: "all" | "session_opt_in" | "admin_only";
   tools?: MCPServerToolFilterConfig;
 }
 

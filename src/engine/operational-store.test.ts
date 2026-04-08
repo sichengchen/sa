@@ -229,4 +229,149 @@ describe("OperationalStore", () => {
 
     reopened.close();
   });
+
+  test("persists per-session MCP server availability", async () => {
+    const store = new OperationalStore(testDir);
+    await store.init();
+
+    store.upsertSession({
+      id: "tui:mcp-session",
+      connectorType: "tui",
+      connectorId: "tui",
+      createdAt: 100,
+      lastActiveAt: 200,
+    });
+    store.setSessionMcpServerEnabled("tui:mcp-session", "docs", true, 300);
+    store.setSessionMcpServerEnabled("tui:mcp-session", "fs", false, 301);
+    store.close();
+
+    const reopened = new OperationalStore(testDir);
+    await reopened.init();
+
+    expect(reopened.getSessionMcpServerEnabled("tui:mcp-session", "docs")).toBe(true);
+    expect(reopened.getSessionMcpServerEnabled("tui:mcp-session", "fs")).toBe(false);
+    expect(reopened.listSessionMcpServers("tui:mcp-session")).toEqual({
+      docs: true,
+      fs: false,
+    });
+
+    reopened.close();
+  });
+
+  test("soft-deletes sessions while preserving durable state", async () => {
+    const store = new OperationalStore(testDir);
+    await store.init();
+
+    store.upsertSession({
+      id: "tui:durable-session",
+      connectorType: "tui",
+      connectorId: "tui",
+      createdAt: 100,
+      lastActiveAt: 200,
+    });
+    store.createRun({
+      runId: "run-durable",
+      sessionId: "tui:durable-session",
+      trigger: "chat",
+      status: "completed",
+      inputText: "persist me",
+      startedAt: 300,
+      completedAt: 301,
+    });
+    expect(store.destroySession("tui:durable-session")).toBe(true);
+    expect(store.getSession("tui:durable-session")).toBeUndefined();
+    expect(store.listSessions().some((session) => session.id === "tui:durable-session")).toBe(false);
+    store.close();
+
+    const db = new Database(join(testDir, "aria.sqlite"), { readonly: true });
+    const sessionRow = db
+      .prepare("SELECT destroyed_at FROM sessions WHERE session_id = ?")
+      .get("tui:durable-session") as { destroyed_at: number };
+    const runRow = db
+      .prepare("SELECT status FROM runs WHERE run_id = ?")
+      .get("run-durable") as { status: string };
+    db.close(false);
+
+    expect(sessionRow.destroyed_at).toBeGreaterThan(0);
+    expect(runRow.status).toBe("completed");
+  });
+
+  test("persists automation tasks and task runs", async () => {
+    const store = new OperationalStore(testDir);
+    await store.init();
+
+    store.upsertAutomationTask({
+      taskId: "cron:daily-summary",
+      taskType: "cron",
+      name: "daily-summary",
+      enabled: true,
+      paused: false,
+      config: { schedule: "0 9 * * *", prompt: "Summarize yesterday" },
+      createdAt: 100,
+      updatedAt: 101,
+      nextRunAt: "2026-04-08T09:00:00.000Z",
+    });
+    store.recordAutomationRunStart({
+      taskRunId: "task-run-1",
+      taskId: "cron:daily-summary",
+      taskType: "cron",
+      taskName: "daily-summary",
+      sessionId: "cron:daily-summary:run",
+      runId: "run-automation-1",
+      trigger: "cron",
+      promptText: "Summarize yesterday",
+      deliveryTarget: { connector: "telegram" },
+      startedAt: 200,
+    });
+    store.finishAutomationRun({
+      taskRunId: "task-run-1",
+      status: "success",
+      responseText: "Yesterday was productive.",
+      summary: "Yesterday was productive.",
+      completedAt: 201,
+    });
+    store.close();
+
+    const reopened = new OperationalStore(testDir);
+    await reopened.init();
+
+    expect(reopened.listAutomationTasks("cron")).toEqual([
+      {
+        taskId: "cron:daily-summary",
+        taskType: "cron",
+        name: "daily-summary",
+        slug: null,
+        enabled: true,
+        paused: false,
+        config: { schedule: "0 9 * * *", prompt: "Summarize yesterday" },
+        createdAt: 100,
+        updatedAt: 101,
+        lastRunAt: null,
+        nextRunAt: "2026-04-08T09:00:00.000Z",
+        lastStatus: null,
+        lastSummary: null,
+      },
+    ]);
+    expect(reopened.listAutomationRuns("cron:daily-summary")).toEqual([
+      {
+        taskRunId: "task-run-1",
+        taskId: "cron:daily-summary",
+        taskType: "cron",
+        taskName: "daily-summary",
+        sessionId: "cron:daily-summary:run",
+        runId: "run-automation-1",
+        trigger: "cron",
+        status: "success",
+        promptText: "Summarize yesterday",
+        responseText: "Yesterday was productive.",
+        summary: "Yesterday was productive.",
+        startedAt: 200,
+        completedAt: 201,
+        deliveryTarget: { connector: "telegram" },
+        errorMessage: null,
+      },
+    ]);
+
+    reopened.close();
+  });
 });

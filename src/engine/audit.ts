@@ -30,8 +30,18 @@ export interface AuditEntry {
   session: string;
   connector: string;
   event: AuditEvent;
+  run?: string;
+  taskId?: string;
+  taskRunId?: string;
   tool?: string;
+  toolset?: string;
+  backend?: string;
   danger?: DangerLevel;
+  approval?: string;
+  capabilityScope?: string;
+  isolation?: string;
+  mcpServer?: string;
+  mcpTrust?: string;
   command?: string;
   url?: string;
   summary?: string;
@@ -93,7 +103,17 @@ export class AuditLogger {
     };
 
     if (input.tool) entry.tool = input.tool;
+    if (input.run) entry.run = input.run;
+    if (input.taskId) entry.taskId = input.taskId;
+    if (input.taskRunId) entry.taskRunId = input.taskRunId;
+    if (input.toolset) entry.toolset = input.toolset;
+    if (input.backend) entry.backend = input.backend;
     if (input.danger) entry.danger = input.danger;
+    if (input.approval) entry.approval = input.approval;
+    if (input.capabilityScope) entry.capabilityScope = input.capabilityScope;
+    if (input.isolation) entry.isolation = input.isolation;
+    if (input.mcpServer) entry.mcpServer = input.mcpServer;
+    if (input.mcpTrust) entry.mcpTrust = input.mcpTrust;
     if (input.command) entry.command = input.command;
     if (input.url) entry.url = input.url;
     if (input.summary) entry.summary = truncateSummary(input.summary);

@@ -28,7 +28,7 @@ import { SessionArchiveManager } from "./session-archive.js";
 import { CheckpointManager } from "./checkpoints.js";
 import { createSkillManageTool } from "./tools/skill-manage.js";
 import { MCPManager } from "./mcp.js";
-import { registerCronTask } from "./automation.js";
+import { registerCronTask, upsertCronTaskRecord, upsertHeartbeatTaskRecord, upsertWebhookTaskRecord } from "./automation.js";
 import { OperationalStore } from "./operational-store.js";
 import { PromptEngine } from "./prompt-engine.js";
 import { CLI_NAME, getRuntimeHome } from "@sa/shared/brand.js";
@@ -81,7 +81,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
   await store.init();
 
   const checkpoints = new CheckpointManager(config.homeDir, saConfig.runtime.checkpoints);
-  const mcp = new MCPManager(saConfig.runtime.mcp?.servers);
+  const mcp = new MCPManager(saConfig.runtime.mcp?.servers, process.env.TERMINAL_CWD ?? process.cwd(), store);
   await mcp.init();
 
   // Apply search weights from config
@@ -291,6 +291,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
 
   // Restore persisted cron tasks from config
   const cronTasks = saConfig.runtime.automation?.cronTasks ?? [];
+  const webhookTasks = saConfig.runtime.automation?.webhookTasks ?? [];
   runtime = {
     config,
     router,
@@ -338,9 +339,19 @@ export async function createRuntime(): Promise<EngineRuntime> {
       });
     },
   };
+  const heartbeatTask = scheduler.list().find((task) => task.name === "heartbeat");
+  upsertHeartbeatTaskRecord(runtime, {
+    enabled: saConfig.runtime.heartbeat?.enabled ?? true,
+    intervalMinutes: saConfig.runtime.heartbeat?.intervalMinutes ?? 30,
+    nextRunAt: heartbeatTask?.nextRunAt ?? null,
+  });
   for (const task of cronTasks) {
+    upsertCronTaskRecord(runtime, task);
     if (!task.enabled) continue;
     registerCronTask(runtime, task);
+  }
+  for (const task of webhookTasks) {
+    upsertWebhookTaskRecord(runtime, task);
   }
   if (cronTasks.length > 0) {
     console.log(`[aria] Restored ${cronTasks.filter((t) => t.enabled).length} cron task(s)`);

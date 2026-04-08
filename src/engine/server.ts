@@ -8,7 +8,7 @@ import { createContext } from "./context.js";
 import type { EngineRuntime } from "./runtime.js";
 import { heartbeatState } from "./scheduler.js";
 import { frameAsData } from "./agent/content-frame.js";
-import { deliverAutomationResult, logAutomationResult, runAutomationAgent } from "./automation.js";
+import { deliverAutomationResult, logAutomationResult, runAutomationAgent, upsertWebhookTaskRecord } from "./automation.js";
 import { RUNTIME_NAME, getRuntimeHome } from "@sa/shared/brand.js";
 
 const DEFAULT_PORT = 7420;
@@ -211,6 +211,8 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
   const prompt = task.prompt.replace(/\{\{payload\}\}/g, securePayload);
 
   const result = await runAutomationAgent(runtime, {
+    taskId: task.id ?? `webhook:${task.slug}`,
+    taskType: "webhook",
     sessionPrefix: `webhook:${slug}`,
     connectorType: "webhook",
     name: task.name,
@@ -219,6 +221,7 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
     allowedTools: task.allowedTools,
     allowedToolsets: task.allowedToolsets,
     skills: task.skills,
+    delivery: task.delivery,
   });
 
   await logAutomationResult(runtime, `webhook-${slug}`, prompt, result.responseText, result.toolCalls);
@@ -246,6 +249,10 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
       },
     },
   });
+  const updatedTask = updatedWebhookTasks.find((item) => item.slug === slug);
+  if (updatedTask) {
+    upsertWebhookTaskRecord(runtime, updatedTask);
+  }
 
   return new Response(
     JSON.stringify({ slug, task: task.name, response: result.responseText, sessionId: result.sessionId }),
