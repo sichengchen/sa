@@ -1,6 +1,6 @@
 # Esperta Aria Specs
 
-These files define the canonical Aria platform architecture and supersede the earlier Esperta Base-oriented spec set.
+These files define the canonical Aria platform architecture and supersede the earlier Esperta Aria-oriented spec set.
 
 ## Canonical Aria Specs
 

@@ -13,7 +13,7 @@ running commands in sensitive directories.
     "security": {
       "exec": {
         "fence": ["~/projects", "/tmp"],
-        "alwaysDeny": ["~/.sa", "~/.ssh", "~/.gnupg", "~/.aws", "~/.config/gcloud"]
+        "alwaysDeny": ["~/.aria", "~/.ssh", "~/.gnupg", "~/.aws", "~/.config/gcloud"]
       }
     }
   }
@@ -44,7 +44,7 @@ Default deny list:
 
 | Path | Rationale |
 |------|-----------|
-| `~/.sa` | Esperta Base config, secrets, tokens |
+| `~/.aria` | Esperta Aria config, secrets, tokens |
 | `~/.ssh` | SSH keys |
 | `~/.gnupg` | GPG keys |
 | `~/.aws` | AWS credentials |
@@ -66,7 +66,7 @@ When a directory is outside the fence (or in the deny list), the user can:
 ## Security Mode Interaction
 
 - **default** mode: full fence enforced.
-- **trusted** mode: fence widened to `~`, deny only `~/.sa`.
+- **trusted** mode: fence widened to `~`, deny only `~/.aria`.
 - **unrestricted** mode: fence disabled entirely.
 
 See [`security-modes.md`](security-modes.md) for details.

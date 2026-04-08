@@ -116,7 +116,7 @@ The exec tool enforces a working directory policy to prevent filesystem escape.
 - **fence** — list of allowed working directories. Commands with a `workdir`
   outside the fence are rejected.
 - **alwaysDeny** — paths that are always blocked regardless of fence:
-  `~/.sa`, `~/.ssh`, `~/.gnupg`, `~/.config/op`, etc.
+  `~/.aria`, `~/.ssh`, `~/.gnupg`, `~/.config/op`, etc.
 
 Full details: `specs/security/exec-fence.md`.
 
@@ -124,7 +124,7 @@ Full details: `specs/security/exec-fence.md`.
 
 ## Automatic Checkpoints
 
-When filesystem checkpoints are enabled, Esperta Base automatically snapshots the target
+When filesystem checkpoints are enabled, Esperta Aria automatically snapshots the target
 working directory before destructive `exec` commands such as `rm`, `mv`,
 in-place `sed`, shell redirection (`>`), and dangerous git restore/reset style
 operations. Checkpoints are deduplicated per working directory per agent turn

@@ -1,7 +1,7 @@
 # Secrets Vault
 
 Encrypted at-rest storage for API keys, bot tokens, and pairing credentials.
-Stored in `~/.sa/secrets.enc` with a companion salt file `~/.sa/.salt`.
+Stored in `~/.aria/secrets.enc` with a companion salt file `~/.aria/.salt`.
 
 ---
 
@@ -14,7 +14,7 @@ Stored in `~/.sa/secrets.enc` with a companion salt file `~/.sa/.salt`.
 | Key length | 32 bytes (256 bits) |
 | IV | 16 random bytes per encryption |
 | Auth tag | GCM authentication tag (integrity check) |
-| Salt | 32 random bytes, stored in `~/.sa/.salt` |
+| Salt | 32 random bytes, stored in `~/.aria/.salt` |
 
 ---
 
@@ -62,8 +62,8 @@ different ciphertext.
 
 | File | Permission | Description |
 |------|------------|-------------|
-| `~/.sa/.salt` | `0o600` | Random salt, never overwritten once created |
-| `~/.sa/secrets.enc` | `0o600` | Encrypted secrets, rewritten on every save |
+| `~/.aria/.salt` | `0o600` | Random salt, never overwritten once created |
+| `~/.aria/secrets.enc` | `0o600` | Encrypted secrets, rewritten on every save |
 
 ---
 

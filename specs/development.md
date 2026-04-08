@@ -11,7 +11,7 @@
 ## Setup
 
 ```bash
-git clone <repo-url> esperta-base && cd esperta-base
+git clone <repo-url> aria && cd aria
 bun install
 cp .env.example .env   # fill at least one provider API key
 ```
@@ -88,7 +88,7 @@ Three tiers, all using Bun's built-in test runner (Jest-compatible API).
 
 **CI** (`ci.yml`) -- runs on push/PR to `main`: TruffleHog secret scan + lint + typecheck + test + build.
 
-**Release** (`release.yml`) -- triggered by `v*` tag: build `esperta-base-darwin` binary, create GitHub Release, update Homebrew tap.
+**Release** (`release.yml`) -- triggered by `v*` tag: build `aria-darwin` binary, create GitHub Release, update Homebrew tap.
 
 ---
 
@@ -106,8 +106,8 @@ bun run scripts/version.ts --push # bump + tag + push (triggers release)
 ## Homebrew Tap
 
 ```bash
-brew tap sichengchen/tap && brew install esperta-base
-brew services start esperta-base   # optional: engine as background service
+brew tap sichengchen/tap && brew install aria
+brew services start aria   # optional: engine as background service
 ```
 
 ---
@@ -116,10 +116,10 @@ brew services start esperta-base   # optional: engine as background service
 
 | Alias              | Maps To            |
 |--------------------|--------------------|
-| `@sa/engine/*`     | `src/engine/*`     |
-| `@sa/connectors/*` | `src/connectors/*` |
-| `@sa/shared/*`     | `src/shared/*`     |
-| `@sa/cli/*`        | `src/cli/*`        |
+| `@aria/engine/*`     | `src/engine/*`     |
+| `@aria/connectors/*` | `src/connectors/*` |
+| `@aria/shared/*`     | `src/shared/*`     |
+| `@aria/cli/*`        | `src/cli/*`        |
 
 Configured in `tsconfig.json`, resolved by Bun. Always include `.js` extension in imports.
 
@@ -138,6 +138,6 @@ Configured in `tsconfig.json`, resolved by Bun. Always include `.js` extension i
 
 ## Debugging
 
-- **SA_HOME override**: `SA_HOME=/tmp/sa-debug bun run dev` for isolated testing.
-- **Engine logs**: `esperta-base engine logs` or `tail -f ~/.sa/engine.log`.
+- **ARIA_HOME override**: `ARIA_HOME=/tmp/aria-debug bun run dev` for isolated testing.
+- **Engine logs**: `aria engine logs` or `tail -f ~/.aria/engine.log`.
 - **Single test**: `bun test src/engine/tools/exec.test.ts` or `bun test --grep "pattern"`.

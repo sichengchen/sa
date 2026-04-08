@@ -2,7 +2,7 @@
 
 ## Overview
 
-Esperta Base uses the **Agent Skills** specification ([agentskills.io](https://agentskills.io)) to extend the agent's capabilities through prompt-level instructions. Skills are Markdown files named `SKILL.md` with YAML frontmatter. They teach the agent how to perform specific tasks using existing tools -- they are not tools themselves.
+Esperta Aria uses the **Agent Skills** specification ([agentskills.io](https://agentskills.io)) to extend the agent's capabilities through prompt-level instructions. Skills are Markdown files named `SKILL.md` with YAML frontmatter. They teach the agent how to perform specific tasks using existing tools -- they are not tools themselves.
 
 When a user message arrives, the agent inspects an `<available_skills>` catalog injected into its system prompt, identifies the most relevant skill, loads its full content via the `read_skill` tool, and follows its instructions. This lazy-loading design keeps the system prompt compact while making a large library of domain knowledge available on demand.
 
@@ -35,15 +35,15 @@ The body supports `{baseDir}` interpolation. At load time, `{baseDir}` is replac
 
 ## Skill Types
 
-Esperta Base discovers skills from three sources, in priority order:
+Esperta Aria discovers skills from three sources, in priority order:
 
 ### 1. Bundled Skills
 
-Ship with Esperta Base at `src/engine/skills/bundled/`. Each subdirectory contains a `SKILL.md` and optional supporting files.
+Ship with Esperta Aria at `src/engine/skills/bundled/`. Each subdirectory contains a `SKILL.md` and optional supporting files.
 
 | Skill                | Purpose                                        |
 |----------------------|------------------------------------------------|
-| `sa`                 | Knowledge about Esperta Base itself (spec index) |
+| `aria`               | Knowledge about Esperta Aria itself (spec index) |
 | `coding-agents`      | Delegate tasks to Claude Code / Codex CLI agents, esperkit integration |
 | `clawhub`            | Search, install, update skills from ClawHub    |
 | `skill-creator`      | Scaffold new custom skills                     |
@@ -59,7 +59,7 @@ Ship with Esperta Base at `src/engine/skills/bundled/`. Each subdirectory contai
 
 ### 2. User-Installed Skills
 
-Live at `~/.sa/skills/<name>/SKILL.md` (or `$SA_HOME/skills/`). Users can create them manually or install from ClawHub. User skills with the same name as a bundled skill override it (both are keyed by name; user skills load second).
+Live at `~/.aria/skills/<name>/SKILL.md` (or `$ARIA_HOME/skills/`). Users can create them manually or install from ClawHub. User skills with the same name as a bundled skill override it (both are keyed by name; user skills load second).
 
 ### 3. ClawHub Skills
 
@@ -73,7 +73,7 @@ Live at `~/.sa/skills/<name>/SKILL.md` (or `$SA_HOME/skills/`). Users can create
 
 1. Clear the internal `Map<string, LoadedSkill>`.
 2. Scan the bundled skills directory with `scanSkillDirectory()`. If the directory does not exist on disk (compiled binary), fall back to `parseEmbeddedSkills()`.
-3. Scan the user skills directory (`~/.sa/skills/`).
+3. Scan the user skills directory (`~/.aria/skills/`).
 4. Register each skill as a `LoadedSkill` with `content: ""` and `active: false`.
 
 ### System Prompt Injection
@@ -118,7 +118,7 @@ Active skills are tracked via `getActiveSkills()` and can be formatted into the 
 
 ### skill_manage Tool
 
-Esperta Base also ships a writable companion tool, `skill_manage`, for turning successful workflows into reusable skills under `~/.sa/skills/`.
+Esperta Aria also ships a writable companion tool, `skill_manage`, for turning successful workflows into reusable skills under `~/.aria/skills/`.
 
 Supported actions:
 
@@ -129,7 +129,7 @@ Supported actions:
 - `write_file` — write supporting files under `references/`, `templates/`, `scripts/`, or `assets/`
 - `remove_file` — remove a supporting file from one of those directories
 
-The tool refuses to edit bundled or embedded skills directly; only writable user skills under `~/.sa/skills/` are mutable.
+The tool refuses to edit bundled or embedded skills directly; only writable user skills under `~/.aria/skills/` are mutable.
 
 ---
 
@@ -161,9 +161,9 @@ The ClawHub integration is a bundled skill that delegates to the `clawhub` CLI:
 | Command                                   | Danger   | Description                          |
 |-------------------------------------------|----------|--------------------------------------|
 | `clawhub search '<query>'`                | safe     | Search the registry by keyword       |
-| `clawhub install '<slug>' --workdir ~/.sa`| moderate | Install a skill by slug              |
-| `clawhub update --all --workdir ~/.sa`    | moderate | Check installed skills for updates   |
-| `clawhub list --workdir ~/.sa`            | safe     | List locally installed ClawHub skills|
+| `clawhub install '<slug>' --workdir ~/.aria`| moderate | Install a skill by slug              |
+| `clawhub update --all --workdir ~/.aria`    | moderate | Check installed skills for updates   |
+| `clawhub list --workdir ~/.aria`            | safe     | List locally installed ClawHub skills|
 
 After installation, the skill is discovered on the next registry reload and is
 available to subsequent turns immediately after the runtime refreshes the skill
@@ -173,7 +173,7 @@ catalog.
 
 ## Creating Custom Skills
 
-1. Create a directory: `mkdir -p ~/.sa/skills/my-skill/`
+1. Create a directory: `mkdir -p ~/.aria/skills/my-skill/`
 2. Create `SKILL.md` with frontmatter (`name`, `description`) and a body with agent instructions.
 3. Optionally add `scripts/`, `references/`, or `assets/` directories alongside `SKILL.md`. Reference them from the body using `{baseDir}/scripts/foo.sh`.
 4. The skill is discovered on the next engine restart or registry reload.
@@ -184,7 +184,7 @@ The bundled `skill-creator` skill can guide the agent through this process inter
 
 ## Embedded Skills (Binary Builds)
 
-When Esperta Base is compiled into a single binary, bundled skills are not available on disk. The build process handles this:
+When Esperta Aria is compiled into a single binary, bundled skills are not available on disk. The build process handles this:
 
 1. `scripts/embed-skills.ts` reads every `.md` file from `src/engine/skills/bundled/*/`.
 2. Generates `src/engine/skills/embedded-skills.generated.ts` exporting a `Record<string, Record<string, string>>` mapping directory names to `{ relative path -> content }`.

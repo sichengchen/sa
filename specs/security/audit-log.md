@@ -65,12 +65,12 @@ When the log file reaches 10 MB, it rotates to `.1`, the previous `.1` becomes
 ## CLI Commands
 
 ```bash
-sa audit                       # Show recent entries (table format)
-sa audit --tail 20             # Last 20 entries
-sa audit --tool exec           # Filter by tool
-sa audit --event auth_failure  # Filter by event type
-sa audit --since 1h            # Entries from the last hour
-sa audit --json                # Raw JSON output
+aria audit                       # Show recent entries (table format)
+aria audit --tail 20             # Last 20 entries
+aria audit --tool exec           # Filter by tool
+aria audit --event auth_failure  # Filter by event type
+aria audit --since 1h            # Entries from the last hour
+aria audit --json                # Raw JSON output
 ```
 
 ---

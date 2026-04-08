@@ -13,11 +13,11 @@ ports.
 | Localhost | `127.0.0.1`, `::1`, `localhost`, `0.0.0.0` |
 | Private ranges | `10.*`, `172.16-31.*`, `192.168.*`, `169.254.*` |
 | Cloud metadata | `169.254.169.254`, `metadata.google.internal` |
-| Esperta Base engine ports | `127.0.0.1:7420`, `127.0.0.1:7421` |
+| Esperta Aria engine ports | `127.0.0.1:7420`, `127.0.0.1:7421` |
 | Schemes | Only `http:` and `https:` allowed |
 
 All private and loopback addresses are blocked to prevent the agent from
-accessing internal services, cloud instance metadata, or the Esperta Base engine itself
+accessing internal services, cloud instance metadata, or the Esperta Aria engine itself
 via HTTP.
 
 ---

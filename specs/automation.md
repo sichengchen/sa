@@ -2,7 +2,7 @@
 
 ## Overview
 
-Esperta Base supports three automation mechanisms: **heartbeat**, **cron**, and **webhook tasks**. All log results to `~/.sa/automation/`. Config lives in `config.json` under `runtime.heartbeat` and `runtime.automation`. Tasks persist across engine restarts and now track run metadata (`lastRunAt`, `nextRunAt`, `lastStatus`, `lastSummary`).
+Esperta Aria supports three automation mechanisms: **heartbeat**, **cron**, and **webhook tasks**. All log results to `~/.aria/automation/`. Config lives in `config.json` under `runtime.heartbeat` and `runtime.automation`. Tasks persist across engine restarts and now track run metadata (`lastRunAt`, `nextRunAt`, `lastStatus`, `lastSummary`).
 
 ---
 
@@ -16,20 +16,20 @@ Agent-based periodic check running in the **main session**. The agent reads a us
 |--------------------|---------|------------------|---------------------------------------------------|
 | `enabled`          | boolean | `true`           | Whether the heartbeat agent runs on each cycle    |
 | `intervalMinutes`  | number  | `30`             | Minutes between heartbeat checks                  |
-| `checklistPath`    | string  | `"HEARTBEAT.md"` | Path to checklist, relative to `SA_HOME`          |
+| `checklistPath`    | string  | `"HEARTBEAT.md"` | Path to checklist, relative to `ARIA_HOME`          |
 | `suppressToken`    | string  | `"HEARTBEAT_OK"` | Exact response that suppresses user notification  |
 
 ### How It Works
 
 1. Scheduler fires every `intervalMinutes`. Heartbeat uses a fixed minute interval, not cron step syntax, so values like `120` or `480` work correctly.
-2. Health JSON is written to `~/.sa/engine.heartbeat` on every cycle (pid, memory, timestamp).
-3. A heartbeat run log is written to `~/.sa/automation/heartbeat-<timestamp>.md` on every cycle.
-4. If `enabled` and a main agent exists, engine reads `~/.sa/HEARTBEAT.md`.
+2. Health JSON is written to `~/.aria/engine.heartbeat` on every cycle (pid, memory, timestamp).
+3. A heartbeat run log is written to `~/.aria/automation/heartbeat-<timestamp>.md` on every cycle.
+4. If `enabled` and a main agent exists, engine reads `~/.aria/HEARTBEAT.md`.
 5. Agent handles each checklist item; replies with exactly `HEARTBEAT_OK` if nothing needs attention.
 6. **Smart suppression**: if response equals the suppress token, result is marked `suppressed: true` and no notification is sent.
-7. If the response is not suppressed, Esperta Base attempts to push it through the `notify` tool (Telegram/Discord if configured) and also writes the result to the engine log.
+7. If the response is not suppressed, Esperta Aria attempts to push it through the `notify` tool (Telegram/Discord if configured) and also writes the result to the engine log.
 
-### Checklist File (`~/.sa/HEARTBEAT.md`)
+### Checklist File (`~/.aria/HEARTBEAT.md`)
 
 User-editable Markdown. Read fresh on each cycle. Default:
 
@@ -55,7 +55,7 @@ User-editable Markdown. Read fresh on each cycle. Default:
 
 ## Cron Dispatch
 
-Scheduled tasks dispatch a prompt to a fresh, isolated agent session. Esperta Base accepts classic cron expressions, natural-language cadence strings such as `every 2h`, short delays like `30m`, and absolute ISO timestamps for one-shot tasks.
+Scheduled tasks dispatch a prompt to a fresh, isolated agent session. Esperta Aria accepts classic cron expressions, natural-language cadence strings such as `every 2h`, short delays like `30m`, and absolute ISO timestamps for one-shot tasks.
 
 ### Task Fields
 
@@ -82,7 +82,7 @@ Scheduled tasks dispatch a prompt to a fresh, isolated agent session. Esperta Ba
 
 ### Schedule Syntax
 
-Esperta Base normalizes four schedule forms:
+Esperta Aria normalizes four schedule forms:
 
 | Input              | Meaning |
 |--------------------|---------|
@@ -114,7 +114,7 @@ Persisted in `config.json` at `runtime.automation.cronTasks`. Re-registered on e
 
 ### Result Logging
 
-Each run writes to `~/.sa/automation/daily-summary-2026-02-22T09-00-00-000Z.md` (prompt, response, tool calls).
+Each run writes to `~/.aria/automation/daily-summary-2026-02-22T09-00-00-000Z.md` (prompt, response, tool calls).
 
 ### tRPC API
 
@@ -168,7 +168,7 @@ When `connector` is set, the `notify` tool pushes the response to the specified 
 
 ### Session, Logging, and Delivery
 
-Session ID: `webhook:<slug>:<id>`. Fresh agent per run. Logs written to `~/.sa/automation/`. Delivery prefers `task.delivery.connector` and falls back to the legacy `connector` field.
+Session ID: `webhook:<slug>:<id>`. Fresh agent per run. Logs written to `~/.aria/automation/`. Delivery prefers `task.delivery.connector` and falls back to the legacy `connector` field.
 
 ### Persistence
 

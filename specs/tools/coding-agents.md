@@ -31,7 +31,7 @@ Delegates coding tasks to Claude Code CLI (`claude --print`).
 
 1. `probeAuth("claude")` checks if CLI is installed (`claude --version`)
 2. If installed, runs `claude auth status` to check OAuth/API key auth
-3. If not authenticated, injects `ANTHROPIC_API_KEY` from Esperta Base secrets
+3. If not authenticated, injects `ANTHROPIC_API_KEY` from Esperta Aria secrets
 4. If no key available, returns error with setup instructions
 
 ---
@@ -51,7 +51,7 @@ Same schema as `claude_code` (task, files, workdir, background, handle).
 ### Auth Flow
 
 1. `probeAuth("codex")` checks if CLI is installed (`codex --version`)
-2. If not authenticated, injects `OPENAI_API_KEY` from Esperta Base secrets
+2. If not authenticated, injects `OPENAI_API_KEY` from Esperta Aria secrets
 3. If no key available, returns error with setup instructions
 
 ---

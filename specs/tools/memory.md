@@ -1,7 +1,7 @@
 # Memory Tools
 
 Four tools for persistent, searchable agent memory. Memory is stored in the
-Esperta Base home directory (`~/.sa/memory/`).
+Esperta Aria home directory (`~/.aria/memory/`).
 
 ---
 
@@ -76,7 +76,7 @@ Deletes `topics/<key>.md` only. Does not delete journal entries or `MEMORY.md`.
 ## Memory Directory Structure
 
 ```
-~/.sa/memory/
+~/.aria/memory/
   MEMORY.md              # Curated by user, injected into system prompt
   topics/                # Topic files managed by memory_write
     <key>.md

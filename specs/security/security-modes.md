@@ -22,7 +22,7 @@ This is the standard operating mode.
 
 - Approval gate: only always-dangerous exec patterns prompt the user
 - URL policy: localhost allowed
-- Exec fence: widened to `~`, deny only `~/.sa`
+- Exec fence: widened to `~`, deny only `~/.aria`
 - Content framing: still active
 - Audit log: still active
 
