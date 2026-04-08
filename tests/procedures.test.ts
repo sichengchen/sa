@@ -84,7 +84,29 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
   return {
     config,
     router,
-    memory: { init: async () => {}, loadContext: async () => "", persist: async () => {} } as any,
+    memory: {
+      init: async () => {},
+      loadContext: async () => "Curated operator note",
+      listLayer: async (layer: "profile" | "project" | "operational") => {
+        if (layer === "profile") return ["style"];
+        if (layer === "operational") return ["mode"];
+        return ["repo"];
+      },
+      listJournalDates: async () => ["2026-04-08"],
+      getLayer: async (_layer: "profile" | "project" | "operational", key: string) => `${key} content`,
+      getJournal: async (date: string) => `journal ${date}`,
+      searchIndex: async (query: string) => [{
+        source: "project/repo.md",
+        sourceType: "project",
+        content: `match for ${query}`,
+        lineStart: 1,
+        lineEnd: 1,
+        score: 0.9,
+        updatedAt: 100,
+      }],
+      getMemoryContext: async () => "",
+      persist: async () => {},
+    } as any,
     store,
     archive,
     checkpoints,
@@ -398,6 +420,72 @@ describe("tRPC procedures (non-live)", () => {
       expect(runs).toHaveLength(1);
       expect(runs[0]!.taskName).toBe("digest");
       expect(runs[0]!.status).toBe("success");
+    });
+  });
+
+  describe("memory / approval / audit procedures", () => {
+    test("inspects layered memory", async () => {
+      const caller = createCaller();
+
+      const overview = await caller.memory.overview();
+      expect(overview.curatedLength).toBeGreaterThan(0);
+      expect(overview.layers.profile).toContain("style");
+      expect(overview.journals).toContain("2026-04-08");
+
+      const read = await caller.memory.read({ layer: "profile", key: "style" });
+      expect(read.exists).toBe(true);
+      expect(read.content).toContain("style content");
+
+      const results = await caller.memory.search({ query: "repo", limit: 5 });
+      expect(results[0]?.sourceType).toBe("project");
+    });
+
+    test("lists pending approvals and filtered audit entries", async () => {
+      const caller = createCaller();
+      const { session } = await caller.session.create({ connectorType: "tui", prefix: "tui" });
+
+      runtime.store.createRun({
+        runId: "run-approval-test",
+        sessionId: session.id,
+        trigger: "chat",
+        status: "running",
+        inputText: "Use exec",
+        startedAt: 100,
+      });
+      runtime.store.recordToolCallStart({
+        toolCallId: "tool-call-approval-test",
+        runId: "run-approval-test",
+        sessionId: session.id,
+        toolName: "exec",
+        args: { command: "pwd" },
+        startedAt: 101,
+      });
+      runtime.store.recordApprovalPending({
+        approvalId: "approval-test",
+        runId: "run-approval-test",
+        sessionId: session.id,
+        toolCallId: "tool-call-approval-test",
+        toolName: "exec",
+        args: { command: "pwd" },
+        createdAt: 102,
+      });
+
+      runtime.audit.log({
+        session: session.id,
+        connector: "tui",
+        event: "tool_call",
+        tool: "exec",
+        run: "run-approval-test",
+        summary: "pwd",
+      });
+
+      const approvals = await caller.approval.list({ sessionId: session.id, status: "pending", limit: 5 });
+      expect(approvals).toHaveLength(1);
+      expect(approvals[0]?.toolName).toBe("exec");
+
+      const auditEntries = await caller.audit.list({ session: session.id, tool: "exec", tail: 5 });
+      expect(auditEntries).toHaveLength(1);
+      expect(auditEntries[0]?.tool).toBe("exec");
     });
   });
 

@@ -182,6 +182,55 @@ describe("OperationalStore", () => {
     expect(approval.resolution).toBe("allow_session");
   });
 
+  test("lists approvals with session and status filters", async () => {
+    const store = new OperationalStore(testDir);
+    await store.init();
+
+    store.upsertSession({
+      id: "tui:approval-session",
+      connectorType: "tui",
+      connectorId: "tui",
+      createdAt: 100,
+      lastActiveAt: 200,
+    });
+    store.createRun({
+      runId: "run-approval-list",
+      sessionId: "tui:approval-session",
+      trigger: "chat",
+      status: "running",
+      inputText: "approve this",
+      startedAt: 300,
+    });
+    store.recordToolCallStart({
+      toolCallId: "tool-approval-list",
+      runId: "run-approval-list",
+      sessionId: "tui:approval-session",
+      toolName: "exec",
+      args: { command: "pwd" },
+      startedAt: 301,
+    });
+    store.recordApprovalPending({
+      approvalId: "approval-list",
+      runId: "run-approval-list",
+      sessionId: "tui:approval-session",
+      toolCallId: "tool-approval-list",
+      toolName: "exec",
+      args: { command: "pwd" },
+      createdAt: 302,
+    });
+
+    const approvals = store.listApprovals({
+      sessionId: "tui:approval-session",
+      status: "pending",
+      limit: 5,
+    });
+    expect(approvals).toHaveLength(1);
+    expect(approvals[0]?.toolName).toBe("exec");
+    expect(approvals[0]?.args).toEqual({ command: "pwd" });
+
+    store.close();
+  });
+
   test("persists session summaries and prompt cache entries", async () => {
     const store = new OperationalStore(testDir);
     await store.init();

@@ -31,6 +31,7 @@ import {
   upsertWebhookTaskRecord,
   updateCronTaskState,
 } from "./automation.js";
+import { queryAuditEntries } from "./audit.js";
 
 /** Format tool args as a compact summary for IM display */
 function formatArgsForIM(toolName: string, args: Record<string, unknown>): string {
@@ -1169,8 +1170,62 @@ export function createAppRouter(runtime: EngineRuntime) {
         }),
     }),
 
+    /** Durable operator memory inspection */
+    memory: router({
+      overview: adminProcedure
+        .input(z.object({
+          journalLimit: z.number().int().min(1).max(50).optional(),
+        }).optional())
+        .query(async ({ input }) => {
+          const curated = await runtime.memory.loadContext();
+          return {
+            curatedLength: curated.length,
+            curatedPreview: curated.trim() ? curated.slice(0, 400) : null,
+            layers: {
+              profile: await runtime.memory.listLayer("profile"),
+              project: await runtime.memory.listLayer("project"),
+              operational: await runtime.memory.listLayer("operational"),
+            },
+            journals: await runtime.memory.listJournalDates(input?.journalLimit ?? 10),
+          };
+        }),
+
+      read: adminProcedure
+        .input(z.object({
+          layer: z.enum(["curated", "profile", "project", "operational", "journal"]),
+          key: z.string().optional(),
+        }))
+        .query(async ({ input }) => {
+          if (input.layer === "curated") {
+            const content = await runtime.memory.loadContext();
+            return { exists: content.length > 0, content };
+          }
+
+          if (!input.key) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "key is required for this memory layer" });
+          }
+
+          const content = input.layer === "journal"
+            ? await runtime.memory.getJournal(input.key)
+            : await runtime.memory.getLayer(input.layer, input.key);
+
+          return { exists: content !== null, content };
+        }),
+
+      search: adminProcedure
+        .input(z.object({
+          query: z.string().min(1),
+          limit: z.number().int().min(1).max(50).optional(),
+        }))
+        .query(({ input }) => {
+          return runtime.memory.searchIndex(input.query, {
+            maxResults: input.limit ?? 10,
+          });
+        }),
+    }),
+
       /** Toolset metadata */
-      toolset: router({
+    toolset: router({
       list: adminProcedure.query(() => {
         return listToolsets(runtime.tools);
       }),
@@ -1259,6 +1314,19 @@ export function createAppRouter(runtime: EngineRuntime) {
             uri: input.uri,
             content: await runtime.mcp.readResource(input.server, input.uri),
           };
+        }),
+    }),
+
+    /** Durable approval inspection */
+    approval: router({
+      list: adminProcedure
+        .input(z.object({
+          sessionId: z.string().optional(),
+          status: z.enum(["pending", "approved", "denied", "allow_session", "interrupted"]).optional(),
+          limit: z.number().int().min(1).max(100).optional(),
+        }).optional())
+        .query(({ input }) => {
+          return runtime.store.listApprovals(input);
         }),
     }),
 
@@ -1924,6 +1992,23 @@ export function createAppRouter(runtime: EngineRuntime) {
         }).optional())
         .query(({ input }) => {
           return runtime.store.listAutomationRuns(input?.taskId, input?.limit ?? 20);
+        }),
+    }),
+
+    /** Audit inspection */
+    audit: router({
+      list: adminProcedure
+        .input(z.object({
+          tail: z.number().int().min(1).max(500).optional(),
+          tool: z.string().optional(),
+          event: z.string().optional(),
+          since: z.string().optional(),
+          session: z.string().optional(),
+          run: z.string().optional(),
+          taskId: z.string().optional(),
+        }).optional())
+        .query(({ input }) => {
+          return queryAuditEntries(runtime.audit.getLogPath(), input ?? {});
         }),
     }),
 

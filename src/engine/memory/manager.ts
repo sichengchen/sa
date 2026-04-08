@@ -379,6 +379,16 @@ export class MemoryManager {
     return keys;
   }
 
+  async listJournalDates(limit = 10): Promise<string[]> {
+    if (!existsSync(this.journalDir)) return [];
+    const files = await readdir(this.journalDir);
+    return files
+      .filter((file) => file.endsWith(".md"))
+      .map((file) => file.replace(/\.md$/, ""))
+      .sort((a, b) => b.localeCompare(a))
+      .slice(0, limit);
+  }
+
   /**
    * Get relevant memory context for a user query.
    * Searches across all memory and returns formatted snippets + today's journal.

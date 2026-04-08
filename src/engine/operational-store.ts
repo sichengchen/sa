@@ -31,6 +31,19 @@ export interface SessionSummaryRecord {
   updatedAt: number;
 }
 
+export interface ApprovalRecord {
+  approvalId: string;
+  runId: string;
+  sessionId: string;
+  toolCallId: string;
+  toolName: string;
+  args: Record<string, unknown>;
+  status: ApprovalStatus;
+  createdAt: number;
+  resolvedAt?: number | null;
+  resolution?: string | null;
+}
+
 export interface PromptCacheRecord {
   cacheKey: string;
   scope: string;
@@ -589,6 +602,50 @@ export class OperationalStore {
           AND status = 'pending'
       `)
       .run(status, resolvedAt, status, approvalId);
+  }
+
+  listApprovals(input?: {
+    sessionId?: string;
+    status?: ApprovalStatus;
+    limit?: number;
+  }): ApprovalRecord[] {
+    const limit = input?.limit ?? 20;
+    const filters: string[] = [];
+    const params: Array<string | number> = [];
+
+    if (input?.sessionId) {
+      filters.push("session_id = ?");
+      params.push(input.sessionId);
+    }
+    if (input?.status) {
+      filters.push("status = ?");
+      params.push(input.status);
+    }
+
+    const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+    const rows = this.getDb()
+      .prepare(`
+        SELECT approval_id, run_id, session_id, tool_call_id, tool_name,
+               args_json, status, created_at, resolved_at, resolution
+        FROM approvals
+        ${whereClause}
+        ORDER BY created_at DESC
+        LIMIT ?
+      `)
+      .all(...params, limit) as Array<Record<string, unknown>>;
+
+    return rows.map((row) => ({
+      approvalId: String(row.approval_id),
+      runId: String(row.run_id),
+      sessionId: String(row.session_id),
+      toolCallId: String(row.tool_call_id),
+      toolName: String(row.tool_name),
+      args: JSON.parse(String(row.args_json)) as Record<string, unknown>,
+      status: String(row.status) as ApprovalStatus,
+      createdAt: Number(row.created_at),
+      resolvedAt: row.resolved_at != null ? Number(row.resolved_at) : null,
+      resolution: row.resolution != null ? String(row.resolution) : null,
+    }));
   }
 
   getSessionSummary(sessionId: string, summaryKind: string): SessionSummaryRecord | undefined {

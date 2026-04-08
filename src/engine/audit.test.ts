@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtempSync, rmSync, readFileSync, statSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { AuditLogger, type AuditEntry, type AuditInput } from "./audit.js";
+import { AuditLogger, queryAuditEntries, type AuditEntry, type AuditInput } from "./audit.js";
 
 function readEntries(logDir: string): AuditEntry[] {
   const path = join(logDir, "audit.log");
@@ -231,5 +231,33 @@ describe("AuditLogger", () => {
   it("getLogPath returns the correct path", () => {
     const logger = new AuditLogger(tmpDir);
     expect(logger.getLogPath()).toBe(join(tmpDir, "audit.log"));
+  });
+
+  it("queries audit entries with filters", () => {
+    const logger = new AuditLogger(tmpDir);
+    logger.log({
+      session: "tui:session-a",
+      connector: "tui",
+      event: "tool_call",
+      tool: "exec",
+      run: "run-1",
+      summary: "pwd",
+    });
+    logger.log({
+      session: "tui:session-b",
+      connector: "tui",
+      event: "tool_result",
+      tool: "read",
+      run: "run-2",
+      summary: "README",
+    });
+
+    const entries = queryAuditEntries(join(tmpDir, "audit.log"), {
+      tool: "exec",
+      session: "tui:session-a",
+      tail: 5,
+    });
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.run).toBe("run-1");
   });
 });

@@ -5,7 +5,7 @@
  * unrestricted session modes.
  */
 
-import { appendFileSync, statSync, renameSync, existsSync, openSync, closeSync, chmodSync } from "node:fs";
+import { appendFileSync, statSync, renameSync, existsSync, openSync, closeSync, chmodSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { DangerLevel } from "./agent/types.js";
 
@@ -55,6 +55,16 @@ export interface AuditEntry {
 /** Fields the caller provides (ts is auto-set) */
 export type AuditInput = Omit<AuditEntry, "ts">;
 
+export interface AuditQueryOptions {
+  tail?: number;
+  tool?: string;
+  event?: AuditEvent | string;
+  since?: string;
+  session?: string;
+  run?: string;
+  taskId?: string;
+}
+
 /** Max file size before rotation (10 MB) */
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -74,6 +84,66 @@ function truncateSessionId(sessionId: string): string {
 function truncateSummary(s: string): string {
   if (s.length <= MAX_SUMMARY_LENGTH) return s;
   return s.slice(0, MAX_SUMMARY_LENGTH) + "...";
+}
+
+function parseAuditLine(line: string): AuditEntry | null {
+  try {
+    return JSON.parse(line) as AuditEntry;
+  } catch {
+    return null;
+  }
+}
+
+export function readAuditEntries(logPath: string): AuditEntry[] {
+  if (!existsSync(logPath)) {
+    return [];
+  }
+
+  const content = readFileSync(logPath, "utf-8").trim();
+  if (!content) {
+    return [];
+  }
+
+  return content
+    .split("\n")
+    .map((line) => parseAuditLine(line))
+    .filter((entry): entry is AuditEntry => entry !== null);
+}
+
+export function queryAuditEntries(logPath: string, options: AuditQueryOptions = {}): AuditEntry[] {
+  let entries = readAuditEntries(logPath);
+
+  if (options.tool) {
+    entries = entries.filter((entry) => entry.tool === options.tool);
+  }
+  if (options.event) {
+    entries = entries.filter((entry) => entry.event === options.event);
+  }
+  if (options.session) {
+    const sessionFilter = options.session;
+    entries = entries.filter((entry) => (
+      entry.session.startsWith(sessionFilter) || sessionFilter.startsWith(entry.session)
+    ));
+  }
+  if (options.run) {
+    entries = entries.filter((entry) => entry.run === options.run);
+  }
+  if (options.taskId) {
+    entries = entries.filter((entry) => entry.taskId === options.taskId);
+  }
+  if (options.since) {
+    const sinceDate = new Date(options.since);
+    if (!Number.isNaN(sinceDate.getTime())) {
+      entries = entries.filter((entry) => new Date(entry.ts) >= sinceDate);
+    }
+  }
+
+  const tail = options.tail ?? 20;
+  if (entries.length > tail) {
+    entries = entries.slice(-tail);
+  }
+
+  return entries;
 }
 
 export class AuditLogger {
