@@ -15,7 +15,7 @@ this.masterToken = randomBytes(32).toString("hex"); // 64-char hex string
 await writeFile(this.tokenFilePath, this.masterToken, { mode: 0o600 });
 ```
 
-- Written to `~/.sa/engine.token` with `chmod 600`.
+- Written to `~/.aria/engine.token` with `chmod 600`.
 - Valid for the lifetime of the engine process.
 - Deleted on engine shutdown.
 - Local connectors (TUI) read this file to authenticate with the engine.
@@ -68,7 +68,7 @@ const authMiddleware = middleware(async ({ ctx, next }) => {
 
 ## Authorization Model
 
-Authentication only proves that a token is valid. Esperta Base also enforces a second
+Authentication only proves that a token is valid. Esperta Aria also enforces a second
 authorization step based on token type:
 
 | Token type | Scope |
@@ -120,7 +120,7 @@ Webhook endpoints use a dedicated webhook token, separate from the master token.
 ### Bearer Token
 
 A webhook token is auto-generated on engine startup and written to
-`~/.sa/engine.webhook-token` (chmod 600). Requests must include it:
+`~/.aria/engine.webhook-token` (chmod 600). Requests must include it:
 
 ```bash
 curl -X POST http://127.0.0.1:7420/webhook/agent \

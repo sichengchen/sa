@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Esperta Base is a personal AI agent assistant. It runs as a **daemon (Engine)** that owns all state -- config, model router, tools, memory, skills, sessions, auth, and scheduler. Frontends (TUI, Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear, Webhook) are stateless **Connectors** that communicate with the Engine over **tRPC** (HTTP + WebSocket) on `127.0.0.1:7420/7421`.
+Esperta Aria is a personal AI agent assistant. It runs as a **daemon (Engine)** that owns all state -- config, model router, tools, memory, skills, sessions, auth, and scheduler. Frontends (TUI, Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear, Webhook) are stateless **Connectors** that communicate with the Engine over **tRPC** (HTTP + WebSocket) on `127.0.0.1:7420/7421`.
 
 ---
 
@@ -40,7 +40,7 @@ Esperta Base is a personal AI agent assistant. It runs as a **daemon (Engine)** 
                     |  +-----------------+   |
                     +------------------------+
                               |
-                      ~/.sa/  (file-based state)
+                      ~/.aria/  (file-based state)
                       config.json, secrets.enc,
                       IDENTITY.md, USER.md,
                       HEARTBEAT.md, memory/,
@@ -65,7 +65,7 @@ Esperta Base is a personal AI agent assistant. It runs as a **daemon (Engine)** 
 | MCP | `src/engine/mcp.ts` | Connect configured MCP servers, surface remote tools, resources, and prompts |
 | Audio | `src/engine/audio/` | Audio transcription -- prefers local Whisper, falls back to cloud API |
 | Connectors | `src/connectors/` | TUI (Ink + React), Telegram (Grammy), Chat SDK connectors (Slack, Teams, Google Chat, Discord, GitHub, Linear), shared stream handler |
-| CLI | `src/cli/` | `esperta-base` command entry point, daemon control, onboarding wizard, config editor |
+| CLI | `src/cli/` | `aria` command entry point, daemon control, onboarding wizard, config editor |
 | Shared | `src/shared/` | Typed tRPC client factory, cross-layer types, connector base, markdown formatting |
 
 ---
@@ -73,9 +73,9 @@ Esperta Base is a personal AI agent assistant. It runs as a **daemon (Engine)** 
 ## Engine startup flow
 
 1. Spawn detached Bun process (`src/engine/index.ts`)
-2. `ConfigManager.load()` -- load or create `~/.sa/config.json` (v3), `IDENTITY.md`
-3. `MemoryManager.init()` -- ensure `~/.sa/memory/` exists
-4. `SessionArchiveManager.init()` -- open `~/.sa/session-archive.sqlite`
+2. `ConfigManager.load()` -- load or create `~/.aria/config.json` (v3), `IDENTITY.md`
+3. `MemoryManager.init()` -- ensure `~/.aria/memory/` exists
+4. `SessionArchiveManager.init()` -- open `~/.aria/session-archive.sqlite`
 5. Inject `runtime.env` -- plain env vars from config (env vars take precedence)
 6. `config.loadSecrets()` -- decrypt `secrets.enc`, inject API keys into `process.env`
 7. Validate provider API keys -- warn if any `apiKeyEnvVar` is missing
@@ -113,11 +113,11 @@ The `Agent` class implements the core chat loop. Each `agent.chat(userText)` cal
 
 ## Context Enrichment
 
-Before a normal chat turn reaches the model, Esperta Base enriches the user message in three stages:
+Before a normal chat turn reaches the model, Esperta Aria enriches the user message in three stages:
 
-1. **Project context files**: the runtime auto-loads the nearest `.sa.md`, `SA.md`, `AGENTS.md`, `CLAUDE.md`, or `.cursorrules` file into the system prompt. As tools move into subdirectories, matching context files are appended as tool-result hints.
+1. **Project context files**: the runtime auto-loads the nearest `.aria.md`, `AGENTS.md`, `CLAUDE.md`, or `.cursorrules` file into the system prompt. As tools move into subdirectories, matching context files are appended as tool-result hints.
 2. **Inline `@` references**: `chat.stream` expands `@file:path[:start-end]`, `@folder:path`, `@diff`, `@staged`, and `@url:https://...` into attached context blocks before the model sees the turn.
-3. **Memory context**: after reference expansion, Esperta Base queries persistent memory using the expanded message and prepends any relevant `<memory_context>` block.
+3. **Memory context**: after reference expansion, Esperta Aria queries persistent memory using the expanded message and prepends any relevant `<memory_context>` block.
 
 `@` references are constrained to the active workspace root and warn instead of expanding when a path escapes the workspace or hits a blocked secret location.
 
@@ -143,7 +143,7 @@ Event filtering by `ToolPolicyManager`: verbosity levels (`verbose`/`minimal`/`s
 
 ## Authorization Model
 
-Esperta Base separates authentication from authorization:
+Esperta Aria separates authentication from authorization:
 
 - **Master token** calls are trusted for engine-wide administration.
 - **Session token** calls are limited to the paired connector's own
@@ -181,10 +181,10 @@ or restart the engine.
 1. Identity prompt (from `IDENTITY.md`)
 2. Available Tools section (formatted list: `- toolName [dangerLevel]: summary`)
 3. Tool Call Style guide (safe/moderate/dangerous narration rules)
-4. Memory guide + current memory context (from `~/.sa/memory/`)
+4. Memory guide + current memory context (from `~/.aria/memory/`)
 5. Skills directive + available skills list (`read_skill` before replying)
 6. Skill learning guide (`skill_manage` for reusable workflows)
-7. Project context files (`.sa.md`, `SA.md`, `AGENTS.md`, `CLAUDE.md`, `.cursorrules`) if discovered
+7. Project context files (`.aria.md`, `AGENTS.md`, `CLAUDE.md`, `.cursorrules`) if discovered
 8. Reactions guide (when to react with emoji vs. reply)
 9. Group Chat guide (name-prefixed messages, address by name)
 10. Safety advisory (no independent goals, human oversight)
@@ -263,7 +263,7 @@ or restart the engine.
 ## Config directory layout
 
 ```text
-~/.sa/
+~/.aria/
   config.json           Config v3: runtime + providers + models + automation
   IDENTITY.md           Agent personality and base system prompt
   USER.md               User profile (optional)
@@ -296,7 +296,7 @@ or restart the engine.
 - **Graceful shutdown**: engine stop/restart flushes live session archives, aborts pending work, and closes long-lived subsystems (MCP, memory, auth cleanup) before exit.
 - **Streaming-first**: agent yields events as they arrive from the LLM. tRPC subscriptions and SSE webhooks forward with minimal buffering.
 - **pi-ai abstraction**: unified streaming interface across Anthropic, OpenAI, Google, OpenRouter. Use type assertion `(getModel as (p: string, m: string) => Model<Api>)` for dynamic strings.
-- **Chat SDK adapter pattern**: six connectors (Slack, Teams, Google Chat, Discord, GitHub, Linear) share a single `ChatSDKAdapter` class that bridges Chat SDK events to Esperta Base's tRPC client. Platform-specific code is limited to adapter instantiation and webhook server setup.
+- **Chat SDK adapter pattern**: six connectors (Slack, Teams, Google Chat, Discord, GitHub, Linear) share a single `ChatSDKAdapter` class that bridges Chat SDK events to Esperta Aria's tRPC client. Platform-specific code is limited to adapter instantiation and webhook server setup.
 - **Skills are Markdown**: lightweight, version-controllable, shareable via ClawHub. No code execution in skill loading.
 - **Audio transcription**: prefers local Whisper, falls back to cloud API.
 - **Tool approval is per-connector**: TUI defaults to auto-approve; IM connectors default to `"ask"`.

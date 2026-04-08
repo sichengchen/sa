@@ -2,21 +2,21 @@
 
 ## CLI commands
 
-Preferred CLI name: `esperta-base`. Compatibility alias: `sa`.
+Public CLI identity: `aria`.
 
-### `esperta-base` (no arguments)
+### `aria` (no arguments)
 
-Detect first run. If `~/.sa/config.json` does not exist, run the onboarding wizard. Otherwise, start the engine daemon (if not running), wait for `/health` to respond, pair with the engine, create a TUI session, and open the Ink-based terminal UI.
+Detect first run. If `~/.aria/config.json` does not exist, run the onboarding wizard. Otherwise, start the engine daemon (if not running), wait for `/health` to respond, pair with the engine, create a TUI session, and open the Ink-based terminal UI.
 
-### `esperta-base config`
+### `aria config`
 
 Interactive configuration editor. Provides menus for editing providers, models, connectors, runtime settings, and automation tasks.
 
-### `esperta-base onboard`
+### `aria onboard`
 
 Run the setup wizard. Walks through provider API key entry, model selection, Telegram/Discord pairing, and identity configuration.
 
-### `esperta-base engine <subcommand>`
+### `aria engine <subcommand>`
 
 | Subcommand | Description |
 |---|---|
@@ -26,21 +26,21 @@ Run the setup wizard. Walks through provider API key entry, model selection, Tel
 | `logs` | View recent engine daemon log output |
 | `restart` | Stop then start the engine |
 
-### `esperta-base stop`
+### `aria stop`
 
 Force-cancel all running agent tasks and tool calls. Sends `chat.stopAll` to the engine.
 
-### `esperta-base restart`
+### `aria restart`
 
 Restart the engine via the `engine.restart` tRPC procedure. The engine writes a restart marker file and exits; the CLI re-launches the daemon.
 
-### `esperta-base shutdown`
+### `aria shutdown`
 
 Shut down the engine gracefully via the `engine.shutdown` tRPC procedure.
 
-### `esperta-base audit`
+### `aria audit`
 
-Security audit log viewer. Reads `~/.sa/audit.log` (NDJSON).
+Security audit log viewer. Reads `~/.aria/audit.log` (NDJSON).
 
 | Flag | Description |
 |---|---|
@@ -48,9 +48,30 @@ Security audit log viewer. Reads `~/.sa/audit.log` (NDJSON).
 | `--tool <name>` | Filter by tool name |
 | `--event <type>` | Filter by event type (e.g., `auth_failure`, `security_block`) |
 | `--since <duration>` | Entries from the last duration (e.g., `1h`, `30m`, `7d`) |
+| `--session <id>` | Filter by session ID or prefix |
 | `--json` | Output raw JSON instead of table format |
 
-### `esperta-base help`
+### `aria automation`
+
+Durable automation inspection for task state and recent runs.
+
+| Subcommand | Description |
+|---|---|
+| `list` | Show heartbeat, cron, and webhook tasks with status and next run |
+| `runs [task]` | Show recent automation executions, optionally filtered by task ID, name, or slug |
+
+### `aria memory`
+
+Layered memory inspection for the operator.
+
+| Subcommand | Description |
+|---|---|
+| `list` | Show curated memory size, layer keys, and recent journal days |
+| `list <layer>` | Show keys for `profile`, `project`, `operational`, or `journal` |
+| `read <layer> <key>` | Read one memory entry (`curated` does not require a key) |
+| `search <query>` | Search memory across layers |
+
+### `aria help`
 
 Show available commands and usage.
 
@@ -64,16 +85,22 @@ When chatting in the TUI:
 |---|---|
 | `/new` | Start a new conversation. Destroys the current session and agent, then creates a fresh session under the `tui` prefix. |
 | `/stop` | Force-cancel all running agent tasks and tool calls for the current session |
-| `/restart` | Restart the Esperta Base engine (exits TUI for reconnect) |
-| `/shutdown` | Shut down the Esperta Base engine completely |
+| `/restart` | Restart Aria Runtime (exits TUI for reconnect) |
+| `/shutdown` | Shut down Aria Runtime completely |
 | `/status` | Show engine status (uptime, active model, session count) |
 | `/model <name>` | Switch the active model. Supports aliases (e.g., `/model fast`). |
 | `/models` | List all configured models with provider and active status |
 | `/provider` | List configured providers with API key env var names |
 | `/sessions` | List active sessions and open session picker |
+| `/archives` | List recently archived sessions without switching the active chat |
 | `/switch <id>` | Switch to a different session by ID prefix |
 | `/search <query>` | Search archived session transcripts and summaries, then print matching session IDs in the TUI |
 | `/history <id>` | Show the transcript for a live session or an archived session without switching the active chat |
+| `/automation` | Show durable automation tasks and their current status |
+| `/runs [task]` | Show recent automation executions, optionally filtered to one task |
+| `/approvals [all]` | Show pending approval requests for the current session or globally |
+| `/memory` | Inspect layered memory, read specific entries, or search memory |
+| `/audit [all|N]` | Inspect recent audit entries for the current session or globally |
 | `/rollback` | List recent filesystem checkpoints for the current working directory |
 | `/rollback diff <hash>` | Show the diff between the current working tree and a checkpoint |
 | `/rollback <hash> [file]` | Restore the full working tree or a single file from a checkpoint |
@@ -83,9 +110,9 @@ When chatting in the TUI:
 ## TUI flow
 
 ```text
-esperta-base (no arguments)
+aria (no arguments)
   |
-  +-- If no ~/.sa/config.json: run onboarding wizard
+  +-- If no ~/.aria/config.json: run onboarding wizard
   +-- ensureEngine()
   |     Start daemon if not running, wait for /health
   +-- Read engine.url + engine.token
@@ -115,43 +142,43 @@ esperta-base (no arguments)
 
 ### Setting environment variables
 
-**Never write to shell profiles** (`.zshrc`, `.bashrc`) or dotenv files. Use Esperta Base's built-in tools:
+**Never write to shell profiles** (`.zshrc`, `.bashrc`) or dotenv files. Use Esperta Aria's built-in tools:
 
 - `set_env_secret` -- for sensitive values (API keys, tokens). Stored encrypted in `secrets.enc`.
 - `set_env_variable` -- for non-sensitive values (feature flags, paths). Stored in `config.json`.
 
 Both take effect immediately and persist across engine restarts.
 
-For interactive key management: `esperta-base config`
+For interactive key management: `aria config`
 
 ### Adding a model
 
 ```
-esperta-base config -> Models -> + Add new model
+aria config -> Models -> + Add new model
 ```
 
-Or re-run the wizard: `esperta-base onboard`
+Or re-run the wizard: `aria onboard`
 
 ### Adding a provider
 
 ```
-esperta-base config -> Providers -> + Add new provider
+aria config -> Providers -> + Add new provider
 ```
 
 ### Checking health
 
 ```bash
-esperta-base engine status
+aria engine status
 curl -s http://127.0.0.1:7420/health
 ```
 
 ### Updating bot tokens
 
 ```
-esperta-base config -> Connectors -> edit token
+aria config -> Connectors -> edit token
 ```
 
-Or re-run: `esperta-base onboard`
+Or re-run: `aria onboard`
 
 ### Installing a skill from ClawHub
 

@@ -1,6 +1,6 @@
 # Configuration
 
-Esperta Base stores all configuration in a local directory (default: `~/.sa/`). Override with `SA_HOME`.
+Esperta Aria stores all configuration in a local directory (default: `~/.aria/`). Override with `ARIA_HOME`.
 
 ---
 
@@ -24,8 +24,8 @@ Esperta Base stores all configuration in a local directory (default: `~/.sa/`). 
 | `DISCORD_GUILD_ID` | Optional | Restrict Discord bot to a specific guild |
 | `GITHUB_TOKEN` | Optional | GitHub bot/app token |
 | `LINEAR_API_KEY` | Optional | Linear API key |
-| `SA_HOME` | Optional | Override config directory (default: `~/.sa/`) |
-| `SA_ENGINE_PORT` | Optional | Override Engine HTTP port (default `7420`; WS `7421`) |
+| `ARIA_HOME` | Optional | Override config directory (default: `~/.aria/`) |
+| `ARIA_ENGINE_PORT` | Optional | Override Engine HTTP port (default `7420`; WS `7421`) |
 
 Resolution order: environment variable > `secrets.enc` > `runtime.env`.
 
@@ -34,7 +34,7 @@ Resolution order: environment variable > `secrets.enc` > `runtime.env`.
 ## Config directory layout
 
 ```text
-~/.sa/
+~/.aria/
   config.json        # v3 config (runtime + providers + models + automation)
   IDENTITY.md        # agent name, personality, system prompt
   USER.md            # user profile and preferences
@@ -94,7 +94,7 @@ Resolution order: environment variable > `secrets.enc` > `runtime.env`.
     "audio": { "enabled": true, "preferLocal": true },
 
     // Plain (non-secret) env vars injected at startup
-    "env": { "SA_LOG_LEVEL": "info" },
+    "env": { "ARIA_LOG_LEVEL": "info" },
 
     // Model routing
     "modelTiers": { "performance": "opus", "normal": "sonnet", "eco": "haiku" },
@@ -169,7 +169,7 @@ Resolution order: environment variable > `secrets.enc` > `runtime.env`.
 | `runtime.activeModel` | string | `"sonnet"` | Last active model name |
 | `runtime.telegramBotTokenEnvVar` | string | `"TELEGRAM_BOT_TOKEN"` | Legacy Telegram env-var name |
 | `runtime.memory.enabled` | boolean | `true` | Enable memory subsystem |
-| `runtime.memory.directory` | string | `"memory"` | Memory dir relative to `SA_HOME` |
+| `runtime.memory.directory` | string | `"memory"` | Memory dir relative to `ARIA_HOME` |
 | `runtime.memory.search.maxResults` | number | `10` | Max search results |
 | `runtime.memory.search.vectorWeight` | number | `0.6` | Hybrid search vector weight |
 | `runtime.memory.search.textWeight` | number | `0.4` | Hybrid search BM25 weight |
@@ -333,7 +333,7 @@ Managed at runtime via `set_env_secret` tool.
 ## Skills directory
 
 ```text
-~/.sa/skills/
+~/.aria/skills/
   some-skill/
     SKILL.md
   .registry.json   # ClawHub install metadata
