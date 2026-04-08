@@ -54,6 +54,7 @@ function formatArgsForIM(toolName: string, args: Record<string, unknown>): strin
 /** Per-session agent instances */
 const sessionAgents = new Map<string, Agent>();
 const sessionToolEnvironments = new Map<string, SessionToolEnvironment>();
+const activeRunsBySession = new Map<string, string>();
 
 /** Pending tool approval resolvers: toolCallId -> resolve(boolean) */
 const pendingApprovals = new Map<string, (approved: boolean) => void>();
@@ -64,8 +65,8 @@ const sessionToolOverrides = new Map<string, Set<string>>();
 /** Session-level security overrides: sessionId -> allowed resources */
 const sessionSecurityOverrides = new Map<string, SessionSecurityOverrides>();
 
-/** Pending approval metadata: toolCallId -> { sessionId, toolName } */
-const pendingApprovalMeta = new Map<string, { sessionId: string; toolName: string }>();
+/** Pending approval metadata: toolCallId -> { sessionId, toolName, runId } */
+const pendingApprovalMeta = new Map<string, { sessionId: string; toolName: string; runId: string }>();
 
 /** Pending security escalation resolvers: escalationId -> resolve(choice) */
 const pendingEscalations = new Map<string, { resolve: (choice: EscalationChoice) => void; sessionId: string }>();
@@ -93,11 +94,22 @@ export async function flushProcedureState(runtime: EngineRuntime, reason = "Engi
     agent.abort();
   }
 
+  const completedAt = Date.now();
+  for (const runId of activeRunsBySession.values()) {
+    runtime.store.finishRun(runId, {
+      status: "interrupted",
+      completedAt,
+      errorMessage: reason,
+    });
+  }
+  activeRunsBySession.clear();
+
   for (const sessionId of sessionAgents.keys()) {
     await persistSessionArchiveForRuntime(runtime, sessionId);
   }
 
   for (const [toolCallId, resolve] of pendingApprovals.entries()) {
+    runtime.store.resolveApproval(toolCallId, "interrupted", completedAt);
     resolve(false);
     pendingApprovals.delete(toolCallId);
     pendingApprovalMeta.delete(toolCallId);
@@ -118,6 +130,7 @@ async function persistSessionArchiveForRuntime(runtime: EngineRuntime, sessionId
   const session = runtime.sessions.getSession(sessionId);
   const agent = sessionAgents.get(sessionId);
   if (!session || !agent) return;
+  runtime.store.syncSessionMessages(session.id, agent.getMessages());
   await runtime.archive.syncSession(session, agent.getMessages());
 }
 
@@ -262,6 +275,96 @@ export function createAppRouter(runtime: EngineRuntime) {
     await persistSessionArchiveForRuntime(runtime, sessionId);
   }
 
+  function cancelActiveRun(sessionId: string, errorMessage: string): boolean {
+    const runId = activeRunsBySession.get(sessionId);
+    if (!runId) {
+      return false;
+    }
+    finishRun(sessionId, runId, {
+      status: "cancelled",
+      errorMessage,
+    });
+    return true;
+  }
+
+  function resolvePendingApprovalsForSession(
+    sessionId: string,
+    status: "denied" | "interrupted",
+  ): void {
+    for (const [toolCallId, meta] of pendingApprovalMeta.entries()) {
+      if (meta.sessionId !== sessionId) {
+        continue;
+      }
+      runtime.store.resolveApproval(toolCallId, status);
+      const resolver = pendingApprovals.get(toolCallId);
+      if (resolver) {
+        resolver(false);
+        pendingApprovals.delete(toolCallId);
+      }
+      pendingApprovalMeta.delete(toolCallId);
+    }
+  }
+
+  function resolvePendingEscalationsForSession(sessionId: string): void {
+    for (const [escId, pending] of pendingEscalations.entries()) {
+      if (pending.sessionId !== sessionId) {
+        continue;
+      }
+      pending.resolve("deny");
+      pendingEscalations.delete(escId);
+    }
+  }
+
+  function rejectPendingQuestionsForSession(sessionId: string, message: string): void {
+    for (const [questionId, pending] of pendingQuestions.entries()) {
+      if (pending.sessionId !== sessionId) {
+        continue;
+      }
+      pending.reject(new Error(message));
+      pendingQuestions.delete(questionId);
+    }
+  }
+
+  function startRun(
+    sessionId: string,
+    trigger: string,
+    inputText: string,
+    parentRunId?: string,
+  ): string {
+    const runId = crypto.randomUUID();
+    runtime.store.createRun({
+      runId,
+      sessionId,
+      trigger,
+      status: "running",
+      inputText,
+      startedAt: Date.now(),
+      parentRunId,
+    });
+    activeRunsBySession.set(sessionId, runId);
+    return runId;
+  }
+
+  function finishRun(
+    sessionId: string,
+    runId: string,
+    updates: {
+      status: "completed" | "failed" | "cancelled" | "interrupted";
+      stopReason?: string;
+      errorMessage?: string;
+    },
+  ): void {
+    if (activeRunsBySession.get(sessionId) === runId) {
+      activeRunsBySession.delete(sessionId);
+    }
+    runtime.store.finishRun(runId, {
+      status: updates.status,
+      completedAt: Date.now(),
+      stopReason: updates.stopReason,
+      errorMessage: updates.errorMessage,
+    });
+  }
+
   function resolveWorkingDir(sessionId?: string, workingDir?: string): string {
     if (workingDir && workingDir.trim()) {
       return workingDir;
@@ -301,52 +404,45 @@ export function createAppRouter(runtime: EngineRuntime) {
         getSystemPrompt: () => runtime.systemPrompt,
         onAskUser,
         onToolApproval: async (toolName, toolCallId, args) => {
-        const mode = getApprovalMode(sessionId);
-        const level = getEffectiveDangerLevel(toolName, args);
-
-        // Safe tools: always auto-approve
-        if (level === "safe") return true;
-
-        // Dangerous tools: always ask (even TUI "never" mode)
-        if (level === "dangerous") {
-          // Check session-level overrides first
+          const mode = getApprovalMode(sessionId);
+          const level = getEffectiveDangerLevel(toolName, args);
           const overrides = sessionToolOverrides.get(sessionId);
-          if (overrides?.has(toolName)) return true;
 
-          return new Promise<boolean>((resolve) => {
-            pendingApprovals.set(toolCallId, resolve);
-            pendingApprovalMeta.set(toolCallId, { sessionId, toolName });
-            setTimeout(() => {
-              if (pendingApprovals.has(toolCallId)) {
-                pendingApprovals.delete(toolCallId);
-                pendingApprovalMeta.delete(toolCallId);
-                resolve(false);
-              }
-            }, 5 * 60 * 1000);
-          });
-        }
+          if (level === "safe") {
+            pendingApprovalMeta.delete(toolCallId);
+            runtime.store.resolveApproval(toolCallId, "approved");
+            return true;
+          }
 
-        // Moderate tools: auto-approve unless mode is "always"
-        if (mode === "always") {
-          const overrides = sessionToolOverrides.get(sessionId);
-          if (overrides?.has(toolName)) return true;
+          if (overrides?.has(toolName)) {
+            pendingApprovalMeta.delete(toolCallId);
+            runtime.store.resolveApproval(toolCallId, "allow_session");
+            return true;
+          }
 
-          return new Promise<boolean>((resolve) => {
-            pendingApprovals.set(toolCallId, resolve);
-            pendingApprovalMeta.set(toolCallId, { sessionId, toolName });
-            setTimeout(() => {
-              if (pendingApprovals.has(toolCallId)) {
-                pendingApprovals.delete(toolCallId);
-                pendingApprovalMeta.delete(toolCallId);
-                resolve(false);
-              }
-            }, 5 * 60 * 1000);
-          });
-        }
+          if (level === "dangerous" || mode === "always") {
+            return new Promise<boolean>((resolve) => {
+              pendingApprovals.set(toolCallId, resolve);
+              setTimeout(() => {
+                if (pendingApprovals.has(toolCallId)) {
+                  pendingApprovals.delete(toolCallId);
+                  pendingApprovalMeta.delete(toolCallId);
+                  runtime.store.resolveApproval(toolCallId, "denied");
+                  resolve(false);
+                }
+              }, 5 * 60 * 1000);
+            });
+          }
 
-        return true;
+          pendingApprovalMeta.delete(toolCallId);
+          runtime.store.resolveApproval(toolCallId, "approved");
+          return true;
         },
       });
+      const persistedMessages = runtime.store.getSessionMessages(sessionId);
+      if (persistedMessages.length > 0) {
+        agent.hydrateHistory(persistedMessages);
+      }
       sessionAgents.set(sessionId, agent);
     }
     return agent;
@@ -357,6 +453,7 @@ export function createAppRouter(runtime: EngineRuntime) {
     events: AsyncIterable<AgentEvent>,
     connectorType: ConnectorType,
     approvalMode: ToolApprovalMode,
+    runId: string,
     sessionId?: string,
   ): AsyncGenerator<EngineEvent> {
     const isIM = connectorType !== "tui";
@@ -376,6 +473,14 @@ export function createAppRouter(runtime: EngineRuntime) {
         case "tool_start": {
           const dangerLevel = getEffectiveDangerLevel(event.name, event.args);
           const ctx: ToolEventContext = { toolName: event.name, dangerLevel };
+
+          runtime.store.recordToolCallStart({
+            toolCallId: event.id,
+            runId,
+            sessionId: sid,
+            toolName: event.name,
+            args: event.args,
+          });
 
           // Audit: tool_call
           auditLog(runtime, {
@@ -398,6 +503,12 @@ export function createAppRouter(runtime: EngineRuntime) {
           break;
         }
         case "tool_end": {
+          runtime.store.recordToolCallEnd({
+            toolCallId: event.id,
+            status: event.result.isError ? "failed" : "completed",
+            result: event.result,
+          });
+
           // Audit: tool_result
           auditLog(runtime, {
             session: sid,
@@ -430,6 +541,19 @@ export function createAppRouter(runtime: EngineRuntime) {
           break;
         }
         case "tool_approval_request": {
+          pendingApprovalMeta.set(event.id, {
+            sessionId: sid,
+            toolName: event.name,
+            runId,
+          });
+          runtime.store.recordApprovalPending({
+            approvalId: event.id,
+            runId,
+            sessionId: sid,
+            toolCallId: event.id,
+            toolName: event.name,
+            args: event.args,
+          });
           const ctx: ToolEventContext = {
             toolName: event.name,
             dangerLevel: getEffectiveDangerLevel(event.name, event.args),
@@ -517,12 +641,38 @@ export function createAppRouter(runtime: EngineRuntime) {
             // Memory context fetch failed — continue without it
           }
 
+          const runId = startRun(input.sessionId, "chat", chatMessage);
+          let finalStatus: "completed" | "failed" | "interrupted" = "completed";
+          let finalStopReason: string | undefined;
+          let finalErrorMessage: string | undefined;
+
           try {
-            yield* filterAgentEvents(agent.chat(chatMessage), connectorType, getApprovalMode(input.sessionId), input.sessionId);
+            for await (const event of filterAgentEvents(
+              agent.chat(chatMessage),
+              connectorType,
+              getApprovalMode(input.sessionId),
+              runId,
+              input.sessionId,
+            )) {
+              if (event.type === "done") {
+                finalStopReason = event.stopReason;
+              } else if (event.type === "error") {
+                finalStatus = "failed";
+                finalErrorMessage = event.message;
+              }
+              yield event;
+            }
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
+            finalStatus = "failed";
+            finalErrorMessage = message;
             yield { type: "error", message };
           } finally {
+            finishRun(input.sessionId, runId, {
+              status: finalStatus,
+              stopReason: finalStopReason,
+              errorMessage: finalErrorMessage,
+            });
             await persistSessionArchive(input.sessionId);
           }
         }),
@@ -533,38 +683,15 @@ export function createAppRouter(runtime: EngineRuntime) {
         .mutation(async ({ ctx, input }): Promise<{ cancelled: boolean }> => {
           requireOwnedSession(ctx, input.sessionId);
           const agent = sessionAgents.get(input.sessionId);
-          if (!agent) {
+          const cancelledRun = cancelActiveRun(input.sessionId, "Stopped by user");
+          if (!agent && !cancelledRun) {
             return { cancelled: false };
           }
-          const cancelled = agent.abort();
+          const cancelled = agent?.abort() ?? false;
 
-          // Resolve any pending approvals for this session (auto-reject)
-          for (const [toolCallId, meta] of pendingApprovalMeta.entries()) {
-            if (meta.sessionId === input.sessionId) {
-              const resolver = pendingApprovals.get(toolCallId);
-              if (resolver) {
-                resolver(false);
-                pendingApprovals.delete(toolCallId);
-              }
-              pendingApprovalMeta.delete(toolCallId);
-            }
-          }
-
-          // Resolve any pending escalations for this session
-          for (const [escId, pending] of pendingEscalations.entries()) {
-            if (pending.sessionId === input.sessionId) {
-              pending.resolve("deny");
-              pendingEscalations.delete(escId);
-            }
-          }
-
-          // Reject any pending user questions for this session
-          for (const [qId, pending] of pendingQuestions.entries()) {
-            if (pending.sessionId === input.sessionId) {
-              pending.reject(new Error("Stopped by user"));
-              pendingQuestions.delete(qId);
-            }
-          }
+          resolvePendingApprovalsForSession(input.sessionId, "denied");
+          resolvePendingEscalationsForSession(input.sessionId);
+          rejectPendingQuestionsForSession(input.sessionId, "Stopped by user");
 
           const session = runtime.sessions.getSession(input.sessionId);
           auditLog(runtime, {
@@ -576,7 +703,7 @@ export function createAppRouter(runtime: EngineRuntime) {
           });
 
           await persistSessionArchive(input.sessionId);
-          return { cancelled };
+          return { cancelled: cancelled || cancelledRun };
         }),
 
       /** Stop all running agents across all sessions */
@@ -585,41 +712,29 @@ export function createAppRouter(runtime: EngineRuntime) {
           if (!isMasterCall(ctx)) {
             throw new TRPCError({ code: "FORBIDDEN", message: "stopAll requires the master token" });
           }
+          const targetSessionIds = new Set<string>([
+            ...sessionAgents.keys(),
+            ...activeRunsBySession.keys(),
+          ]);
           let cancelled = 0;
-          const total = sessionAgents.size;
+          let total = 0;
 
-          for (const [sid, agent] of sessionAgents.entries()) {
-            if (agent.abort()) {
+          for (const sid of targetSessionIds) {
+            const agent = sessionAgents.get(sid);
+            const cancelledRun = cancelActiveRun(sid, "Stopped by user");
+            const aborted = agent?.abort() ?? false;
+            const wasActive = cancelledRun || agent?.isRunning;
+            if (!wasActive) {
+              continue;
+            }
+            total++;
+            if (aborted || cancelledRun) {
               cancelled++;
             }
 
-            // Resolve pending approvals for this session
-            for (const [toolCallId, meta] of pendingApprovalMeta.entries()) {
-              if (meta.sessionId === sid) {
-                const resolver = pendingApprovals.get(toolCallId);
-                if (resolver) {
-                  resolver(false);
-                  pendingApprovals.delete(toolCallId);
-                }
-                pendingApprovalMeta.delete(toolCallId);
-              }
-            }
-
-            // Resolve pending escalations for this session
-            for (const [escId, pending] of pendingEscalations.entries()) {
-              if (pending.sessionId === sid) {
-                pending.resolve("deny");
-                pendingEscalations.delete(escId);
-              }
-            }
-
-            // Reject pending questions for this session
-            for (const [qId, pending] of pendingQuestions.entries()) {
-              if (pending.sessionId === sid) {
-                pending.reject(new Error("Stopped by user"));
-                pendingQuestions.delete(qId);
-              }
-            }
+            resolvePendingApprovalsForSession(sid, "denied");
+            resolvePendingEscalationsForSession(sid);
+            rejectPendingQuestionsForSession(sid, "Stopped by user");
           }
 
           auditLog(runtime, {
@@ -654,6 +769,14 @@ export function createAppRouter(runtime: EngineRuntime) {
 
           if (liveSession) {
             requireOwnedSession(ctx, input.sessionId);
+            const persistedMessages = runtime.store.getSessionMessages(input.sessionId);
+            if (persistedMessages.length > 0) {
+              return {
+                sessionId: input.sessionId,
+                messages: persistedMessages,
+                archived: false,
+              };
+            }
           } else {
             await requireOwnedArchivedSession(ctx, input.sessionId);
           }
@@ -712,12 +835,37 @@ export function createAppRouter(runtime: EngineRuntime) {
           const agent = getSessionAgent(input.sessionId);
           const connectorType = session.connectorType as ConnectorType;
           sessionToolEnvironments.get(input.sessionId)?.newTurn();
+          const runId = startRun(input.sessionId, "audio_transcription", transcript);
+          let finalStatus: "completed" | "failed" | "interrupted" = "completed";
+          let finalStopReason: string | undefined;
+          let finalErrorMessage: string | undefined;
           try {
-            yield* filterAgentEvents(agent.chat(transcript), connectorType, getApprovalMode(input.sessionId), input.sessionId);
+            for await (const event of filterAgentEvents(
+              agent.chat(transcript),
+              connectorType,
+              getApprovalMode(input.sessionId),
+              runId,
+              input.sessionId,
+            )) {
+              if (event.type === "done") {
+                finalStopReason = event.stopReason;
+              } else if (event.type === "error") {
+                finalStatus = "failed";
+                finalErrorMessage = event.message;
+              }
+              yield event;
+            }
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
+            finalStatus = "failed";
+            finalErrorMessage = message;
             yield { type: "error", message };
           } finally {
+            finishRun(input.sessionId, runId, {
+              status: finalStatus,
+              stopReason: finalStopReason,
+              errorMessage: finalErrorMessage,
+            });
             await persistSessionArchive(input.sessionId);
           }
         }),
@@ -785,6 +933,11 @@ export function createAppRouter(runtime: EngineRuntime) {
             return { destroyed: false };
           }
           const session = requireOwnedSession(ctx, input.sessionId);
+          sessionAgents.get(input.sessionId)?.abort();
+          cancelActiveRun(input.sessionId, "Session destroyed");
+          resolvePendingApprovalsForSession(input.sessionId, "denied");
+          resolvePendingEscalationsForSession(input.sessionId);
+          rejectPendingQuestionsForSession(input.sessionId, "Session destroyed");
           await persistSessionArchive(input.sessionId);
           auditLog(runtime, {
             session: input.sessionId,
@@ -795,13 +948,6 @@ export function createAppRouter(runtime: EngineRuntime) {
           sessionToolEnvironments.delete(input.sessionId);
           sessionToolOverrides.delete(input.sessionId);
           sessionSecurityOverrides.delete(input.sessionId);
-          // Reject pending questions for destroyed session
-          for (const [qId, pending] of pendingQuestions.entries()) {
-            if (pending.sessionId === input.sessionId) {
-              pending.reject(new Error("Session destroyed"));
-              pendingQuestions.delete(qId);
-            }
-          }
           runtime.securityMode.clearMode(input.sessionId);
           return { destroyed: runtime.sessions.destroySession(input.sessionId) };
         }),
@@ -959,6 +1105,10 @@ export function createAppRouter(runtime: EngineRuntime) {
           if (meta) {
             requireOwnedSession(ctx, meta.sessionId);
           }
+          runtime.store.resolveApproval(
+            input.toolCallId,
+            input.approved ? "approved" : "denied",
+          );
           pendingApprovals.delete(input.toolCallId);
           pendingApprovalMeta.delete(input.toolCallId);
 
@@ -1001,6 +1151,7 @@ export function createAppRouter(runtime: EngineRuntime) {
           overrides.add(meta.toolName);
 
           // Approve the current call
+          runtime.store.resolveApproval(input.toolCallId, "allow_session");
           pendingApprovals.delete(input.toolCallId);
           pendingApprovalMeta.delete(input.toolCallId);
           resolver(true);

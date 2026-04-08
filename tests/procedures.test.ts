@@ -18,6 +18,7 @@ import type { KnownProvider } from "@mariozechner/pi-ai";
 import { SessionArchiveManager } from "@sa/engine/session-archive.js";
 import { CheckpointManager } from "@sa/engine/checkpoints.js";
 import { MCPManager } from "@sa/engine/mcp.js";
+import { OperationalStore } from "@sa/engine/operational-store.js";
 
 let testDir: string;
 let runtime: EngineRuntime;
@@ -64,7 +65,9 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
     null,
   );
 
-  const sessions = new SessionManager();
+  const store = new OperationalStore(saHome);
+  await store.init();
+  const sessions = new SessionManager(store);
   const auth = new AuthManager(saHome);
   await auth.init();
   const archive = new SessionArchiveManager(saHome);
@@ -82,6 +85,7 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
     config,
     router,
     memory: { init: async () => {}, loadContext: async () => "", persist: async () => {} } as any,
+    store,
     archive,
     checkpoints,
     mcp,
@@ -101,6 +105,7 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
     },
     async close() {
       scheduler.stop();
+      store.close();
       archive.close();
       await auth.cleanup();
     },
@@ -247,6 +252,21 @@ describe("tRPC procedures (non-live)", () => {
       expect(history.archived).toBe(true);
       expect(history.messages).toHaveLength(2);
       expect((history.messages[0] as any).content).toContain("Debug the failing cron task");
+    });
+
+    test("reads durable live history when no in-memory agent is attached", async () => {
+      const caller = createCaller();
+      const { session } = await caller.session.create({ connectorType: "tui", prefix: "tui" });
+
+      runtime.store.syncSessionMessages(session.id, [
+        { role: "user", content: "Persist this", timestamp: 100 } as any,
+        { role: "assistant", content: "Stored in the live runtime.", timestamp: 101 } as any,
+      ]);
+
+      const history = await caller.chat.history({ sessionId: session.id });
+      expect(history.archived).toBe(false);
+      expect(history.messages).toHaveLength(2);
+      expect((history.messages[1] as any).content).toContain("Stored in the live runtime.");
     });
   });
 
