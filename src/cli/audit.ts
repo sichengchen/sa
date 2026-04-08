@@ -1,5 +1,5 @@
 /**
- * `sa audit` CLI command — read and filter the audit log.
+ * `esperta-base audit` CLI command — read and filter the audit log.
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -59,8 +59,8 @@ function parseArgs(args: string[]): {
 }
 
 function printHelp(): void {
-  console.log("sa audit — View the SA audit log\n");
-  console.log("Usage: sa audit [options]\n");
+  console.log("esperta-base audit — View the Esperta Base audit log\n");
+  console.log("Usage: esperta-base audit [options]\n");
   console.log("Options:");
   console.log("  --tail N       Show last N entries (default: 20)");
   console.log("  --tool NAME    Filter by tool name (e.g. exec, web_fetch)");

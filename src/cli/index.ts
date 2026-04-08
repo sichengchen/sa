@@ -10,6 +10,9 @@ import { createTuiClient } from "@sa/connectors/tui/client.js";
 import { App } from "@sa/connectors/tui/App.js";
 
 const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
+const CLI_NAME = "esperta-base";
+const CLI_ALIAS = "sa";
+const ENGINE_NAME = "Esperta Base Engine";
 const [subcommand, ...args] = process.argv.slice(2);
 
 async function runOnboarding(existingConfig?: unknown): Promise<void> {
@@ -96,12 +99,12 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   },
   config: async () => {
     if (!isConfigured()) {
-      console.error("No configuration found. Run 'sa onboard' first.");
+      console.error(`No configuration found. Run '${CLI_NAME} onboard' first.`);
       process.exit(1);
     }
     const { runConfig } = await import("./config/index.js");
     await runConfig(saHome);
-    console.log("\nRun 'sa engine restart' to apply changes to the running Engine.");
+    console.log(`\nRun '${CLI_NAME} engine restart' to apply changes to the running Engine.`);
   },
   onboard: async () => {
     const existing = isConfigured() ? await loadExistingConfig() : undefined;
@@ -136,13 +139,13 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     const { createTuiClient } = await import("@sa/connectors/tui/client.js");
     try {
       const client = createTuiClient();
-      console.log("Shutting down SA engine...");
+      console.log(`Shutting down ${ENGINE_NAME}...`);
       await client.engine.shutdown.mutate();
-      console.log("SA engine stopped.");
+      console.log(`${ENGINE_NAME} stopped.`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`Failed to shut down: ${msg}`);
-      console.error("Is the Engine running? Try 'sa engine status'.");
+      console.error(`Is the Engine running? Try '${CLI_NAME} engine status'.`);
       process.exit(1);
     }
   },
@@ -150,7 +153,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     const { createTuiClient } = await import("@sa/connectors/tui/client.js");
     try {
       const client = createTuiClient();
-      console.log("Restarting SA engine...");
+      console.log(`Restarting ${ENGINE_NAME}...`);
       await client.engine.restart.mutate();
       // Wait for engine to come back up
       let retries = 0;
@@ -159,17 +162,17 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
         try {
           const freshClient = createTuiClient();
           await freshClient.health.ping.query();
-          console.log("SA engine restarted successfully.");
+          console.log(`${ENGINE_NAME} restarted successfully.`);
           return;
         } catch {
           retries++;
         }
       }
-      console.log("SA engine restart initiated. It may still be starting up.");
+      console.log(`${ENGINE_NAME} restart initiated. It may still be starting up.`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`Failed to restart: ${msg}`);
-      console.error("Is the Engine running? Try 'sa engine restart'.");
+      console.error(`Is the Engine running? Try '${CLI_NAME} engine restart'.`);
       process.exit(1);
     }
   },
@@ -186,7 +189,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`Failed to stop agents: ${msg}`);
-      console.error("Is the Engine running? Try 'sa engine status'.");
+      console.error(`Is the Engine running? Try '${CLI_NAME} engine status'.`);
       process.exit(1);
     }
   },
@@ -204,8 +207,9 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     await import("@sa/engine/index.js");
   },
   help: async () => {
-    console.log("SA — Personal AI Agent Assistant\n");
-    console.log("Usage: sa [command]\n");
+    console.log("Esperta Base — Personal AI Agent Assistant\n");
+    console.log(`Usage: ${CLI_NAME} [command]\n`);
+    console.log(`Compatibility alias: ${CLI_ALIAS}\n`);
     console.log("Commands:");
     console.log("  (default)   Start the Engine (if needed) and open the TUI");
     console.log("  audit       View the audit log (--tail N, --tool, --event, --since, --json)");
@@ -213,8 +217,8 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     console.log("  onboard     Run the onboarding wizard");
     console.log("  engine      Manage the Engine daemon (start/stop/status/logs/restart)");
     console.log("  stop        Stop all running agent tasks");
-    console.log("  restart     Restart the SA engine");
-    console.log("  shutdown    Stop the SA engine completely");
+    console.log("  restart     Restart the Esperta Base engine");
+    console.log("  shutdown    Stop the Esperta Base engine completely");
     console.log("  telegram    Start the Telegram connector (webhook server on port 3426)");
     console.log("  discord     Start the Discord connector (webhook server on port 3423)");
     console.log("  slack       Start the Slack connector (webhook server on port 3420)");
@@ -247,7 +251,7 @@ async function main() {
   const handler = COMMANDS[subcommand];
   if (!handler) {
     console.error(`Unknown command: ${subcommand}`);
-    console.error("Run 'sa help' for usage information.");
+    console.error(`Run '${CLI_NAME} help' for usage information.`);
     process.exit(1);
   }
 

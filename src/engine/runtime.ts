@@ -190,14 +190,14 @@ export async function createRuntime(): Promise<EngineRuntime> {
     const envVar = provider.apiKeyEnvVar;
     if (!process.env[envVar] && !secrets?.apiKeys[envVar]) {
       console.warn(
-        `[sa] Warning: API key "${envVar}" not found for provider "${provider.id}".`
+        `[esperta-base] Warning: API key "${envVar}" not found for provider "${provider.id}".`
       );
       console.warn(
-        `[sa]   Store it with: sa onboard (or set_env_secret tool)`
+        `[esperta-base]   Store it with: esperta-base onboard (or set_env_secret tool)`
       );
       if (process.platform === "darwin") {
         console.warn(
-          `[sa]   Note: brew services does not inherit shell env vars — keys must be in secrets.enc`
+          `[esperta-base]   Note: brew services does not inherit shell env vars — keys must be in secrets.enc`
         );
       }
     }
@@ -234,7 +234,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
         model: embCfg.model,
       });
     } catch (err) {
-      console.warn("[sa] Failed to initialize embeddings:", err instanceof Error ? err.message : String(err));
+      console.warn("[esperta-base] Failed to initialize embeddings:", err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -440,7 +440,7 @@ export async function createRuntime(): Promise<EngineRuntime> {
     registerCronTask(runtime, task);
   }
   if (cronTasks.length > 0) {
-    console.log(`[sa] Restored ${cronTasks.filter((t) => t.enabled).length} cron task(s)`);
+    console.log(`[esperta-base] Restored ${cronTasks.filter((t) => t.enabled).length} cron task(s)`);
   }
 
   scheduler.start();

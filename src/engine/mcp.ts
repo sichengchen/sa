@@ -221,7 +221,7 @@ export class MCPManager {
 
       try {
         const { transport, instance } = resolveTransport(config, this.cwd);
-        const client = new Client({ name: "sa", version: "2026.3.4" }, { capabilities: {} });
+        const client = new Client({ name: "esperta-base", version: "2026.4.1" }, { capabilities: {} });
         await client.connect(instance);
 
         const listedTools = await client.listTools();

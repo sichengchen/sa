@@ -99,14 +99,14 @@ describe("validateUrl", () => {
     expect(validateUrl("http://100.100.100.200/latest/meta-data/").ok).toBe(false);
   });
 
-  // --- SA engine ports ---
-  it("blocks SA engine port 7420", () => {
+  // --- Esperta Base engine ports ---
+  it("blocks Esperta Base engine port 7420", () => {
     const r = validateUrl("http://example.com:7420/api");
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toContain("Blocked port");
   });
 
-  it("blocks SA engine port 7421", () => {
+  it("blocks Esperta Base engine port 7421", () => {
     const r = validateUrl("http://example.com:7421/ws");
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toContain("Blocked port");

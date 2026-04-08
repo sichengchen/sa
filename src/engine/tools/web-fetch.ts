@@ -6,7 +6,7 @@ import { frameAsData, sanitizeContent } from "../agent/content-frame.js";
 
 const DEFAULT_MAX_LENGTH = 50_000;
 const FETCH_TIMEOUT = 30_000;
-const USER_AGENT = "SA-Agent/1.0 (personal AI assistant)";
+const USER_AGENT = "EspertaBase/1.0 (personal AI agent assistant)";
 
 const nhm = new NodeHtmlMarkdown();
 

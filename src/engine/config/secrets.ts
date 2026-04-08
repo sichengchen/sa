@@ -108,7 +108,7 @@ export async function loadSecrets(homeDir: string): Promise<SecretsFile | null> 
     const secrets = decrypt(raw, legacyKey);
 
     // Legacy decryption succeeded — re-encrypt with new derivation
-    console.warn("[sa] Migrating secrets.enc to improved key derivation...");
+    console.warn("[esperta-base] Migrating secrets.enc to improved key derivation...");
     const newKey = deriveKey(salt);
     const reEncrypted = encrypt(secrets, newKey);
     await writeFile(secretsPath, reEncrypted);
@@ -120,7 +120,7 @@ export async function loadSecrets(homeDir: string): Promise<SecretsFile | null> 
   }
 
   console.warn(
-    "[sa] Warning: secrets.enc could not be decrypted (file may be corrupted or from a different machine) — falling back to environment variables"
+    "[esperta-base] Warning: secrets.enc could not be decrypted (file may be corrupted or from a different machine) — falling back to environment variables"
   );
   return null;
 }

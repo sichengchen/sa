@@ -1,7 +1,7 @@
 /**
- * Discord connector for SA — uses Chat SDK's Discord adapter.
+ * Discord connector for Esperta Base — uses Chat SDK's Discord adapter.
  *
- * Replaces the old Discord.js connector. Bridges Discord events to SA's
+ * Replaces the old Discord.js connector. Bridges Discord events to Esperta Base's
  * engine via the shared ChatSDKAdapter. Uses post+edit for streaming.
  *
  * Note: Audio transcription (voice messages) is not yet supported via
@@ -24,12 +24,12 @@ export function createDiscordConnector(options: DiscordConnectorOptions = {}) {
     const missing = getMissingCredentials();
     throw new Error(
       `Discord connector requires: ${missing.join(", ")}. ` +
-      `Store them via \`sa config\` or the set_env_secret tool.`,
+      `Store them via \`esperta-base config\` or the \`sa config\` alias, or use the set_env_secret tool.`,
     );
   }
 
   const chat = new Chat({
-    userName: "sa",
+    userName: "esperta-base",
     adapters: {
       discord: createDiscordAdapter(),
     },
@@ -60,7 +60,7 @@ export async function startDiscordConnector(port = 3423): Promise<void> {
       if (url.pathname === "/api/webhooks/discord" && request.method === "POST") {
         return webhookHandler(request);
       }
-      return new Response("SA Discord Connector", { status: 200 });
+      return new Response("Esperta Base Discord Connector", { status: 200 });
     },
   });
 

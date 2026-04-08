@@ -1,10 +1,11 @@
 {
-  "name": "sa",
+  "name": "esperta-base",
   "version": "2026.3.4",
-  "description": "SA (Sasa) — Personal AI agent assistant",
+  "description": "Esperta Base — Personal AI agent assistant",
   "type": "module",
   "main": "src/cli/index.ts",
   "bin": {
+    "esperta-base": "dist/index.js",
     "sa": "dist/index.js"
   },
   "scripts": {

@@ -82,7 +82,7 @@ export function TeamsSetup({ onNext, onBack, currentValues }: TeamsSetupProps) {
     <Box flexDirection="column" padding={1}>
       <Text bold color="cyan">Microsoft Teams Bot Setup (optional)</Text>
       <Text />
-      <Text>To use SA via Teams, register a bot in the Azure Bot Framework.</Text>
+      <Text>To use Esperta Base via Teams, register a bot in the Azure Bot Framework.</Text>
       <Text>Enter the bot ID (Application ID), or leave empty to skip.</Text>
       <Text />
       <Box>

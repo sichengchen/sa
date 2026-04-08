@@ -63,12 +63,12 @@ describe("memory_search tool", () => {
   });
 
   it("returns matching entries with source attribution", async () => {
-    await memory.save("project", "SA is a personal AI assistant");
+    await memory.save("project", "Esperta Base is a personal AI assistant");
     await memory.save("unrelated", "weather forecast today");
     const tool = createMemorySearchTool(memory);
     const result = await tool.execute({ query: "personal AI" });
     expect(result.content).toContain("topics/project.md");
-    expect(result.content).toContain("SA is a personal AI assistant");
+    expect(result.content).toContain("Esperta Base is a personal AI assistant");
     expect(result.content).toContain("score:");
   });
 

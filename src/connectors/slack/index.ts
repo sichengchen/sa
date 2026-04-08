@@ -1,8 +1,8 @@
 /**
- * Slack connector for SA — uses Chat SDK's Slack adapter.
+ * Slack connector for Esperta Base — uses Chat SDK's Slack adapter.
  *
  * Bridges Slack events (mentions, messages, buttons, slash commands)
- * to SA's engine via the shared ChatSDKAdapter.
+ * to Esperta Base's engine via the shared ChatSDKAdapter.
  */
 
 import { Chat } from "chat";
@@ -27,12 +27,12 @@ export function createSlackConnector(options: SlackConnectorOptions = {}) {
     const missing = getMissingCredentials();
     throw new Error(
       `Slack connector requires: ${missing.join(", ")}. ` +
-      `Store them via \`sa config\` or the set_env_secret tool.`,
+      `Store them via \`esperta-base config\` or the \`sa config\` alias, or use the set_env_secret tool.`,
     );
   }
 
   const chat = new Chat({
-    userName: "sa",
+    userName: "esperta-base",
     adapters: {
       slack: createSlackAdapter(),
     },
@@ -40,7 +40,7 @@ export function createSlackConnector(options: SlackConnectorOptions = {}) {
     streamingUpdateIntervalMs: 500,
   });
 
-  // Wire SA engine bridge
+  // Wire Esperta Base engine bridge
   const adapter = new ChatSDKAdapter(chat, {
     connectorType: "slack",
     platformName: "slack",
@@ -59,7 +59,7 @@ export function createSlackConnector(options: SlackConnectorOptions = {}) {
  * Start the Slack connector as a standalone webhook server.
  *
  * Starts a Bun HTTP server on the given port to handle Slack webhook events,
- * bridging them to SA's engine via tRPC.
+ * bridging them to Esperta Base's engine via tRPC.
  */
 export async function startSlackConnector(port = 3420): Promise<void> {
   const { chat, webhookHandler } = createSlackConnector();
@@ -71,7 +71,7 @@ export async function startSlackConnector(port = 3420): Promise<void> {
       if (url.pathname === "/api/webhooks/slack" && request.method === "POST") {
         return webhookHandler(request);
       }
-      return new Response("SA Slack Connector", { status: 200 });
+      return new Response("Esperta Base Slack Connector", { status: 200 });
     },
   });
 

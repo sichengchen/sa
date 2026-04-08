@@ -1,5 +1,5 @@
 /**
- * GitHub connector for SA — uses Chat SDK's GitHub adapter.
+ * GitHub connector for Esperta Base — uses Chat SDK's GitHub adapter.
  *
  * Handles issue/PR mentions and reactions. GitHub does not support
  * streaming — responses are posted after completion.
@@ -20,12 +20,12 @@ export function createGitHubConnector(options: GitHubConnectorOptions = {}) {
     const missing = getMissingCredentials();
     throw new Error(
       `GitHub connector requires: ${missing.join(", ")}. ` +
-      `Store them via \`sa config\` or the set_env_secret tool.`,
+      `Store them via \`esperta-base config\` or the \`sa config\` alias, or use the set_env_secret tool.`,
     );
   }
 
   const chat = new Chat({
-    userName: "sa",
+    userName: "esperta-base",
     adapters: {
       github: createGitHubAdapter(),
     },
@@ -55,7 +55,7 @@ export async function startGitHubConnector(port = 3424): Promise<void> {
       if (url.pathname === "/api/webhooks/github" && request.method === "POST") {
         return webhookHandler(request);
       }
-      return new Response("SA GitHub Connector", { status: 200 });
+      return new Response("Esperta Base GitHub Connector", { status: 200 });
     },
   });
 

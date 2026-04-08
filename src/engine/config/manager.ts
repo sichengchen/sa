@@ -159,7 +159,7 @@ export class ConfigManager {
 
 function parseIdentityMd(md: string): Identity {
   const nameMatch = md.match(/^#\s+(.+)/m);
-  const name = nameMatch ? nameMatch[1].trim() : "SA";
+  const name = nameMatch ? nameMatch[1].trim() : "Esperta Base";
 
   const personalityMatch = md.match(
     /##\s+Personality\s*\n([\s\S]*?)(?=\n##|\n$|$)/

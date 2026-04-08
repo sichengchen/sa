@@ -58,7 +58,7 @@ const SA_HOME_RESOLVED = process.env.SA_HOME
     : "";
 
 /**
- * Mask SA internal paths: replace `~/.sa/...` and resolved SA_HOME paths
+ * Mask Esperta Base internal paths: replace `~/.sa/...` and resolved SA_HOME paths
  * with `[SA_HOME]/...`.
  */
 export function maskPaths(text: string): string {
@@ -98,7 +98,7 @@ export function truncateStackTraces(text: string, maxFrames = 3): string {
 /**
  * Full sanitization pipeline for tool results:
  * 1. Redact API keys
- * 2. Mask SA paths
+ * 2. Mask Esperta Base paths
  * 3. Truncate stack traces
  */
 export function sanitizeContent(text: string): string {
