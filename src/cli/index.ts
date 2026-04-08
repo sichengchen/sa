@@ -5,6 +5,8 @@ import { render } from "ink";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { engineCommand, ensureEngine } from "./engine.js";
+import { automationCommand } from "./automation.js";
+import { memoryCommand } from "./memory.js";
 import { createTuiClient } from "@sa/connectors/tui/client.js";
 import { App } from "@sa/connectors/tui/App.js";
 import { CLI_NAME, PRODUCT_NAME, RUNTIME_NAME, getRuntimeHome } from "@sa/shared/brand.js";
@@ -90,10 +92,12 @@ async function openTui(): Promise<void> {
 
 const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   engine: engineCommand,
+  automation: automationCommand,
   audit: async (cmdArgs) => {
     const { auditCommand } = await import("./audit.js");
     await auditCommand(cmdArgs);
   },
+  memory: memoryCommand,
   config: async () => {
     if (!isConfigured()) {
       console.error(`No configuration found. Run '${CLI_NAME} onboard' first.`);
@@ -208,9 +212,11 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     console.log(`Usage: ${CLI_NAME} [command]\n`);
     console.log("Commands:");
     console.log("  (default)   Start the runtime (if needed) and open the TUI");
+    console.log("  automation  Inspect durable automation tasks and runs");
     console.log("  audit       View the audit log (--tail N, --tool, --event, --since, --json)");
     console.log("  config      Interactive configuration editor");
     console.log("  onboard     Run the onboarding wizard");
+    console.log("  memory      Inspect layered memory and search results");
     console.log("  engine      Manage the runtime daemon (start/stop/status/logs/restart)");
     console.log("  stop        Stop all running agent tasks");
     console.log("  restart     Restart Aria Runtime");

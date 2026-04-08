@@ -1,6 +1,6 @@
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
-import type { AuditEntry } from "../engine/audit.js";
+import { queryAuditEntries, type AuditEntry } from "../engine/audit.js";
 import { CLI_NAME, PRODUCT_NAME, getRuntimeHome } from "@sa/shared/brand.js";
 
 /** ANSI color helpers */
@@ -25,12 +25,14 @@ function parseArgs(args: string[]): {
   tool?: string;
   event?: string;
   since?: string;
+  session?: string;
   json: boolean;
 } {
   let tail = 20;
   let tool: string | undefined;
   let event: string | undefined;
   let since: string | undefined;
+  let session: string | undefined;
   let json = false;
 
   for (let i = 0; i < args.length; i++) {
@@ -44,6 +46,8 @@ function parseArgs(args: string[]): {
       event = args[++i]!;
     } else if (arg === "--since" && args[i + 1]) {
       since = args[++i]!;
+    } else if (arg === "--session" && args[i + 1]) {
+      session = args[++i]!;
     } else if (arg === "--json") {
       json = true;
     } else if (arg === "--help" || arg === "-h") {
@@ -52,7 +56,7 @@ function parseArgs(args: string[]): {
     }
   }
 
-  return { tail, tool, event, since, json };
+  return { tail, tool, event, since, session, json };
 }
 
 function printHelp(): void {
@@ -63,6 +67,7 @@ function printHelp(): void {
   console.log("  --tool NAME    Filter by tool name (e.g. exec, web_fetch)");
   console.log("  --event TYPE   Filter by event type (e.g. auth_failure, tool_call)");
   console.log("  --since DATE   Filter entries after date (e.g. 2026-02-01)");
+  console.log("  --session ID   Filter by session ID or prefix");
   console.log("  --json         Output raw NDJSON (for piping)");
   console.log("  --help, -h     Show this help message");
 }
@@ -93,41 +98,7 @@ export async function auditCommand(args: string[]): Promise<void> {
   }
 
   const opts = parseArgs(args);
-
-  // Read and parse log entries
-  const content = readFileSync(logPath, "utf-8").trim();
-  if (!content) {
-    console.log("Audit log is empty.");
-    return;
-  }
-
-  let entries: AuditEntry[] = [];
-  for (const line of content.split("\n")) {
-    try {
-      entries.push(JSON.parse(line));
-    } catch {
-      // Skip corrupt lines
-    }
-  }
-
-  // Apply filters
-  if (opts.tool) {
-    entries = entries.filter((e) => e.tool === opts.tool);
-  }
-  if (opts.event) {
-    entries = entries.filter((e) => e.event === opts.event);
-  }
-  if (opts.since) {
-    const sinceDate = new Date(opts.since);
-    if (!isNaN(sinceDate.getTime())) {
-      entries = entries.filter((e) => new Date(e.ts) >= sinceDate);
-    }
-  }
-
-  // Tail: take only the last N entries
-  if (entries.length > opts.tail) {
-    entries = entries.slice(-opts.tail);
-  }
+  const entries = queryAuditEntries(logPath, opts);
 
   if (entries.length === 0) {
     console.log("No matching audit entries found.");

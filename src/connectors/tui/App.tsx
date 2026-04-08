@@ -14,7 +14,27 @@ import type { Session } from "@sa/shared/types.js";
 
 type EngineClient = ReturnType<typeof createTuiClient>;
 
-const TUI_COMMANDS = ["/new", "/stop", "/restart", "/shutdown", "/status", "/model", "/models", "/provider", "/sessions", "/switch", "/search", "/history", "/rollback"];
+const TUI_COMMANDS = [
+  "/new",
+  "/stop",
+  "/restart",
+  "/shutdown",
+  "/status",
+  "/model",
+  "/models",
+  "/provider",
+  "/sessions",
+  "/archives",
+  "/switch",
+  "/search",
+  "/history",
+  "/automation",
+  "/runs",
+  "/approvals",
+  "/memory",
+  "/audit",
+  "/rollback",
+];
 
 interface AppProps {
   client: EngineClient;
@@ -336,6 +356,234 @@ export function App({ client }: AppProps) {
             },
             ...historyMessages,
           ]);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          addMessage({ role: "error", content: msg });
+        }
+        return;
+      }
+
+      if (text === "/archives") {
+        try {
+          const archived = await client.session.listArchived.query({ limit: 10 });
+          if (archived.length === 0) {
+            addMessage({ role: "tool", content: "No archived sessions found.", toolName: "system" });
+            return;
+          }
+          const lines = archived.map((entry: any, index: number) => {
+            const preview = (entry.preview || entry.summary || "").replace(/\s+/g, " ").trim();
+            return `${index + 1}. ${entry.sessionId} [${entry.connectorType}] ${preview}`;
+          });
+          addMessage({
+            role: "tool",
+            content: `Archived sessions:\n${lines.join("\n")}\n\nUse /history <session-id> to inspect one result.`,
+            toolName: "system",
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          addMessage({ role: "error", content: msg });
+        }
+        return;
+      }
+
+      if (text === "/automation") {
+        try {
+          const tasks = await client.automation.list.query();
+          if (tasks.length === 0) {
+            addMessage({ role: "tool", content: "No automation tasks found.", toolName: "system" });
+            return;
+          }
+          const lines = tasks.map((task: any) => {
+            const status = task.paused ? "paused" : task.enabled ? "active" : "disabled";
+            const nextRun = task.nextRunAt ? new Date(task.nextRunAt).toLocaleString() : "n/a";
+            const lastStatus = task.lastStatus ?? "n/a";
+            return `[${task.taskType}] ${task.name} (${status}) next=${nextRun} last=${lastStatus}`;
+          });
+          addMessage({
+            role: "tool",
+            content: `Automation tasks:\n${lines.join("\n")}\n\nUse /runs [task-id-or-name] for recent executions.`,
+            toolName: "system",
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          addMessage({ role: "error", content: msg });
+        }
+        return;
+      }
+
+      if (text === "/runs" || text.startsWith("/runs ")) {
+        const target = text === "/runs" ? "" : text.slice(6).trim();
+        try {
+          let taskId: string | undefined;
+          if (target) {
+            const tasks = await client.automation.list.query();
+            const match = tasks.find((task: any) => (
+              task.taskId.startsWith(target) || task.name === target || task.slug === target
+            ));
+            if (!match) {
+              addMessage({ role: "error", content: `No automation task matched: ${target}` });
+              return;
+            }
+            taskId = match.taskId;
+          }
+
+          const runs = await client.automation.runs.query(taskId ? { taskId, limit: 10 } : { limit: 10 });
+          if (runs.length === 0) {
+            addMessage({ role: "tool", content: "No automation runs found.", toolName: "system" });
+            return;
+          }
+
+          const lines = runs.map((run: any) => {
+            const startedAt = new Date(run.startedAt).toLocaleString();
+            const summary = run.summary || run.errorMessage || "no summary";
+            return `[${run.taskType}] ${run.taskName} ${run.status} @ ${startedAt}\n  ${summary}`;
+          });
+          addMessage({
+            role: "tool",
+            content: `Automation runs:\n${lines.join("\n")}`,
+            toolName: "system",
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          addMessage({ role: "error", content: msg });
+        }
+        return;
+      }
+
+      if (text === "/approvals" || text.startsWith("/approvals ")) {
+        const rest = text === "/approvals" ? "" : text.slice(11).trim();
+        try {
+          const approvals = await client.approval.list.query({
+            sessionId: rest === "all" ? undefined : sessionId ?? undefined,
+            status: "pending",
+            limit: 10,
+          });
+          if (approvals.length === 0) {
+            addMessage({ role: "tool", content: "No pending approvals found.", toolName: "system" });
+            return;
+          }
+          const lines = approvals.map((approval: any) => (
+            `${approval.sessionId} ${approval.toolName} ${JSON.stringify(approval.args).slice(0, 120)}`
+          ));
+          addMessage({
+            role: "tool",
+            content: `Pending approvals:\n${lines.join("\n")}`,
+            toolName: "system",
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          addMessage({ role: "error", content: msg });
+        }
+        return;
+      }
+
+      if (text === "/memory" || text.startsWith("/memory ")) {
+        const rest = text === "/memory" ? "" : text.slice(8).trim();
+        try {
+          if (!rest) {
+            const overview = await client.memory.overview.query();
+            addMessage({
+              role: "tool",
+              content: [
+                `Curated memory: ${overview.curatedLength} chars`,
+                `Profile keys: ${overview.layers.profile.join(", ") || "none"}`,
+                `Project keys: ${overview.layers.project.join(", ") || "none"}`,
+                `Operational keys: ${overview.layers.operational.join(", ") || "none"}`,
+                `Recent journals: ${overview.journals.join(", ") || "none"}`,
+              ].join("\n"),
+              toolName: "system",
+            });
+            return;
+          }
+
+          if (rest.startsWith("search ")) {
+            const query = rest.slice(7).trim();
+            if (!query) {
+              addMessage({ role: "error", content: "Usage: /memory search <query>" });
+              return;
+            }
+            const results = await client.memory.search.query({ query, limit: 8 });
+            if (results.length === 0) {
+              addMessage({ role: "tool", content: `No memory matches for: ${query}`, toolName: "system" });
+              return;
+            }
+            const lines = results.map((result: any) => (
+              `[${result.sourceType}] ${result.source} score=${result.score.toFixed(3)} ${result.content.replace(/\s+/g, " ").trim().slice(0, 120)}`
+            ));
+            addMessage({ role: "tool", content: `Memory search:\n${lines.join("\n")}`, toolName: "system" });
+            return;
+          }
+
+          if (rest.startsWith("read ")) {
+            const [, layer, ...keyParts] = rest.split(/\s+/);
+            const key = keyParts.join(" ").trim();
+            if (!layer || (layer !== "curated" && !key)) {
+              addMessage({ role: "error", content: "Usage: /memory read <curated|profile|project|operational|journal> [key]" });
+              return;
+            }
+            const result = await client.memory.read.query({
+              layer: layer as any,
+              key: key || undefined,
+            });
+            addMessage({
+              role: "tool",
+              content: result.content ?? `No ${layer} entry found.`,
+              toolName: "system",
+            });
+            return;
+          }
+
+          if (["curated", "profile", "project", "operational", "journal"].includes(rest)) {
+            const overview = await client.memory.overview.query();
+            if (rest === "curated") {
+              const result = await client.memory.read.query({ layer: "curated" });
+              addMessage({
+                role: "tool",
+                content: result.content || "(curated memory is empty)",
+                toolName: "system",
+              });
+              return;
+            }
+
+            const entries = rest === "journal" ? overview.journals : overview.layers[rest as "profile" | "project" | "operational"];
+            addMessage({
+              role: "tool",
+              content: entries.length > 0 ? entries.join("\n") : `(no ${rest} entries)`,
+              toolName: "system",
+            });
+            return;
+          }
+
+          addMessage({ role: "error", content: "Usage: /memory [profile|project|operational|journal|curated] | /memory read ... | /memory search ..." });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          addMessage({ role: "error", content: msg });
+        }
+        return;
+      }
+
+      if (text === "/audit" || text.startsWith("/audit ")) {
+        const rest = text === "/audit" ? "" : text.slice(7).trim();
+        const showAll = rest === "all";
+        const maybeTail = !showAll && rest ? parseInt(rest, 10) : NaN;
+        try {
+          const entries = await client.audit.list.query({
+            tail: Number.isNaN(maybeTail) ? 10 : maybeTail,
+            session: showAll ? undefined : sessionId ?? undefined,
+          });
+          if (entries.length === 0) {
+            addMessage({ role: "tool", content: "No audit entries found.", toolName: "system" });
+            return;
+          }
+          const lines = entries.map((entry: any) => {
+            const detail = entry.tool ?? entry.summary ?? entry.command ?? entry.url ?? "";
+            return `${entry.ts.slice(0, 19).replace("T", " ")} ${entry.event} ${detail}`.trim();
+          });
+          addMessage({
+            role: "tool",
+            content: `Audit log${showAll ? "" : " (current session)"}:\n${lines.join("\n")}`,
+            toolName: "system",
+          });
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           addMessage({ role: "error", content: msg });
