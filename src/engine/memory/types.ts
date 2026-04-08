@@ -2,14 +2,17 @@ export interface MemoryEntry {
   key: string;
   content: string;
   updatedAt: number;
+  layer?: MemoryLayer;
 }
+
+export type MemoryLayer = "profile" | "project" | "operational" | "journal";
 
 /** A ranked search result from the memory index. */
 export interface SearchResult {
   /** File path relative to memory dir (e.g. "topics/user-address.md") */
   source: string;
   /** Source classification */
-  sourceType: "memory" | "topic" | "journal";
+  sourceType: "memory" | "profile" | "project" | "operational" | "journal";
   /** Chunk text (snippet) */
   content: string;
   /** First line of this chunk in the source file (1-indexed) */
@@ -29,7 +32,7 @@ export interface SearchOptions {
   /** Maximum number of results to return (default: 10) */
   maxResults?: number;
   /** Filter by source type (default: "all") */
-  sourceType?: "memory" | "topic" | "journal" | "all";
+  sourceType?: "memory" | "profile" | "project" | "operational" | "journal" | "all";
 }
 
 /** Embedding function callback type */

@@ -26,20 +26,37 @@ export function createMemoryWriteTool(memory: MemoryManager): ToolImpl {
             'Write target: "topic" (default if key provided) or "journal" (default if no key)',
         }),
       ),
+      layer: Type.Optional(
+        Type.Union([
+          Type.Literal("profile"),
+          Type.Literal("project"),
+          Type.Literal("operational"),
+          Type.Literal("journal"),
+        ], {
+          description:
+            'Explicit Aria memory layer: "profile", "project", "operational", or "journal".',
+        }),
+      ),
     }),
     async execute(args) {
       const content = args.content as string;
       const key = args.key as string | undefined;
       const writeType = (args.type as string | undefined) ?? (key ? "topic" : "journal");
+      const layer = args.layer as "profile" | "project" | "operational" | "journal" | undefined;
 
       try {
-        if (writeType === "journal" || !key) {
+        if (layer === "journal" || writeType === "journal" || !key) {
           await memory.appendJournal(content);
           const date = new Date().toISOString().slice(0, 10);
           return { content: `Appended to journal: ${date}` };
         }
-        await memory.save(key, content);
-        return { content: `Saved memory: ${key}` };
+        const resolvedLayer = layer ?? (writeType === "topic" ? "project" : "project");
+        await memory.saveLayer(resolvedLayer, key, content);
+        return {
+          content: resolvedLayer === "project"
+            ? `Saved memory: ${key}`
+            : `Saved ${resolvedLayer} memory: ${key}`,
+        };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         return { content: `Error writing memory: ${msg}`, isError: true };

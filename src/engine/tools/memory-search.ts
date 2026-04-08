@@ -19,6 +19,9 @@ export function createMemorySearchTool(memory: MemoryManager): ToolImpl {
           [
             Type.Literal("all"),
             Type.Literal("topics"),
+            Type.Literal("project"),
+            Type.Literal("profile"),
+            Type.Literal("operational"),
             Type.Literal("journal"),
             Type.Literal("memory"),
           ],
@@ -35,15 +38,15 @@ export function createMemorySearchTool(memory: MemoryManager): ToolImpl {
     }),
     async execute(args) {
       const query = args.query as string;
-      // Map "topics" → "topic" for the internal API
+      // Map legacy "topics" → "project" for the internal API
       const sourceRaw = (args.source as string | undefined) ?? "all";
-      const sourceType = sourceRaw === "topics" ? "topic" : sourceRaw;
+      const sourceType = sourceRaw === "topics" ? "project" : sourceRaw;
       const limit = (args.limit as number | undefined) ?? 5;
 
       try {
         const results = await memory.searchIndex(query, {
           maxResults: limit,
-          sourceType: sourceType as "all" | "memory" | "topic" | "journal",
+          sourceType: sourceType as "all" | "memory" | "profile" | "project" | "operational" | "journal",
         });
 
         if (results.length === 0) {

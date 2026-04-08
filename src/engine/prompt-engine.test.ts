@@ -112,7 +112,7 @@ async function createPromptEngine() {
     config,
     router,
     memory: {
-      loadContext: async () => "Memory note: ship the runtime migration.",
+      loadLayeredContext: async () => "## Project Memory\n- migration: ship the runtime migration.",
     } as any,
     store,
     skills,
@@ -130,8 +130,8 @@ describe("PromptEngine", () => {
     expect(prompt).toContain("## Tool Runtime");
     expect(prompt).toContain("### files");
     expect(prompt).toContain("### terminal");
-    expect(prompt).toContain("## Current Memory Context");
-    expect(prompt).toContain("Memory note: ship the runtime migration.");
+    expect(prompt).toContain("## Project Memory");
+    expect(prompt).toContain("ship the runtime migration");
     expect(prompt).toContain("## User Profile");
     expect(prompt).toContain("Operator profile: prefers direct technical summaries.");
     expect(prompt).toContain("Workspace Notes");

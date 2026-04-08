@@ -15,13 +15,24 @@ export function createMemoryReadTool(memory: MemoryManager): ToolImpl {
         description:
           'Topic key (e.g. "user-preferences") or journal date (e.g. "2026-02-22")',
       }),
+      layer: Type.Optional(
+        Type.Union([
+          Type.Literal("profile"),
+          Type.Literal("project"),
+          Type.Literal("operational"),
+          Type.Literal("journal"),
+        ], {
+          description: 'Optional memory layer. Defaults to "project" unless key is a journal date.',
+        }),
+      ),
     }),
     async execute(args) {
       const key = args.key as string;
+      const layer = args.layer as "profile" | "project" | "operational" | "journal" | undefined;
 
       try {
         // Check if it's a journal date (YYYY-MM-DD format)
-        if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+        if (layer === "journal" || /^\d{4}-\d{2}-\d{2}$/.test(key)) {
           const content = await memory.getJournal(key);
           if (content === null) {
             return { content: `No journal entry for: ${key}` };
@@ -29,10 +40,14 @@ export function createMemoryReadTool(memory: MemoryManager): ToolImpl {
           return { content };
         }
 
-        // Otherwise, treat as a topic key
-        const content = await memory.get(key);
+        const resolvedLayer = layer ?? "project";
+        const content = await memory.getLayer(resolvedLayer, key);
         if (content === null) {
-          return { content: `No memory found for key: ${key}` };
+          return {
+            content: resolvedLayer === "project"
+              ? `No memory found for key: ${key}`
+              : `No ${resolvedLayer} memory found for key: ${key}`,
+          };
         }
         return { content };
       } catch (err) {

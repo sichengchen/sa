@@ -141,7 +141,7 @@ describe("Temporal decay", () => {
     mgr.close();
   });
 
-  test("evergreen files (topics) do not decay", async () => {
+  test("evergreen files (project memory) do not decay", async () => {
     const mgr = new MemoryManager(testDir);
     await mgr.init();
     mgr.setSearchWeights({
@@ -152,8 +152,8 @@ describe("Temporal decay", () => {
 
     const results = await mgr.searchIndex("dark mode");
     expect(results.length).toBeGreaterThanOrEqual(1);
-    // Topic score should not be decayed
-    expect(results[0].sourceType).toBe("topic");
+    // Project memory score should not be decayed
+    expect(results[0].sourceType).toBe("project");
     expect(results[0].score).toBeGreaterThan(0);
     mgr.close();
   });

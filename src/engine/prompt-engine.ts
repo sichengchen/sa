@@ -93,6 +93,7 @@ export interface SessionPromptInput {
   overlay?: string;
   attachedSkills?: string[];
   messages?: readonly Message[];
+  tools?: ToolImpl[];
 }
 
 interface PromptEngineOptions {
@@ -221,7 +222,7 @@ export class PromptEngine {
       .find((model) => model.name === activeModelName);
 
     const userProfile = await this.config.loadUserProfile();
-    const memoryContext = await this.memory.loadContext();
+    const memoryContext = await this.memory.loadLayeredContext();
     const contextFilesPrompt = this.config.getConfigFile().runtime.contextFiles?.enabled === false
       ? ""
       : await buildContextFilesPrompt(process.env.TERMINAL_CWD ?? process.cwd(), {
@@ -236,7 +237,7 @@ export class PromptEngine {
       buildToolRuntimeSection(this.tools),
       TOOL_CALL_STYLE,
       MEMORY_GUIDE,
-      memoryContext ? `## Current Memory Context\n${memoryContext}` : "",
+      memoryContext ? memoryContext : "",
       skillsBlock,
       SKILL_LEARNING_GUIDE,
       contextFilesPrompt,
@@ -289,6 +290,9 @@ export class PromptEngine {
     const summary = await this.getRollingSummary(input.sessionId, messages);
     const recentTranscript = this.buildRecentTranscript(messages);
     const attachedSkills = await this.buildAttachedSkillsSection(input.attachedSkills);
+    const sessionToolRuntime = input.tools && input.tools.length > 0
+      ? buildToolRuntimeSection(input.tools)
+      : "";
 
     return [
       basePrompt,
@@ -300,6 +304,7 @@ export class PromptEngine {
       ].join("\n"),
       summary ? `## Rolling Summary\n${summary}` : "",
       recentTranscript ? `## Recent Transcript\n${recentTranscript}` : "",
+      sessionToolRuntime ? `## Session Tool Availability\n${sessionToolRuntime}` : "",
       attachedSkills,
       input.overlay ? `## Session Overlay\n${input.overlay}` : "",
     ]

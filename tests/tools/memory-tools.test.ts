@@ -67,7 +67,7 @@ describe("memory_search tool", () => {
     await memory.save("unrelated", "weather forecast today");
     const tool = createMemorySearchTool(memory);
     const result = await tool.execute({ query: "personal AI" });
-    expect(result.content).toContain("topics/project.md");
+    expect(result.content).toContain("project/project.md");
     expect(result.content).toContain("Esperta Base is a personal AI assistant");
     expect(result.content).toContain("score:");
   });
@@ -79,7 +79,7 @@ describe("memory_search tool", () => {
     const tool = createMemorySearchTool(memory);
     const result = await tool.execute({ query: "note", limit: 2 });
     // Count source attributions (each result has a [source] line)
-    const matches = result.content!.match(/\[topics\//g) ?? [];
+    const matches = result.content!.match(/\[project\//g) ?? [];
     expect(matches.length).toBeLessThanOrEqual(2);
   });
 
@@ -89,8 +89,20 @@ describe("memory_search tool", () => {
     const tool = createMemorySearchTool(memory);
 
     const topicResult = await tool.execute({ query: "meeting", source: "topics" });
-    expect(topicResult.content).toContain("topics/");
+    expect(topicResult.content).toContain("project/");
     expect(topicResult.content).not.toContain("journal/");
+  });
+
+  it("filters by explicit layered sources", async () => {
+    await memory.saveLayer("profile", "tone", "Use direct language");
+    await memory.saveLayer("operational", "mode", "Trusted mode for this session");
+    const tool = createMemorySearchTool(memory);
+
+    const profileResult = await tool.execute({ query: "direct", source: "profile" });
+    expect(profileResult.content).toContain("profile/tone.md");
+
+    const operationalResult = await tool.execute({ query: "trusted", source: "operational" });
+    expect(operationalResult.content).toContain("operational/mode.md");
   });
 });
 
@@ -115,6 +127,13 @@ describe("memory_read tool", () => {
     expect(result.content).toBe("No memory found for key: nonexistent");
   });
 
+  it("reads profile memory when layer is provided", async () => {
+    await memory.saveLayer("profile", "style", "Brief responses");
+    const tool = createMemoryReadTool(memory);
+    const result = await tool.execute({ key: "style", layer: "profile" });
+    expect(result.content).toBe("Brief responses");
+  });
+
   it("returns not-found for missing journal date", async () => {
     const tool = createMemoryReadTool(memory);
     const result = await tool.execute({ key: "2020-01-01" });
@@ -137,5 +156,13 @@ describe("memory_delete tool", () => {
     const tool = createMemoryDeleteTool(memory);
     const result = await tool.execute({ key: "ghost" });
     expect(result.content).toBe("No memory found for key: ghost");
+  });
+
+  it("deletes profile memory when layer is provided", async () => {
+    await memory.saveLayer("profile", "style", "Brief responses");
+    const tool = createMemoryDeleteTool(memory);
+    const result = await tool.execute({ key: "style", layer: "profile" });
+    expect(result.content).toBe("Deleted profile memory: style");
+    expect(await memory.getLayer("profile", "style")).toBeNull();
   });
 });
