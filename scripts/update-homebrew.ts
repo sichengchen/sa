@@ -15,12 +15,16 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 
 const TAP_REPO = "sichengchen/homebrew-tap";
-const FORMULA_PATH = "Formula/esperta-base.rb";
-const APP_REPO = "sichengchen/esperta-base";
+const FORMULA_PATH = "Formula/aria.rb";
+const APP_REPO = process.env.GITHUB_REPOSITORY;
 
 const token = process.env.TAP_GITHUB_TOKEN;
 if (!token) {
   console.error("Error: TAP_GITHUB_TOKEN env var is required");
+  process.exit(1);
+}
+if (!APP_REPO) {
+  console.error("Error: GITHUB_REPOSITORY env var is required");
   process.exit(1);
 }
 
@@ -31,7 +35,7 @@ const version = pkg.version as string;
 
 // Read checksum from local artifact file
 const checksumContent = readFileSync(
-  resolve(import.meta.dir, "..", "artifacts", "esperta-base-darwin.sha256"),
+  resolve(import.meta.dir, "..", "artifacts", "aria-darwin.sha256"),
   "utf-8",
 );
 const sha = checksumContent.trim().split(/\s+/)[0];
@@ -40,30 +44,29 @@ console.log(`Version: ${version}`);
 console.log(`SHA256: ${sha}`);
 
 // Generate formula content
-const formula = `class EspertaBase < Formula
-  desc "Personal AI agent assistant"
+const formula = `class Aria < Formula
+  desc "Local-first agent platform"
   homepage "https://github.com/${APP_REPO}"
   version "${version}"
   license "MIT"
 
-  url "https://github.com/${APP_REPO}/releases/download/v${version}/esperta-base-darwin"
+  url "https://github.com/${APP_REPO}/releases/download/v${version}/aria-darwin"
   sha256 "${sha}"
 
   depends_on "oven-sh/bun/bun"
 
   def install
-    bin.install "esperta-base-darwin" => "esperta-base"
-    bin.install "esperta-base-darwin" => "sa"
+    bin.install "aria-darwin" => "aria"
   end
 
   service do
-    run [opt_bin/"esperta-base", "engine", "start"]
+    run [opt_bin/"aria", "engine", "start"]
     working_dir Dir.home
-    environment_variables SA_HOME: "\#{Dir.home}/.sa", PATH: "\#{HOMEBREW_PREFIX}/bin:\#{HOMEBREW_PREFIX}/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+    environment_variables ARIA_HOME: "\#{Dir.home}/.aria", PATH: "\#{HOMEBREW_PREFIX}/bin:\#{HOMEBREW_PREFIX}/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
   end
 
   test do
-    assert_match version.to_s, shell_output("\#{bin}/esperta-base --version 2>&1", 1)
+    assert_match "Usage: aria", shell_output("\#{bin}/aria --help")
   end
 end
 `;
@@ -85,7 +88,7 @@ if (getRes.ok) {
 
 // Commit the formula via the Contents API
 const body: Record<string, string> = {
-  message: `esperta-base ${version}`,
+  message: `aria ${version}`,
   content: Buffer.from(formula).toString("base64"),
 };
 if (fileSha) body.sha = fileSha;

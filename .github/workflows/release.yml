@@ -23,18 +23,18 @@ jobs:
         run: bun run build
 
       - name: Rename binary
-        run: mv dist/index.js dist/esperta-base-darwin
+        run: mv dist/index.js dist/aria-darwin
 
       - name: Generate checksum
-        run: shasum -a 256 dist/esperta-base-darwin > dist/esperta-base-darwin.sha256
+        run: shasum -a 256 dist/aria-darwin > dist/aria-darwin.sha256
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: esperta-base-darwin
+          name: aria-darwin
           path: |
-            dist/esperta-base-darwin
-            dist/esperta-base-darwin.sha256
+            dist/aria-darwin
+            dist/aria-darwin.sha256
 
   release:
     needs: build
@@ -50,8 +50,8 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            artifacts/esperta-base-darwin
-            artifacts/esperta-base-darwin.sha256
+            artifacts/aria-darwin
+            artifacts/aria-darwin.sha256
 
   update-tap:
     needs: release
