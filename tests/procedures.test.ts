@@ -593,7 +593,6 @@ describe("tRPC procedures (non-live)", () => {
       expect(typeof events[0].timestamp).toBe("number");
     });
   });
-
   describe("model.list", () => {
     test("returns configured models", async () => {
       const caller = createCaller();
