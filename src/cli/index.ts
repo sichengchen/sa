@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { engineCommand, ensureEngine } from "./engine.js";
 import { automationCommand } from "./automation.js";
 import { memoryCommand } from "./memory.js";
+import { loadConnectorRuntimeEnv } from "./connector-env.js";
 import { createTuiClient } from "@aria/connectors/tui/client.js";
 import { App } from "@aria/connectors/tui/App.js";
 import { CLI_NAME, PRODUCT_NAME, RUNTIME_NAME, getRuntimeHome } from "@aria/shared/brand.js";
@@ -112,26 +113,31 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     await runOnboarding(existing);
   },
   slack: async (cmdArgs) => {
+    await loadConnectorRuntimeEnv(runtimeHome);
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3420;
     const { startSlackConnector } = await import("@aria/connectors/slack/index.js");
     await startSlackConnector(port);
   },
   teams: async (cmdArgs) => {
+    await loadConnectorRuntimeEnv(runtimeHome);
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3421;
     const { startTeamsConnector } = await import("@aria/connectors/teams/index.js");
     await startTeamsConnector(port);
   },
   gchat: async (cmdArgs) => {
+    await loadConnectorRuntimeEnv(runtimeHome);
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3422;
     const { startGChatConnector } = await import("@aria/connectors/gchat/index.js");
     await startGChatConnector(port);
   },
   github: async (cmdArgs) => {
+    await loadConnectorRuntimeEnv(runtimeHome);
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3424;
     const { startGitHubConnector } = await import("@aria/connectors/github/index.js");
     await startGitHubConnector(port);
   },
   linear: async (cmdArgs) => {
+    await loadConnectorRuntimeEnv(runtimeHome);
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3425;
     const { startLinearConnector } = await import("@aria/connectors/linear/index.js");
     await startLinearConnector(port);
@@ -195,11 +201,13 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     }
   },
   telegram: async (cmdArgs) => {
+    await loadConnectorRuntimeEnv(runtimeHome);
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3426;
     const { startTelegramConnector } = await import("@aria/connectors/telegram/index.js");
     await startTelegramConnector(port);
   },
   discord: async (cmdArgs) => {
+    await loadConnectorRuntimeEnv(runtimeHome);
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3423;
     const { startDiscordConnector } = await import("@aria/connectors/discord/index.js");
     await startDiscordConnector(port);
