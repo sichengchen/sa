@@ -29,6 +29,10 @@ config formats are not migrated in place.
 | `ARIA_TELEGRAM_PAIRING_CODE` | Optional | Telegram `/pair` code override for single-chat lock-in |
 | `GITHUB_TOKEN` | Optional | GitHub bot/app token |
 | `LINEAR_API_KEY` | Optional | Linear API key |
+| `WECHAT_ACCOUNT_ID` | Optional | WeChat account ID for manual connector startup |
+| `WECHAT_BOT_TOKEN` | Optional | WeChat bot token for manual connector startup |
+| `WECHAT_API_BASE_URL` | Optional | Override the WeChat API base URL |
+| `WECHAT_ALLOWED_USER_IDS` | Optional | Comma-separated WeChat sender IDs allowed to talk to the bot |
 | `ARIA_HOME` | Optional | Override config directory (default: `~/.aria/`) |
 | `ARIA_ENGINE_PORT` | Optional | Override Engine HTTP port (default `7420`; WS `7421`) |
 
@@ -54,6 +58,7 @@ Resolution order: environment variable > `secrets.enc` > `runtime.env`.
   skills/            # user-installed skills
     .registry.json   # ClawHub install metadata
   automation/        # cron and webhook task logs
+  wechat/            # WeChat connector cursor + context-token cache
   engine.url         # daemon discovery URL
   engine.pid         # daemon PID
   engine.token       # daemon auth token
@@ -89,6 +94,7 @@ Resolution order: environment variable > `secrets.enc` > `runtime.env`.
     "toolApproval": {
       "tui": "never", "telegram": "ask", "slack": "ask", "teams": "ask",
       "gchat": "ask", "discord": "ask", "github": "ask", "linear": "ask",
+      "wechat": "ask",
       "webhook": "never"
     },
 
@@ -111,7 +117,8 @@ Resolution order: environment variable > `secrets.enc` > `runtime.env`.
     "toolPolicy": {
       "verbosity": { "tui": "minimal", "telegram": "silent", "slack": "silent",
         "teams": "silent", "gchat": "silent", "discord": "silent",
-        "github": "silent", "linear": "silent", "webhook": "silent" },
+        "github": "silent", "linear": "silent", "wechat": "silent",
+        "webhook": "silent" },
       "overrides": {
         "exec": { "dangerLevel": "dangerous", "report": "always" },
         "web_fetch": { "report": "never" }
@@ -334,8 +341,9 @@ Structure:
 | `discordGuildId` | string | Discord guild ID |
 | `githubToken` | string | GitHub bot/app token |
 | `linearApiKey` | string | Linear API key |
+| `wechatAccounts` | array | Linked WeChat accounts saved by `aria wechat login` |
 
-Managed at runtime via `set_env_secret` tool.
+Managed at runtime via `set_env_secret` and `aria wechat login`.
 
 ---
 

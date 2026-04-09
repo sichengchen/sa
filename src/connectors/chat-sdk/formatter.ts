@@ -17,6 +17,7 @@ export const PLATFORM_LIMITS: Record<string, number> = {
   github: 65536,  // GitHub comment limit
   linear: 10000,  // Linear comment limit
   telegram: 4096, // Telegram message limit
+  wechat: 1800,   // Conservative limit for plain-text WeChat replies
 };
 
 /** Get the message length limit for a platform */
