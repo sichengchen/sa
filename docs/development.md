@@ -36,7 +36,7 @@ cp .env.example .env   # fill at least one provider API key
 ```
 src/
   cli/              # entrypoint, daemon commands, onboarding/config UIs
-  connectors/       # transports: tui, telegram, discord
+  connectors/       # transports: tui, telegram, wechat, chat surfaces
   engine/           # daemon: agent, config, memory, router, skills, tools
   shared/           # tRPC client, shared types, markdown utils
 scripts/            # version.ts, update-homebrew.ts, embed-skills.ts
@@ -54,8 +54,7 @@ tests/
 |--------------------------------|------------------------------------|
 | `@mariozechner/pi-ai`         | Multi-provider LLM abstraction     |
 | `@trpc/server`, `@trpc/client`| Typed RPC (Engine <-> connectors)  |
-| `grammy`                       | Telegram connector                 |
-| `discord.js`                   | Discord connector                  |
+| `chat`, `@chat-adapter/*`      | Slack/Teams/GChat/Discord/GitHub/Linear connectors |
 | `ink`, `react`                 | Terminal UI                        |
 | `zod`                          | Runtime validation                 |
 

@@ -7,6 +7,7 @@ const DEFAULT_VERBOSITY: Record<string, ToolVerbosity> = {
   tui: "minimal",
   telegram: "silent",
   discord: "silent",
+  wechat: "silent",
   webhook: "silent",
 };
 

@@ -45,7 +45,7 @@ export interface Session {
 }
 
 /** Connector types supported by the Engine — single source of truth */
-export const ConnectorTypeSchema = z.enum(["tui", "telegram", "discord", "slack", "teams", "gchat", "github", "linear", "webhook", "engine", "cron"]);
+export const ConnectorTypeSchema = z.enum(["tui", "telegram", "discord", "slack", "teams", "gchat", "github", "linear", "wechat", "webhook", "engine", "cron"]);
 export type ConnectorType = z.infer<typeof ConnectorTypeSchema>;
 
 /** Tool approval mode per connector */

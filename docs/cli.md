@@ -71,6 +71,15 @@ Layered memory inspection for the operator.
 | `read <layer> <key>` | Read one memory entry (`curated` does not require a key) |
 | `search <query>` | Search memory across layers |
 
+### `aria wechat [start|login [baseUrl]]`
+
+WeChat connector surface.
+
+| Mode | Description |
+|---|---|
+| `start` | Start the saved WeChat connector(s) and forward direct messages into Aria Runtime |
+| `login [baseUrl]` | Start Tencent QR login, save the resulting account to `secrets.enc`, and restrict inbound messages to the scanning user by default |
+
 ### `aria help`
 
 Show available commands and usage.
@@ -179,6 +188,13 @@ aria config -> Connectors -> edit token
 ```
 
 Or re-run: `aria onboard`
+
+### Linking WeChat
+
+```bash
+aria wechat login
+aria wechat
+```
 
 ### Installing a skill from ClawHub
 
