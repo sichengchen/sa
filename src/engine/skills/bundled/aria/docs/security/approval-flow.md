@@ -53,7 +53,7 @@ Each connector type has an approval mode configured in
 | Mode | Default for | Behavior |
 |------|-------------|----------|
 | `"never"` | TUI, Webhook | Safe and moderate auto-approve. Dangerous still prompts. |
-| `"ask"` | Telegram, Slack, Teams, GChat, Discord, GitHub, Linear | Same as `"never"` in practice -- moderate auto-approves, dangerous asks. |
+| `"ask"` | Telegram, Slack, Teams, GChat, Discord, GitHub, Linear, WeChat | Same as `"never"` in practice -- moderate auto-approves, dangerous asks. |
 | `"always"` | — | Both moderate and dangerous prompt. Only safe auto-approves. |
 
 ---
@@ -104,6 +104,7 @@ same tool in that session auto-approve without prompting.
       "discord": "ask",
       "github": "ask",
       "linear": "ask",
+      "wechat": "ask",
       "webhook": "never"
     }
   }

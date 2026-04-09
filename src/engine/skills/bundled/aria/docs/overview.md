@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Esperta Aria is a local-first agent platform. It runs as a durable **runtime daemon** that owns prompt assembly, tools, approvals, sessions, MCP connectivity, automation, and connector-facing interaction streams. Frontends (TUI, Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear, Webhook) are thin **surfaces** that communicate with the runtime over **tRPC** (HTTP + WebSocket) on `127.0.0.1:7420/7421`.
+Esperta Aria is a local-first agent platform. It runs as a durable **runtime daemon** that owns prompt assembly, tools, approvals, sessions, MCP connectivity, automation, and connector-facing interaction streams. Frontends (TUI, Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear, WeChat, Webhook) are thin **surfaces** that communicate with the runtime over **tRPC** (HTTP + WebSocket) on `127.0.0.1:7420/7421`.
 
 ---
 
@@ -12,11 +12,11 @@ Esperta Aria is a local-first agent platform. It runs as a durable **runtime dae
         | TUI  |  | Telegram |  | Slack |  | Teams |  | GChat |
         +--+---+  +----+-----+  +---+---+  +---+---+  +---+---+
            |           |            |           |           |
-           |   +---------+  +----------+  +--------+  +--------+
-           |   | Discord |  |  GitHub  |  | Linear |  | Webhook|
-           |   +----+----+  +----+-----+  +----+---+  +----+---+
-           |        |            |             |            |
-           +--------+-----+-----+------+------+-----+------+
+           |   +---------+  +----------+  +--------+  +--------+  +--------+
+           |   | Discord |  |  GitHub  |  | Linear |  | WeChat |  | Webhook|
+           |   +----+----+  +----+-----+  +----+---+  +----+---+  +----+---+
+           |        |            |             |            |            |
+           +--------+-----+-----+------+------+------+-----+------+------+
                           |            |
            tRPC (HTTP+WS) |   REST/SSE |
          127.0.0.1:7420/7421           |
@@ -66,7 +66,7 @@ Esperta Aria is a local-first agent platform. It runs as a durable **runtime dae
 | Skills | `src/engine/skills/` | Skill discovery, loading (bundled + user), activation, prompt integration via `SKILL.md` |
 | MCP | `src/engine/mcp.ts` | Connect configured MCP servers, surface remote tools, resources, and prompts |
 | Audio | `src/engine/audio/` | Audio transcription -- prefers local Whisper, falls back to cloud API |
-| Connectors | `src/connectors/` | TUI (Ink + React), Telegram (Grammy), Chat SDK connectors (Slack, Teams, Google Chat, Discord, GitHub, Linear), shared stream handler |
+| Connectors | `src/connectors/` | TUI (Ink + React), Telegram, WeChat long-poll connector, Chat SDK connectors (Slack, Teams, Google Chat, Discord, GitHub, Linear), shared stream handler |
 | CLI | `src/cli/` | `aria` command entry point, daemon control, onboarding wizard, config editor |
 | Shared | `src/shared/` | Typed tRPC client factory, cross-layer types, connector base, markdown formatting |
 
@@ -95,7 +95,7 @@ Esperta Aria is a local-first agent platform. It runs as a durable **runtime dae
 19. `Scheduler.start()` -- register built-in heartbeat task
 20. Restore persisted cron and webhook task records
 21. `startServer()` -- bind HTTP (7420) + WS (7421) listeners
-22. Auto-start connectors (Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear) if tokens configured
+22. Start connector surfaces explicitly as needed (`aria telegram`, `aria wechat`, `aria slack`, etc.)
 
 ---
 
@@ -299,7 +299,7 @@ or restart the engine.
 - **Graceful shutdown**: engine stop/restart flushes live session archives, aborts pending work, and closes long-lived subsystems (MCP, memory, auth cleanup) before exit.
 - **Streaming-first**: agent yields events as they arrive from the LLM. tRPC subscriptions and SSE webhooks forward with minimal buffering.
 - **pi-ai abstraction**: unified streaming interface across Anthropic, OpenAI, Google, OpenRouter. Use type assertion `(getModel as (p: string, m: string) => Model<Api>)` for dynamic strings.
-- **Chat SDK adapter pattern**: six connectors (Slack, Teams, Google Chat, Discord, GitHub, Linear) share a single `ChatSDKAdapter` class that bridges Chat SDK events to Esperta Aria's tRPC client. Platform-specific code is limited to adapter instantiation and webhook server setup.
+- **Chat SDK adapter pattern**: six connectors (Slack, Teams, Google Chat, Discord, GitHub, Linear) share a single `ChatSDKAdapter` class that bridges Chat SDK events to Esperta Aria's tRPC client. Platform-specific code is limited to adapter instantiation and webhook server setup. WeChat is the one native long-poll connector today because Tencent's API is not exposed through Chat SDK.
 - **Skills are Markdown**: lightweight, version-controllable, shareable via ClawHub. No code execution in skill loading.
 - **Audio transcription**: prefers local Whisper, falls back to cloud API.
 - **Tool approval is per-connector**: TUI defaults to auto-approve; IM connectors default to `"ask"`.
