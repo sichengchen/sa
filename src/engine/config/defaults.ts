@@ -69,6 +69,7 @@ export const DEFAULT_CONFIG: AriaConfigFile = {
       gchat: "ask",
       github: "ask",
       linear: "ask",
+      wechat: "ask",
       webhook: "never",
     },
     webhook: {
@@ -101,6 +102,7 @@ export const DEFAULT_CONFIG: AriaConfigFile = {
         gchat: "silent",
         github: "silent",
         linear: "silent",
+        wechat: "silent",
         webhook: "silent",
       },
       overrides: {},

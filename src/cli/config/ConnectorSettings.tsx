@@ -10,7 +10,8 @@ type Substep = "menu" | "edit-telegram-token" | "edit-discord-token" | "edit-dis
   | "edit-teams-id" | "edit-teams-password"
   | "edit-gchat-key"
   | "edit-github-token" | "edit-github-secret"
-  | "edit-linear-key" | "edit-linear-secret";
+  | "edit-linear-key" | "edit-linear-secret"
+  | "wechat-accounts";
 
 interface ConnectorSettingsProps {
   config: AriaConfigFile;
@@ -39,6 +40,7 @@ const MENU_ITEMS = [
   { key: "github-secret", label: "GitHub webhook secret" },
   { key: "linear-key", label: "Linear API key" },
   { key: "linear-secret", label: "Linear webhook secret" },
+  { key: "wechat-accounts", label: "WeChat linked accounts" },
   { key: "tui-approval", label: "TUI tool approval" },
   { key: "telegram-approval", label: "Telegram tool approval" },
   { key: "discord-approval", label: "Discord tool approval" },
@@ -47,6 +49,7 @@ const MENU_ITEMS = [
   { key: "gchat-approval", label: "Google Chat tool approval" },
   { key: "github-approval", label: "GitHub tool approval" },
   { key: "linear-approval", label: "Linear tool approval" },
+  { key: "wechat-approval", label: "WeChat tool approval" },
   { key: "webhook-enabled", label: "Webhook connector" },
   { key: "webhook-approval", label: "Webhook tool approval" },
 ] as const;
@@ -83,6 +86,7 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
   const rawGithubSecret = secrets?.apiKeys?.GITHUB_WEBHOOK_SECRET;
   const rawLinearKey = secrets?.apiKeys?.LINEAR_API_KEY;
   const rawLinearSecret = secrets?.apiKeys?.LINEAR_WEBHOOK_SECRET;
+  const wechatAccounts = secrets?.wechatAccounts ?? [];
 
   const mask = (v: string | undefined) => v ? "●●●●" + v.slice(-4) : "(not set)";
   const telegramToken = mask(rawTelegram);
@@ -135,6 +139,8 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
         } else if (item.key === "linear-secret") {
           setEditValue(rawLinearSecret ?? "");
           setSubstep("edit-linear-secret");
+        } else if (item.key === "wechat-accounts") {
+          setSubstep("wechat-accounts");
         } else if (item.key.endsWith("-approval")) {
           const connector = item.key.replace("-approval", "") as ConnectorType;
           const current = getApprovalMode(config, connector);
@@ -172,6 +178,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
 
     // --- EDIT FIELDS ---
     if (key.escape) { setSubstep("menu"); return; }
+    if (substep === "wechat-accounts") {
+      return;
+    }
     if (key.return) {
       const updated: SecretsFile = { ...secrets!, apiKeys: { ...secrets!.apiKeys } };
       if (substep === "edit-telegram-token") {
@@ -260,6 +269,7 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
             else if (item.key === "github-secret") detail = ` ${mask(rawGithubSecret)}`;
             else if (item.key === "linear-key") detail = ` ${mask(rawLinearKey)}`;
             else if (item.key === "linear-secret") detail = ` ${mask(rawLinearSecret)}`;
+            else if (item.key === "wechat-accounts") detail = ` ${wechatAccounts.length === 0 ? "(none linked)" : `${wechatAccounts.length} linked`}`;
             else if (item.key.endsWith("-approval")) {
               const connector = item.key.replace("-approval", "") as ConnectorType;
               detail = ` ${APPROVAL_LABELS[getApprovalMode(config, connector)]}`;
@@ -275,6 +285,31 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           })}
           <Text />
           <Text dimColor>↑↓ navigate | Enter edit/cycle | Esc back</Text>
+        </>
+      )}
+
+      {substep === "wechat-accounts" && (
+        <>
+          <Text bold>WeChat Linked Accounts</Text>
+          <Text dimColor>Use `aria wechat login` in your shell to add or refresh a linked WeChat account.</Text>
+          <Text />
+          {wechatAccounts.length === 0 ? (
+            <Text dimColor>No accounts saved in secrets.enc.</Text>
+          ) : (
+            <>
+              {wechatAccounts.map((account) => (
+                <Text key={account.accountId}>
+                  {account.accountId}
+                  <Text dimColor>
+                    {`  ${account.apiBaseUrl ?? "(default base URL)"}`}
+                    {account.allowedUserIds?.length ? `  allow: ${account.allowedUserIds.join(", ")}` : ""}
+                  </Text>
+                </Text>
+              ))}
+            </>
+          )}
+          <Text />
+          <Text dimColor>Esc back</Text>
         </>
       )}
 

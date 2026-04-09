@@ -16,7 +16,7 @@ import { LinearSetup, type LinearSetupData } from "./steps/LinearSetup.js";
 import { SkillSetup, type SkillSetupData } from "./steps/SkillSetup.js";
 import { UserProfile, type UserProfileData } from "./steps/UserProfile.js";
 import { Confirm, type WizardData } from "./steps/Confirm.js";
-import { saveSecrets } from "@aria/engine/config/secrets.js";
+import { loadSecrets, saveSecrets } from "@aria/engine/config/secrets.js";
 import { BUNDLED_SKILLS_DIR } from "@aria/engine/skills/registry.js";
 import { EMBEDDED_SKILLS } from "@aria/engine/skills/embedded-skills.generated.js";
 import type { ModelConfig, ProviderConfig } from "@aria/engine/router/types.js";
@@ -201,7 +201,9 @@ ${recurringContext}
       if (data.githubWebhookSecret) apiKeys.GITHUB_WEBHOOK_SECRET = data.githubWebhookSecret;
       if (data.linearApiKey) apiKeys.LINEAR_API_KEY = data.linearApiKey;
       if (data.linearWebhookSecret) apiKeys.LINEAR_WEBHOOK_SECRET = data.linearWebhookSecret;
+      const existingSecrets = await loadSecrets(homeDir);
       await saveSecrets(homeDir, {
+        ...(existingSecrets ?? { apiKeys: {} }),
         apiKeys,
         pairingCode: data.pairingCode,
       });

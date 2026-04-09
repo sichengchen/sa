@@ -16,6 +16,7 @@ Every session ID follows `<prefix>:<suffix>`:
 | `main:a1b2c3d4` | `main` | `a1b2c3d4` |
 | `tui:e5f6a7b8` | `tui` | `e5f6a7b8` |
 | `telegram:123456:c9d0e1f2` | `telegram:123456` | `c9d0e1f2` |
+| `wechat:wx_alias:user123:c9d0e1f2` | `wechat:wx_alias:user123` | `c9d0e1f2` |
 | `discord:789012:g3h4i5j6` | `discord:789012` | `g3h4i5j6` |
 | `cron:daily-report:k7l8m9n0` | `cron:daily-report` | `k7l8m9n0` |
 | `webhook:deploy:p1q2r3s4` | `webhook:deploy` | `p1q2r3s4` |
@@ -27,7 +28,7 @@ Every session ID follows `<prefix>:<suffix>`:
 | Tier | ID pattern | Creator | Purpose |
 |---|---|---|---|
 | Main | `main:<id>` | Engine startup | Engine-level tasks: heartbeat, orchestration. One per engine lifetime. connectorType = `"engine"`. |
-| Connector | `tui:<id>`, `telegram:<chatId>:<id>`, `slack:<channelId>:<id>`, `teams:<channelId>:<id>`, `gchat:<channelId>:<id>`, `discord:<channelId>:<id>`, `github:<channelId>:<id>`, `linear:<channelId>:<id>`, `webhook:<id>` | Connector via `session.create` | User-facing conversations. One agent per session. |
+| Connector | `tui:<id>`, `telegram:<chatId>:<id>`, `slack:<channelId>:<id>`, `teams:<channelId>:<id>`, `gchat:<channelId>:<id>`, `discord:<channelId>:<id>`, `github:<channelId>:<id>`, `linear:<channelId>:<id>`, `wechat:<accountId>:<peerId>:<id>`, `webhook:<id>` | Connector via `session.create` | User-facing conversations. One agent per session. |
 | Automation | `cron:<task-name>:<id>`, `webhook:<slug>:<id>` | Scheduler / webhook handler | Isolated, ephemeral sessions for background tasks. |
 
 ### Main session
@@ -48,6 +49,7 @@ Created per chat or channel. Each gets isolated message history and agent state.
 | Discord | `discord:<channelId>` | `discord:987654321:c9d0e1f2` |
 | GitHub | `github:<channelId>` | `github:owner/repo:l1m2n3o4` |
 | Linear | `linear:<channelId>` | `linear:team-id:p5q6r7s8` |
+| WeChat | `wechat:<accountId>:<peerId>` | `wechat:wx_alias:user123:p5q6r7s8` |
 
 On connect, connectors first try `session.getLatest` to resume, then fall back to `session.create`.
 
@@ -106,7 +108,7 @@ Move a session to a different connector. Throws if session does not exist.
 All connectors support `/new` to start a fresh session under the same prefix:
 
 - **TUI**: destroys the current session (removes agent + history), then creates fresh.
-- **Telegram/Slack/Teams/Google Chat/Discord/GitHub/Linear**: creates a new session without destroying the old one. Old session history preserved and accessible via `/sessions` or `/switch`.
+- **Telegram/Slack/Teams/Google Chat/Discord/GitHub/Linear/WeChat**: creates a new session without destroying the old one. Old session history preserved and accessible via `/sessions` or `/switch`.
 
 ---
 
