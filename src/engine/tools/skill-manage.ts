@@ -75,7 +75,7 @@ function validateSubFilePath(filePath: string): string | null {
 export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
   return {
     name: "skill_manage",
-    description: "Create, update, patch, and delete reusable skills under ~/.sa/skills.",
+    description: "Create, update, patch, and delete reusable skills under ~/.aria/skills.",
     summary: "Manage reusable skills. Use this to save successful workflows as skills and patch outdated skills.",
     dangerLevel: "moderate",
     parameters: Type.Object({
@@ -136,7 +136,7 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
           }
           const skillPath = findWritableSkillPath(deps.homeDir, deps.registry, name);
           if (!skillPath) {
-            return { content: `Skill "${name}" is not editable from ~/.sa/skills.`, isError: true };
+            return { content: `Skill "${name}" is not editable from ~/.aria/skills.`, isError: true };
           }
           await writeFile(skillPath, content);
           await deps.registry.loadAll(deps.homeDir);
@@ -149,7 +149,7 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
           const newString = String(args.new_string ?? "");
           const skillPath = findWritableSkillPath(deps.homeDir, deps.registry, name);
           if (!skillPath) {
-            return { content: `Skill "${name}" is not editable from ~/.sa/skills.`, isError: true };
+            return { content: `Skill "${name}" is not editable from ~/.aria/skills.`, isError: true };
           }
           const current = await readFile(skillPath, "utf-8");
           const occurrences = current.split(oldString).length - 1;
@@ -169,7 +169,7 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
         case "delete": {
           const skillPath = findWritableSkillPath(deps.homeDir, deps.registry, name);
           if (!skillPath) {
-            return { content: `Skill "${name}" is not removable from ~/.sa/skills.`, isError: true };
+            return { content: `Skill "${name}" is not removable from ~/.aria/skills.`, isError: true };
           }
           await rm(dirname(skillPath), { recursive: true, force: true });
           await deps.registry.loadAll(deps.homeDir);
@@ -185,7 +185,7 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
           }
           const skillPath = findWritableSkillPath(deps.homeDir, deps.registry, name);
           if (!skillPath) {
-            return { content: `Skill "${name}" is not editable from ~/.sa/skills.`, isError: true };
+            return { content: `Skill "${name}" is not editable from ~/.aria/skills.`, isError: true };
           }
           const skillDir = dirname(skillPath);
           const targetPath = ensureInsideSkillsRoot(rootDir, join(skillDir, relativePath));
@@ -208,7 +208,7 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
           }
           const skillPath = findWritableSkillPath(deps.homeDir, deps.registry, name);
           if (!skillPath) {
-            return { content: `Skill "${name}" is not editable from ~/.sa/skills.`, isError: true };
+            return { content: `Skill "${name}" is not editable from ~/.aria/skills.`, isError: true };
           }
           const skillDir = dirname(skillPath);
           const targetPath = ensureInsideSkillsRoot(rootDir, join(skillDir, relativePath));

@@ -2,37 +2,37 @@
 
 import { writeFileSync, unlinkSync, existsSync, openSync } from "node:fs";
 import { join } from "node:path";
-import { homedir } from "node:os";
 import { spawn } from "node:child_process";
 import { createRuntime } from "./runtime.js";
 import { startServer } from "./server.js";
+import { ENGINE_PORT_ENV_VAR, HOME_ENV_VAR, RUNTIME_NAME, getRuntimeHome } from "@aria/shared/brand.js";
 
-const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
-const PID_FILE = join(saHome, "engine.pid");
-const URL_FILE = join(saHome, "engine.url");
+const runtimeHome = getRuntimeHome();
+const PID_FILE = join(runtimeHome, "engine.pid");
+const URL_FILE = join(runtimeHome, "engine.url");
 
-const port = process.env.SA_ENGINE_PORT
-  ? parseInt(process.env.SA_ENGINE_PORT, 10)
+const port = process.env[ENGINE_PORT_ENV_VAR]
+  ? parseInt(process.env[ENGINE_PORT_ENV_VAR]!, 10)
   : undefined;
 
 async function main() {
-  console.log("Esperta Base Engine bootstrapping...");
+  console.log(`${RUNTIME_NAME} bootstrapping...`);
   const runtime = await createRuntime();
   const server = await startServer(runtime, { port });
 
-  // Write discovery files so `esperta-base engine status` works regardless of how we were started
+  // Write discovery files so `aria engine status` works regardless of how we were started
   const httpUrl = `http://127.0.0.1:${server.port}`;
   writeFileSync(PID_FILE, String(process.pid));
   writeFileSync(URL_FILE, httpUrl);
 
   // Chat SDK connectors (Telegram, Discord, Slack, etc.) run as separate
-  // webhook servers. Start them via `sa telegram`, `sa discord`, etc.
+  // webhook servers. Start them via `aria telegram`, `aria discord`, etc.
 
   // Graceful shutdown (with optional restart)
-  const RESTART_MARKER = join(saHome, "engine.restart");
+  const RESTART_MARKER = join(runtimeHome, "engine.restart");
 
   function shutdown() {
-    console.log("\nEsperta Base Engine shutting down...");
+    console.log(`\n${RUNTIME_NAME} shutting down...`);
     const shouldRestart = existsSync(RESTART_MARKER);
     if (shouldRestart) {
       try { unlinkSync(RESTART_MARKER); } catch {}
@@ -45,14 +45,14 @@ async function main() {
       () => {
         clearTimeout(forceTimer);
         if (shouldRestart) {
-          const logFd = openSync(join(saHome, "engine.log"), "a");
+          const logFd = openSync(join(runtimeHome, "engine.log"), "a");
           const child = spawn(process.execPath, [process.argv[1]!, "__engine"], {
             detached: true,
             stdio: ["ignore", logFd, logFd],
-            env: { ...process.env },
+            env: { ...process.env, [HOME_ENV_VAR]: runtimeHome },
           });
           child.unref();
-          console.log(`Esperta Base Engine restarting (new PID: ${child.pid})...`);
+          console.log(`${RUNTIME_NAME} restarting (new PID: ${child.pid})...`);
         }
         process.exit(0);
       },
@@ -65,6 +65,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Esperta Base Engine failed to start:", err);
+  console.error(`${RUNTIME_NAME} failed to start:`, err);
   process.exit(1);
 });

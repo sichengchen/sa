@@ -9,7 +9,7 @@ let homeDir: string;
 let registry: SkillRegistry;
 
 beforeEach(async () => {
-  homeDir = await mkdtemp(join(tmpdir(), "sa-skill-manage-"));
+  homeDir = await mkdtemp(join(tmpdir(), "aria-skill-manage-"));
   registry = new SkillRegistry();
   await registry.loadAll(homeDir);
 });

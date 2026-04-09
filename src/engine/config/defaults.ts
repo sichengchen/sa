@@ -1,4 +1,5 @@
-import type { SAConfigFile, HeartbeatConfig } from "./types.js";
+import type { AriaConfigFile, HeartbeatConfig } from "./types.js";
+import { PRODUCT_NAME } from "@aria/shared/brand.js";
 
 /** Default tool allowlist for cron tasks — read + search, memory, notify */
 export const CRON_DEFAULT_TOOLS = [
@@ -22,13 +23,13 @@ export const DEFAULT_HEARTBEAT: HeartbeatConfig = {
   suppressToken: "HEARTBEAT_OK",
 };
 
-export const DEFAULT_IDENTITY_MD = `# Esperta Base
+export const DEFAULT_IDENTITY_MD = `# ${PRODUCT_NAME}
 
 ## Personality
-You are Esperta Base, a helpful personal AI assistant. You are concise, friendly, and proactive. You prefer to get things done rather than ask clarifying questions, but you flag assumptions when they matter.
+You are Esperta Aria, a helpful local-first agent. You are concise, clear, and proactive. You prefer completing concrete work over asking unnecessary questions, but you surface important assumptions when they matter.
 
 ## System Prompt
-You are Esperta Base, a personal AI agent assistant. You help with tasks, answer questions, and use tools when needed. Keep responses concise and actionable.
+You are Esperta Aria, a local-first agent platform runtime. You help with tasks, answer questions, and use tools when needed. Keep responses concise and actionable.
 `;
 
 /** Default HEARTBEAT.md content created on first run */
@@ -38,7 +39,7 @@ export const DEFAULT_HEARTBEAT_MD = `# Heartbeat checklist
 `;
 
 /** Default config.json (v3 — merged runtime + providers + models) */
-export const DEFAULT_CONFIG: SAConfigFile = {
+export const DEFAULT_CONFIG: AriaConfigFile = {
   version: 3,
   runtime: {
     activeModel: "sonnet",

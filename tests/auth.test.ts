@@ -1,11 +1,11 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { AuthManager } from "@sa/engine/auth.js";
+import { AuthManager } from "@aria/engine/auth.js";
 import { mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
 
-const testHome = join(tmpdir(), "sa-test-auth-" + Date.now());
+const testHome = join(tmpdir(), "aria-test-auth-" + Date.now());
 
 beforeEach(async () => {
   await mkdir(testHome, { recursive: true });

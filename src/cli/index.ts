@@ -4,15 +4,14 @@ import React from "react";
 import { render } from "ink";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { homedir } from "node:os";
 import { engineCommand, ensureEngine } from "./engine.js";
-import { createTuiClient } from "@sa/connectors/tui/client.js";
-import { App } from "@sa/connectors/tui/App.js";
+import { automationCommand } from "./automation.js";
+import { memoryCommand } from "./memory.js";
+import { createTuiClient } from "@aria/connectors/tui/client.js";
+import { App } from "@aria/connectors/tui/App.js";
+import { CLI_NAME, PRODUCT_NAME, RUNTIME_NAME, getRuntimeHome } from "@aria/shared/brand.js";
 
-const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
-const CLI_NAME = "esperta-base";
-const CLI_ALIAS = "sa";
-const ENGINE_NAME = "Esperta Base Engine";
+const runtimeHome = getRuntimeHome();
 const [subcommand, ...args] = process.argv.slice(2);
 
 async function runOnboarding(existingConfig?: unknown): Promise<void> {
@@ -20,7 +19,7 @@ async function runOnboarding(existingConfig?: unknown): Promise<void> {
   return new Promise<void>((resolve) => {
     const instance = render(
       React.createElement(Wizard, {
-        homeDir: saHome,
+        homeDir: runtimeHome,
         existingConfig: existingConfig as any,
         onComplete: () => {
           instance.unmount();
@@ -34,13 +33,13 @@ async function runOnboarding(existingConfig?: unknown): Promise<void> {
 async function loadExistingConfig(): Promise<unknown | undefined> {
   try {
     const { ConfigManager } = await import("../engine/config/index.js");
-    const config = new ConfigManager(saHome);
-    const saConfig = await config.load();
+    const config = new ConfigManager(runtimeHome);
+    const ariaConfig = await config.load();
     const secrets = await config.loadSecrets();
-    const defaultModel = saConfig.models?.[0];
-    const defaultProvider = saConfig.providers?.find(
+    const defaultModel = ariaConfig.models?.[0];
+    const defaultProvider = ariaConfig.providers?.find(
       (p: { id: string }) => p.id === defaultModel?.provider
-    ) ?? saConfig.providers?.[0];
+    ) ?? ariaConfig.providers?.[0];
     const userProfile = await config.loadUserProfile();
     let userName = "";
     let timezone = "";
@@ -57,8 +56,8 @@ async function loadExistingConfig(): Promise<unknown | undefined> {
       if (aboutMatch && aboutMatch[1].trim()) aboutMe = aboutMatch[1].trim();
     }
     return {
-      name: saConfig.identity.name,
-      personality: saConfig.identity.personality,
+      name: ariaConfig.identity.name,
+      personality: ariaConfig.identity.personality,
       userName,
       timezone,
       communicationStyle,
@@ -81,7 +80,7 @@ async function loadExistingConfig(): Promise<unknown | undefined> {
 }
 
 function isConfigured(): boolean {
-  return existsSync(join(saHome, "config.json"));
+  return existsSync(join(runtimeHome, "config.json"));
 }
 
 async function openTui(): Promise<void> {
@@ -93,18 +92,20 @@ async function openTui(): Promise<void> {
 
 const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   engine: engineCommand,
+  automation: automationCommand,
   audit: async (cmdArgs) => {
     const { auditCommand } = await import("./audit.js");
     await auditCommand(cmdArgs);
   },
+  memory: memoryCommand,
   config: async () => {
     if (!isConfigured()) {
       console.error(`No configuration found. Run '${CLI_NAME} onboard' first.`);
       process.exit(1);
     }
     const { runConfig } = await import("./config/index.js");
-    await runConfig(saHome);
-    console.log(`\nRun '${CLI_NAME} engine restart' to apply changes to the running Engine.`);
+    await runConfig(runtimeHome);
+    console.log(`\nRun '${CLI_NAME} engine restart' to apply changes to the running runtime.`);
   },
   onboard: async () => {
     const existing = isConfigured() ? await loadExistingConfig() : undefined;
@@ -112,72 +113,72 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   },
   slack: async (cmdArgs) => {
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3420;
-    const { startSlackConnector } = await import("@sa/connectors/slack/index.js");
+    const { startSlackConnector } = await import("@aria/connectors/slack/index.js");
     await startSlackConnector(port);
   },
   teams: async (cmdArgs) => {
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3421;
-    const { startTeamsConnector } = await import("@sa/connectors/teams/index.js");
+    const { startTeamsConnector } = await import("@aria/connectors/teams/index.js");
     await startTeamsConnector(port);
   },
   gchat: async (cmdArgs) => {
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3422;
-    const { startGChatConnector } = await import("@sa/connectors/gchat/index.js");
+    const { startGChatConnector } = await import("@aria/connectors/gchat/index.js");
     await startGChatConnector(port);
   },
   github: async (cmdArgs) => {
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3424;
-    const { startGitHubConnector } = await import("@sa/connectors/github/index.js");
+    const { startGitHubConnector } = await import("@aria/connectors/github/index.js");
     await startGitHubConnector(port);
   },
   linear: async (cmdArgs) => {
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3425;
-    const { startLinearConnector } = await import("@sa/connectors/linear/index.js");
+    const { startLinearConnector } = await import("@aria/connectors/linear/index.js");
     await startLinearConnector(port);
   },
   shutdown: async () => {
-    const { createTuiClient } = await import("@sa/connectors/tui/client.js");
-    try {
-      const client = createTuiClient();
-      console.log(`Shutting down ${ENGINE_NAME}...`);
-      await client.engine.shutdown.mutate();
-      console.log(`${ENGINE_NAME} stopped.`);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`Failed to shut down: ${msg}`);
-      console.error(`Is the Engine running? Try '${CLI_NAME} engine status'.`);
-      process.exit(1);
-    }
+      const { createTuiClient } = await import("@aria/connectors/tui/client.js");
+      try {
+        const client = createTuiClient();
+        console.log(`Shutting down ${RUNTIME_NAME}...`);
+        await client.engine.shutdown.mutate();
+        console.log(`${RUNTIME_NAME} stopped.`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`Failed to shut down: ${msg}`);
+        console.error(`Is the runtime running? Try '${CLI_NAME} engine status'.`);
+        process.exit(1);
+      }
   },
   restart: async () => {
-    const { createTuiClient } = await import("@sa/connectors/tui/client.js");
-    try {
-      const client = createTuiClient();
-      console.log(`Restarting ${ENGINE_NAME}...`);
-      await client.engine.restart.mutate();
+      const { createTuiClient } = await import("@aria/connectors/tui/client.js");
+      try {
+        const client = createTuiClient();
+        console.log(`Restarting ${RUNTIME_NAME}...`);
+        await client.engine.restart.mutate();
       // Wait for engine to come back up
       let retries = 0;
-      while (retries < 30) {
+        while (retries < 30) {
         await new Promise((r) => setTimeout(r, 500));
-        try {
-          const freshClient = createTuiClient();
-          await freshClient.health.ping.query();
-          console.log(`${ENGINE_NAME} restarted successfully.`);
-          return;
-        } catch {
-          retries++;
+          try {
+            const freshClient = createTuiClient();
+            await freshClient.health.ping.query();
+            console.log(`${RUNTIME_NAME} restarted successfully.`);
+            return;
+          } catch {
+            retries++;
+          }
         }
+        console.log(`${RUNTIME_NAME} restart initiated. It may still be starting up.`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`Failed to restart: ${msg}`);
+        console.error(`Is the runtime running? Try '${CLI_NAME} engine restart'.`);
+        process.exit(1);
       }
-      console.log(`${ENGINE_NAME} restart initiated. It may still be starting up.`);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`Failed to restart: ${msg}`);
-      console.error(`Is the Engine running? Try '${CLI_NAME} engine restart'.`);
-      process.exit(1);
-    }
   },
   stop: async () => {
-    const { createTuiClient } = await import("@sa/connectors/tui/client.js");
+    const { createTuiClient } = await import("@aria/connectors/tui/client.js");
     try {
       const client = createTuiClient();
       const result = await client.chat.stopAll.mutate();
@@ -189,36 +190,37 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`Failed to stop agents: ${msg}`);
-      console.error(`Is the Engine running? Try '${CLI_NAME} engine status'.`);
+      console.error(`Is the runtime running? Try '${CLI_NAME} engine status'.`);
       process.exit(1);
     }
   },
   telegram: async (cmdArgs) => {
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3426;
-    const { startTelegramConnector } = await import("@sa/connectors/telegram/index.js");
+    const { startTelegramConnector } = await import("@aria/connectors/telegram/index.js");
     await startTelegramConnector(port);
   },
   discord: async (cmdArgs) => {
     const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3423;
-    const { startDiscordConnector } = await import("@sa/connectors/discord/index.js");
+    const { startDiscordConnector } = await import("@aria/connectors/discord/index.js");
     await startDiscordConnector(port);
   },
   __engine: async () => {
-    await import("@sa/engine/index.js");
+    await import("@aria/engine/index.js");
   },
   help: async () => {
-    console.log("Esperta Base — Personal AI Agent Assistant\n");
+    console.log(`${PRODUCT_NAME} — Local-First Agent Platform\n`);
     console.log(`Usage: ${CLI_NAME} [command]\n`);
-    console.log(`Compatibility alias: ${CLI_ALIAS}\n`);
     console.log("Commands:");
-    console.log("  (default)   Start the Engine (if needed) and open the TUI");
+    console.log("  (default)   Start the runtime (if needed) and open the TUI");
+    console.log("  automation  Inspect durable automation tasks and runs");
     console.log("  audit       View the audit log (--tail N, --tool, --event, --since, --json)");
     console.log("  config      Interactive configuration editor");
     console.log("  onboard     Run the onboarding wizard");
-    console.log("  engine      Manage the Engine daemon (start/stop/status/logs/restart)");
+    console.log("  memory      Inspect layered memory and search results");
+    console.log("  engine      Manage the runtime daemon (start/stop/status/logs/restart)");
     console.log("  stop        Stop all running agent tasks");
-    console.log("  restart     Restart the Esperta Base engine");
-    console.log("  shutdown    Stop the Esperta Base engine completely");
+    console.log("  restart     Restart Aria Runtime");
+    console.log("  shutdown    Stop Aria Runtime completely");
     console.log("  telegram    Start the Telegram connector (webhook server on port 3426)");
     console.log("  discord     Start the Discord connector (webhook server on port 3423)");
     console.log("  slack       Start the Slack connector (webhook server on port 3420)");

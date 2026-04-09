@@ -7,7 +7,7 @@ import type { ConfigManager } from "../config/index.js";
 describe("validateEnvVarName", () => {
   it("accepts valid uppercase names", () => {
     expect(validateEnvVarName("ANTHROPIC_API_KEY")).toBeNull();
-    expect(validateEnvVarName("SA_HOME")).toBeNull();
+    expect(validateEnvVarName("ARIA_HOME")).toBeNull();
     expect(validateEnvVarName("BRAVE_API_KEY")).toBeNull();
   });
 
@@ -142,9 +142,9 @@ describe("createSetEnvVariableTool", () => {
   it("accepts valid name and saves config", async () => {
     const cfg = makeMockConfig();
     const tool = createSetEnvVariableTool(cfg);
-    const result = await tool.execute({ name: "SA_LOG_LEVEL", value: "debug" });
+    const result = await tool.execute({ name: "ARIA_LOG_LEVEL", value: "debug" });
     expect(result.isError).toBe(false);
-    expect(result.content).toContain("SA_LOG_LEVEL");
+    expect(result.content).toContain("ARIA_LOG_LEVEL");
     expect(cfg.saveConfig).toHaveBeenCalled();
   });
 });

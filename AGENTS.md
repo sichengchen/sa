@@ -1,26 +1,38 @@
 # AGENTS
 
-Use this file to bootstrap any coding agent into the Esper workflow.
+Use this file to bootstrap any coding agent into the current Esperta Aria workflow.
 
-## EsperKit
+## Required Reads
 
-Keep project-specific instructions outside this section. The `esper:init` workflow may update only this block.
+1. Read `README.md` for the public product surface and operator entrypoints.
+2. Read this file before making changes.
+3. Read the canonical Aria docs in `docs/` that match the area you are changing.
+4. Start with these platform docs unless the task is narrowly scoped elsewhere:
+   - `docs/product/aria-platform.md`
+   - `docs/system/runtime-model.md`
+   - `docs/system/prompt-engine.md`
+   - `docs/system/tool-runtime.md`
+   - `docs/system/automation.md`
+   - `docs/interfaces/interaction-protocol.md`
 
-### Required Reads
+## Source Of Truth
 
-1. Read `.esper/context.json` for machine-readable project state.
-2. Read `.esper/CONSTITUTION.md` for project scope and constraints.
-3. Read `.esper/WORKFLOW.md` for the canonical Esper workflow.
-4. If `active_increment` is set, read the matching file under `.esper/increments/active/`.
-5. Read the relevant spec files under the configured `spec_root` from `.esper/context.json`.
+- `docs/` is the authoritative architecture and behavior tree.
+- `src/` is the live implementation.
+- When docs and implementation diverge, move the code toward the Aria architecture and update the docs as part of the shipped change.
 
-### Source of Truth
+## Working Rules
 
-- `.esper/context.json` is the runtime context shared across tools.
-- `.esper/WORKFLOW.md` defines the operational workflow.
-- The configured `spec_root` is the authoritative spec tree.
+- Public identity is `Esperta Aria`.
+- Runtime identity is `Aria Runtime`.
+- CLI identity is `aria`.
+- Runtime home is `~/.aria/` or `ARIA_HOME`.
+- Do not carry `SA` or `Esperta Base` forward in user-facing names, paths, logs, docs, or connector surfaces.
+- Prefer durable runtime state, structured toolsets, shared interaction contracts, and policy-driven execution over legacy compatibility.
 
-### Verification
+## Verification
 
-- Read the `commands` object in `.esper/context.json` for the exact test, lint, typecheck, and dev commands.
-- Run the configured commands before closing an increment.
+- Run `bun run typecheck` before closing substantial changes.
+- Run `bun test` before closing substantial changes.
+- Run `bun run build` before closing substantial changes.
+- If a task is docs-only or otherwise exempt, state that explicitly in the handoff.

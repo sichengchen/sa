@@ -1,8 +1,9 @@
-import { randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { writeFile, unlink } from "node:fs/promises";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { homedir } from "node:os";
+import { getRuntimeHome } from "@aria/shared/brand.js";
+import type { OperationalStore } from "./operational-store.js";
 
 const TOKEN_BYTES = 32;
 const DEFAULT_PAIRING_CODE_LENGTH = 8;
@@ -52,7 +53,7 @@ export class AuthManager {
   private pairingCodeCreatedAt = 0;
   private tokenFilePath: string;
   private webhookTokenFilePath: string;
-  private saHome: string;
+  private runtimeHome: string;
 
   /** Pairing rate limit state: per-connector exponential backoff */
   private pairingFailureCounts = new Map<string, number>();
@@ -62,14 +63,41 @@ export class AuthManager {
   private sessionTTLMs: number;
   private pairingTTLMs: number;
   private pairingCodeLength: number;
+  private store?: OperationalStore;
 
-  constructor(saHome?: string, securityConfig?: AuthSecurityConfig) {
-    this.saHome = saHome ?? process.env.SA_HOME ?? join(homedir(), ".sa");
-    this.tokenFilePath = join(this.saHome, "engine.token");
-    this.webhookTokenFilePath = join(this.saHome, "engine.webhook-token");
+  constructor(runtimeHome?: string, securityConfig?: AuthSecurityConfig, store?: OperationalStore) {
+    this.runtimeHome = runtimeHome ?? getRuntimeHome();
+    this.tokenFilePath = join(this.runtimeHome, "engine.token");
+    this.webhookTokenFilePath = join(this.runtimeHome, "engine.webhook-token");
     this.sessionTTLMs = (securityConfig?.sessionTTL ?? 86400) * 1000;
     this.pairingTTLMs = (securityConfig?.pairingTTL ?? 600) * 1000;
     this.pairingCodeLength = securityConfig?.pairingCodeLength ?? DEFAULT_PAIRING_CODE_LENGTH;
+    this.store = store;
+  }
+
+  private hashCredential(value: string): string {
+    return createHash("sha256").update(value).digest("hex");
+  }
+
+  private issueSessionToken(connectorId: string, connectorType: string): string {
+    const sessionToken = randomBytes(TOKEN_BYTES).toString("hex");
+    const entry: TokenEntry = {
+      token: sessionToken,
+      type: "session",
+      connectorId,
+      connectorType,
+      pairedAt: Date.now(),
+      ttl: this.sessionTTLMs,
+    };
+    this.pairedTokens.set(sessionToken, entry);
+    this.store?.upsertAuthSessionToken({
+      tokenHash: this.hashCredential(sessionToken),
+      connectorId,
+      connectorType,
+      pairedAt: entry.pairedAt,
+      ttlMs: entry.ttl,
+    });
+    return sessionToken;
   }
 
   /** Generate and persist the master token + webhook token on Engine start */
@@ -83,6 +111,7 @@ export class AuthManager {
     if (written !== this.masterToken) {
       await writeFile(this.tokenFilePath, this.masterToken, { mode: 0o600 });
     }
+    this.store?.pruneAuthState();
     return this.masterToken;
   }
 
@@ -109,8 +138,14 @@ export class AuthManager {
     for (let i = 0; i < this.pairingCodeLength; i++) {
       code += PAIRING_CODE_CHARSET[bytes[i]! % PAIRING_CODE_CHARSET.length];
     }
+    const createdAt = Date.now();
     this.activePairingCode = code;
-    this.pairingCodeCreatedAt = Date.now();
+    this.pairingCodeCreatedAt = createdAt;
+    this.store?.replacePairingCode({
+      codeHash: this.hashCredential(code),
+      createdAt,
+      expiresAt: createdAt + this.pairingTTLMs,
+    });
     return code;
   }
 
@@ -135,35 +170,41 @@ export class AuthManager {
       return { success: false, error: `Too many failed pairing attempts. Try again in ${remaining}s.` };
     }
 
-    // Master token (local Connectors read from ~/.sa/engine.token)
+    // Master token (local connectors read from ~/.aria/engine.token)
     if (this.masterToken && safeCompare(credential, this.masterToken)) {
-      const sessionToken = randomBytes(TOKEN_BYTES).toString("hex");
-      this.pairedTokens.set(sessionToken, {
-        token: sessionToken,
-        type: "session",
-        connectorId,
-        connectorType,
-        pairedAt: Date.now(),
-        ttl: this.sessionTTLMs,
-      });
-      return { success: true, token: sessionToken };
+      return { success: true, token: this.issueSessionToken(connectorId, connectorType) };
     }
 
+    const credentialHash = credential ? this.hashCredential(credential) : null;
+
     // Pairing code (remote device-flow)
-    if (this.activePairingCode && !this.isPairingCodeExpired() && safeCompare(credential, this.activePairingCode)) {
+    if (this.activePairingCode && safeCompare(credential, this.activePairingCode)) {
+      if (this.isPairingCodeExpired()) {
+        this.activePairingCode = null;
+        if (credentialHash) {
+          this.store?.consumePairingCode(credentialHash, now);
+        }
+        return { success: false, error: "Pairing code expired" };
+      }
       this.activePairingCode = null; // one-time use
       this.pairingFailureCounts.delete(connectorId); // clear on success
       this.pairingLockedUntil.delete(connectorId);
-      const sessionToken = randomBytes(TOKEN_BYTES).toString("hex");
-      this.pairedTokens.set(sessionToken, {
-        token: sessionToken,
-        type: "session",
-        connectorId,
-        connectorType,
-        pairedAt: Date.now(),
-        ttl: this.sessionTTLMs,
-      });
-      return { success: true, token: sessionToken };
+      if (credentialHash) {
+        this.store?.consumePairingCode(credentialHash, now);
+      }
+      return { success: true, token: this.issueSessionToken(connectorId, connectorType) };
+    }
+
+    if (credentialHash && this.store) {
+      const pairingResult = this.store.consumePairingCode(credentialHash, now);
+      if (pairingResult === "ok") {
+        this.pairingFailureCounts.delete(connectorId);
+        this.pairingLockedUntil.delete(connectorId);
+        return { success: true, token: this.issueSessionToken(connectorId, connectorType) };
+      }
+      if (pairingResult === "expired") {
+        return { success: false, error: "Pairing code expired" };
+      }
     }
 
     // Track failure for exponential backoff (per-connector)
@@ -207,14 +248,30 @@ export class AuthManager {
 
     // Session tokens — check TTL
     const entry = this.pairedTokens.get(token);
-    if (!entry) return null;
-
-    if (entry.ttl > 0 && Date.now() - entry.pairedAt > entry.ttl) {
-      this.pairedTokens.delete(token); // expired — remove
-      return null;
+    if (entry) {
+      if (entry.ttl > 0 && Date.now() - entry.pairedAt > entry.ttl) {
+        this.pairedTokens.delete(token);
+        this.store?.deleteAuthSessionToken(this.hashCredential(token));
+        return null;
+      }
+      return entry;
     }
 
-    return entry;
+    if (!this.store) return null;
+
+    const persisted = this.store.getAuthSessionToken(this.hashCredential(token));
+    if (!persisted) return null;
+
+    const hydrated: TokenEntry = {
+      token,
+      type: "session",
+      connectorId: persisted.connectorId,
+      connectorType: persisted.connectorType,
+      pairedAt: persisted.pairedAt,
+      ttl: persisted.ttlMs,
+    };
+    this.pairedTokens.set(token, hydrated);
+    return hydrated;
   }
 
   /** Validate a webhook bearer token specifically (not master token) */
@@ -225,12 +282,14 @@ export class AuthManager {
 
   /** Revoke a session token */
   revoke(token: string): boolean {
-    return this.pairedTokens.delete(token);
+    const removedInMemory = this.pairedTokens.delete(token);
+    const removedPersisted = this.store?.deleteAuthSessionToken(this.hashCredential(token)) ?? false;
+    return removedInMemory || removedPersisted;
   }
 
   /** Read master token from file (used by Connectors) */
-  static readTokenFromFile(saHome?: string): string | null {
-    const home = saHome ?? process.env.SA_HOME ?? join(homedir(), ".sa");
+  static readTokenFromFile(runtimeHome?: string): string | null {
+    const home = runtimeHome ?? getRuntimeHome();
     const path = join(home, "engine.token");
     if (!existsSync(path)) return null;
     return readFileSync(path, "utf-8").trim();

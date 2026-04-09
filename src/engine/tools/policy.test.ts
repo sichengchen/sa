@@ -1,7 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { ToolPolicyManager, type ToolEventContext } from "./policy.js";
 import type { DangerLevel } from "../agent/types.js";
-import type { ConnectorType } from "@sa/shared/types.js";
+import type { ConnectorType } from "@aria/shared/types.js";
 
 /** Helper to build a minimal ToolEventContext */
 function ctx(

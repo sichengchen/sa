@@ -110,10 +110,10 @@ export class ModelRouter {
     if (fromSecrets) return fromSecrets;
     const hint =
       process.platform === "darwin"
-        ? ` (brew services does not inherit shell env vars — use "esperta-base onboard" to store in secrets.enc)`
+        ? ` (launchd services do not inherit shell env vars — use "aria onboard" to store in secrets.enc)`
         : "";
     throw new Error(
-      `API key not found: set environment variable "${envVar}" or run "esperta-base onboard" to store it in secrets.enc${hint}`
+      `API key not found: set environment variable "${envVar}" or run "aria onboard" to store it in secrets.enc${hint}`
     );
   }
 

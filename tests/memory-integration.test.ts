@@ -1,10 +1,10 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { MemoryManager } from "@sa/engine/memory/index.js";
+import { MemoryManager } from "@aria/engine/memory/index.js";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-const testDir = join(tmpdir(), "sa-test-memory-integration-" + Date.now());
+const testDir = join(tmpdir(), "aria-test-memory-integration-" + Date.now());
 
 beforeEach(async () => {
   await rm(testDir, { recursive: true, force: true });
@@ -24,7 +24,7 @@ describe("getMemoryContext", () => {
 
     const context = await mgr.getMemoryContext("Alice");
     expect(context).toContain("Alice");
-    expect(context).toContain("topics/");
+    expect(context).toContain("project/");
     mgr.close();
   });
 
@@ -62,8 +62,21 @@ describe("getMemoryContext", () => {
     await mgr.appendJournal("Worked on TypeScript project today", today);
 
     const context = await mgr.getMemoryContext("TypeScript");
-    expect(context).toContain("topics/preferences.md");
+    expect(context).toContain("project/preferences.md");
     expect(context).toContain("Today's journal");
+    mgr.close();
+  });
+
+  test("surfaces profile and operational layers distinctly", async () => {
+    const mgr = new MemoryManager(testDir);
+    await mgr.init();
+
+    await mgr.saveLayer("profile", "tone", "Operator prefers direct language in trusted sessions.");
+    await mgr.saveLayer("operational", "session-mode", "Current session is running in trusted mode.");
+
+    const context = await mgr.getMemoryContext("trusted");
+    expect(context).toContain("Profile memory");
+    expect(context).toContain("Operational memory");
     mgr.close();
   });
 

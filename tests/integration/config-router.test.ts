@@ -1,11 +1,11 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { ConfigManager } from "@sa/engine/config/index.js";
-import { ModelRouter } from "@sa/engine/router/index.js";
+import { ConfigManager } from "@aria/engine/config/index.js";
+import { ModelRouter } from "@aria/engine/router/index.js";
 import { rm, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-const testHome = join(tmpdir(), "sa-integration-config-" + Date.now());
+const testHome = join(tmpdir(), "aria-integration-config-" + Date.now());
 
 beforeEach(async () => {
   await rm(testHome, { recursive: true, force: true });
@@ -18,12 +18,12 @@ afterEach(async () => {
 describe("Config + Router integration", () => {
   test("ConfigManager creates defaults, Router loads from config data", async () => {
     const config = new ConfigManager(testHome);
-    const saConfig = await config.load();
+    const ariaConfig = await config.load();
 
     const router = ModelRouter.fromConfig({
-      providers: saConfig.providers,
-      models: saConfig.models,
-      defaultModel: saConfig.defaultModel,
+      providers: ariaConfig.providers,
+      models: ariaConfig.models,
+      defaultModel: ariaConfig.defaultModel,
     });
     expect(router.listModels()).toContain("sonnet");
     expect(router.getActiveModelName()).toBe("sonnet");
@@ -51,12 +51,12 @@ describe("Config + Router integration", () => {
     await writeFile(join(testHome, "config.json"), JSON.stringify(v3Config));
 
     const config = new ConfigManager(testHome);
-    const saConfig = await config.load();
+    const ariaConfig = await config.load();
 
     const router = ModelRouter.fromConfig({
-      providers: saConfig.providers,
-      models: saConfig.models,
-      defaultModel: saConfig.defaultModel,
+      providers: ariaConfig.providers,
+      models: ariaConfig.models,
+      defaultModel: ariaConfig.defaultModel,
     });
     expect(router.getActiveModelName()).toBe("fast");
 
@@ -79,10 +79,10 @@ describe("Config + Router integration", () => {
     );
 
     const config = new ConfigManager(testHome);
-    const saConfig = await config.load();
+    const ariaConfig = await config.load();
 
-    expect(saConfig.identity.name).toBe("TestBot");
-    expect(saConfig.identity.personality).toBe("Test personality.");
-    expect(saConfig.identity.systemPrompt).toBe("You are TestBot.");
+    expect(ariaConfig.identity.name).toBe("TestBot");
+    expect(ariaConfig.identity.personality).toBe("Test personality.");
+    expect(ariaConfig.identity.systemPrompt).toBe("You are TestBot.");
   });
 });

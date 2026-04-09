@@ -1,8 +1,8 @@
 /**
- * ChatSDKAdapter — shared bridge between Chat SDK events and Esperta Base's tRPC engine.
+ * ChatSDKAdapter — shared bridge between Chat SDK events and Aria Runtime's tRPC engine.
  *
  * Wires Chat SDK event handlers (onNewMention, onSubscribedMessage, onAction,
- * etc.) to Esperta Base's tRPC client for session management, streaming, tool approval,
+ * etc.) to Aria Runtime's tRPC client for session management, streaming, tool approval,
  * and slash commands. Platform-specific connectors instantiate this adapter
  * with their Chat SDK instance and configuration.
  */
@@ -10,13 +10,13 @@
 import type { Chat, Thread, SentMessage, Adapter, Message as ChatMessage } from "chat";
 import { createStreamHandler, type StreamOps } from "../shared/stream-handler.js";
 import { formatToolResult, splitMessage, getMaxLength, formatSenderAttribution } from "./formatter.js";
-import type { ConnectorType } from "@sa/shared/types.js";
+import type { ConnectorType } from "@aria/shared/types.js";
 import { createChatSDKClient } from "./client.js";
 
 type EngineClient = ReturnType<typeof createChatSDKClient>;
 
 export interface ChatSDKAdapterConfig {
-  /** Esperta Base connector type for this platform */
+  /** Aria connector type for this platform */
   connectorType: ConnectorType;
   /** Platform name matching the Chat SDK adapter key (e.g. "slack", "discord") */
   platformName: string;
@@ -31,7 +31,7 @@ export interface ChatSDKAdapterConfig {
 }
 
 /**
- * Bridges Chat SDK events to Esperta Base's tRPC engine.
+ * Bridges Chat SDK events to Aria Runtime's tRPC engine.
  *
  * Usage:
  * ```ts
@@ -45,7 +45,7 @@ export class ChatSDKAdapter {
   private chat: Chat;
   private config: ChatSDKAdapterConfig;
 
-  /** Per-thread active session: Chat SDK threadId → Esperta Base sessionId */
+  /** Per-thread active session: Chat SDK threadId → Aria sessionId */
   private activeSessions = new Map<string, string>();
 
   constructor(chat: Chat, config: ChatSDKAdapterConfig) {
@@ -54,7 +54,7 @@ export class ChatSDKAdapter {
     this.client = createChatSDKClient();
   }
 
-  /** Wire all Chat SDK event handlers to the Esperta Base engine */
+  /** Wire all Chat SDK event handlers to Aria Runtime */
   setup(): void {
     // New @-mention in an unsubscribed thread
     this.chat.onNewMention(async (thread, message) => {
@@ -126,7 +126,7 @@ export class ChatSDKAdapter {
     });
   }
 
-  /** Get or create an Esperta Base session for a Chat SDK thread */
+  /** Get or create an Aria session for a Chat SDK thread */
   private async ensureSession(thread: Thread): Promise<string> {
     const threadId = thread.id;
     const existing = this.activeSessions.get(threadId);
@@ -150,7 +150,7 @@ export class ChatSDKAdapter {
     return session.id;
   }
 
-  /** Handle an incoming message — route to the Esperta Base engine and stream back */
+  /** Handle an incoming message — route to Aria Runtime and stream back */
   private async handleMessage(thread: Thread, message: ChatMessage): Promise<void> {
     const text = message.text?.trim();
     if (!text) return;
@@ -363,7 +363,7 @@ export class ChatSDKAdapter {
 
     if (text === "/shutdown") {
       try {
-        await thread.post("Shutting down Esperta Base engine...");
+        await thread.post("Shutting down Aria Runtime...");
         await this.client.engine.shutdown.mutate();
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -374,7 +374,7 @@ export class ChatSDKAdapter {
 
     if (text === "/restart") {
       try {
-        await thread.post("Restarting Esperta Base engine...");
+        await thread.post("Restarting Aria Runtime...");
         await this.client.engine.restart.mutate();
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

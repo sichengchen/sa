@@ -12,7 +12,7 @@ export function Identity({ onNext, onBack, currentValues }: IdentityProps) {
     currentValues ? "keep-or-change" : "edit"
   );
   const [field, setField] = useState<"name" | "personality">("name");
-  const [name, setName] = useState(currentValues?.name ?? "Esperta Base");
+  const [name, setName] = useState(currentValues?.name ?? "Esperta Aria");
   const [personality, setPersonality] = useState(
     currentValues?.personality ?? "Helpful, concise, and proactive personal assistant"
   );
@@ -41,7 +41,7 @@ export function Identity({ onNext, onBack, currentValues }: IdentityProps) {
       if (field === "name") {
         setField("personality");
       } else {
-        onNext({ name: name || "Esperta Base", personality });
+        onNext({ name: name || "Esperta Aria", personality });
       }
       return;
     }

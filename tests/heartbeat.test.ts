@@ -3,14 +3,14 @@ import { mkdtemp, readdir, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { Scheduler, createHeartbeatTask, heartbeatState } from "@sa/engine/scheduler.js";
-import { DEFAULT_HEARTBEAT } from "@sa/engine/config/defaults.js";
-import { SessionManager } from "@sa/engine/sessions.js";
+import { Scheduler, createHeartbeatTask, heartbeatState } from "@aria/engine/scheduler.js";
+import { DEFAULT_HEARTBEAT } from "@aria/engine/config/defaults.js";
+import { SessionManager } from "@aria/engine/sessions.js";
 
 let testDir: string;
 
 beforeEach(async () => {
-  testDir = await mkdtemp(join(tmpdir(), "sa-heartbeat-test-"));
+  testDir = await mkdtemp(join(tmpdir(), "aria-heartbeat-test-"));
   // Reset heartbeat state
   heartbeatState.lastResult = null;
   heartbeatState.config = { ...DEFAULT_HEARTBEAT };
@@ -103,7 +103,7 @@ describe("Heartbeat task", () => {
     } as any;
 
     const task = createHeartbeatTask({
-      saHome: testDir,
+      runtimeHome: testDir,
       mainAgent: fakeAgent,
       notify: async (message: string) => {
         notified = message;
@@ -127,7 +127,7 @@ describe("Heartbeat task", () => {
     } as any;
 
     const task = createHeartbeatTask({
-      saHome: testDir,
+      runtimeHome: testDir,
       mainAgent: fakeAgent,
       notify: async () => {
         notifyCount++;

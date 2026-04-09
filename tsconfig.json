@@ -17,10 +17,10 @@
     "types": ["bun-types"],
     "baseUrl": ".",
     "paths": {
-      "@sa/engine/*": ["src/engine/*"],
-      "@sa/connectors/*": ["src/connectors/*"],
-      "@sa/shared/*": ["src/shared/*"],
-      "@sa/cli/*": ["src/cli/*"]
+      "@aria/engine/*": ["src/engine/*"],
+      "@aria/connectors/*": ["src/connectors/*"],
+      "@aria/shared/*": ["src/shared/*"],
+      "@aria/cli/*": ["src/cli/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

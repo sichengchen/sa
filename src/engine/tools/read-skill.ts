@@ -18,7 +18,7 @@ export function createReadSkillTool(registry: SkillRegistry): ToolImpl {
       path: Type.Optional(
         Type.String({
           description:
-            'Optional sub-file path within the skill directory. Use "__index__" to list all files, or a relative path like "specs/overview.md" to read a specific file. Omit to read the main SKILL.md.',
+            'Optional sub-file path within the skill directory. Use "__index__" to list all files, or a relative path like "docs/overview.md" to read a specific file. Omit to read the main SKILL.md.',
         }),
       ),
     }),

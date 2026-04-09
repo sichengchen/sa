@@ -118,7 +118,7 @@ export class SeatbeltSandbox implements Sandbox {
     const profile = generateSeatbeltProfile(opts);
 
     // Write profile to temp file
-    this.tempDir = mkdtempSync(join(tmpdir(), "sa-sandbox-"));
+    this.tempDir = mkdtempSync(join(tmpdir(), "aria-sandbox-"));
     this.profilePath = join(this.tempDir, "profile.sb");
     writeFileSync(this.profilePath, profile);
 
@@ -152,7 +152,7 @@ export class NoopSandbox implements Sandbox {
 
   wrap(command: string[], _opts: SandboxOptions): string[] {
     if (!noopWarned) {
-      console.warn("[esperta-base] OS sandbox unavailable on this platform. Relying on application-level exec fence.");
+      console.warn("[aria] OS sandbox unavailable on this platform. Relying on application-level exec fence.");
       noopWarned = true;
     }
     return command;

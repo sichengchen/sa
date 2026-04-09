@@ -2,37 +2,38 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createAppRouter } from "@sa/engine/procedures.js";
-import { createContext } from "@sa/engine/context.js";
-import { SessionManager } from "@sa/engine/sessions.js";
-import { AuthManager } from "@sa/engine/auth.js";
-import { ConfigManager } from "@sa/engine/config/index.js";
-import { ModelRouter } from "@sa/engine/router/index.js";
-import { Agent } from "@sa/engine/agent/index.js";
-import { SkillRegistry } from "@sa/engine/skills/index.js";
-import { Scheduler, createHeartbeatTask } from "@sa/engine/scheduler.js";
-import { AuditLogger } from "@sa/engine/audit.js";
-import { SecurityModeManager } from "@sa/engine/security-mode.js";
-import type { EngineRuntime } from "@sa/engine/runtime.js";
+import { createAppRouter } from "@aria/engine/procedures.js";
+import { createContext } from "@aria/engine/context.js";
+import { SessionManager } from "@aria/engine/sessions.js";
+import { AuthManager } from "@aria/engine/auth.js";
+import { ConfigManager } from "@aria/engine/config/index.js";
+import { ModelRouter } from "@aria/engine/router/index.js";
+import { Agent } from "@aria/engine/agent/index.js";
+import { SkillRegistry } from "@aria/engine/skills/index.js";
+import { Scheduler, createHeartbeatTask } from "@aria/engine/scheduler.js";
+import { AuditLogger } from "@aria/engine/audit.js";
+import { SecurityModeManager } from "@aria/engine/security-mode.js";
+import type { EngineRuntime } from "@aria/engine/runtime.js";
 import type { KnownProvider } from "@mariozechner/pi-ai";
-import { SessionArchiveManager } from "@sa/engine/session-archive.js";
-import { CheckpointManager } from "@sa/engine/checkpoints.js";
-import { MCPManager } from "@sa/engine/mcp.js";
+import { SessionArchiveManager } from "@aria/engine/session-archive.js";
+import { CheckpointManager } from "@aria/engine/checkpoints.js";
+import { MCPManager } from "@aria/engine/mcp.js";
+import { OperationalStore } from "@aria/engine/operational-store.js";
 
 let testDir: string;
 let runtime: EngineRuntime;
 let masterToken: string;
 
 /** Create a minimal EngineRuntime for testing (no LLM needed) */
-async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
+async function createTestRuntime(runtimeHome: string): Promise<EngineRuntime> {
   // Write minimal config files
-  await mkdir(join(saHome, "memory"), { recursive: true });
+  await mkdir(join(runtimeHome, "memory"), { recursive: true });
   await writeFile(
-    join(saHome, "IDENTITY.md"),
+    join(runtimeHome, "IDENTITY.md"),
     "# Test Agent\n\n## Personality\nTest\n\n## System Prompt\nYou are a test agent.\n",
   );
   await writeFile(
-    join(saHome, "config.json"),
+    join(runtimeHome, "config.json"),
     JSON.stringify({
       version: 3,
       runtime: {
@@ -52,7 +53,7 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
 
   process.env.TEST_API_KEY = "test-key-for-router-init";
 
-  const config = new ConfigManager(saHome);
+  const config = new ConfigManager(runtimeHome);
   await config.load();
 
   const router = ModelRouter.fromConfig(
@@ -64,35 +65,64 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
     null,
   );
 
-  const sessions = new SessionManager();
-  const auth = new AuthManager(saHome);
+  const store = new OperationalStore(runtimeHome);
+  await store.init();
+  const sessions = new SessionManager(store);
+  const auth = new AuthManager(runtimeHome);
   await auth.init();
-  const archive = new SessionArchiveManager(saHome);
+  const archive = new SessionArchiveManager(runtimeHome);
   await archive.init();
-  const checkpoints = new CheckpointManager(saHome, { enabled: true, maxSnapshots: 10 });
-  const mcp = new MCPManager(undefined, saHome);
+  const checkpoints = new CheckpointManager(runtimeHome, { enabled: true, maxSnapshots: 10 });
+  const mcp = new MCPManager(undefined, runtimeHome);
   await mcp.init();
 
   const mainSession = sessions.create("main", "engine");
   const skills = new SkillRegistry();
   const scheduler = new Scheduler();
-  scheduler.register(createHeartbeatTask(saHome, null));
+  scheduler.register(createHeartbeatTask(runtimeHome, null));
 
   return {
     config,
     router,
-    memory: { init: async () => {}, loadContext: async () => "", persist: async () => {} } as any,
+    memory: {
+      init: async () => {},
+      loadContext: async () => "Curated operator note",
+      listLayer: async (layer: "profile" | "project" | "operational") => {
+        if (layer === "profile") return ["style"];
+        if (layer === "operational") return ["mode"];
+        return ["repo"];
+      },
+      listJournalDates: async () => ["2026-04-08"],
+      getLayer: async (_layer: "profile" | "project" | "operational", key: string) => `${key} content`,
+      getJournal: async (date: string) => `journal ${date}`,
+      searchIndex: async (query: string) => [{
+        source: "project/repo.md",
+        sourceType: "project",
+        content: `match for ${query}`,
+        lineStart: 1,
+        lineEnd: 1,
+        score: 0.9,
+        updatedAt: 100,
+      }],
+      getMemoryContext: async () => "",
+      persist: async () => {},
+    } as any,
+    store,
     archive,
     checkpoints,
     mcp,
     tools: [],
+    promptEngine: {
+      buildBasePrompt: async () => "Test agent.",
+      buildSessionPrompt: async () => "Test agent.",
+    } as any,
     systemPrompt: "Test agent.",
     sessions,
     auth,
     skills,
     scheduler,
     transcriber: { transcribe: async () => "", backend: null } as any,
-    audit: new AuditLogger(saHome),
+    audit: new AuditLogger(runtimeHome),
     securityMode: new SecurityModeManager(),
     agentName: "Test",
     mainSessionId: mainSession.id,
@@ -101,6 +131,7 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
     },
     async close() {
       scheduler.stop();
+      store.close();
       archive.close();
       await auth.cleanup();
     },
@@ -111,7 +142,7 @@ async function createTestRuntime(saHome: string): Promise<EngineRuntime> {
 }
 
 beforeEach(async () => {
-  testDir = await mkdtemp(join(tmpdir(), "sa-procedures-test-"));
+  testDir = await mkdtemp(join(tmpdir(), "aria-procedures-test-"));
   runtime = await createTestRuntime(testDir);
   masterToken = runtime.auth.getMasterToken();
 });
@@ -248,6 +279,21 @@ describe("tRPC procedures (non-live)", () => {
       expect(history.messages).toHaveLength(2);
       expect((history.messages[0] as any).content).toContain("Debug the failing cron task");
     });
+
+    test("reads durable live history when no in-memory agent is attached", async () => {
+      const caller = createCaller();
+      const { session } = await caller.session.create({ connectorType: "tui", prefix: "tui" });
+
+      runtime.store.syncSessionMessages(session.id, [
+        { role: "user", content: "Persist this", timestamp: 100 } as any,
+        { role: "assistant", content: "Stored in the live runtime.", timestamp: 101 } as any,
+      ]);
+
+      const history = await caller.chat.history({ sessionId: session.id });
+      expect(history.archived).toBe(false);
+      expect(history.messages).toHaveLength(2);
+      expect((history.messages[1] as any).content).toContain("Stored in the live runtime.");
+    });
   });
 
   describe("session.destroy", () => {
@@ -288,7 +334,7 @@ describe("tRPC procedures (non-live)", () => {
       const caller = createCaller();
 
       const toolsets = await caller.toolset.list();
-      expect(toolsets.some((toolset) => toolset.name === "file")).toBe(true);
+      expect(toolsets.some((toolset) => toolset.name === "files")).toBe(true);
       expect(toolsets.some((toolset) => toolset.name === "delegation")).toBe(true);
 
       const servers = await caller.mcp.listServers();
@@ -317,11 +363,14 @@ describe("tRPC procedures (non-live)", () => {
         name: "test-task",
         schedule: "0 9 * * *",
         prompt: "Good morning",
+        retryPolicy: { maxAttempts: 3, delaySeconds: 5 },
       });
       expect(result.added).toBe(true);
 
       const tasks = await caller.cron.list();
-      expect(tasks.find((t) => t.name === "test-task")).toBeDefined();
+      const task = tasks.find((t) => t.name === "test-task");
+      expect(task).toBeDefined();
+      expect((task as any).retryPolicy).toEqual({ maxAttempts: 3, delaySeconds: 5 });
 
       const removed = await caller.cron.remove({ name: "test-task" });
       expect(removed.removed).toBe(true);
@@ -412,6 +461,138 @@ describe("tRPC procedures (non-live)", () => {
     });
   });
 
+  describe("automation procedures", () => {
+    test("lists durable tasks and task runs from the operational store", async () => {
+      const caller = createCaller();
+      await caller.cron.add({
+        name: "digest",
+        schedule: "0 8 * * *",
+        prompt: "Send a digest",
+      });
+
+      const task = runtime.store.getAutomationTaskByName("cron", "digest");
+      expect(task).toBeDefined();
+      runtime.store.recordAutomationRunStart({
+        taskRunId: "task-run-procedures-1",
+        taskId: task!.taskId,
+        taskType: "cron",
+        taskName: "digest",
+        sessionId: "cron:digest:test",
+        runId: "run-procedures-1",
+        trigger: "cron",
+        promptText: "Send a digest",
+        startedAt: 100,
+      });
+      runtime.store.finishAutomationRun({
+        taskRunId: "task-run-procedures-1",
+        status: "success",
+        responseText: "Digest sent.",
+        summary: "Digest sent.",
+        completedAt: 101,
+      });
+      runtime.store.recordAutomationDelivery({
+        taskRunId: "task-run-procedures-1",
+        deliveryStatus: "failed",
+        deliveryAttemptedAt: 102,
+        deliveryError: "telegram offline",
+      });
+
+      const tasks = await caller.automation.list({ type: "cron" });
+      expect(tasks.some((item) => item.name === "digest")).toBe(true);
+
+      const runs = await caller.automation.runs({ taskId: task!.taskId, limit: 5 });
+      expect(runs).toHaveLength(1);
+      expect(runs[0]!.taskName).toBe("digest");
+      expect(runs[0]!.status).toBe("success");
+      expect(runs[0]!.deliveryStatus).toBe("failed");
+      expect(runs[0]!.deliveryError).toContain("telegram offline");
+    });
+  });
+
+  describe("memory / approval / audit procedures", () => {
+    test("inspects layered memory", async () => {
+      const caller = createCaller();
+
+      const overview = await caller.memory.overview();
+      expect(overview.curatedLength).toBeGreaterThan(0);
+      expect(overview.layers.profile).toContain("style");
+      expect(overview.journals).toContain("2026-04-08");
+
+      const read = await caller.memory.read({ layer: "profile", key: "style" });
+      expect(read.exists).toBe(true);
+      expect(read.content).toContain("style content");
+
+      const results = await caller.memory.search({ query: "repo", limit: 5 });
+      expect(results[0]?.sourceType).toBe("project");
+    });
+
+    test("lists pending approvals and filtered audit entries", async () => {
+      const caller = createCaller();
+      const { session } = await caller.session.create({ connectorType: "tui", prefix: "tui" });
+
+      runtime.store.createRun({
+        runId: "run-approval-test",
+        sessionId: session.id,
+        trigger: "chat",
+        status: "running",
+        inputText: "Use exec",
+        startedAt: 100,
+      });
+      runtime.store.recordToolCallStart({
+        toolCallId: "tool-call-approval-test",
+        runId: "run-approval-test",
+        sessionId: session.id,
+        toolName: "exec",
+        args: { command: "pwd" },
+        startedAt: 101,
+      });
+      runtime.store.recordApprovalPending({
+        approvalId: "approval-test",
+        runId: "run-approval-test",
+        sessionId: session.id,
+        toolCallId: "tool-call-approval-test",
+        toolName: "exec",
+        args: { command: "pwd" },
+        createdAt: 102,
+      });
+
+      runtime.audit.log({
+        session: session.id,
+        connector: "tui",
+        event: "tool_call",
+        tool: "exec",
+        run: "run-approval-test",
+        summary: "pwd",
+      });
+
+      const approvals = await caller.approval.list({ sessionId: session.id, status: "pending", limit: 5 });
+      expect(approvals).toHaveLength(1);
+      expect(approvals[0]?.toolName).toBe("exec");
+
+      const auditEntries = await caller.audit.list({ session: session.id, tool: "exec", tail: 5 });
+      expect(auditEntries).toHaveLength(1);
+      expect(auditEntries[0]?.tool).toBe("exec");
+    });
+  });
+
+  describe("interaction protocol metadata", () => {
+    test("includes durable event identity on streamed errors", async () => {
+      const caller = createCaller();
+      const events: any[] = [];
+      const gen = await caller.chat.stream({ sessionId: "missing-session", message: "hello" });
+      for await (const event of gen) {
+        events.push(event);
+      }
+
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
+        type: "error",
+        sessionId: "missing-session",
+        source: "chat",
+      });
+      expect(typeof events[0].timestamp).toBe("number");
+    });
+  });
   describe("model.list", () => {
     test("returns configured models", async () => {
       const caller = createCaller();

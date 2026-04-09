@@ -2,13 +2,13 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtemp, rm, writeFile, readFile, readdir, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Scheduler, matchesCron } from "@sa/engine/scheduler.js";
-import { SessionManager } from "@sa/engine/sessions.js";
+import { Scheduler, matchesCron } from "@aria/engine/scheduler.js";
+import { SessionManager } from "@aria/engine/sessions.js";
 
 let testDir: string;
 
 beforeEach(async () => {
-  testDir = await mkdtemp(join(tmpdir(), "sa-cron-test-"));
+  testDir = await mkdtemp(join(tmpdir(), "aria-cron-test-"));
 });
 
 afterEach(async () => {
@@ -106,7 +106,14 @@ describe("Cron persistence roundtrip", () => {
         automation: {
           cronTasks: [
             { name: "daily", schedule: "0 9 * * *", prompt: "Morning report", enabled: true },
-            { name: "once", schedule: "30 14 * * *", prompt: "Reminder", enabled: true, oneShot: true },
+            {
+              name: "once",
+              schedule: "30 14 * * *",
+              prompt: "Reminder",
+              enabled: true,
+              oneShot: true,
+              retryPolicy: { maxAttempts: 2, delaySeconds: 30 },
+            },
           ],
         },
       },
@@ -119,11 +126,12 @@ describe("Cron persistence roundtrip", () => {
     await writeFile(path, JSON.stringify(config, null, 2));
     const loaded = JSON.parse(await readFile(path, "utf-8"));
 
-    expect(loaded.runtime.automation.cronTasks).toHaveLength(2);
-    expect(loaded.runtime.automation.cronTasks[0].name).toBe("daily");
-    expect(loaded.runtime.automation.cronTasks[1].oneShot).toBe(true);
+      expect(loaded.runtime.automation.cronTasks).toHaveLength(2);
+      expect(loaded.runtime.automation.cronTasks[0].name).toBe("daily");
+      expect(loaded.runtime.automation.cronTasks[1].oneShot).toBe(true);
+      expect(loaded.runtime.automation.cronTasks[1].retryPolicy.maxAttempts).toBe(2);
+    });
   });
-});
 
 describe("Result logging", () => {
   test("automation directory and log files can be created", async () => {

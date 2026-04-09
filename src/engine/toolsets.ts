@@ -4,53 +4,113 @@ export interface ToolsetDefinition {
   name: string;
   description: string;
   tools: string[];
+  capabilityScope?: "workspace" | "runtime" | "network" | "connector" | "external";
+  executionEnvironment?: "local" | "connector" | "hybrid" | "mcp";
+  isolationBoundary?: "workspace" | "runtime" | "connector" | "mcp_server";
+  approvalPolicy?: "mostly_safe" | "mixed" | "operator_gated" | "connector_gated";
+  auditDomain?: string;
+  frontendVisibilityDefault?: "visible" | "summary" | "quiet";
 }
 
 const BUILTIN_TOOLSET_DEFINITIONS: ToolsetDefinition[] = [
   {
-    name: "file",
+    name: "files",
     description: "Read and modify files in the local workspace.",
     tools: ["read", "write", "edit"],
+    capabilityScope: "workspace",
+    executionEnvironment: "local",
+    isolationBoundary: "workspace",
+    approvalPolicy: "mixed",
+    auditDomain: "filesystem",
+    frontendVisibilityDefault: "summary",
   },
   {
-    name: "exec",
+    name: "terminal",
     description: "Run local shell commands and manage background processes.",
-    tools: ["exec", "exec_status", "exec_kill"],
+    tools: ["exec", "exec_status", "exec_kill", "set_env_secret", "set_env_variable"],
+    capabilityScope: "runtime",
+    executionEnvironment: "local",
+    isolationBoundary: "workspace",
+    approvalPolicy: "operator_gated",
+    auditDomain: "terminal",
+    frontendVisibilityDefault: "summary",
   },
   {
     name: "web",
     description: "Fetch URLs and run web searches.",
     tools: ["web_fetch", "web_search"],
+    capabilityScope: "network",
+    executionEnvironment: "hybrid",
+    isolationBoundary: "runtime",
+    approvalPolicy: "mostly_safe",
+    auditDomain: "web",
+    frontendVisibilityDefault: "summary",
   },
   {
     name: "memory",
     description: "Read, search, write, and delete persistent memory.",
     tools: ["memory_search", "memory_read", "memory_write", "memory_delete"],
+    capabilityScope: "runtime",
+    executionEnvironment: "local",
+    isolationBoundary: "runtime",
+    approvalPolicy: "mixed",
+    auditDomain: "memory",
+    frontendVisibilityDefault: "summary",
+  },
+  {
+    name: "automation",
+    description: "Scheduled and event-driven execution capabilities governed by the runtime.",
+    tools: [],
+    capabilityScope: "runtime",
+    executionEnvironment: "hybrid",
+    isolationBoundary: "runtime",
+    approvalPolicy: "operator_gated",
+    auditDomain: "automation",
+    frontendVisibilityDefault: "visible",
   },
   {
     name: "skills",
     description: "Read and manage reusable skills.",
     tools: ["read_skill", "skill_manage"],
+    capabilityScope: "workspace",
+    executionEnvironment: "local",
+    isolationBoundary: "workspace",
+    approvalPolicy: "mixed",
+    auditDomain: "skills",
+    frontendVisibilityDefault: "summary",
   },
   {
-    name: "env",
-    description: "Manage environment variables and encrypted secrets.",
-    tools: ["set_env_secret", "set_env_variable"],
-  },
-  {
-    name: "notify",
-    description: "Notify users or react in chat connectors.",
-    tools: ["notify", "reaction"],
+    name: "communication",
+    description: "Notify users, react in connectors, and ask follow-up questions.",
+    tools: ["notify", "reaction", "ask_user"],
+    capabilityScope: "connector",
+    executionEnvironment: "connector",
+    isolationBoundary: "connector",
+    approvalPolicy: "connector_gated",
+    auditDomain: "communication",
+    frontendVisibilityDefault: "visible",
   },
   {
     name: "delegation",
-    description: "Delegate work to sub-agents or coding agents.",
-    tools: ["delegate", "delegate_status", "claude_code", "codex"],
+    description: "Delegate work to sub-agents and inspect delegated execution.",
+    tools: ["delegate", "delegate_status"],
+    capabilityScope: "runtime",
+    executionEnvironment: "hybrid",
+    isolationBoundary: "runtime",
+    approvalPolicy: "operator_gated",
+    auditDomain: "delegation",
+    frontendVisibilityDefault: "visible",
   },
   {
-    name: "interaction",
-    description: "Ask the user clarifying questions.",
-    tools: ["ask_user"],
+    name: "coding",
+    description: "Use external coding agents for implementation assistance.",
+    tools: ["claude_code", "codex"],
+    capabilityScope: "external",
+    executionEnvironment: "local",
+    isolationBoundary: "runtime",
+    approvalPolicy: "operator_gated",
+    auditDomain: "coding",
+    frontendVisibilityDefault: "summary",
   },
 ];
 
@@ -93,11 +153,21 @@ export function buildDynamicToolsets(tools: ToolImpl[]): ToolsetDefinition[] {
     name: `mcp:${serverName}`,
     description: `External MCP tools provided by server "${serverName}".`,
     tools: toolNames.sort(),
+    capabilityScope: "external",
+    executionEnvironment: "mcp",
+    isolationBoundary: "mcp_server",
+    approvalPolicy: "operator_gated",
+    auditDomain: "mcp",
+    frontendVisibilityDefault: "summary",
   }));
 }
 
 export function listToolsets(tools: ToolImpl[]): ToolsetDefinition[] {
   return [...getBuiltinToolsets(), ...buildDynamicToolsets(tools)];
+}
+
+export function getPrimaryToolset(toolName: string, tools: ToolImpl[]): ToolsetDefinition | undefined {
+  return listToolsets(tools).find((toolset) => toolset.tools.includes(toolName));
 }
 
 export function resolveToolsets(

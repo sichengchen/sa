@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, mock } from "bun:test";
-import { Agent, ToolRegistry } from "@sa/engine/agent/index.js";
-import type { ToolImpl } from "@sa/engine/agent/index.js";
-import { ModelRouter } from "@sa/engine/router/index.js";
+import { Agent, ToolRegistry } from "@aria/engine/agent/index.js";
+import type { ToolImpl } from "@aria/engine/agent/index.js";
+import { ModelRouter } from "@aria/engine/router/index.js";
 import { Type } from "@mariozechner/pi-ai";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
@@ -10,7 +10,7 @@ import { tmpdir } from "node:os";
 // Mock the stream module
 import * as streamModule from "@mariozechner/pi-ai";
 
-const testDir = join(tmpdir(), "sa-test-agent-" + Date.now());
+const testDir = join(tmpdir(), "aria-test-agent-" + Date.now());
 
 function setupRouter(): ModelRouter {
   return ModelRouter.fromConfig({

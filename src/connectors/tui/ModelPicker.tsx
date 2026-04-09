@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import type { ModelConfig } from "@sa/engine/router/types.js";
+import type { ModelConfig } from "@aria/engine/router/types.js";
 
 interface ModelPickerProps {
   models: ModelConfig[];

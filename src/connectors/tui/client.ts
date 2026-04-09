@@ -1,16 +1,16 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { homedir } from "node:os";
-import { createEngineClient } from "@sa/shared/client.js";
-import { AuthManager } from "@sa/engine/auth.js";
+import { createEngineClient } from "@aria/shared/client.js";
+import { AuthManager } from "@aria/engine/auth.js";
+import { getRuntimeHome } from "@aria/shared/brand.js";
 
 const DEFAULT_HTTP_PORT = 7420;
 const DEFAULT_WS_PORT = 7421;
 
 /** Read Engine URL from discovery file, fallback to default */
 function readEngineUrl(): string {
-  const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
-  const urlFile = join(saHome, "engine.url");
+  const runtimeHome = getRuntimeHome();
+  const urlFile = join(runtimeHome, "engine.url");
   if (existsSync(urlFile)) {
     return readFileSync(urlFile, "utf-8").trim();
   }

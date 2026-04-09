@@ -1,4 +1,5 @@
-import type { Session, ConnectorType } from "@sa/shared/types.js";
+import type { Session, ConnectorType } from "@aria/shared/types.js";
+import type { OperationalStore } from "./operational-store.js";
 
 /** Generate a random suffix for session IDs (full 128-bit UUID) */
 function randomSuffix(): string {
@@ -17,6 +18,11 @@ function randomSuffix(): string {
  */
 export class SessionManager {
   private sessions = new Map<string, Session>();
+  private store?: OperationalStore;
+
+  constructor(store?: OperationalStore) {
+    this.store = store;
+  }
 
   /** Create a new session under a prefix with a generated unique suffix.
    *  e.g. create("main", "engine") → "main:a1b2c3d4"
@@ -31,32 +37,40 @@ export class SessionManager {
       createdAt: Date.now(),
       lastActiveAt: Date.now(),
     };
-    this.sessions.set(id, session);
+    if (this.store) {
+      this.store.upsertSession(session);
+    } else {
+      this.sessions.set(id, session);
+    }
     return session;
   }
 
   /** Retrieve a session by its full ID */
   getSession(sessionId: string): Session | undefined {
-    return this.sessions.get(sessionId);
+    return this.store?.getSession(sessionId) ?? this.sessions.get(sessionId);
   }
 
   /** List all active sessions */
   listSessions(): Session[] {
-    return Array.from(this.sessions.values());
+    return this.store?.listSessions() ?? Array.from(this.sessions.values());
   }
 
   /** List all sessions whose ID starts with the given prefix.
    *  e.g. listByPrefix("telegram:123456") returns all sessions for that chat.
    */
   listByPrefix(prefix: string): Session[] {
+    if (this.store) {
+      return this.store.listByPrefix(prefix);
+    }
     const needle = prefix + ":";
-    return Array.from(this.sessions.values()).filter(
-      (s) => s.id.startsWith(needle),
-    );
+    return Array.from(this.sessions.values()).filter((s) => s.id.startsWith(needle));
   }
 
   /** Get the most recently active session under a prefix, or undefined. */
   getLatest(prefix: string): Session | undefined {
+    if (this.store) {
+      return this.store.getLatest(prefix);
+    }
     const matches = this.listByPrefix(prefix);
     if (matches.length === 0) return undefined;
     return matches.reduce((a, b) => (a.lastActiveAt >= b.lastActiveAt ? a : b));
@@ -90,7 +104,7 @@ export class SessionManager {
     targetConnectorId: string,
     targetConnectorType?: ConnectorType,
   ): Session {
-    const session = this.sessions.get(sessionId);
+    const session = this.sessions.get(sessionId) ?? this.store?.getSession(sessionId);
     if (!session) {
       throw new Error(`Session not found: ${sessionId}`);
     }
@@ -99,11 +113,19 @@ export class SessionManager {
       session.connectorType = targetConnectorType;
     }
     session.lastActiveAt = Date.now();
+    if (this.store) {
+      this.store.upsertSession(session);
+    } else {
+      this.sessions.set(sessionId, session);
+    }
     return session;
   }
 
   /** Destroy a session */
   destroySession(sessionId: string): boolean {
+    if (this.store) {
+      return this.store.destroySession(sessionId);
+    }
     return this.sessions.delete(sessionId);
   }
 
@@ -112,6 +134,18 @@ export class SessionManager {
     const session = this.sessions.get(sessionId);
     if (session) {
       session.lastActiveAt = Date.now();
+      if (this.store) {
+        this.store.upsertSession(session);
+      }
+      return;
+    }
+
+    if (this.store) {
+      const persisted = this.store.getSession(sessionId);
+      if (persisted) {
+        persisted.lastActiveAt = Date.now();
+        this.store.upsertSession(persisted);
+      }
     }
   }
 }

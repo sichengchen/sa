@@ -1,8 +1,8 @@
 /**
- * Slack connector for Esperta Base — uses Chat SDK's Slack adapter.
+ * Slack connector for Esperta Aria — uses Chat SDK's Slack adapter.
  *
  * Bridges Slack events (mentions, messages, buttons, slash commands)
- * to Esperta Base's engine via the shared ChatSDKAdapter.
+ * to Aria Runtime via the shared ChatSDKAdapter.
  */
 
 import { Chat } from "chat";
@@ -27,12 +27,12 @@ export function createSlackConnector(options: SlackConnectorOptions = {}) {
     const missing = getMissingCredentials();
     throw new Error(
       `Slack connector requires: ${missing.join(", ")}. ` +
-      `Store them via \`esperta-base config\` or the \`sa config\` alias, or use the set_env_secret tool.`,
+      "Store them via `aria config` or use the set_env_secret tool.",
     );
   }
 
   const chat = new Chat({
-    userName: "esperta-base",
+    userName: "aria",
     adapters: {
       slack: createSlackAdapter(),
     },
@@ -40,7 +40,7 @@ export function createSlackConnector(options: SlackConnectorOptions = {}) {
     streamingUpdateIntervalMs: 500,
   });
 
-  // Wire Esperta Base engine bridge
+  // Wire Aria Runtime bridge
   const adapter = new ChatSDKAdapter(chat, {
     connectorType: "slack",
     platformName: "slack",
@@ -59,7 +59,7 @@ export function createSlackConnector(options: SlackConnectorOptions = {}) {
  * Start the Slack connector as a standalone webhook server.
  *
  * Starts a Bun HTTP server on the given port to handle Slack webhook events,
- * bridging them to Esperta Base's engine via tRPC.
+ * bridging them to Aria Runtime via tRPC.
  */
 export async function startSlackConnector(port = 3420): Promise<void> {
   const { chat, webhookHandler } = createSlackConnector();
@@ -71,7 +71,7 @@ export async function startSlackConnector(port = 3420): Promise<void> {
       if (url.pathname === "/api/webhooks/slack" && request.method === "POST") {
         return webhookHandler(request);
       }
-      return new Response("Esperta Base Slack Connector", { status: 200 });
+      return new Response("Esperta Aria Slack Connector", { status: 200 });
     },
   });
 

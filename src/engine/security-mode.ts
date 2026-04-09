@@ -136,7 +136,7 @@ export function describeModeEffects(mode: SecurityMode, ttlSeconds: number): str
       "Switching to TRUSTED mode",
       "- Approval gate: only always-dangerous prompts",
       "- URL policy: localhost allowed",
-      "- Exec fence: widened to ~, deny only ~/.sa",
+      "- Exec fence: widened to ~, deny only ~/.aria",
       "- Content framing: still active",
       "- Audit log: still active",
       `Auto-reverts to default after ${minutes} minutes.`,

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import type { SAConfigFile } from "@sa/engine/config/index.js";
-import { loadSecrets, saveSecrets } from "@sa/engine/config/secrets.js";
-import type { SecretsFile } from "@sa/engine/config/types.js";
-import type { ToolApprovalMode, ConnectorType } from "@sa/shared/types.js";
+import type { AriaConfigFile } from "@aria/engine/config/index.js";
+import { loadSecrets, saveSecrets } from "@aria/engine/config/secrets.js";
+import type { SecretsFile } from "@aria/engine/config/types.js";
+import type { ToolApprovalMode, ConnectorType } from "@aria/shared/types.js";
 
 type Substep = "menu" | "edit-telegram-token" | "edit-discord-token" | "edit-discord-guild"
   | "edit-slack-token" | "edit-slack-secret"
@@ -13,9 +13,9 @@ type Substep = "menu" | "edit-telegram-token" | "edit-discord-token" | "edit-dis
   | "edit-linear-key" | "edit-linear-secret";
 
 interface ConnectorSettingsProps {
-  config: SAConfigFile;
+  config: AriaConfigFile;
   homeDir: string;
-  onSave: (config: SAConfigFile) => Promise<void>;
+  onSave: (config: AriaConfigFile) => Promise<void>;
   onBack: () => void;
 }
 
@@ -51,7 +51,7 @@ const MENU_ITEMS = [
   { key: "webhook-approval", label: "Webhook tool approval" },
 ] as const;
 
-function getApprovalMode(config: SAConfigFile, connector: ConnectorType): ToolApprovalMode {
+function getApprovalMode(config: AriaConfigFile, connector: ConnectorType): ToolApprovalMode {
   return config.runtime.toolApproval?.[connector] ?? (connector === "tui" ? "never" : "ask");
 }
 
@@ -139,7 +139,7 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           const connector = item.key.replace("-approval", "") as ConnectorType;
           const current = getApprovalMode(config, connector);
           const next = cycleApprovalMode(current);
-          const updated: SAConfigFile = {
+          const updated: AriaConfigFile = {
             ...config,
             runtime: {
               ...config.runtime,
@@ -153,7 +153,7 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           onSave(updated).then(() => setSaved(false));
         } else if (item.key === "webhook-enabled") {
           const current = config.runtime.webhook?.enabled ?? false;
-          const updated: SAConfigFile = {
+          const updated: AriaConfigFile = {
             ...config,
             runtime: {
               ...config.runtime,

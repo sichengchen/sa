@@ -1,18 +1,18 @@
 import { describe, test, expect, afterEach } from "bun:test";
-import { ConfigManager } from "@sa/engine/config/index.js";
-import { ModelRouter } from "@sa/engine/router/index.js";
-import { Agent } from "@sa/engine/agent/index.js";
-import { MemoryManager } from "@sa/engine/memory/index.js";
-import { getBuiltinTools, createWebFetchTool } from "@sa/engine/tools/index.js";
-import { createMemoryWriteTool } from "@sa/engine/tools/memory-write.js";
-import { createMemorySearchTool } from "@sa/engine/tools/memory-search.js";
-import { createMemoryReadTool } from "@sa/engine/tools/memory-read.js";
-import { createMemoryDeleteTool } from "@sa/engine/tools/memory-delete.js";
+import { ConfigManager } from "@aria/engine/config/index.js";
+import { ModelRouter } from "@aria/engine/router/index.js";
+import { Agent } from "@aria/engine/agent/index.js";
+import { MemoryManager } from "@aria/engine/memory/index.js";
+import { getBuiltinTools, createWebFetchTool } from "@aria/engine/tools/index.js";
+import { createMemoryWriteTool } from "@aria/engine/tools/memory-write.js";
+import { createMemorySearchTool } from "@aria/engine/tools/memory-search.js";
+import { createMemoryReadTool } from "@aria/engine/tools/memory-read.js";
+import { createMemoryDeleteTool } from "@aria/engine/tools/memory-delete.js";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-const testHome = join(tmpdir(), "sa-e2e-smoke-" + Date.now());
+const testHome = join(tmpdir(), "aria-e2e-smoke-" + Date.now());
 
 afterEach(async () => {
   await rm(testHome, { recursive: true, force: true });
@@ -22,11 +22,11 @@ describe("E2E smoke test", () => {
   test("full system initialization — config, router, memory, agent", async () => {
     // 1. Config initializes with defaults
     const config = new ConfigManager(testHome);
-    const saConfig = await config.load();
-    expect(saConfig.identity.name).toBe("Esperta Base");
+    const ariaConfig = await config.load();
+    expect(ariaConfig.identity.name).toBe("Esperta Aria");
 
     // 2. Memory initializes
-    const memoryDir = join(testHome, saConfig.runtime.memory.directory);
+    const memoryDir = join(testHome, ariaConfig.runtime.memory.directory);
     const memory = new MemoryManager(memoryDir);
     await memory.init();
 
@@ -34,9 +34,9 @@ describe("E2E smoke test", () => {
 
     // 3. Router loads from config data (v3 merged schema)
     const router = ModelRouter.fromConfig({
-      providers: saConfig.providers,
-      models: saConfig.models,
-      defaultModel: saConfig.defaultModel,
+      providers: ariaConfig.providers,
+      models: ariaConfig.models,
+      defaultModel: ariaConfig.defaultModel,
     });
     expect(router.listModels().length).toBeGreaterThan(0);
 
@@ -52,7 +52,7 @@ describe("E2E smoke test", () => {
     const agent = new Agent({
       router,
       tools,
-      systemPrompt: saConfig.identity.systemPrompt,
+      systemPrompt: ariaConfig.identity.systemPrompt,
     });
 
     expect(agent.getMessages()).toHaveLength(0);
@@ -107,12 +107,12 @@ describe("E2E smoke test", () => {
   test("config persistence across manager instances", async () => {
     // First instance creates defaults
     const config1 = new ConfigManager(testHome);
-    const saConfig1 = await config1.load();
+    const ariaConfig1 = await config1.load();
     await config1.setConfig("activeModel", "custom-model");
 
     // Second instance loads persisted config
     const config2 = new ConfigManager(testHome);
-    const saConfig2 = await config2.load();
-    expect(saConfig2.runtime.activeModel).toBe("custom-model");
+    const ariaConfig2 = await config2.load();
+    expect(ariaConfig2.runtime.activeModel).toBe("custom-model");
   });
 });

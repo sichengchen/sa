@@ -9,20 +9,31 @@ export type SecurityLayer = "url_policy" | "exec_fence" | "tool_restriction";
 /** User choice for a security escalation prompt */
 export type EscalationChoice = "allow_once" | "allow_session" | "add_persistent" | "deny";
 
-export type EngineEvent =
+export interface EngineEventMeta {
+  sessionId: string;
+  timestamp: number;
+  runId?: string;
+  parentRunId?: string | null;
+  connectorType?: ConnectorType | string;
+  source?: string;
+  taskId?: string;
+}
+
+export type EngineEvent = EngineEventMeta & (
   | { type: "text_delta"; delta: string }
   | { type: "thinking_delta"; delta: string }
   | { type: "tool_start"; name: string; id: string }
   | { type: "tool_end"; name: string; id: string; content: string; isError: boolean }
   | { type: "tool_approval_request"; name: string; id: string; args: Record<string, unknown> }
-  | { type: "security_escalation_request"; id: string; sessionId: string; layer: SecurityLayer; detail: string; resource?: string; options: EscalationChoice[] }
+  | { type: "security_escalation_request"; id: string; layer: SecurityLayer; detail: string; resource?: string; options: EscalationChoice[] }
   | { type: "mode_change"; mode: string; remainingTTL: number; description: string }
   | { type: "user_question"; id: string; question: string; options?: string[] }
   | { type: "sub_agent_start"; subAgentId: string; task: string }
   | { type: "sub_agent_end"; subAgentId: string; status: string; summary: string }
   | { type: "reaction"; emoji: string }
   | { type: "done"; stopReason: string }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+);
 
 /** A session represents a single Connector's conversation with the Engine */
 export interface Session {

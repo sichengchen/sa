@@ -51,7 +51,7 @@ export function GChatSetup({ onNext, onBack, currentValues }: GChatSetupProps) {
     <Box flexDirection="column" padding={1}>
       <Text bold color="cyan">Google Chat Bot Setup (optional)</Text>
       <Text />
-      <Text>To use Esperta Base via Google Chat, create a Chat app in Google Cloud Console.</Text>
+      <Text>To use Esperta Aria via Google Chat, create a Chat app in Google Cloud Console.</Text>
       <Text>Enter the path to the service account JSON key file, or leave empty to skip.</Text>
       <Text />
       <Box>

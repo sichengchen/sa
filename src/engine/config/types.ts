@@ -1,6 +1,6 @@
 import type { ProviderConfig, ModelConfig } from "../router/types.js";
 import type { ModelTier, TaskType } from "../router/task-types.js";
-import type { ToolApprovalMode, ConnectorType } from "@sa/shared/types.js";
+import type { ToolApprovalMode, ConnectorType } from "@aria/shared/types.js";
 
 export interface Identity {
   name: string;
@@ -34,7 +34,7 @@ export interface HeartbeatConfig {
   enabled: boolean;
   /** Interval in minutes between heartbeat checks (default: 30) */
   intervalMinutes: number;
-  /** Path to the heartbeat checklist file relative to SA_HOME (default: "HEARTBEAT.md") */
+  /** Path to the heartbeat checklist file relative to ARIA_HOME (default: "HEARTBEAT.md") */
   checklistPath?: string;
   /** Token the agent returns to indicate nothing needs attention (default: "HEARTBEAT_OK") */
   suppressToken: string;
@@ -67,11 +67,22 @@ export interface MCPServerConfig {
   headers?: Record<string, string>;
   timeoutSeconds?: number;
   connectTimeoutSeconds?: number;
+  /** Trust level assigned to the server registration */
+  trust?: "trusted" | "prompt" | "blocked";
+  /** Whether the server is available by default in all sessions or requires explicit opt-in */
+  sessionAvailability?: "all" | "session_opt_in" | "admin_only";
   tools?: MCPServerToolFilterConfig;
 }
 
 export interface DeliveryTarget {
   connector?: string;
+}
+
+export interface RetryPolicy {
+  /** Total attempts including the initial run (default: 1) */
+  maxAttempts?: number;
+  /** Delay between attempts in seconds (default: 0) */
+  delaySeconds?: number;
 }
 
 /** A user-defined scheduled task */
@@ -95,6 +106,8 @@ export interface CronTask {
   allowedToolsets?: string[];
   /** Skills injected into the job session */
   skills?: string[];
+  /** Optional retry behavior for failed runs */
+  retryPolicy?: RetryPolicy;
   /** Optional delivery target for the final response */
   delivery?: DeliveryTarget;
   scheduleKind?: "cron" | "interval" | "once";
@@ -118,14 +131,14 @@ export interface WebhookTask {
   enabled: boolean;
   /** Optional model override for this task */
   model?: string;
-  /** Which connector to deliver the response through (e.g. "telegram", "discord") */
-  connector?: string;
   /** Tool allowlist — only these tools are available (default: WEBHOOK_DEFAULT_TOOLS) */
   allowedTools?: string[];
   /** Named toolsets to expand into the allowed tool list */
   allowedToolsets?: string[];
   /** Skills injected into the task session */
   skills?: string[];
+  /** Optional retry behavior for failed runs */
+  retryPolicy?: RetryPolicy;
   /** Optional delivery target override */
   delivery?: DeliveryTarget;
   lastRunAt?: string;
@@ -202,7 +215,7 @@ export interface RuntimeConfig {
     exec?: {
       /** Allowed working directories (default: ["~/projects", "/tmp"]) */
       fence?: string[];
-      /** Always-denied paths (default: ["~/.sa", "~/.ssh", "~/.gnupg", "~/.aws", "~/.config/gcloud"]) */
+      /** Always-denied paths (default: ["~/.aria", "~/.ssh", "~/.gnupg", "~/.aws", "~/.config/gcloud"]) */
       alwaysDeny?: string[];
     };
     /** Default security mode for new sessions */
@@ -256,7 +269,7 @@ export interface RuntimeConfig {
 }
 
 /** On-disk config.json schema (v3 — merged models + runtime) */
-export interface SAConfigFile {
+export interface AriaConfigFile {
   version: 3;
   runtime: RuntimeConfig;
   providers: ProviderConfig[];
@@ -265,7 +278,7 @@ export interface SAConfigFile {
 }
 
 /** Full in-memory config (identity from IDENTITY.md + everything else from config.json) */
-export interface SAConfig {
+export interface AriaConfig {
   identity: Identity;
   runtime: RuntimeConfig;
   providers: ProviderConfig[];

@@ -37,7 +37,7 @@ async function detectLocalBackend(): Promise<"whisper-cpp" | "whisper-python" | 
 
 /** Transcribe using local whisper-cpp CLI */
 async function transcribeWithWhisperCpp(audio: Buffer, format: string): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "sa-audio-"));
+  const dir = await mkdtemp(join(tmpdir(), "aria-audio-"));
   const inputPath = join(dir, `input.${format}`);
   const outputPath = join(dir, "input.txt");
 
@@ -80,7 +80,7 @@ async function transcribeWithWhisperCpp(audio: Buffer, format: string): Promise<
 
 /** Transcribe using Python whisper CLI */
 async function transcribeWithWhisperPython(audio: Buffer, format: string): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "sa-audio-"));
+  const dir = await mkdtemp(join(tmpdir(), "aria-audio-"));
   const inputPath = join(dir, `input.${format}`);
 
   await writeFile(inputPath, audio);

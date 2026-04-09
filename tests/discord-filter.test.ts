@@ -1,7 +1,7 @@
 import { describe, test, expect } from "bun:test";
 import {
   formatSenderAttribution,
-} from "@sa/connectors/chat-sdk/formatter.js";
+} from "@aria/connectors/chat-sdk/formatter.js";
 
 /**
  * Tests for shared Chat SDK formatting utilities.

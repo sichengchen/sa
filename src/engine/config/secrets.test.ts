@@ -11,7 +11,7 @@ describe("secrets", () => {
   let dir: string;
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "sa-secrets-test-"));
+    dir = await mkdtemp(join(tmpdir(), "aria-secrets-test-"));
   });
 
   afterEach(async () => {
@@ -123,32 +123,23 @@ describe("key derivation", () => {
     const key = _internal.deriveKey(salt);
     expect(key.length).toBe(32);
   });
-
-  it("legacy derivation produces a different key than new derivation", () => {
-    const salt = randomBytes(32);
-    const newKey = _internal.deriveKey(salt);
-    const legacyKey = _internal.deriveKeyLegacy(salt);
-    expect(Buffer.compare(newKey, legacyKey)).not.toBe(0);
-  });
 });
 
-describe("legacy migration", () => {
+describe("unsupported legacy secrets", () => {
   let dir: string;
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "sa-secrets-migrate-"));
+    dir = await mkdtemp(join(tmpdir(), "aria-secrets-invalid-"));
   });
 
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  /** Write a secrets file encrypted with the legacy (hostname-only) derivation */
   async function writeLegacySecrets(homeDir: string, secrets: SecretsFile): Promise<void> {
     const salt = randomBytes(32);
     await writeFile(join(homeDir, ".salt"), salt.toString("hex") + "\n");
 
-    // Legacy derivation: hostname only, default scrypt params
     const key = scryptSync(hostname(), salt, 32) as Buffer;
 
     const iv = randomBytes(16);
@@ -169,7 +160,7 @@ describe("legacy migration", () => {
     await writeFile(join(homeDir, "secrets.enc"), encData);
   }
 
-  it("migrates legacy-encrypted secrets to new derivation", async () => {
+  it("rejects hostname-only legacy secrets without migrating them", async () => {
     const secrets: SecretsFile = {
       apiKeys: { LEGACY_KEY: "legacy-value-123" },
     };
@@ -177,30 +168,14 @@ describe("legacy migration", () => {
     await writeLegacySecrets(dir, secrets);
 
     const originalWarn = console.warn;
-    let migrated = false;
-    console.warn = (msg: string) => {
-      if (msg.includes("Migrating")) migrated = true;
-    };
+    let warnMessage = "";
+    console.warn = (msg: string) => { warnMessage = msg; };
 
     const loaded = await loadSecrets(dir);
 
     console.warn = originalWarn;
-    expect(loaded).not.toBeNull();
-    expect(loaded!.apiKeys.LEGACY_KEY).toBe("legacy-value-123");
-    expect(migrated).toBe(true);
-
-    // Second load should use new derivation directly (no migration)
-    let migratedAgain = false;
-    console.warn = (msg: string) => {
-      if (msg.includes("Migrating")) migratedAgain = true;
-    };
-
-    const loaded2 = await loadSecrets(dir);
-
-    console.warn = originalWarn;
-    expect(loaded2).not.toBeNull();
-    expect(loaded2!.apiKeys.LEGACY_KEY).toBe("legacy-value-123");
-    expect(migratedAgain).toBe(false);
+    expect(loaded).toBeNull();
+    expect(warnMessage).toContain("unsupported legacy runtime");
   });
 
   it("returns null with specific warning for unrecoverable corruption", async () => {
@@ -219,6 +194,6 @@ describe("legacy migration", () => {
 
     console.warn = originalWarn;
     expect(result).toBeNull();
-    expect(warnMessage).toContain("corrupted or from a different machine");
+    expect(warnMessage).toContain("could not be decrypted");
   });
 });

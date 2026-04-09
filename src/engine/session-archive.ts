@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { Database } from "bun:sqlite";
 import type { Message } from "@mariozechner/pi-ai";
-import type { Session } from "@sa/shared/types.js";
+import type { Session } from "@aria/shared/types.js";
 
 const MAX_PREVIEW_CHARS = 220;
 const MAX_SUMMARY_CHARS = 800;
@@ -192,8 +192,8 @@ export class SessionArchiveManager {
   private readonly dbPath: string;
   private db: Database | null = null;
 
-  constructor(saHome: string) {
-    this.dbPath = join(saHome, "session-archive.sqlite");
+  constructor(runtimeHome: string) {
+    this.dbPath = join(runtimeHome, "session-archive.sqlite");
   }
 
   async init(): Promise<void> {

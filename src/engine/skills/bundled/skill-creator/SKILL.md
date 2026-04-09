@@ -28,7 +28,7 @@ Create a kebab-case name from the description. Rules:
 Create the skill directory and SKILL.md file:
 
 ```
-~/.sa/skills/<skill-name>/SKILL.md
+~/.aria/skills/<skill-name>/SKILL.md
 ```
 
 The SKILL.md must have:

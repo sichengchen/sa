@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import type { SAConfigFile } from "@sa/engine/config/index.js";
+import type { AriaConfigFile } from "@aria/engine/config/index.js";
 
 type Substep = "menu" | "edit-directory" | "edit-search-results" | "edit-vector-weight" | "edit-decay-halflife";
 
 interface MemorySettingsProps {
-  config: SAConfigFile;
-  onSave: (config: SAConfigFile) => Promise<void>;
+  config: AriaConfigFile;
+  onSave: (config: AriaConfigFile) => Promise<void>;
   onBack: () => void;
 }
 
@@ -31,7 +31,7 @@ export function MemorySettings({ config, onSave, onBack }: MemorySettingsProps) 
   ];
 
   function updateMemory(patch: Partial<typeof memory>) {
-    const updated: SAConfigFile = {
+    const updated: AriaConfigFile = {
       ...config,
       runtime: {
         ...config.runtime,
@@ -118,7 +118,7 @@ export function MemorySettings({ config, onSave, onBack }: MemorySettingsProps) 
   });
 
   const editLabels: Record<string, { title: string; hint: string }> = {
-    "edit-directory": { title: "Memory Directory", hint: "Relative to ~/.sa/ — default: memory" },
+    "edit-directory": { title: "Memory Directory", hint: "Relative to ~/.aria/ — default: memory" },
     "edit-search-results": { title: "Max Search Results", hint: "Number of results returned by memory search (default: 10)" },
     "edit-vector-weight": { title: "Vector Weight", hint: "0.0–1.0 — text weight auto-fills to complement (default: 0.6)" },
     "edit-decay-halflife": { title: "Temporal Decay Half-Life", hint: "Days until journal score halves (default: 30)" },

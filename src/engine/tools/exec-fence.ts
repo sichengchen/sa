@@ -20,7 +20,7 @@ export const DEFAULT_FENCE = ["~/projects", "/tmp"];
 
 /** Default always-deny: credential and config directories */
 export const DEFAULT_ALWAYS_DENY = [
-  "~/.sa",
+  "~/.aria",
   "~/.ssh",
   "~/.gnupg",
   "~/.aws",
@@ -123,12 +123,12 @@ export function validateExecPaths(
     const expanded = expandPath(p);
 
     // Always-deny paths are unconditional (even with overrides)
-    // Exception: ~/.sa is ALWAYS denied, no override
-    const saHome = expandPath("~/.sa");
-    if (expanded === saHome || expanded.startsWith(saHome + "/")) {
+    // Exception: ~/.aria is ALWAYS denied, no override
+    const runtimeHome = expandPath("~/.aria");
+    if (expanded === runtimeHome || expanded.startsWith(runtimeHome + "/")) {
       return {
         layer: "exec_fence",
-        detail: `Access to Esperta Base home directory is always denied: ${p}`,
+        detail: `Access to Aria runtime home is always denied: ${p}`,
         resource: p,
       };
     }

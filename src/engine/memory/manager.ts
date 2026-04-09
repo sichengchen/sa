@@ -2,10 +2,18 @@ import { readFile, writeFile, readdir, unlink, mkdir, stat, appendFile } from "n
 import { join, basename } from "node:path";
 import { existsSync } from "node:fs";
 import { Database } from "bun:sqlite";
-import type { MemoryEntry, SearchResult, SearchOptions, EmbeddingConfig } from "./types.js";
+import type { MemoryEntry, MemoryLayer, SearchResult, SearchOptions, EmbeddingConfig } from "./types.js";
 import { chunkMarkdown } from "./chunker.js";
 
 const MAX_MEMORY_LINES = 200;
+const MAX_LAYER_ENTRIES = 8;
+const MAX_LAYER_ENTRY_CHARS = 400;
+const MAX_RETRIEVAL_SNIPPET_CHARS = 300;
+const LAYER_DIRECTORY_MAP: Record<Exclude<MemoryLayer, "journal">, string> = {
+  profile: "profile",
+  project: "project",
+  operational: "operational",
+};
 
 // Default search weights
 const DEFAULT_VECTOR_WEIGHT = 0.6;
@@ -97,7 +105,9 @@ interface SearchCandidate {
 
 export class MemoryManager {
   private memoryDir: string;
-  private topicsDir: string;
+  private profileDir: string;
+  private projectDir: string;
+  private operationalDir: string;
   private journalDir: string;
   private db: Database | null = null;
 
@@ -112,13 +122,17 @@ export class MemoryManager {
 
   constructor(memoryDir: string) {
     this.memoryDir = memoryDir;
-    this.topicsDir = join(memoryDir, "topics");
+    this.profileDir = join(memoryDir, LAYER_DIRECTORY_MAP.profile);
+    this.projectDir = join(memoryDir, LAYER_DIRECTORY_MAP.project);
+    this.operationalDir = join(memoryDir, LAYER_DIRECTORY_MAP.operational);
     this.journalDir = join(memoryDir, "journal");
   }
 
   async init(): Promise<void> {
     await mkdir(this.memoryDir, { recursive: true });
-    await mkdir(this.topicsDir, { recursive: true });
+    await mkdir(this.profileDir, { recursive: true });
+    await mkdir(this.projectDir, { recursive: true });
+    await mkdir(this.operationalDir, { recursive: true });
     await mkdir(this.journalDir, { recursive: true });
 
     const mainPath = join(this.memoryDir, "MEMORY.md");
@@ -182,13 +196,39 @@ export class MemoryManager {
     return content;
   }
 
-  /** Save or update a topic memory entry. Writes to topics/<key>.md and updates index. */
+  /** Load layered memory context for prompt assembly. */
+  async loadLayeredContext(): Promise<string> {
+    const sections: string[] = [];
+    const curated = await this.loadContext();
+    if (curated.trim()) {
+      sections.push(`## Curated Memory\n${curated}`);
+    }
+
+    const profile = await this.formatLayerContext("profile", "Profile Memory");
+    if (profile) sections.push(profile);
+
+    const project = await this.formatLayerContext("project", "Project Memory");
+    if (project) sections.push(project);
+
+    const operational = await this.formatLayerContext("operational", "Operational Memory");
+    if (operational) sections.push(operational);
+
+    return sections.join("\n\n");
+  }
+
+  /** Save or update a project memory entry. Writes to project/<key>.md and updates index. */
   async save(key: string, content: string): Promise<void> {
-    const safeName = key.replace(/[^a-zA-Z0-9_-]/g, "_");
-    const filePath = join(this.topicsDir, `${safeName}.md`);
+    await this.saveLayer("project", key, content);
+  }
+
+  /** Save or update a specific memory layer entry. */
+  async saveLayer(layer: Exclude<MemoryLayer, "journal">, key: string, content: string): Promise<void> {
+    const safeName = this.sanitizeKey(key);
+    const layerDir = this.getLayerDir(layer);
+    const filePath = join(layerDir, `${safeName}.md`);
     await writeFile(filePath, content);
-    const source = `topics/${safeName}.md`;
-    await this.indexFile(source, "topic", content);
+    const source = `${LAYER_DIRECTORY_MAP[layer]}/${safeName}.md`;
+    await this.indexFile(source, layer, content);
   }
 
   /** Search across all memory files using FTS5 BM25. Returns MemoryEntry[] for backward compat. */
@@ -199,12 +239,12 @@ export class MemoryManager {
       let key: string;
       if (r.sourceType === "memory") {
         key = "MEMORY";
-      } else if (r.sourceType === "topic") {
+      } else if (r.sourceType === "project" || r.sourceType === "profile" || r.sourceType === "operational") {
         key = basename(r.source, ".md");
       } else {
         key = r.source.replace(/\.md$/, "");
       }
-      return { key, content: r.content, updatedAt: r.updatedAt };
+      return { key, content: r.content, updatedAt: r.updatedAt, layer: this.sourceTypeToLayer(r.sourceType) };
     });
   }
 
@@ -288,36 +328,59 @@ export class MemoryManager {
     return this.applyTemporalDecay(merged.slice(0, maxResults));
   }
 
-  /** Read a specific memory entry by topic key */
+  /** Read a specific memory entry by project memory key */
   async get(key: string): Promise<string | null> {
-    const safeName = key.replace(/[^a-zA-Z0-9_-]/g, "_");
-    const filePath = join(this.topicsDir, `${safeName}.md`);
+    return this.getLayer("project", key);
+  }
+
+  async getLayer(layer: Exclude<MemoryLayer, "journal">, key: string): Promise<string | null> {
+    const safeName = this.sanitizeKey(key);
+    const filePath = join(this.getLayerDir(layer), `${safeName}.md`);
     if (!existsSync(filePath)) return null;
     return readFile(filePath, "utf-8");
   }
 
-  /** Delete a memory entry by topic key */
+  /** Delete a memory entry by project memory key */
   async delete(key: string): Promise<boolean> {
-    const safeName = key.replace(/[^a-zA-Z0-9_-]/g, "_");
-    const filePath = join(this.topicsDir, `${safeName}.md`);
+    return this.deleteLayer("project", key);
+  }
+
+  async deleteLayer(layer: Exclude<MemoryLayer, "journal">, key: string): Promise<boolean> {
+    const safeName = this.sanitizeKey(key);
+    const filePath = join(this.getLayerDir(layer), `${safeName}.md`);
     if (!existsSync(filePath)) return false;
     await unlink(filePath);
-    const source = `topics/${safeName}.md`;
+    const source = `${LAYER_DIRECTORY_MAP[layer]}/${safeName}.md`;
     this.removeFromIndex(source);
     return true;
   }
 
-  /** List all topic memory keys */
+  /** List all project memory keys */
   async list(): Promise<string[]> {
+    return this.listLayer("project");
+  }
+
+  async listLayer(layer: Exclude<MemoryLayer, "journal">): Promise<string[]> {
     const keys: string[] = [];
-    if (!existsSync(this.topicsDir)) return keys;
-    const files = await readdir(this.topicsDir);
+    const layerDir = this.getLayerDir(layer);
+    if (!existsSync(layerDir)) return keys;
+    const files = await readdir(layerDir);
     for (const file of files) {
       if (file.endsWith(".md")) {
         keys.push(file.replace(/\.md$/, ""));
       }
     }
     return keys;
+  }
+
+  async listJournalDates(limit = 10): Promise<string[]> {
+    if (!existsSync(this.journalDir)) return [];
+    const files = await readdir(this.journalDir);
+    return files
+      .filter((file) => file.endsWith(".md"))
+      .map((file) => file.replace(/\.md$/, ""))
+      .sort((a, b) => b.localeCompare(a))
+      .slice(0, limit);
   }
 
   /**
@@ -332,13 +395,29 @@ export class MemoryManager {
     if (query.trim()) {
       const results = await this.searchIndex(query, { maxResults: 5 });
       if (results.length > 0) {
-        const snippets = results.map((r) => {
-          const snippet = r.content.length > 300
-            ? r.content.slice(0, 300) + "..."
-            : r.content;
-          return `[${r.source}] ${snippet}`;
-        });
-        parts.push(snippets.join("\n"));
+        const grouped = new Map<SearchResult["sourceType"], string[]>();
+        for (const result of results) {
+          const snippet = result.content.length > MAX_RETRIEVAL_SNIPPET_CHARS
+            ? result.content.slice(0, MAX_RETRIEVAL_SNIPPET_CHARS) + "..."
+            : result.content;
+          const current = grouped.get(result.sourceType) ?? [];
+          current.push(`[${result.source}] ${snippet}`);
+          grouped.set(result.sourceType, current);
+        }
+
+        const layerOrder: Array<[SearchResult["sourceType"], string]> = [
+          ["profile", "Profile memory"],
+          ["project", "Project memory"],
+          ["operational", "Operational memory"],
+          ["memory", "Curated memory"],
+          ["journal", "Journal memory"],
+        ];
+        for (const [sourceType, label] of layerOrder) {
+          const entries = grouped.get(sourceType);
+          if (entries && entries.length > 0) {
+            parts.push(`[${label}]\n${entries.join("\n")}`);
+          }
+        }
       }
     }
 
@@ -390,12 +469,14 @@ export class MemoryManager {
       currentSources.set("MEMORY.md", { type: "memory", path: mainPath });
     }
 
-    // topics/
-    if (existsSync(this.topicsDir)) {
-      const topicFiles = await readdir(this.topicsDir);
-      for (const f of topicFiles) {
+    // layer-backed memory files
+    for (const [layer, dirName] of Object.entries(LAYER_DIRECTORY_MAP) as Array<[Exclude<MemoryLayer, "journal">, string]>) {
+      const fullDir = join(this.memoryDir, dirName);
+      if (!existsSync(fullDir)) continue;
+      const files = await readdir(fullDir);
+      for (const f of files) {
         if (f.endsWith(".md")) {
-          currentSources.set(`topics/${f}`, { type: "topic", path: join(this.topicsDir, f) });
+          currentSources.set(`${dirName}/${f}`, { type: layer, path: join(fullDir, f) });
         }
       }
     }
@@ -695,7 +776,7 @@ export class MemoryManager {
 
     const decayed = results.map((r) => {
       // Evergreen files never decay
-      if (r.sourceType === "memory" || r.sourceType === "topic") return r;
+      if (r.sourceType === "memory" || r.sourceType === "profile" || r.sourceType === "project" || r.sourceType === "operational") return r;
 
       // Journal files: extract date from source filename
       const dateMatch = r.source.match(/(\d{4}-\d{2}-\d{2})\.md$/);
@@ -724,5 +805,49 @@ export class MemoryManager {
   private setMeta(key: string, value: string): void {
     if (!this.db) return;
     this.db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)").run(key, value);
+  }
+
+  private sanitizeKey(key: string): string {
+    return key.replace(/[^a-zA-Z0-9_-]/g, "_");
+  }
+
+  private getLayerDir(layer: Exclude<MemoryLayer, "journal">): string {
+    switch (layer) {
+      case "profile":
+        return this.profileDir;
+      case "project":
+        return this.projectDir;
+      case "operational":
+        return this.operationalDir;
+    }
+  }
+
+  private sourceTypeToLayer(sourceType: SearchResult["sourceType"]): MemoryLayer | undefined {
+    switch (sourceType) {
+      case "profile":
+      case "project":
+      case "operational":
+      case "journal":
+        return sourceType;
+      default:
+        return undefined;
+    }
+  }
+
+  private async formatLayerContext(layer: Exclude<MemoryLayer, "journal">, title: string): Promise<string> {
+    const entries = await this.listLayer(layer);
+    if (entries.length === 0) return "";
+
+    const snippets: string[] = [];
+    for (const key of entries.slice(0, MAX_LAYER_ENTRIES)) {
+      const content = await this.getLayer(layer, key);
+      if (!content) continue;
+      const snippet = content.length > MAX_LAYER_ENTRY_CHARS
+        ? `${content.slice(0, MAX_LAYER_ENTRY_CHARS)}...`
+        : content;
+      snippets.push(`- ${key}: ${snippet}`);
+    }
+
+    return snippets.length > 0 ? `## ${title}\n${snippets.join("\n")}` : "";
   }
 }

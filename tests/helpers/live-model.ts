@@ -1,5 +1,5 @@
 import { describe } from "bun:test";
-import { ModelRouter } from "@sa/engine/router/index.js";
+import { ModelRouter } from "@aria/engine/router/index.js";
 import type { KnownProvider } from "@mariozechner/pi-ai";
 
 /** True when a live API key is available for LLM tests */

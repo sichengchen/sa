@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { HeartbeatConfig } from "./config/types.js";
+import type { DeliveryTarget, HeartbeatConfig, RetryPolicy } from "./config/types.js";
 import { DEFAULT_HEARTBEAT } from "./config/defaults.js";
 import type { Agent } from "./agent/index.js";
 import { computeNextRunAt, isTaskDue } from "./automation-schedule.js";
@@ -24,6 +24,10 @@ export interface ScheduledTask {
   builtin?: boolean;
   /** Optional prompt to send to agent (for user-defined tasks) */
   prompt?: string;
+  /** Optional retry policy for agent-backed automation tasks */
+  retryPolicy?: RetryPolicy;
+  /** Optional delivery target for automation output */
+  delivery?: DeliveryTarget;
   /** If true, auto-unregister after first execution */
   oneShot?: boolean;
   /** Callback invoked when a one-shot task completes */
@@ -39,7 +43,7 @@ interface RegisteredTask extends ScheduledTask {
 }
 
 interface HeartbeatTaskOptions {
-  saHome: string;
+  runtimeHome: string;
   mainAgent?: Agent | null;
   notify?: (message: string) => Promise<void> | void;
 }
@@ -110,6 +114,8 @@ export class Scheduler {
     schedule: string;
     builtin: boolean;
     prompt?: string;
+    retryPolicy?: RetryPolicy;
+    delivery?: DeliveryTarget;
     scheduleKind?: "cron" | "interval" | "once";
     intervalMinutes?: number;
     runAt?: string;
@@ -124,6 +130,8 @@ export class Scheduler {
       schedule: t.schedule,
       builtin: t.builtin ?? false,
       prompt: t.prompt,
+      retryPolicy: t.retryPolicy,
+      delivery: t.delivery,
       scheduleKind: t.scheduleKind,
       intervalMinutes: t.intervalMinutes,
       runAt: t.runAt,
@@ -283,9 +291,9 @@ function formatIntervalSchedule(intervalMinutes: number): string {
   return intervalMinutes <= 59 ? `*/${intervalMinutes} * * * *` : `@every ${intervalMinutes}m`;
 }
 
-async function writeHeartbeatLog(saHome: string, healthData: HeartbeatResult): Promise<void> {
+async function writeHeartbeatLog(runtimeHome: string, healthData: HeartbeatResult): Promise<void> {
   try {
-    const autoDir = join(saHome, "automation");
+    const autoDir = join(runtimeHome, "automation");
     await mkdir(autoDir, { recursive: true });
     const ts = new Date().toISOString().replace(/[:.]/g, "-");
     const logContent = [
@@ -311,7 +319,7 @@ export function createHeartbeatTask(
   config?: Partial<HeartbeatConfig>,
 ): ScheduledTask {
   const options = typeof optionsOrSaHome === "string"
-    ? { saHome: optionsOrSaHome, mainAgent }
+    ? { runtimeHome: optionsOrSaHome, mainAgent }
     : optionsOrSaHome;
   const hbConfig: HeartbeatConfig = { ...DEFAULT_HEARTBEAT, ...config };
   heartbeatState.config = hbConfig;
@@ -325,7 +333,7 @@ export function createHeartbeatTask(
     builtin: true,
     async handler() {
       // Always write the health file for daemon monitoring
-      const heartbeatFile = join(options.saHome, "engine.heartbeat");
+      const heartbeatFile = join(options.runtimeHome, "engine.heartbeat");
       const healthData: HeartbeatResult = {
         timestamp: new Date().toISOString(),
         pid: process.pid,
@@ -338,12 +346,12 @@ export function createHeartbeatTask(
         healthData.agentRan = false;
         await writeFile(heartbeatFile, JSON.stringify(healthData) + "\n");
         heartbeatState.lastResult = healthData;
-        await writeHeartbeatLog(options.saHome, healthData);
+        await writeHeartbeatLog(options.runtimeHome, healthData);
         return;
       }
 
       // Read the checklist
-      const checklistPath = join(options.saHome, hbConfig.checklistPath ?? "HEARTBEAT.md");
+      const checklistPath = join(options.runtimeHome, hbConfig.checklistPath ?? "HEARTBEAT.md");
       let checklist = "";
       try {
         checklist = await readFile(checklistPath, "utf-8");
@@ -378,7 +386,7 @@ export function createHeartbeatTask(
 
       await writeFile(heartbeatFile, JSON.stringify(healthData) + "\n");
       heartbeatState.lastResult = healthData;
-      await writeHeartbeatLog(options.saHome, healthData);
+      await writeHeartbeatLog(options.runtimeHome, healthData);
 
       if (!healthData.suppressed && responseText.trim()) {
         if (options.notify) {

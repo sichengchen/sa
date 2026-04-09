@@ -1,6 +1,5 @@
 import { writeFile, unlink, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { homedir } from "node:os";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { WebSocketServer } from "ws";
@@ -9,7 +8,8 @@ import { createContext } from "./context.js";
 import type { EngineRuntime } from "./runtime.js";
 import { heartbeatState } from "./scheduler.js";
 import { frameAsData } from "./agent/content-frame.js";
-import { deliverAutomationResult, logAutomationResult, runAutomationAgent } from "./automation.js";
+import { logAutomationResult, runAutomationAgent, upsertWebhookTaskRecord } from "./automation.js";
+import { RUNTIME_NAME, getRuntimeHome } from "@aria/shared/brand.js";
 
 const DEFAULT_PORT = 7420;
 
@@ -211,6 +211,8 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
   const prompt = task.prompt.replace(/\{\{payload\}\}/g, securePayload);
 
   const result = await runAutomationAgent(runtime, {
+    taskId: task.id ?? `webhook:${task.slug}`,
+    taskType: "webhook",
     sessionPrefix: `webhook:${slug}`,
     connectorType: "webhook",
     name: task.name,
@@ -219,10 +221,11 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
     allowedTools: task.allowedTools,
     allowedToolsets: task.allowedToolsets,
     skills: task.skills,
+    retryPolicy: task.retryPolicy,
+    delivery: task.delivery,
   });
 
   await logAutomationResult(runtime, `webhook-${slug}`, prompt, result.responseText, result.toolCalls);
-  await deliverAutomationResult(runtime, task.delivery, result.responseText, task.connector);
 
   console.log(`[webhook] Task "${task.name}" (${slug}) completed: ${result.summary}`);
 
@@ -246,9 +249,22 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
       },
     },
   });
+  const updatedTask = updatedWebhookTasks.find((item) => item.slug === slug);
+  if (updatedTask) {
+    upsertWebhookTaskRecord(runtime, updatedTask);
+  }
 
   return new Response(
-    JSON.stringify({ slug, task: task.name, response: result.responseText, sessionId: result.sessionId }),
+    JSON.stringify({
+      slug,
+      task: task.name,
+      response: result.responseText,
+      sessionId: result.sessionId,
+      attempt: result.attemptNumber,
+      maxAttempts: result.maxAttempts,
+      deliveryStatus: result.deliveryStatus,
+      deliveryError: result.deliveryError ?? null,
+    }),
     { headers: { "content-type": "application/json" } },
   );
 }
@@ -307,7 +323,7 @@ export interface EngineServer {
 export async function startServer(runtime: EngineRuntime, options: EngineServerOptions = {}): Promise<EngineServer> {
   const port = options.port ?? DEFAULT_PORT;
   const hostname = options.hostname ?? "127.0.0.1";
-  const saHome = process.env.SA_HOME ?? join(homedir(), ".sa");
+  const runtimeHome = getRuntimeHome();
 
   const appRouter = createAppRouter(runtime);
 
@@ -327,10 +343,6 @@ export async function startServer(runtime: EngineRuntime, options: EngineServerO
 
       // Webhook endpoints (all under /webhook/*)
       if (url.pathname === "/webhook/agent" && req.method === "POST") {
-        return handleWebhookAgent(req, runtime, appRouter);
-      }
-      // Legacy /webhook route (backwards compat → redirects to /webhook/agent)
-      if (url.pathname === "/webhook" && req.method === "POST") {
         return handleWebhookAgent(req, runtime, appRouter);
       }
       if (url.pathname === "/webhook/heartbeat" && req.method === "POST") {
@@ -372,10 +384,10 @@ export async function startServer(runtime: EngineRuntime, options: EngineServerO
   const httpUrl = `http://${hostname}:${port}`;
 
   // Write discovery files for CLI and Connectors
-  await writeFile(join(saHome, "engine.url"), httpUrl);
+  await writeFile(join(runtimeHome, "engine.url"), httpUrl);
 
-  console.log(`Esperta Base Engine listening on ${httpUrl}`);
-  console.log(`Esperta Base Engine WS on ws://${hostname}:${port + 1}`);
+  console.log(`${RUNTIME_NAME} listening on ${httpUrl}`);
+  console.log(`${RUNTIME_NAME} WS on ws://${hostname}:${port + 1}`);
 
   return {
     port,
@@ -385,7 +397,7 @@ export async function startServer(runtime: EngineRuntime, options: EngineServerO
       wssHandler.broadcastReconnectNotification();
       wss.close();
       // Clean up discovery files
-      try { await unlink(join(saHome, "engine.url")); } catch {}
+      try { await unlink(join(runtimeHome, "engine.url")); } catch {}
       await runtime.close();
     },
   };

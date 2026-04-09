@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "bun:test";
-import { Scheduler, matchesCron, createHeartbeatTask } from "@sa/engine/scheduler.js";
+import { Scheduler, matchesCron, createHeartbeatTask } from "@aria/engine/scheduler.js";
 import { mkdir, rm, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -319,7 +319,7 @@ describe("Scheduler", () => {
 });
 
 describe("createHeartbeatTask", () => {
-  const testHome = join(tmpdir(), "sa-test-heartbeat-" + Date.now());
+  const testHome = join(tmpdir(), "aria-test-heartbeat-" + Date.now());
 
   beforeEach(async () => {
     await mkdir(testHome, { recursive: true });

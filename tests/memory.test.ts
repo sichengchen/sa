@@ -1,11 +1,11 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { MemoryManager } from "@sa/engine/memory/index.js";
+import { MemoryManager } from "@aria/engine/memory/index.js";
 import { writeFile, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
 
-const testDir = join(tmpdir(), "sa-test-memory-" + Date.now());
+const testDir = join(tmpdir(), "aria-test-memory-" + Date.now());
 
 beforeEach(async () => {
   await rm(testDir, { recursive: true, force: true });
@@ -22,7 +22,9 @@ describe("MemoryManager", () => {
 
     const context = await mgr.loadContext();
     expect(context).toBe("");
-    expect(existsSync(join(testDir, "topics"))).toBe(true);
+    expect(existsSync(join(testDir, "profile"))).toBe(true);
+    expect(existsSync(join(testDir, "project"))).toBe(true);
+    expect(existsSync(join(testDir, "operational"))).toBe(true);
     expect(existsSync(join(testDir, "journal"))).toBe(true);
     expect(existsSync(join(testDir, ".index.sqlite"))).toBe(true);
     mgr.close();
@@ -139,8 +141,8 @@ describe("MemoryManager — FTS5 search", () => {
 
     const results = await mgr.searchIndex("address");
     expect(results.length).toBeGreaterThanOrEqual(1);
-    expect(results[0].sourceType).toBe("topic");
-    expect(results[0].source).toBe("topics/address.md");
+    expect(results[0].sourceType).toBe("project");
+    expect(results[0].source).toBe("project/address.md");
     expect(results[0].content).toContain("123 Example St");
     expect(results[0].score).toBeGreaterThan(0);
     expect(results[0].lineStart).toBeGreaterThanOrEqual(1);
@@ -154,10 +156,10 @@ describe("MemoryManager — FTS5 search", () => {
     await mgr.save("note", "Meeting notes for today");
     await mgr.appendJournal("Had a meeting about project X");
 
-    const topicOnly = await mgr.searchIndex("meeting", { sourceType: "topic" });
+    const topicOnly = await mgr.searchIndex("meeting", { sourceType: "project" });
     const journalOnly = await mgr.searchIndex("meeting", { sourceType: "journal" });
 
-    expect(topicOnly.every((r) => r.sourceType === "topic")).toBe(true);
+    expect(topicOnly.every((r) => r.sourceType === "project")).toBe(true);
     expect(journalOnly.every((r) => r.sourceType === "journal")).toBe(true);
     mgr.close();
   });
@@ -248,18 +250,17 @@ describe("MemoryManager — Journal", () => {
   });
 });
 
-describe("MemoryManager — Reindex and migration", () => {
-  test("reindex picks up externally created topic files", async () => {
+describe("MemoryManager — Reindex behavior", () => {
+  test("reindex picks up externally created project memory files", async () => {
     const mgr = new MemoryManager(testDir);
     await mgr.init();
 
-    // Create a topic file externally (simulating migration)
-    await writeFile(join(testDir, "topics", "external.md"), "Externally created memory file.");
+    await writeFile(join(testDir, "project", "external.md"), "Externally created memory file.");
     await mgr.reindex();
 
     const results = await mgr.searchIndex("externally created");
     expect(results.length).toBeGreaterThanOrEqual(1);
-    expect(results[0].source).toBe("topics/external.md");
+    expect(results[0].source).toBe("project/external.md");
     mgr.close();
   });
 
@@ -273,7 +274,7 @@ describe("MemoryManager — Reindex and migration", () => {
 
     // Delete file externally
     const { unlink } = await import("node:fs/promises");
-    await unlink(join(testDir, "topics", "willdelete.md"));
+    await unlink(join(testDir, "project", "willdelete.md"));
     await mgr.reindex();
 
     expect(await mgr.searchIndex("unique content")).toEqual([]);
@@ -302,5 +303,23 @@ describe("MemoryManager — Reindex and migration", () => {
     expect(keys).toContain("user-name");
     expect(keys).toContain("preferences");
     mgr2.close();
+  });
+
+  test("supports explicit profile and operational layers", async () => {
+    const mgr = new MemoryManager(testDir);
+    await mgr.init();
+
+    await mgr.saveLayer("profile", "user-style", "Prefers terse answers.");
+    await mgr.saveLayer("operational", "approval-mode", "Trusted mode enabled for repo maintenance.");
+
+    expect(await mgr.getLayer("profile", "user-style")).toBe("Prefers terse answers.");
+    expect(await mgr.getLayer("operational", "approval-mode")).toBe("Trusted mode enabled for repo maintenance.");
+
+    const promptContext = await mgr.loadLayeredContext();
+    expect(promptContext).toContain("## Profile Memory");
+    expect(promptContext).toContain("Prefers terse answers.");
+    expect(promptContext).toContain("## Operational Memory");
+    expect(promptContext).toContain("Trusted mode enabled");
+    mgr.close();
   });
 });

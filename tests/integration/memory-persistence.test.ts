@@ -1,10 +1,10 @@
 import { describe, test, expect, afterEach } from "bun:test";
-import { MemoryManager } from "@sa/engine/memory/index.js";
+import { MemoryManager } from "@aria/engine/memory/index.js";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-const testDir = join(tmpdir(), "sa-integration-memory-" + Date.now());
+const testDir = join(tmpdir(), "aria-integration-memory-" + Date.now());
 
 afterEach(async () => {
   await rm(testDir, { recursive: true, force: true });

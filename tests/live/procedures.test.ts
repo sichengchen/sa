@@ -2,36 +2,37 @@ import { test, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createAppRouter } from "@sa/engine/procedures.js";
-import { createContext } from "@sa/engine/context.js";
-import { SessionManager } from "@sa/engine/sessions.js";
-import { AuthManager } from "@sa/engine/auth.js";
-import { ConfigManager } from "@sa/engine/config/index.js";
-import { Agent } from "@sa/engine/agent/index.js";
-import { SkillRegistry } from "@sa/engine/skills/index.js";
-import { Scheduler, createHeartbeatTask } from "@sa/engine/scheduler.js";
-import type { EngineRuntime } from "@sa/engine/runtime.js";
-import type { EngineEvent } from "@sa/shared/types.js";
+import { createAppRouter } from "@aria/engine/procedures.js";
+import { createContext } from "@aria/engine/context.js";
+import { SessionManager } from "@aria/engine/sessions.js";
+import { AuthManager } from "@aria/engine/auth.js";
+import { ConfigManager } from "@aria/engine/config/index.js";
+import { Agent } from "@aria/engine/agent/index.js";
+import { SkillRegistry } from "@aria/engine/skills/index.js";
+import { Scheduler, createHeartbeatTask } from "@aria/engine/scheduler.js";
+import type { EngineRuntime } from "@aria/engine/runtime.js";
+import type { EngineEvent } from "@aria/shared/types.js";
 import { makeLiveRouter, describeLive } from "../helpers/live-model.js";
 import { echoTool } from "../helpers/test-tools.js";
-import { SessionArchiveManager } from "@sa/engine/session-archive.js";
-import { AuditLogger } from "@sa/engine/audit.js";
-import { SecurityModeManager } from "@sa/engine/security-mode.js";
-import { CheckpointManager } from "@sa/engine/checkpoints.js";
-import { MCPManager } from "@sa/engine/mcp.js";
+import { SessionArchiveManager } from "@aria/engine/session-archive.js";
+import { AuditLogger } from "@aria/engine/audit.js";
+import { SecurityModeManager } from "@aria/engine/security-mode.js";
+import { CheckpointManager } from "@aria/engine/checkpoints.js";
+import { MCPManager } from "@aria/engine/mcp.js";
+import { OperationalStore } from "@aria/engine/operational-store.js";
 
 let testDir: string;
 let runtime: EngineRuntime;
 let masterToken: string;
 
-async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
-  await mkdir(join(saHome, "memory"), { recursive: true });
+async function createLiveTestRuntime(runtimeHome: string): Promise<EngineRuntime> {
+  await mkdir(join(runtimeHome, "memory"), { recursive: true });
   await writeFile(
-    join(saHome, "IDENTITY.md"),
+    join(runtimeHome, "IDENTITY.md"),
     "# Test Agent\n\n## Personality\nTest\n\n## System Prompt\nYou are a test agent.\n",
   );
   await writeFile(
-    join(saHome, "config.json"),
+    join(runtimeHome, "config.json"),
     JSON.stringify({
       version: 3,
       runtime: {
@@ -49,23 +50,25 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
     }),
   );
 
-  const config = new ConfigManager(saHome);
+  const config = new ConfigManager(runtimeHome);
   await config.load();
 
   const router = makeLiveRouter();
-  const sessions = new SessionManager();
-  const auth = new AuthManager(saHome);
+  const store = new OperationalStore(runtimeHome);
+  await store.init();
+  const sessions = new SessionManager(store);
+  const auth = new AuthManager(runtimeHome);
   await auth.init();
-  const archive = new SessionArchiveManager(saHome);
+  const archive = new SessionArchiveManager(runtimeHome);
   await archive.init();
-  const checkpoints = new CheckpointManager(saHome, { enabled: true, maxSnapshots: 10 });
-  const mcp = new MCPManager(undefined, saHome);
+  const checkpoints = new CheckpointManager(runtimeHome, { enabled: true, maxSnapshots: 10 });
+  const mcp = new MCPManager(undefined, runtimeHome);
   await mcp.init();
 
   const mainSession = sessions.create("main", "engine");
   const skills = new SkillRegistry();
   const scheduler = new Scheduler();
-  scheduler.register(createHeartbeatTask(saHome, null));
+  scheduler.register(createHeartbeatTask(runtimeHome, null));
 
   const tools = [echoTool];
 
@@ -73,17 +76,22 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
     config,
     router,
     memory: { init: async () => {}, loadContext: async () => "", persist: async () => {} } as any,
+    store,
     archive,
     checkpoints,
     mcp,
     tools,
+    promptEngine: {
+      buildBasePrompt: async () => "Reply briefly. When asked to use a tool, use it without explanation.",
+      buildSessionPrompt: async () => "Reply briefly. When asked to use a tool, use it without explanation.",
+    } as any,
     systemPrompt: "Reply briefly. When asked to use a tool, use it without explanation.",
     sessions,
     auth,
     skills,
     scheduler,
     transcriber: { transcribe: async () => "", backend: null } as any,
-    audit: new AuditLogger(saHome),
+    audit: new AuditLogger(runtimeHome),
     securityMode: new SecurityModeManager(),
     agentName: "Test",
     mainSessionId: mainSession.id,
@@ -92,6 +100,7 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
     },
     async close() {
       scheduler.stop();
+      store.close();
       archive.close();
       await auth.cleanup();
     },
@@ -109,7 +118,7 @@ async function createLiveTestRuntime(saHome: string): Promise<EngineRuntime> {
 
 describeLive("tRPC procedures — live LLM tests", () => {
   beforeEach(async () => {
-    testDir = await mkdtemp(join(tmpdir(), "sa-live-procedures-test-"));
+    testDir = await mkdtemp(join(tmpdir(), "aria-live-procedures-test-"));
     runtime = await createLiveTestRuntime(testDir);
     masterToken = runtime.auth.getMasterToken();
   });

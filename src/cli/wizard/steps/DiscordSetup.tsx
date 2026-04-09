@@ -124,7 +124,7 @@ export function DiscordSetup({ onNext, onBack, currentValues }: DiscordSetupProp
       </Text>
       <Text />
       <Text>
-        To use Esperta Base via Discord, create a bot at discord.com/developers/applications.
+        To use Esperta Aria via Discord, create a bot at discord.com/developers/applications.
       </Text>
       <Text>Enter the bot token, or leave empty to skip.</Text>
       <Text />

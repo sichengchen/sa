@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import type { SAConfigFile } from "@sa/engine/config/index.js";
-import type { ModelConfig, ProviderConfig } from "@sa/engine/router/index.js";
-import type { ModelTier } from "@sa/engine/router/task-types.js";
-import { loadSecrets } from "@sa/engine/config/secrets.js";
+import type { AriaConfigFile } from "@aria/engine/config/index.js";
+import type { ModelConfig, ProviderConfig } from "@aria/engine/router/index.js";
+import type { ModelTier } from "@aria/engine/router/task-types.js";
+import { loadSecrets } from "@aria/engine/config/secrets.js";
 import { fetchModelList, lookupModelMeta } from "../shared/fetch-models.js";
 
 type Screen = "categories" | "chat-list" | "embedding-list" | "tier-assign"
@@ -16,9 +16,9 @@ const VISIBLE_MODELS = 8;
 const TIERS: ModelTier[] = ["performance", "normal", "eco"];
 
 interface ModelManagerProps {
-  config: SAConfigFile;
+  config: AriaConfigFile;
   homeDir: string;
-  onSave: (config: SAConfigFile) => Promise<void>;
+  onSave: (config: AriaConfigFile) => Promise<void>;
   onBack: () => void;
 }
 
@@ -125,7 +125,7 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
     const newTiers = { ...tiers, [tier]: modelName };
     // If all tiers point to default, remove modelTiers entirely
     const allDefault = TIERS.every((t) => (newTiers[t] ?? config.defaultModel) === config.defaultModel);
-    const updated: SAConfigFile = {
+    const updated: AriaConfigFile = {
       ...config,
       runtime: {
         ...config.runtime,
@@ -340,7 +340,7 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
         for (const tier of TIERS) {
           if (newTiers[tier] === removeTarget) delete newTiers[tier];
         }
-        const updated: SAConfigFile = {
+        const updated: AriaConfigFile = {
           ...config,
           models: config.models.filter((m) => m.name !== removeTarget),
           runtime: {

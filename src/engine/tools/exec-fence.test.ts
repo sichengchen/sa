@@ -7,7 +7,7 @@ const HOME = homedir();
 describe("validateExecPaths", () => {
   const config = {
     fence: ["~/projects", "/tmp"],
-    alwaysDeny: ["~/.sa", "~/.ssh", "~/.gnupg"],
+    alwaysDeny: ["~/.aria", "~/.ssh", "~/.gnupg"],
   };
 
   describe("workdir validation", () => {
@@ -29,7 +29,7 @@ describe("validateExecPaths", () => {
     });
 
     it("blocks workdir in always-deny", () => {
-      const result = validateExecPaths("ls", `${HOME}/.sa`, config);
+      const result = validateExecPaths("ls", `${HOME}/.aria`, config);
       expect("ok" in result).toBe(false);
       if (!("ok" in result)) {
         expect(result.detail).toContain("denied");
@@ -50,8 +50,8 @@ describe("validateExecPaths", () => {
       }
     });
 
-    it("blocks commands accessing ~/.sa", () => {
-      const result = validateExecPaths(`cat ${HOME}/.sa/config.json`, undefined, config);
+    it("blocks commands accessing ~/.aria", () => {
+      const result = validateExecPaths(`cat ${HOME}/.aria/config.json`, undefined, config);
       expect("ok" in result).toBe(false);
     });
 
@@ -96,9 +96,9 @@ describe("validateExecPaths", () => {
       expect(validateExecPaths("cat /etc/hosts", undefined, config, overrides)).toEqual({ ok: true });
     });
 
-    it("cannot override ~/.sa (always denied)", () => {
-      const overrides = new Set([`${HOME}/.sa`]);
-      const result = validateExecPaths(`cat ${HOME}/.sa/config.json`, undefined, config, overrides);
+    it("cannot override ~/.aria (always denied)", () => {
+      const overrides = new Set([`${HOME}/.aria`]);
+      const result = validateExecPaths(`cat ${HOME}/.aria/config.json`, undefined, config, overrides);
       expect("ok" in result).toBe(false);
     });
   });

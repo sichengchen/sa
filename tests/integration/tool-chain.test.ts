@@ -1,13 +1,13 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { readTool } from "@sa/engine/tools/read.js";
-import { writeTool } from "@sa/engine/tools/write.js";
-import { editTool } from "@sa/engine/tools/edit.js";
-import { bashTool } from "@sa/engine/tools/bash.js";
+import { readTool } from "@aria/engine/tools/read.js";
+import { writeTool } from "@aria/engine/tools/write.js";
+import { editTool } from "@aria/engine/tools/edit.js";
+import { bashTool } from "@aria/engine/tools/bash.js";
 import { rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-const testDir = join(tmpdir(), "sa-integration-tools-" + Date.now());
+const testDir = join(tmpdir(), "aria-integration-tools-" + Date.now());
 
 beforeEach(async () => {
   await mkdir(testDir, { recursive: true });

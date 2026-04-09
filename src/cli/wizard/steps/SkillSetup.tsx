@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import { existsSync } from "node:fs";
-import { scanSkillDirectory, parseEmbeddedSkills } from "@sa/engine/skills/loader.js";
-import { BUNDLED_SKILLS_DIR } from "@sa/engine/skills/registry.js";
-import { EMBEDDED_SKILLS } from "@sa/engine/skills/embedded-skills.generated.js";
-import type { SkillMetadata } from "@sa/engine/skills/types.js";
+import { scanSkillDirectory, parseEmbeddedSkills } from "@aria/engine/skills/loader.js";
+import { BUNDLED_SKILLS_DIR } from "@aria/engine/skills/registry.js";
+import { EMBEDDED_SKILLS } from "@aria/engine/skills/embedded-skills.generated.js";
+import type { SkillMetadata } from "@aria/engine/skills/types.js";
 
 export interface SkillSetupData {
   selectedSkills: string[];

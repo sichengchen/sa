@@ -21,7 +21,7 @@ describe("SeatbeltSandbox", () => {
 
     const wrapped = sandbox.wrap(["sh", "-c", "echo hello"], {
       fence: ["/tmp", "~/projects"],
-      deny: ["~/.sa", "~/.ssh"],
+      deny: ["~/.aria", "~/.ssh"],
     });
 
     expect(wrapped[0]).toBe("sandbox-exec");
@@ -50,7 +50,7 @@ describe("NoopSandbox", () => {
 
   it("returns command unchanged", () => {
     const cmd = ["sh", "-c", "ls -la"];
-    const result = sandbox.wrap(cmd, { fence: ["/tmp"], deny: ["~/.sa"] });
+    const result = sandbox.wrap(cmd, { fence: ["/tmp"], deny: ["~/.aria"] });
     expect(result).toEqual(cmd);
   });
 });

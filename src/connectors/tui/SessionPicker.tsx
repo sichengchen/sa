@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import type { Session } from "@sa/shared/types.js";
+import type { Session } from "@aria/shared/types.js";
 
 interface SessionPickerProps {
   sessions: Session[];

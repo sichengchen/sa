@@ -1,108 +1,47 @@
-<img width="2000" height="506" alt="Frame 7-2" src="https://github.com/user-attachments/assets/16e538f9-7e0a-4594-b9f0-2979675e1aa3" />
+# Esperta Aria
 
-# Esperta Base
+Local-first agent platform with a durable runtime, structured toolsets, native MCP, and one shared interaction protocol across CLI, connectors, webhooks, and automation.
 
-Personal AI agent assistant.
+## Public Identity
 
-## Install
-
-```bash
-brew install sichengchen/tap/esperta-base
-```
-
-Update with `brew upgrade esperta-base`.
-
-### Service
-
-```bash
-brew services start esperta-base     # start engine, auto-start on login
-brew services stop esperta-base      # stop engine
-brew services restart esperta-base   # restart
-```
-
-Or manage manually with `esperta-base engine start/stop/restart/status/logs`.
-
-## Architecture
-
-The **Engine** runs as a background daemon and owns the agent loop, tools, memory, session archive, checkpoints, skills, MCP integrations, scheduler, audio transcription, and model routing. **Connectors** (Telegram, Slack, Teams, Google Chat, Discord, GitHub, Linear) auto-start with the Engine when configured. The **TUI** is launched on-demand. **Webhook** endpoints (`/webhook/agent`, `/webhook/tasks/:slug`, `/webhook/heartbeat`) allow external systems to send messages, trigger automation tasks, and invoke heartbeat checks programmatically. Six connectors share a unified **Chat SDK adapter** — Telegram stays on Grammy. Session tokens are scoped to their paired connector identity; admin surfaces remain master-token only.
+- Product: `Esperta Aria`
+- Runtime: `Aria Runtime`
+- CLI: `aria`
+- Runtime home: `~/.aria/` or `ARIA_HOME`
 
 ## Development
 
 ```bash
-git clone https://github.com/sichengchen/esperta-base.git
-cd esperta-base
 bun install
-bun run dev            # starts Engine (if needed) + opens TUI
+bun run dev
 ```
 
-On first run, an onboarding wizard configures identity, model/provider settings, and optional connectors. Config is saved to `~/.sa/` (or `SA_HOME` if set).
+On first run, the onboarding flow writes runtime state under `~/.aria/`.
+
+## Commands
 
 | Command | Purpose |
-|---------|---------|
-| `bun run dev` | Run from source |
-| `bun run build` | Bundle to `dist/` |
-| `bun test` | Run tests |
-| `bun run lint` | ESLint |
-| `bun run typecheck` | TypeScript check |
-| `bun run version:bump` | Bump CalVer + tag |
-
-## Esperta Base CLI
-
-Preferred command: `esperta-base`. Compatibility alias: `sa`.
-
-```text
-esperta-base                      Start Engine (if needed) and open the TUI
-esperta-base onboard              Run the onboarding wizard
-esperta-base config               Open interactive config editor (providers/models/connectors/memory)
-esperta-base engine start         Start the Engine as a background daemon
-esperta-base engine stop          Stop the running Engine
-esperta-base engine status        Show Engine status
-esperta-base engine logs          Show recent Engine logs
-esperta-base engine restart       Restart the Engine
-esperta-base stop                 Force-cancel all running agent tasks
-esperta-base restart              Restart the Engine via tRPC
-esperta-base shutdown             Shut down the Engine gracefully
-esperta-base help                 Show help
-```
-
-## Skills
-
-- Bundled skills ship in `src/engine/skills/bundled/`
-- User-installed/local skills live in `~/.sa/skills/<skill-name>/SKILL.md`
-- The agent can create and patch reusable user skills through the `skill_manage` tool
-- `skill.reload` and successful `skill_manage` mutations refresh the runtime skill catalog for subsequent turns without restarting the Engine
+| --- | --- |
+| `aria` | Start the runtime if needed and open the TUI |
+| `aria onboard` | Run onboarding |
+| `aria config` | Open the interactive config editor |
+| `aria engine start` | Start Aria Runtime in the background |
+| `aria engine stop` | Stop the runtime |
+| `aria engine status` | Show runtime status |
+| `aria engine logs` | Show runtime logs |
+| `aria restart` | Restart the runtime via API |
+| `aria shutdown` | Shut the runtime down gracefully |
+| `aria audit` | Inspect the audit log |
 
 ## Documentation
 
-System docs live in [`specs/`](specs/README.md). Key sections:
+The canonical Aria documentation now lives in [`docs/`](docs/README.md):
 
-- [Overview](specs/overview.md) — Architecture, subsystems, agent loop, model router, tRPC API
-- [Configuration](specs/configuration.md) — Config schema, providers, models, tiers, aliases
-- [Tools](specs/tools/README.md) — Danger classification, approval matrix, per-tool config
-- [Security](specs/security/README.md) — Threat model, approval flow, exec classifier, secrets vault, auth
-- [Automation](specs/automation.md) — Heartbeat, cron, webhooks
-- [Sessions](specs/sessions.md) — 3-tier session model, structured IDs
-- [Skills](specs/skills.md) — SKILL.md format, discovery, ClawHub
-- [Development](specs/development.md) — Testing, CI/CD, CalVer, contributing
+- [`docs/product/aria-platform.md`](docs/product/aria-platform.md)
+- [`docs/system/runtime-model.md`](docs/system/runtime-model.md)
+- [`docs/system/prompt-engine.md`](docs/system/prompt-engine.md)
+- [`docs/system/tool-runtime.md`](docs/system/tool-runtime.md)
+- [`docs/system/automation.md`](docs/system/automation.md)
+- [`docs/interfaces/interaction-protocol.md`](docs/interfaces/interaction-protocol.md)
 
-## Config location
-
-Config lives in `~/.sa/` by default. Override with `SA_HOME`.
-
-```text
-~/.sa/
-  IDENTITY.md       # agent name, personality, system prompt
-  USER.md           # user profile (name, timezone, preferences)
-  config.json       # runtime + providers + models config
-  secrets.enc       # encrypted API keys and connector secrets
-  .salt             # local salt used for secrets encryption key derivation
-  memory/           # persistent memory files
-  skills/           # installed skills
-  checkpoints/      # shadow git repos used for rollback checkpoints
-  session-archive.sqlite # persisted session transcripts + search index
-  engine.url        # Engine discovery file (written at startup)
-  engine.pid        # Engine PID file
-  engine.token      # Engine auth token file
-  engine.log        # Engine log output
-  engine.heartbeat  # heartbeat metadata written by scheduler
-```
+Supporting design, operator, security, and tool documentation also lives under `docs/`, with the product, system, and interface pages above serving as the primary Aria entry points.

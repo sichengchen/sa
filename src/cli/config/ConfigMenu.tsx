@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import { ConfigManager } from "@sa/engine/config/index.js";
-import type { SAConfigFile } from "@sa/engine/config/index.js";
+import { ConfigManager } from "@aria/engine/config/index.js";
+import type { AriaConfigFile } from "@aria/engine/config/index.js";
 import { ProviderManager } from "./ProviderManager.js";
 import { ModelManager } from "./ModelManager.js";
 import { ConnectorSettings } from "./ConnectorSettings.js";
@@ -25,7 +25,7 @@ const MENU_ITEMS = [
 
 export function ConfigApp({ homeDir, onExit }: ConfigAppProps) {
   const [screen, setScreen] = useState<Screen>("menu");
-  const [config, setConfig] = useState<SAConfigFile | null>(null);
+  const [config, setConfig] = useState<AriaConfigFile | null>(null);
   const [manager, setManager] = useState<ConfigManager | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,7 +58,7 @@ export function ConfigApp({ homeDir, onExit }: ConfigAppProps) {
     );
   }
 
-  async function saveConfig(updated: SAConfigFile) {
+  async function saveConfig(updated: AriaConfigFile) {
     if (!manager) return;
     setConfig(updated);
     await manager.saveConfig(updated);
@@ -122,7 +122,7 @@ export function ConfigApp({ homeDir, onExit }: ConfigAppProps) {
 }
 
 interface ConfigMenuScreenProps {
-  config: SAConfigFile;
+  config: AriaConfigFile;
   homeDir: string;
   onSelect: (screen: Screen) => void;
   onExit: () => void;
@@ -152,7 +152,7 @@ function ConfigMenuScreen({ config, onSelect, onExit }: ConfigMenuScreenProps) {
   return (
     <Box flexDirection="column" padding={1}>
       <Text bold color="cyan">
-        Esperta Base Configuration
+        Esperta Aria Configuration
       </Text>
       <Text />
       {MENU_ITEMS.map((item, i) => {

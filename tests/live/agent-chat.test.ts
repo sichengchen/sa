@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
-import { Agent } from "@sa/engine/agent/index.js";
-import type { AgentEvent } from "@sa/engine/agent/types.js";
+import { Agent } from "@aria/engine/agent/index.js";
+import type { AgentEvent } from "@aria/engine/agent/types.js";
 import { makeLiveRouter, describeLive } from "../helpers/live-model.js";
 import { echoTool } from "../helpers/test-tools.js";
 

@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import type { SAConfigFile } from "@sa/engine/config/index.js";
-import { loadSecrets, saveSecrets } from "@sa/engine/config/secrets.js";
-import type { SecretsFile } from "@sa/engine/config/types.js";
+import type { AriaConfigFile } from "@aria/engine/config/index.js";
+import { loadSecrets, saveSecrets } from "@aria/engine/config/secrets.js";
+import type { SecretsFile } from "@aria/engine/config/types.js";
 
 type Screen = "menu" | "variables" | "secrets";
 type ListMode = "list" | "edit-value" | "add-name" | "add-value" | "confirm-delete";
 
 interface EnvironmentSettingsProps {
-  config: SAConfigFile;
+  config: AriaConfigFile;
   homeDir: string;
-  onSave: (config: SAConfigFile) => Promise<void>;
+  onSave: (config: AriaConfigFile) => Promise<void>;
   onBack: () => void;
 }
 

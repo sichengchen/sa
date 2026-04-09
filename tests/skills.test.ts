@@ -3,10 +3,10 @@ import { mkdir, rm, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
-import { SkillRegistry, scanSkillDirectory, formatSkillsDiscovery, formatActiveSkills } from "@sa/engine/skills/index.js";
-import { parseFrontmatter } from "@sa/engine/skills/loader.js";
+import { SkillRegistry, scanSkillDirectory, formatSkillsDiscovery, formatActiveSkills } from "@aria/engine/skills/index.js";
+import { parseFrontmatter } from "@aria/engine/skills/loader.js";
 
-const testHome = join(tmpdir(), "sa-test-skills-" + Date.now());
+const testHome = join(tmpdir(), "aria-test-skills-" + Date.now());
 const skillsDir = join(testHome, "skills");
 
 beforeEach(async () => {

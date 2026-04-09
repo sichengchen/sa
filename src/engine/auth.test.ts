@@ -3,13 +3,14 @@ import { mkdtemp, rm, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { AuthManager } from "./auth.js";
+import { OperationalStore } from "./operational-store.js";
 
 describe("AuthManager", () => {
   let dir: string;
   let auth: AuthManager;
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "sa-auth-test-"));
+    dir = await mkdtemp(join(tmpdir(), "aria-auth-test-"));
     auth = new AuthManager(dir);
     await auth.init();
   });
@@ -163,6 +164,27 @@ describe("AuthManager", () => {
       expect(shortTTLAuth.validate(token!)).toBeNull();
       await shortTTLAuth.cleanup();
     });
+
+    it("restores persisted session tokens across auth manager restarts", async () => {
+      const store = new OperationalStore(dir);
+      await store.init();
+
+      const first = new AuthManager(dir, undefined, store);
+      await first.init();
+      const paired = first.pair(first.getMasterToken(), "telegram:123", "telegram");
+      expect(paired.success).toBe(true);
+
+      const second = new AuthManager(dir, undefined, store);
+      await second.init();
+      const entry = second.validate(paired.token!);
+      expect(entry).not.toBeNull();
+      expect(entry!.connectorId).toBe("telegram:123");
+      expect(entry!.connectorType).toBe("telegram");
+
+      await first.cleanup();
+      await second.cleanup();
+      store.close();
+    });
   });
 
   describe("validateWebhookToken()", () => {
@@ -188,6 +210,27 @@ describe("AuthManager", () => {
 
     it("returns false for unknown token", () => {
       expect(auth.revoke("nonexistent")).toBe(false);
+    });
+  });
+
+  describe("pairing code persistence", () => {
+    it("accepts a persisted pairing code after auth manager restart", async () => {
+      const store = new OperationalStore(dir);
+      await store.init();
+
+      const first = new AuthManager(dir, undefined, store);
+      await first.init();
+      const code = first.generatePairingCode();
+
+      const second = new AuthManager(dir, undefined, store);
+      await second.init();
+      const result = second.pair(code, "discord:channel", "discord");
+      expect(result.success).toBe(true);
+      expect(result.token).toBeTruthy();
+
+      await first.cleanup();
+      await second.cleanup();
+      store.close();
     });
   });
 });

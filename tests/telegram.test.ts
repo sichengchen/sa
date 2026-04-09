@@ -2,13 +2,13 @@ import { describe, test, expect } from "bun:test";
 import {
   hasTelegramCredentials,
   getMissingCredentials,
-} from "@sa/connectors/telegram/index.js";
+} from "@aria/connectors/telegram/index.js";
 import {
   formatToolResult,
   splitMessage,
   getMaxLength,
   formatSenderAttribution,
-} from "@sa/connectors/chat-sdk/formatter.js";
+} from "@aria/connectors/chat-sdk/formatter.js";
 
 describe("Telegram config", () => {
   describe("hasTelegramCredentials", () => {

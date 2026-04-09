@@ -6,7 +6,7 @@ import {
   createWSClient,
 } from "@trpc/client";
 import superjson from "superjson";
-import type { AppRouter } from "@sa/engine/procedures.js";
+import type { AppRouter } from "@aria/engine/procedures.js";
 
 export interface ClientOptions {
   /** Engine HTTP URL (e.g. "http://127.0.0.1:7420") */

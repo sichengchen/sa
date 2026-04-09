@@ -2,7 +2,7 @@ import { describe, test, expect } from "bun:test";
 
 describe("clawhub skill", () => {
   test("SkillRegistry loads clawhub skill", async () => {
-    const { SkillRegistry } = await import("@sa/engine/skills/index.js");
+    const { SkillRegistry } = await import("@aria/engine/skills/index.js");
     const registry = new SkillRegistry();
     await registry.loadAll();
 

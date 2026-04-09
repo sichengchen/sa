@@ -1,5 +1,5 @@
 import { Type } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "@sa/engine/agent/types.js";
+import type { ToolImpl } from "@aria/engine/agent/types.js";
 
 /** Simple echo tool — returns the input message as content */
 export const echoTool: ToolImpl = {
