@@ -286,6 +286,17 @@ export interface AriaConfig {
   defaultModel: string;
 }
 
+export interface WeChatAccountSecret {
+  /** WeChat bot/account identifier (wx_alias from Tencent login flow) */
+  accountId: string;
+  /** Bot auth token issued after QR login */
+  botToken: string;
+  /** Base API URL for this account */
+  apiBaseUrl?: string;
+  /** Restrict inbound messages to these user IDs */
+  allowedUserIds?: string[];
+}
+
 export interface SecretsFile {
   /** Map of env var name → raw API key, e.g. { "ANTHROPIC_API_KEY": "sk-..." } */
   apiKeys: Record<string, string>;
@@ -299,4 +310,6 @@ export interface SecretsFile {
   discordToken?: string;
   /** Discord guild (server) ID for bot operation */
   discordGuildId?: string;
+  /** Saved WeChat QR-login accounts */
+  wechatAccounts?: WeChatAccountSecret[];
 }

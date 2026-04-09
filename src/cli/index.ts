@@ -136,6 +136,38 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     const { startLinearConnector } = await import("@aria/connectors/linear/index.js");
     await startLinearConnector(port);
   },
+  wechat: async (cmdArgs) => {
+    const [action, maybeBaseUrl] = cmdArgs;
+    const { startWeChatConnector, startWeChatLogin } = await import("@aria/connectors/wechat/index.js");
+
+    if (!action || action === "start") {
+      await ensureEngine();
+      await startWeChatConnector();
+      return;
+    }
+
+    if (action === "login") {
+      const account = await startWeChatLogin({ baseUrl: maybeBaseUrl });
+      console.log(`Linked WeChat account ${account.accountId}.`);
+      if (account.allowedUserIds?.length) {
+        console.log(`Allowed sender(s): ${account.allowedUserIds.join(", ")}`);
+      }
+      console.log(`Run '${CLI_NAME} wechat' to start the connector.`);
+      return;
+    }
+
+    if (action === "--help" || action === "-h" || action === "help") {
+      console.log(`Usage: ${CLI_NAME} wechat [start|login [baseUrl]]`);
+      console.log("");
+      console.log("  start               Start the WeChat connector using saved or env credentials");
+      console.log("  login [baseUrl]     Link a WeChat account via QR scan and save it to secrets.enc");
+      return;
+    }
+
+    console.error(`Unknown WeChat action: ${action}`);
+    console.error(`Usage: ${CLI_NAME} wechat [start|login [baseUrl]]`);
+    process.exit(1);
+  },
   shutdown: async () => {
       const { createTuiClient } = await import("@aria/connectors/tui/client.js");
       try {
@@ -221,6 +253,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     console.log("  stop        Stop all running agent tasks");
     console.log("  restart     Restart Aria Runtime");
     console.log("  shutdown    Stop Aria Runtime completely");
+    console.log("  wechat      Link or start the WeChat connector");
     console.log("  telegram    Start the Telegram connector (webhook server on port 3426)");
     console.log("  discord     Start the Discord connector (webhook server on port 3423)");
     console.log("  slack       Start the Slack connector (webhook server on port 3420)");

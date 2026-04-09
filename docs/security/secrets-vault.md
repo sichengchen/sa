@@ -77,6 +77,12 @@ interface SecretsFile {
   pairingCode?: string;              // One-time pairing code
   discordToken?: string;             // Discord bot token
   discordGuildId?: string;           // Discord guild ID
+  wechatAccounts?: Array<{          // Linked WeChat connector accounts
+    accountId: string;
+    botToken: string;
+    apiBaseUrl?: string;
+    allowedUserIds?: string[];
+  }>;
 }
 ```
 

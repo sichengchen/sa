@@ -47,6 +47,7 @@ describe("ToolPolicyManager", () => {
       expect(pm.getVerbosity("tui")).toBe("minimal");
       expect(pm.getVerbosity("telegram")).toBe("silent");
       expect(pm.getVerbosity("discord")).toBe("silent");
+      expect(pm.getVerbosity("wechat")).toBe("silent");
       expect(pm.getVerbosity("webhook")).toBe("silent");
     });
 

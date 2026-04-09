@@ -131,6 +131,7 @@ Controls how much tool execution detail connectors display.
 | Google Chat  | silent    |
 | GitHub       | silent    |
 | Linear       | silent    |
+| WeChat       | silent    |
 | Webhook      | silent    |
 
 ### Config Example
