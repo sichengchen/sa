@@ -337,6 +337,81 @@ describe("tRPC procedures (non-live)", () => {
     });
   });
 
+  describe("webhookTask mutations", () => {
+    test("adds, updates, and removes a webhook task", async () => {
+      const caller = createCaller();
+
+      const added = await caller.webhookTask.add({
+        name: "Deploy Notify",
+        slug: "deploy-notify",
+        prompt: "A deploy happened: {{payload}}",
+        enabled: true,
+      });
+      expect(added.added).toBe(true);
+
+      const created = await caller.webhookTask.list();
+      expect(created.find((task) => task.slug === "deploy-notify")?.name).toBe("Deploy Notify");
+
+      const updated = await caller.webhookTask.update({
+        slug: "deploy-notify",
+        name: "Deploy Alerts",
+      });
+      expect(updated.updated).toBe(true);
+
+      const afterUpdate = await caller.webhookTask.list();
+      expect(afterUpdate.find((task) => task.slug === "deploy-notify")?.name).toBe("Deploy Alerts");
+
+      const removed = await caller.webhookTask.remove({ slug: "deploy-notify" });
+      expect(removed.removed).toBe(true);
+
+      const afterRemove = await caller.webhookTask.list();
+      expect(afterRemove.find((task) => task.slug === "deploy-notify")).toBeUndefined();
+    });
+
+    test("rejects duplicate webhook task names on add", async () => {
+      const caller = createCaller();
+
+      await caller.webhookTask.add({
+        name: "Deploy Notify",
+        slug: "deploy-notify",
+        prompt: "A deploy happened: {{payload}}",
+        enabled: true,
+      });
+
+      await expect(caller.webhookTask.add({
+        name: "Deploy Notify",
+        slug: "deploy-summary",
+        prompt: "Summarize deploy: {{payload}}",
+        enabled: true,
+      })).rejects.toThrow('Webhook task "Deploy Notify" already exists');
+    });
+
+    test("rejects renaming a webhook task to an existing name", async () => {
+      const caller = createCaller();
+
+      await caller.webhookTask.add({
+        name: "Deploy Notify",
+        slug: "deploy-notify",
+        prompt: "A deploy happened: {{payload}}",
+        enabled: true,
+      });
+      await caller.webhookTask.add({
+        name: "Alert Handler",
+        slug: "alert-handler",
+        prompt: "Alert: {{payload}}",
+        enabled: true,
+      });
+
+      await expect(caller.webhookTask.update({
+        slug: "alert-handler",
+        name: "Deploy Notify",
+      })).rejects.toThrow('Webhook task "Deploy Notify" already exists');
+
+      const tasks = await caller.webhookTask.list();
+      expect(tasks.find((task) => task.slug === "alert-handler")?.name).toBe("Alert Handler");
+    });
+  });
+
   describe("model.list", () => {
     test("returns configured models", async () => {
       const caller = createCaller();
