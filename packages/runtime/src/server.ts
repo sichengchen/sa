@@ -6,9 +6,9 @@ import { WebSocketServer } from "ws";
 import { createAppRouter, flushProcedureState, type AppRouter } from "../../../src/engine/procedures.js";
 import { createContext } from "./context.js";
 import type { EngineRuntime } from "./runtime.js";
-import { heartbeatState } from "../../../src/engine/scheduler.js";
+import { heartbeatState } from "./scheduler.js";
 import { frameAsData } from "../../../src/engine/agent/content-frame.js";
-import { logAutomationResult, runAutomationAgent, upsertWebhookTaskRecord } from "../../../src/engine/automation.js";
+import { logAutomationResult, runAutomationAgent, upsertWebhookTaskRecord } from "./automation.js";
 import { RUNTIME_NAME, getRuntimeHome } from "@aria/shared/brand.js";
 
 const DEFAULT_PORT = 7420;

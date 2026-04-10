@@ -8,6 +8,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./automation": "./src/automation.ts",
+    "./automation-schedule": "./src/automation-schedule.ts",
     "./audit": "./src/audit.ts",
     "./auth": "./src/auth.ts",
     "./checkpoints": "./src/checkpoints.ts",
@@ -15,7 +17,9 @@
     "./context": "./src/context.ts",
     "./engine": "./src/engine.ts",
     "./operational-store": "./src/operational-store.ts",
+    "./router": "./src/router/index.ts",
     "./runtime": "./src/runtime.ts",
+    "./scheduler": "./src/scheduler.ts",
     "./security-mode": "./src/security-mode.ts",
     "./server": "./src/server.ts",
     "./session-archive": "./src/session-archive.ts",
