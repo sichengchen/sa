@@ -24,12 +24,12 @@ import { createTranscriber, type Transcriber } from "../../../src/engine/audio/i
 import { AuditLogger } from "./audit.js";
 import { SecurityModeManager } from "./security-mode.js";
 import { configureSandbox } from "../../../src/engine/tools/exec.js";
-import { SessionArchiveManager } from "../../../src/engine/session-archive.js";
-import { CheckpointManager } from "../../../src/engine/checkpoints.js";
+import { SessionArchiveManager } from "./session-archive.js";
+import { CheckpointManager } from "./checkpoints.js";
 import { createSkillManageTool } from "../../../src/engine/tools/skill-manage.js";
 import { MCPManager } from "../../../src/engine/mcp.js";
 import { registerCronTask, upsertCronTaskRecord, upsertHeartbeatTaskRecord, upsertWebhookTaskRecord } from "../../../src/engine/automation.js";
-import { OperationalStore } from "../../../src/engine/operational-store.js";
+import { OperationalStore } from "./operational-store.js";
 import { PromptEngine } from "../../../src/engine/prompt-engine.js";
 import { CLI_NAME, getRuntimeHome } from "@aria/shared/brand.js";
 
