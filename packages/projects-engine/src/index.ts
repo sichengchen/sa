@@ -1,6 +1,7 @@
 export * from "./bridge.js";
 export * from "./dispatch.js";
 export * from "./external-refs.js";
+export * from "./repos.js";
 export * from "./schema.js";
 export * from "./store.js";
 export * from "./repository.js";
