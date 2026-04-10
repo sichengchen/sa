@@ -13,12 +13,12 @@ import { ToolPolicyManager, type ToolEventContext } from "../../../src/engine/to
 import { ConnectorTypeSchema } from "@aria/shared/types.js";
 import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode, EscalationChoice } from "@aria/shared/types.js";
 import type { ModelConfig, ProviderConfig } from "../../../src/engine/router/types.js";
-import { heartbeatState, createHeartbeatTask } from "../../../src/engine/scheduler.js";
-import { describeModeEffects } from "../../../src/engine/security-mode.js";
+import { heartbeatState, createHeartbeatTask } from "./scheduler.js";
+import { describeModeEffects } from "./security-mode.js";
 import { createSessionToolEnvironment } from "../../../src/engine/session-tool-environment.js";
 import { preprocessContextReferences } from "../../../src/engine/context-references.js";
 import type { CronTask } from "./config/types.js";
-import { computeNextRunAt, parseScheduleInput } from "../../../src/engine/automation-schedule.js";
+import { computeNextRunAt, parseScheduleInput } from "./automation-schedule.js";
 import { listToolsets } from "../../../src/engine/toolsets.js";
 import { buildToolCapabilityCatalog, resolveCapabilityPolicyDecision } from "../../../src/engine/capability-policy.js";
 import {
@@ -30,8 +30,8 @@ import {
   upsertHeartbeatTaskRecord,
   upsertWebhookTaskRecord,
   updateCronTaskState,
-} from "../../../src/engine/automation.js";
-import { queryAuditEntries } from "../../../src/engine/audit.js";
+} from "./automation.js";
+import { queryAuditEntries } from "./audit.js";
 
 /** Format tool args as a compact summary for IM display */
 function formatArgsForIM(toolName: string, args: Record<string, unknown>): string {
