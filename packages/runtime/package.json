@@ -8,6 +8,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./context": "./src/context.ts",
+    "./engine": "./src/engine.ts",
     "./runtime": "./src/runtime.ts",
     "./server": "./src/server.ts",
     "./procedures": "./src/procedures.ts",
