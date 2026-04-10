@@ -17,7 +17,7 @@ import { heartbeatState, createHeartbeatTask } from "../../../src/engine/schedul
 import { describeModeEffects } from "../../../src/engine/security-mode.js";
 import { createSessionToolEnvironment } from "../../../src/engine/session-tool-environment.js";
 import { preprocessContextReferences } from "../../../src/engine/context-references.js";
-import type { CronTask } from "../../../src/engine/config/types.js";
+import type { CronTask } from "./config/types.js";
 import { computeNextRunAt, parseScheduleInput } from "../../../src/engine/automation-schedule.js";
 import { listToolsets } from "../../../src/engine/toolsets.js";
 import { buildToolCapabilityCatalog, resolveCapabilityPolicyDecision } from "../../../src/engine/capability-policy.js";
