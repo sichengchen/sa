@@ -4,6 +4,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { router, publicProcedure, middleware } from "./trpc.js";
 import type { EngineRuntime } from "./runtime.js";
+import { getRuntimeSessionCoordinator } from "./session-coordinator.js";
 import { Agent } from "../../../src/engine/agent/index.js";
 import type { AgentEvent } from "../../../src/engine/agent/index.js";
 import type { DangerLevel } from "../../../src/engine/agent/types.js";
@@ -11,11 +12,10 @@ import { classifyExecCommand } from "../../../src/engine/tools/exec-classifier.j
 import { ToolPolicyManager, type ToolEventContext } from "../../../src/engine/tools/policy.js";
 import { ConnectorTypeSchema } from "@aria/shared/types.js";
 import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode, EscalationChoice } from "@aria/shared/types.js";
-import { type SessionSecurityOverrides, createEmptyOverrides } from "../../../src/engine/agent/security-types.js";
 import type { ModelConfig, ProviderConfig } from "../../../src/engine/router/types.js";
 import { heartbeatState, createHeartbeatTask } from "../../../src/engine/scheduler.js";
 import { describeModeEffects } from "../../../src/engine/security-mode.js";
-import { createSessionToolEnvironment, type SessionToolEnvironment } from "../../../src/engine/session-tool-environment.js";
+import { createSessionToolEnvironment } from "../../../src/engine/session-tool-environment.js";
 import { preprocessContextReferences } from "../../../src/engine/context-references.js";
 import type { CronTask } from "../../../src/engine/config/types.js";
 import { computeNextRunAt, parseScheduleInput } from "../../../src/engine/automation-schedule.js";
@@ -56,46 +56,15 @@ function formatArgsForIM(toolName: string, args: Record<string, unknown>): strin
   return json.length > 200 ? json.slice(0, 200) + "..." : json;
 }
 
-/** Per-session agent instances */
-const sessionAgents = new Map<string, Agent>();
-const sessionPromptState = new Map<string, { value: string }>();
-const sessionToolEnvironments = new Map<string, SessionToolEnvironment>();
-const activeRunsBySession = new Map<string, string>();
-
-/** Pending tool approval resolvers: toolCallId -> resolve(boolean) */
-const pendingApprovals = new Map<string, (approved: boolean) => void>();
-
-/** Session-level tool overrides: sessionId -> Set of auto-approved tool names */
-const sessionToolOverrides = new Map<string, Set<string>>();
-
-/** Session-level security overrides: sessionId -> allowed resources */
-const sessionSecurityOverrides = new Map<string, SessionSecurityOverrides>();
-
-/** Pending approval metadata: toolCallId -> { sessionId, toolName, runId } */
-const pendingApprovalMeta = new Map<string, { sessionId: string; toolName: string; runId: string }>();
-
-/** Pending security escalation resolvers: escalationId -> resolve(choice) */
-const pendingEscalations = new Map<string, { resolve: (choice: EscalationChoice) => void; sessionId: string }>();
-
-/** Pending user question resolvers: questionId (= tool call ID) -> resolve(answer) */
-const pendingQuestions = new Map<string, { resolve: (answer: string) => void; reject: (err: Error) => void; sessionId: string }>();
-
-/** Get or create session security overrides */
-function getSecurityOverrides(sessionId: string): SessionSecurityOverrides {
-  let overrides = sessionSecurityOverrides.get(sessionId);
-  if (!overrides) {
-    overrides = createEmptyOverrides();
-    sessionSecurityOverrides.set(sessionId, overrides);
-  }
-  return overrides;
-}
-
 /** Shorthand for audit logging */
 function auditLog(runtime: EngineRuntime, input: import("../../../src/engine/audit.js").AuditInput): void {
   try { runtime.audit.log(input); } catch { /* audit failure is non-fatal */ }
 }
 
 export async function flushProcedureState(runtime: EngineRuntime, reason = "Engine shutting down"): Promise<void> {
+  const coordinator = getRuntimeSessionCoordinator(runtime);
+  const { sessionAgents, activeRunsBySession, pendingApprovals, pendingApprovalMeta, pendingEscalations, pendingQuestions } = coordinator;
+
   for (const agent of sessionAgents.values()) {
     agent.abort();
   }
@@ -133,6 +102,8 @@ export async function flushProcedureState(runtime: EngineRuntime, reason = "Engi
 }
 
 async function persistSessionArchiveForRuntime(runtime: EngineRuntime, sessionId: string): Promise<void> {
+  const coordinator = getRuntimeSessionCoordinator(runtime);
+  const { sessionAgents } = coordinator;
   const session = runtime.sessions.getSession(sessionId);
   const agent = sessionAgents.get(sessionId);
   if (!session || !agent) return;
@@ -142,6 +113,20 @@ async function persistSessionArchiveForRuntime(runtime: EngineRuntime, sessionId
 
 /** Create the tRPC router bound to a runtime instance */
 export function createAppRouter(runtime: EngineRuntime) {
+  const coordinator = getRuntimeSessionCoordinator(runtime);
+  const {
+    sessionAgents,
+    sessionPromptState,
+    sessionToolEnvironments,
+    activeRunsBySession,
+    pendingApprovals,
+    sessionToolOverrides,
+    sessionSecurityOverrides,
+    pendingApprovalMeta,
+    pendingEscalations,
+    pendingQuestions,
+  } = coordinator;
+
   /** Build the policy manager from config + built-in tool danger levels */
   const builtinLevels = new Map<string, DangerLevel>(
     runtime.tools.map((t) => [t.name, t.dangerLevel]),
