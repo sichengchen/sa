@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
-import type { ModelConfig, ProviderConfig } from "../src/engine/router/types.js";
-import type { ModelTier } from "../src/engine/router/task-types.js";
+import type { ModelConfig, ProviderConfig } from "@aria/engine/router/types.js";
+import type { ModelTier } from "@aria/engine/router/task-types.js";
 
 /**
  * Tests for wizard save logic — multi-model config generation.

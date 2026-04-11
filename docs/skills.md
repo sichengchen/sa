@@ -19,7 +19,6 @@ The build now treats the package-owned runtime skill tree as canonical.
 - `scripts/copy-docs.ts` mirrors `docs/` into the bundled Aria skill docs tree
 - `scripts/embed-skills.ts` reads `packages/runtime/src/skills/bundled/*/`
 - embedded output is written to `packages/runtime/src/skills/embedded-skills.generated.ts`
-- a legacy mirror is still written to `src/engine/skills/embedded-skills.generated.ts` for compatibility callers
 
 ## Runtime Model
 
@@ -63,4 +62,4 @@ Bundled skills cover:
 
 ## Migration Note
 
-Bundled skills are now package-owned. `src/engine/skills/*` should be treated as compatibility mirrors, not canonical authoring locations.
+Bundled skills are package-owned under `packages/runtime/src/skills/`.

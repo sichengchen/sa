@@ -5,13 +5,13 @@
 | Command | Purpose |
 |---------|---------|
 | `bun test` | Run all tests (live tests skip without API key) |
-| `bun test src/engine/tools/policy.test.ts` | Run one file |
+| `bun test packages/runtime/src/tools/policy.test.ts` | Run one file |
 | `bun test tests/live/` | Run only live LLM tests |
 | `ANTHROPIC_API_KEY=sk-... bun test` | Run all tests including live |
 
 ## Rules
 
-1. **Every new file gets a test file.** If you create `src/engine/foo.ts`, create `src/engine/foo.test.ts` (co-located) or `tests/foo.test.ts`.
+1. **Every new file gets a test file.** If you create `packages/runtime/src/foo.ts` or `packages/connectors/src/foo.ts`, add a co-located `.test.ts` or a matching test under `tests/`.
 2. **Every bug fix gets a regression test.** Write the failing test first, then fix.
 3. **Test behavior, not implementation.** Test what a function does, not how it does it.
 4. **Pure unit tests where possible.** No I/O, no network, no temp dirs when the logic is pure.
@@ -34,7 +34,7 @@
 
 ```ts
 import { describe, test, expect } from "bun:test";
-import { Agent } from "../../src/engine/agent/index.js";
+import { Agent } from "@aria/engine/agent/index.js";
 import { makeLiveRouter, describeLive } from "../helpers/live-model.js";
 
 describeLive("Agent chat", () => {
@@ -111,7 +111,7 @@ describe("MyFeature", () => {
 
 ```ts
 import { Type } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../src/engine/agent/types.js";
+import type { ToolImpl } from "@aria/engine/agent/types.js";
 
 const tool: ToolImpl = {
   name: "my_tool",

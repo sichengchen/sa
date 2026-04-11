@@ -37,7 +37,7 @@ The migration tool must support dry-run reporting before mutation.
 
 ## Current Migration State
 
-- runtime code is package-owned, with `src/engine/*` compatibility wrappers still present
+- runtime code is package-owned under `packages/runtime/src`
 - projects-engine durable schema exists
 - handoff and relay packages exist with working persistence models
 - CLI surfaces now cover more tracked-work and relay workflows

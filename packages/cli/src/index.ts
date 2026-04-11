@@ -249,7 +249,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     await startDiscordConnector(port);
   },
   __engine: async () => {
-    await import("@aria/engine/index.js");
+    await import("../../runtime/src/engine.js");
   },
   help: async () => {
     console.log(`${PRODUCT_NAME} — Local-First Agent Platform\n`);

@@ -94,5 +94,5 @@ On startup the runtime must:
 ## Current Implementation Notes
 
 - `packages/runtime` is now the canonical implementation owner for runtime code.
-- `src/engine/*` remains as a compatibility layer for external callers and tests during the migration.
+- runtime code is package-owned under `packages/runtime/src`.
 - The runtime now contains a provider-backed backend registry and a dispatch runner for Projects-driven execution.

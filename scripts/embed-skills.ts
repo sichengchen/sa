@@ -11,7 +11,6 @@ const ROOT = join(import.meta.dir, "..");
 const BUNDLED_DIR = join(ROOT, "packages", "runtime", "src", "skills", "bundled");
 const OUTPUTS = [
   join(ROOT, "packages", "runtime", "src", "skills", "embedded-skills.generated.ts"),
-  join(ROOT, "src", "engine", "skills", "embedded-skills.generated.ts"),
 ];
 interface SkillFiles {
   name: string;

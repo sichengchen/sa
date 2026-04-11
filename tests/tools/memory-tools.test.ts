@@ -2,11 +2,11 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { MemoryManager } from "../../src/engine/memory/manager.js";
-import { createMemoryWriteTool } from "../../src/engine/tools/memory-write.js";
-import { createMemorySearchTool } from "../../src/engine/tools/memory-search.js";
-import { createMemoryReadTool } from "../../src/engine/tools/memory-read.js";
-import { createMemoryDeleteTool } from "../../src/engine/tools/memory-delete.js";
+import { MemoryManager } from "@aria/engine/memory/manager.js";
+import { createMemoryWriteTool } from "@aria/engine/tools/memory-write.js";
+import { createMemorySearchTool } from "@aria/engine/tools/memory-search.js";
+import { createMemoryReadTool } from "@aria/engine/tools/memory-read.js";
+import { createMemoryDeleteTool } from "@aria/engine/tools/memory-delete.js";
 
 let tmpDir: string;
 let memory: MemoryManager;

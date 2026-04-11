@@ -18,17 +18,17 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@aria/engine/*": ["packages/runtime/src/*", "src/engine/*"],
-      "@aria/connectors/*": ["packages/connectors/src/*", "src/connectors/*"],
-      "@aria/shared/*": ["packages/shared-types/src/*", "src/shared/*"],
-      "@aria/cli/*": ["packages/cli/src/*", "src/cli/*"]
+      "@aria/engine/*": ["packages/runtime/src/*"],
+      "@aria/connectors/*": ["packages/connectors/src/*"],
+      "@aria/shared/*": ["packages/shared-types/src/*"],
+      "@aria/cli/*": ["packages/cli/src/*"]
     }
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
     "packages/**/*.ts",
-    "packages/**/*.tsx"
+    "packages/**/*.tsx",
+    "tests/**/*.ts",
+    "scripts/**/*.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }

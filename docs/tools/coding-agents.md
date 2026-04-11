@@ -58,7 +58,7 @@ Same schema as `claude_code` (task, files, workdir, background, handle).
 
 ## AgentSubprocess Infrastructure
 
-Shared process manager lives in `packages/runtime/src/tools/agent-subprocess.ts` with compatibility re-exports under `src/engine/tools/`.
+Shared process manager lives in `packages/runtime/src/tools/agent-subprocess.ts`.
 
 ### Core Functions
 

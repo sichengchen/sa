@@ -2,7 +2,7 @@
 
 Every interactive or automated runtime interaction happens inside a durable session.
 
-`SessionManager` now lives under `packages/runtime/src/sessions.ts`, with compatibility re-exports still available through `src/engine/sessions.ts` during the migration.
+`SessionManager` lives under `packages/runtime/src/sessions.ts`.
 
 ## Session ID Format
 

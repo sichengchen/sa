@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Copies docs/ into the package-owned bundled skill tree and mirrors them
- * to the legacy compatibility tree for callers that still read from src/.
+ * Copies docs/ into the package-owned bundled skill tree.
  * No-op if docs/ doesn't exist.
  */
 import { existsSync, rmSync, cpSync } from "node:fs";
@@ -11,7 +10,6 @@ const ROOT = join(import.meta.dir, "..");
 const SRC = join(ROOT, "docs");
 const DESTS = [
   join(ROOT, "packages", "runtime", "src", "skills", "bundled", "aria", "docs"),
-  join(ROOT, "src", "engine", "skills", "bundled", "aria", "docs"),
 ];
 
 if (!existsSync(SRC)) {

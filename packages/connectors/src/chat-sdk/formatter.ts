@@ -5,33 +5,28 @@
  * and markdown sanitization.
  */
 
-/** Default max message length — platforms override as needed */
 const DEFAULT_MAX_LENGTH = 4000;
 
-/** Platform-specific message length limits */
 export const PLATFORM_LIMITS: Record<string, number> = {
-  slack: 3000,    // Slack blocks have ~3000 char soft limit per block
-  teams: 28000,   // Teams Adaptive Cards allow ~28KB
-  gchat: 4096,    // Google Chat message limit
-  discord: 2000,  // Discord message limit
-  github: 65536,  // GitHub comment limit
-  linear: 10000,  // Linear comment limit
-  telegram: 4096, // Telegram message limit
-  wechat: 1800,   // Conservative limit for plain-text WeChat replies
+  slack: 3000,
+  teams: 28000,
+  gchat: 4096,
+  discord: 2000,
+  github: 65536,
+  linear: 10000,
+  telegram: 4096,
+  wechat: 1800,
 };
 
-/** Get the message length limit for a platform */
 export function getMaxLength(platform: string): number {
   return PLATFORM_LIMITS[platform] ?? DEFAULT_MAX_LENGTH;
 }
 
-/** Format a tool result for display */
 export function formatToolResult(toolName: string, content: string, maxLen = 500): string {
   const truncated = content.length > maxLen ? content.slice(0, maxLen) + "..." : content;
   return `**${toolName}**\n\`\`\`\n${truncated}\n\`\`\``;
 }
 
-/** Split a long message into chunks fitting the platform's limit */
 export function splitMessage(text: string, maxLength: number): string[] {
   if (text.length <= maxLength) return [text];
 
@@ -54,7 +49,6 @@ export function splitMessage(text: string, maxLength: number): string[] {
   return chunks;
 }
 
-/** Format a message with sender attribution for group chats */
 export function formatSenderAttribution(displayName: string, text: string): string {
   return `[${displayName}]: ${text}`;
 }

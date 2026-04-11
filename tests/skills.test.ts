@@ -147,7 +147,7 @@ describe("formatActiveSkills", () => {
 });
 
 describe("bundled orchestration skills", () => {
-  const bundledDir = join(import.meta.dir, "..", "src", "engine", "skills", "bundled");
+  const bundledDir = join(import.meta.dir, "..", "packages", "runtime", "src", "skills", "bundled");
 
   const orchestrationSkills = [
     { dir: "coding-agents", expectedName: "coding-agents", mustMention: ["claude_code", "codex", "esperkit", "ask_user", "background"] },

@@ -51,10 +51,10 @@ The repo is in a package-first transition.
 
 | Alias | Resolves to |
 | --- | --- |
-| `@aria/engine/*` | `packages/runtime/src/*` first, then compatibility wrappers in `src/engine/*` |
-| `@aria/connectors/*` | `packages/connectors/src/*`, then legacy `src/connectors/*` |
-| `@aria/shared/*` | `packages/shared-types/src/*`, then legacy `src/shared/*` |
-| `@aria/cli/*` | `packages/cli/src/*`, then legacy `src/cli/*` |
+| `@aria/engine/*` | `packages/runtime/src/*` |
+| `@aria/connectors/*` | `packages/connectors/src/*` |
+| `@aria/shared/*` | `packages/shared-types/src/*` |
+| `@aria/cli/*` | `packages/cli/src/*` |
 
 Within the repo, prefer package-owned implementations over deep relative imports into `src/`.
 
@@ -62,7 +62,7 @@ Within the repo, prefer package-owned implementations over deep relative imports
 
 Three test layers are active:
 
-- co-located unit tests under `src/engine/**` and `src/connectors/**`
+- co-located unit tests under `packages/runtime/src/**` and `packages/connectors/src/**`
 - repo-level integration and workflow tests under `tests/`
 - live-model tests under `tests/live/`, which skip when credentials are absent
 
