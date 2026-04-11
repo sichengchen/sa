@@ -7,8 +7,12 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 
-const BUNDLED_DIR = join(import.meta.dir, "..", "src", "engine", "skills", "bundled");
-const OUTPUT = join(import.meta.dir, "..", "src", "engine", "skills", "embedded-skills.generated.ts");
+const ROOT = join(import.meta.dir, "..");
+const BUNDLED_DIR = join(ROOT, "packages", "runtime", "src", "skills", "bundled");
+const OUTPUTS = [
+  join(ROOT, "packages", "runtime", "src", "skills", "embedded-skills.generated.ts"),
+  join(ROOT, "src", "engine", "skills", "embedded-skills.generated.ts"),
+];
 interface SkillFiles {
   name: string;
   files: { path: string; content: string }[];
@@ -81,7 +85,9 @@ for (const { name, files } of skills) {
 lines.push("};");
 lines.push("");
 
-await Bun.write(OUTPUT, lines.join("\n"));
+for (const output of OUTPUTS) {
+  await Bun.write(output, lines.join("\n"));
+}
 
 const totalFiles = skills.reduce((sum, s) => sum + s.files.length, 0);
-console.log(`Embedded ${totalFiles} files across ${skills.length} skills into ${OUTPUT}`);
+console.log(`Embedded ${totalFiles} files across ${skills.length} skills into ${OUTPUTS.join(", ")}`);

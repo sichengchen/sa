@@ -18,10 +18,10 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@aria/engine/*": ["src/engine/*"],
+      "@aria/engine/*": ["packages/runtime/src/*", "src/engine/*"],
       "@aria/connectors/*": ["packages/connectors/src/*", "src/connectors/*"],
       "@aria/shared/*": ["packages/shared-types/src/*", "src/shared/*"],
-      "@aria/cli/*": ["src/cli/*"]
+      "@aria/cli/*": ["packages/cli/src/*", "src/cli/*"]
     }
   },
   "include": [

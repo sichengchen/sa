@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { ProjectsEngineStore } from "../packages/projects-engine/src/store.js";
 import { createLegacyLinearThreadExternalRefs } from "../packages/projects-engine/src/external-refs.js";
+import type { DispatchRecord } from "../packages/projects-engine/src/types.js";
 
 interface LegacyProjectRow {
   id: string;
@@ -33,22 +34,84 @@ interface LegacyJobRow {
   created_at: string;
 }
 
+interface MigrationReport {
+  dryRun: boolean;
+  legacyDbPath: string;
+  ariaDbPath: string;
+  importedProjects: number;
+  importedRepos: number;
+  importedTasks: number;
+  importedThreads: number;
+  importedJobs: number;
+  importedDispatches: number;
+  importedWorktrees: number;
+  importedExternalRefs: number;
+}
+
+function hasFlag(name: string): boolean {
+  return process.argv.includes(name);
+}
+
+function positionalArgs(): string[] {
+  return process.argv.slice(2).filter((value) => !value.startsWith("--"));
+}
+
 function asTimestamp(value: string): number {
   const timestamp = new Date(value).getTime();
   return Number.isNaN(timestamp) ? Date.now() : timestamp;
 }
 
 function usage(): never {
-  console.error("Usage: bun run scripts/migrate-legacy-esperta-code.ts <legacy-db-path> [aria-db-path]");
+  console.error("Usage: bun run scripts/migrate-legacy-esperta-code.ts <legacy-db-path> [aria-db-path] [--dry-run]");
   process.exit(1);
 }
 
-const legacyDbPath = process.argv[2];
-const ariaDbPath = process.argv[3] ?? join(process.env.ARIA_HOME ?? join(process.env.HOME ?? "", ".aria"), "aria.db");
+function mapLegacyTaskStatus(status: string): "done" | "cancelled" | "backlog" {
+  if (status === "completed") return "done";
+  if (status === "stopped") return "cancelled";
+  return "backlog";
+}
+
+function mapLegacyThreadStatus(status: string): "done" | "dirty" | "cancelled" | "idle" {
+  if (status === "completed") return "done";
+  if (status === "running_dirty") return "dirty";
+  if (status === "stopped") return "cancelled";
+  return "idle";
+}
+
+function mapLegacyDispatchStatus(status: string): DispatchRecord["status"] {
+  if (status === "completed") return "completed";
+  if (status === "stopped") return "cancelled";
+  if (status === "running_dirty") return "running";
+  return "queued";
+}
+
+function shouldCreateDispatch(thread: LegacyThreadRow): boolean {
+  return Boolean(thread.linear_session_id || thread.worktree_path || thread.branch_name || thread.status);
+}
+
+const args = positionalArgs();
+const legacyDbPath = args[0];
+const ariaDbPath = args[1] ?? join(process.env.ARIA_HOME ?? join(process.env.HOME ?? "", ".aria"), "aria.db");
+const dryRun = hasFlag("--dry-run");
 
 if (!legacyDbPath) {
   usage();
 }
+
+const report: MigrationReport = {
+  dryRun,
+  legacyDbPath,
+  ariaDbPath,
+  importedProjects: 0,
+  importedRepos: 0,
+  importedTasks: 0,
+  importedThreads: 0,
+  importedJobs: 0,
+  importedDispatches: 0,
+  importedWorktrees: 0,
+  importedExternalRefs: 0,
+};
 
 const legacyDb = new Sqlite(legacyDbPath, { readonly: true });
 const store = new ProjectsEngineStore(ariaDbPath);
@@ -63,23 +126,27 @@ const legacyProjects = legacyDb.prepare(`
 for (const project of legacyProjects) {
   const now = Date.now();
   const repoId = `repo:${project.id}`;
-  store.upsertProject({
-    projectId: project.id,
-    name: project.name,
-    slug: project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-    description: null,
-    createdAt: now,
-    updatedAt: now,
-  });
-  store.upsertRepo({
-    repoId,
-    projectId: project.id,
-    name: project.name,
-    remoteUrl: project.repo_url,
-    defaultBranch: project.base_branch,
-    createdAt: now,
-    updatedAt: now,
-  });
+  if (!dryRun) {
+    store.upsertProject({
+      projectId: project.id,
+      name: project.name,
+      slug: project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      description: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+    store.upsertRepo({
+      repoId,
+      projectId: project.id,
+      name: project.name,
+      remoteUrl: project.repo_url,
+      defaultBranch: project.base_branch,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  report.importedProjects += 1;
+  report.importedRepos += 1;
 }
 
 const legacyThreads = legacyDb.prepare(`
@@ -93,41 +160,74 @@ for (const thread of legacyThreads) {
   const createdAt = asTimestamp(thread.created_at);
   const updatedAt = asTimestamp(thread.updated_at);
   const taskId = `task:${thread.id}`;
-  store.upsertTask({
-    taskId,
-    projectId: thread.project_id,
-    repoId,
-    title: thread.title,
-    description: null,
-    status: thread.status === "completed" ? "done" : thread.status === "stopped" ? "cancelled" : "backlog",
-    createdAt,
-    updatedAt,
-  });
-  store.upsertThread({
-    threadId: thread.id,
-    projectId: thread.project_id,
-    taskId,
-    repoId,
-    title: thread.title,
-    status: thread.status === "completed" ? "done" : thread.status === "running_dirty" ? "dirty" : thread.status === "stopped" ? "cancelled" : "idle",
-    createdAt,
-    updatedAt,
-  });
+  if (!dryRun) {
+    store.upsertTask({
+      taskId,
+      projectId: thread.project_id,
+      repoId,
+      title: thread.title,
+      description: null,
+      status: mapLegacyTaskStatus(thread.status),
+      createdAt,
+      updatedAt,
+    });
+    store.upsertThread({
+      threadId: thread.id,
+      projectId: thread.project_id,
+      taskId,
+      repoId,
+      title: thread.title,
+      status: mapLegacyThreadStatus(thread.status),
+      createdAt,
+      updatedAt,
+    });
+  }
+  report.importedTasks += 1;
+  report.importedThreads += 1;
+
+  const dispatchId = `dispatch:legacy:${thread.id}`;
+  const worktreeId = thread.worktree_path && thread.branch_name ? `worktree:${thread.id}` : null;
+  if (shouldCreateDispatch(thread)) {
+    if (!dryRun) {
+      store.upsertDispatch({
+        dispatchId,
+        projectId: thread.project_id,
+        taskId,
+        threadId: thread.id,
+        jobId: null,
+        repoId,
+        worktreeId,
+        status: mapLegacyDispatchStatus(thread.status),
+        requestedBackend: null,
+        requestedModel: null,
+        executionSessionId: thread.linear_session_id,
+        summary: "Imported from legacy Esperta Code state.",
+        error: null,
+        createdAt,
+        acceptedAt: thread.linear_session_id ? createdAt : null,
+        completedAt: thread.status === "completed" || thread.status === "stopped" ? updatedAt : null,
+      });
+    }
+    report.importedDispatches += 1;
+  }
 
   if (thread.worktree_path && thread.branch_name) {
-    store.upsertWorktree({
-      worktreeId: `worktree:${thread.id}`,
-      repoId,
-      threadId: thread.id,
-      dispatchId: null,
-      path: thread.worktree_path,
-      branchName: thread.branch_name,
-      baseRef: "legacy",
-      status: "retained",
-      createdAt,
-      expiresAt: null,
-      prunedAt: null,
-    });
+    if (!dryRun) {
+      store.upsertWorktree({
+        worktreeId: `worktree:${thread.id}`,
+        repoId,
+        threadId: thread.id,
+        dispatchId: shouldCreateDispatch(thread) ? dispatchId : null,
+        path: thread.worktree_path,
+        branchName: thread.branch_name,
+        baseRef: "legacy",
+        status: "retained",
+        createdAt,
+        expiresAt: null,
+        prunedAt: null,
+      });
+    }
+    report.importedWorktrees += 1;
   }
 
   for (const ref of createLegacyLinearThreadExternalRefs({
@@ -140,7 +240,10 @@ for (const thread of legacyThreads) {
     createdAt,
     updatedAt,
   })) {
-    store.upsertExternalRef(ref);
+    if (!dryRun) {
+      store.upsertExternalRef(ref);
+    }
+    report.importedExternalRefs += 1;
   }
 }
 
@@ -151,16 +254,19 @@ const legacyJobs = legacyDb.prepare(`
 `).all() as LegacyJobRow[];
 
 for (const job of legacyJobs) {
-  store.upsertJob({
-    jobId: job.id || randomUUID(),
-    threadId: job.thread_id,
-    author: job.author === "agent" ? "agent" : "user",
-    body: job.body,
-    createdAt: asTimestamp(job.created_at),
-  });
+  if (!dryRun) {
+    store.upsertJob({
+      jobId: job.id || randomUUID(),
+      threadId: job.thread_id,
+      author: job.author === "agent" ? "agent" : "user",
+      body: job.body,
+      createdAt: asTimestamp(job.created_at),
+    });
+  }
+  report.importedJobs += 1;
 }
 
 legacyDb.close();
 store.close();
 
-console.log(`Imported ${legacyProjects.length} legacy projects, ${legacyThreads.length} threads, and ${legacyJobs.length} jobs into ${ariaDbPath}`);
+console.log(JSON.stringify(report, null, 2));
