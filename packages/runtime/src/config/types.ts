@@ -1,5 +1,5 @@
-import type { ProviderConfig, ModelConfig } from "../../../../src/engine/router/types.js";
-import type { ModelTier, TaskType } from "../../../../src/engine/router/task-types.js";
+import type { ProviderConfig, ModelConfig } from "../router/types.js";
+import type { ModelTier, TaskType } from "../router/task-types.js";
 import type { ToolApprovalMode, ConnectorType } from "@aria/shared/types.js";
 
 export interface Identity {

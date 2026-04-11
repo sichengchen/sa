@@ -1,9 +1,9 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { Type } from "@sinclair/typebox";
-import type { ToolImpl } from "../../../../src/engine/agent/types.js";
-import type { SkillRegistry } from "../../../../src/engine/skills/index.js";
-import { isPathInside } from "../../../../src/engine/path-boundary.js";
+import type { ToolImpl } from "../agent/types.js";
+import type { SkillRegistry } from "../skills/index.js";
+import { isPathInside } from "../path-boundary.js";
 
 const MAX_SKILL_CONTENT_CHARS = 100_000;
 const ALLOWED_SUBDIRS = new Set(["references", "templates", "scripts", "assets"]);

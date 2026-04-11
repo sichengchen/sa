@@ -15,6 +15,7 @@ export type RuntimeBackendExecutionStatus =
 
 export type RuntimeBackendEventType =
   | "execution.started"
+  | "execution.waiting_approval"
   | "execution.stdout"
   | "execution.stderr"
   | "execution.completed";

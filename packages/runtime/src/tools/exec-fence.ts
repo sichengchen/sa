@@ -4,7 +4,7 @@
 
 import { homedir } from "node:os";
 import { resolve, normalize } from "node:path";
-import type { SecurityBlock } from "../../../../src/engine/agent/security-types.js";
+import type { SecurityBlock } from "../agent/security-types.js";
 
 const HOME = homedir();
 

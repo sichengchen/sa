@@ -1,5 +1,5 @@
 import { Type } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../../../../src/engine/agent/types.js";
+import type { ToolImpl } from "../agent/types.js";
 import type { Subprocess } from "bun";
 
 export interface BackgroundProcess {

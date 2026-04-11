@@ -1,4 +1,4 @@
-import type { ToolImpl } from "../../../../src/engine/agent/types.js";
+import type { ToolImpl } from "../agent/types.js";
 import { readTool } from "./read.js";
 import { writeTool } from "./write.js";
 import { editTool } from "./edit.js";

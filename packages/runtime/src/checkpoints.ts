@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
-import { toRelativeIfInside } from "../../../src/engine/path-boundary.js";
+import { toRelativeIfInside } from "./path-boundary.js";
 
 const DEFAULT_EXCLUDES = [
   "node_modules/",

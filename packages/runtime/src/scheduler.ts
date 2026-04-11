@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { DeliveryTarget, HeartbeatConfig, RetryPolicy } from "./config/types.js";
 import { DEFAULT_HEARTBEAT } from "./config/defaults.js";
-import type { Agent } from "../../../src/engine/agent/index.js";
+import type { Agent } from "./agent/index.js";
 import { computeNextRunAt, isTaskDue } from "./automation-schedule.js";
 
 /** A scheduled task definition */

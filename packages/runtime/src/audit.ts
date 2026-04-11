@@ -7,7 +7,7 @@
 
 import { appendFileSync, statSync, renameSync, existsSync, openSync, closeSync, chmodSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { DangerLevel } from "../../../src/engine/agent/types.js";
+import type { DangerLevel } from "./agent/types.js";
 
 /** Event types recorded in the audit log */
 export type AuditEvent =

@@ -7,7 +7,7 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import type { ToolImpl, ToolResult } from "../../../../src/engine/agent/types.js";
+import type { ToolImpl, ToolResult } from "../agent/types.js";
 import { probeAuth, runSubprocess, runBackground, getBackgroundStatus } from "./agent-subprocess.js";
 
 export interface CodexToolDeps {

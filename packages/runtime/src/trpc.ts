@@ -1,6 +1,6 @@
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
-import type { EngineContext } from "../../../src/engine/context.js";
+import type { EngineContext } from "./context.js";
 
 /** Initialize tRPC with superjson transformer and context type */
 const t = initTRPC.context<EngineContext>().create({

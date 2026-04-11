@@ -1,5 +1,5 @@
 import { Type } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../../../../src/engine/agent/types.js";
+import type { ToolImpl } from "../agent/types.js";
 import type { ConfigManager } from "../config/index.js";
 
 /** Environment variables that must not be overwritten by the agent (injection risk). */

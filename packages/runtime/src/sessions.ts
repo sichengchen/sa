@@ -1,5 +1,5 @@
 import type { Session, ConnectorType } from "@aria/shared/types.js";
-import type { OperationalStore } from "../../../src/engine/operational-store.js";
+import type { OperationalStore } from "./operational-store.js";
 
 /** Generate a random suffix for session IDs (full 128-bit UUID) */
 function randomSuffix(): string {

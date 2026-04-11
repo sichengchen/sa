@@ -5,11 +5,11 @@ import { fileURLToPath } from "node:url";
 import { scanSkillDirectory, loadSkillContent, parseEmbeddedSkills, loadEmbeddedDoc, listEmbeddedFiles } from "./loader.js";
 import { EMBEDDED_SKILLS } from "./embedded-skills.generated.js";
 import type { SkillMetadata, LoadedSkill } from "./types.js";
-import { isPathInside } from "../../../../src/engine/path-boundary.js";
+import { isPathInside } from "../path-boundary.js";
 import { getRuntimeHome } from "@aria/shared/brand.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-export const BUNDLED_SKILLS_DIR = resolve(__dirname, "../../../../src/engine/skills/bundled");
+export const BUNDLED_SKILLS_DIR = resolve(__dirname, "./bundled");
 
 /** Central registry for discovered and activated skills */
 export class SkillRegistry {

@@ -1,6 +1,6 @@
 import { Type } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../../../../src/engine/agent/types.js";
-import type { SkillRegistry } from "../../../../src/engine/skills/index.js";
+import type { ToolImpl } from "../agent/types.js";
+import type { SkillRegistry } from "../skills/index.js";
 
 /** Create a tool that lets the Agent read and activate a skill's full instructions */
 export function createReadSkillTool(registry: SkillRegistry): ToolImpl {

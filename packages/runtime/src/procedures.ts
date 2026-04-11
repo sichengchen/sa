@@ -12,7 +12,7 @@ import { classifyExecCommand } from "./tools/exec-classifier.js";
 import { ToolPolicyManager, type ToolEventContext } from "./tools/policy.js";
 import { ConnectorTypeSchema } from "@aria/shared/types.js";
 import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode, EscalationChoice } from "@aria/shared/types.js";
-import type { ModelConfig, ProviderConfig } from "../../../src/engine/router/types.js";
+import type { ModelConfig, ProviderConfig } from "./router/types.js";
 import { heartbeatState, createHeartbeatTask } from "./scheduler.js";
 import { describeModeEffects } from "./security-mode.js";
 import { createSessionToolEnvironment } from "./session-tool-environment.js";
@@ -57,7 +57,7 @@ function formatArgsForIM(toolName: string, args: Record<string, unknown>): strin
 }
 
 /** Shorthand for audit logging */
-function auditLog(runtime: EngineRuntime, input: import("../../../src/engine/audit.js").AuditInput): void {
+function auditLog(runtime: EngineRuntime, input: import("./audit.js").AuditInput): void {
   try { runtime.audit.log(input); } catch { /* audit failure is non-fatal */ }
 }
 

@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import type { ToolImpl, ToolResult } from "../../../../src/engine/agent/types.js";
+import type { ToolImpl, ToolResult } from "../agent/types.js";
 
 /**
  * ask_user tool — allows the agent to ask the user a clarifying question mid-turn.

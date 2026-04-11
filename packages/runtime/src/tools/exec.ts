@@ -17,9 +17,9 @@
  */
 
 import { Type } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../../../../src/engine/agent/types.js";
+import type { ToolImpl } from "../agent/types.js";
 import { generateHandle, registerBackground } from "./exec-background.js";
-import { frameAsData, sanitizeContent } from "../../../../src/engine/agent/content-frame.js";
+import { frameAsData, sanitizeContent } from "../agent/content-frame.js";
 import { detectSandbox, type Sandbox, type SandboxOptions } from "./sandbox.js";
 
 /** Default timeout for foreground commands (5 minutes) */

@@ -1,9 +1,9 @@
-import type { ToolImpl } from "../../../src/engine/agent/types.js";
+import type { ToolImpl } from "./agent/types.js";
 import type { ModelRouter } from "./router/index.js";
-import { Orchestrator } from "../../../src/engine/agent/orchestrator.js";
-import { SubAgent } from "../../../src/engine/agent/sub-agent.js";
+import { Orchestrator } from "./agent/orchestrator.js";
+import { SubAgent } from "./agent/sub-agent.js";
 import { CheckpointManager, checkpointWorkdirForArgs } from "./checkpoints.js";
-import { SubdirectoryContextTracker } from "../../../src/engine/context-files.js";
+import { SubdirectoryContextTracker } from "./context-files.js";
 import { createDelegateStatusTool } from "./tools/delegate-status.js";
 import { createDelegateTool } from "./tools/delegate.js";
 

@@ -1,5 +1,5 @@
 import { Type } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../../../../src/engine/agent/types.js";
+import type { ToolImpl } from "../agent/types.js";
 import type { SecretsFile } from "../config/types.js";
 
 /** Create the notify tool — pushes messages to Telegram/Discord via HTTP */

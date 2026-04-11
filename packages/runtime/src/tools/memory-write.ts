@@ -1,6 +1,6 @@
 import { Type } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../../../../src/engine/agent/types.js";
-import type { MemoryManager } from "../../../../src/engine/memory/index.js";
+import type { ToolImpl } from "../agent/types.js";
+import type { MemoryManager } from "../memory/index.js";
 
 export function createMemoryWriteTool(memory: MemoryManager): ToolImpl {
   return {

@@ -1,7 +1,7 @@
-import type { Agent } from "../../../src/engine/agent/index.js";
-import type { SessionSecurityOverrides } from "../../../src/engine/agent/security-types.js";
-import { createEmptyOverrides } from "../../../src/engine/agent/security-types.js";
-import type { SessionToolEnvironment } from "../../../src/engine/session-tool-environment.js";
+import type { Agent } from "./agent/index.js";
+import type { SessionSecurityOverrides } from "./agent/security-types.js";
+import { createEmptyOverrides } from "./agent/security-types.js";
+import type { SessionToolEnvironment } from "./session-tool-environment.js";
 import type { EscalationChoice } from "@aria/shared/types.js";
 import type { EngineRuntime } from "./runtime.js";
 

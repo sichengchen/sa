@@ -5,7 +5,7 @@ import { Agent } from "./agent/index.js";
 import type { ToolImpl, ToolApprovalCallback, AskUserCallback } from "./agent/index.js";
 import { MemoryManager } from "./memory/index.js";
 import { getBuiltinTools, createWebFetchTool, createDelegateTool, createDelegateStatusTool, createClaudeCodeTool, createCodexTool, askUserTool } from "./tools/index.js";
-import { Orchestrator } from "../../../src/engine/agent/orchestrator.js";
+import { Orchestrator } from "./agent/orchestrator.js";
 import { createMemoryWriteTool } from "./tools/memory-write.js";
 import { createMemorySearchTool } from "./tools/memory-search.js";
 import { createMemoryReadTool } from "./tools/memory-read.js";

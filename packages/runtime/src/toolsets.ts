@@ -1,4 +1,4 @@
-import type { ToolImpl } from "../../../src/engine/agent/types.js";
+import type { ToolImpl } from "./agent/types.js";
 
 export interface ToolsetDefinition {
   name: string;

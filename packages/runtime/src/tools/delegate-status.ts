@@ -3,8 +3,8 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import type { ToolImpl } from "../../../../src/engine/agent/types.js";
-import type { Orchestrator } from "../../../../src/engine/agent/orchestrator.js";
+import type { ToolImpl } from "../agent/types.js";
+import type { Orchestrator } from "../agent/orchestrator.js";
 
 export interface DelegateStatusDeps {
   /** Get the orchestrator for the current session (may not exist yet) */

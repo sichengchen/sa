@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { WebSocketServer } from "ws";
-import { createAppRouter, flushProcedureState, type AppRouter } from "../../../src/engine/procedures.js";
+import { createAppRouter, flushProcedureState, type AppRouter } from "./procedures.js";
 import { createContext } from "./context.js";
 import type { EngineRuntime } from "./runtime.js";
 import { heartbeatState } from "./scheduler.js";

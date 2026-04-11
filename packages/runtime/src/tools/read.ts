@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { Type } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../../../../src/engine/agent/types.js";
+import type { ToolImpl } from "../agent/types.js";
 
 export const readTool: ToolImpl = {
   name: "read",

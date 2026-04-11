@@ -3,10 +3,10 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import type { ToolImpl } from "../../../../src/engine/agent/types.js";
+import type { ToolImpl } from "../agent/types.js";
 import type { ModelRouter } from "../router/index.js";
-import type { Orchestrator } from "../../../../src/engine/agent/orchestrator.js";
-import { SubAgent } from "../../../../src/engine/agent/sub-agent.js";
+import type { Orchestrator } from "../agent/orchestrator.js";
+import { SubAgent } from "../agent/sub-agent.js";
 
 export interface DelegateToolDeps {
   router: ModelRouter;

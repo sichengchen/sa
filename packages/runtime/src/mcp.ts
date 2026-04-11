@@ -2,7 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { CompatibilityCallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
-import type { ToolImpl, DangerLevel, ToolResult } from "../../../src/engine/agent/types.js";
+import type { ToolImpl, DangerLevel, ToolResult } from "./agent/types.js";
 import type { MCPServerConfig, MCPServerToolFilterConfig } from "./config/types.js";
 import type { OperationalStore } from "./operational-store.js";
 

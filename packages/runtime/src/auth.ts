@@ -3,7 +3,7 @@ import { writeFile, unlink } from "node:fs/promises";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { getRuntimeHome } from "@aria/shared/brand.js";
-import type { OperationalStore } from "../../../src/engine/operational-store.js";
+import type { OperationalStore } from "./operational-store.js";
 
 const TOKEN_BYTES = 32;
 const DEFAULT_PAIRING_CODE_LENGTH = 8;

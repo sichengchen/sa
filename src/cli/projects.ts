@@ -4,6 +4,11 @@ import { ProjectsEngineStore } from "../../packages/projects-engine/src/store.js
 import { ProjectsEngineRepository } from "../../packages/projects-engine/src/repository.js";
 import { ProjectsPlanningService } from "../../packages/projects-engine/src/planning.js";
 import { HandoffStore } from "../../packages/handoff/src/store.js";
+import { HandoffService } from "../../packages/handoff/src/service.js";
+import { ProjectsDispatchService } from "../../packages/projects-engine/src/dispatch.js";
+import { createRuntime } from "../../packages/runtime/src/runtime.js";
+import { listRuntimeBackends } from "../../packages/runtime/src/backend-registry.js";
+import { runDispatchExecution } from "../../packages/runtime/src/dispatch-runner.js";
 
 function printHelp(): void {
   console.log(`Usage: ${CLI_NAME} projects <subcommand>\n`);
@@ -18,6 +23,9 @@ function printHelp(): void {
   console.log("  handoffs [projectId]   List handoff records, optionally filtered by project");
   console.log("  runnable [projectId]   Show runnable threads and dispatches");
   console.log("  queue [projectId] [n]  Queue up to n runnable dispatches");
+  console.log("  backends              List runtime backend availability and capabilities");
+  console.log("  run-dispatch <id>      Execute a queued dispatch through Runtime");
+  console.log("  handoff-submit <projectId> <key> <payload>  Create an idempotent handoff record");
 }
 
 async function withRepository<T>(fn: (repository: ProjectsEngineRepository) => Promise<T> | T): Promise<T> {
@@ -150,6 +158,32 @@ export async function projectsCommand(args: string[]): Promise<void> {
       return;
     }
 
+    if (action === "handoff-submit") {
+      const [projectId, idempotencyKey, ...payloadParts] = args.slice(1);
+      const payload = payloadParts.join(" ").trim();
+      if (!projectId || !idempotencyKey) {
+        printHelp();
+        process.exitCode = 1;
+        return;
+      }
+      const dbPath = join(getRuntimeHome(), "aria.db");
+      const store = new HandoffStore(dbPath);
+      const service = new HandoffService(store);
+      await service.init();
+      try {
+        const record = service.submit(`handoff:${idempotencyKey}`, {
+          idempotencyKey,
+          sourceKind: "local_session",
+          projectId,
+          payloadJson: payload || null,
+        });
+        console.log(`Created handoff ${record.handoffId} [${record.status}]`);
+      } finally {
+        service.close();
+      }
+      return;
+    }
+
     if (action === "runnable") {
       const projectId = args[1];
       const planning = new ProjectsPlanningService(repository);
@@ -171,6 +205,44 @@ export async function projectsCommand(args: string[]): Promise<void> {
       console.log(`Queued ${result.queued.length} dispatch(es).`);
       for (const dispatch of result.queued) {
         console.log(`${dispatch.dispatchId}  thread=${dispatch.threadId}  status=${dispatch.status}`);
+      }
+      return;
+    }
+
+    if (action === "backends") {
+      const runtime = await createRuntime();
+      try {
+        const backends = await listRuntimeBackends(runtime);
+        for (const backend of backends) {
+          console.log(
+            `${backend.backend}  ${backend.availability.available ? "available" : "unavailable"}  auth=${backend.availability.authState ?? "unknown"}  streaming=${backend.capabilities.supportsStreamingEvents ? "yes" : "no"}  files=${backend.capabilities.supportsFileEditing ? "yes" : "no"}`,
+          );
+          if (backend.availability.reason) {
+            console.log(`  reason: ${backend.availability.reason}`);
+          }
+        }
+      } finally {
+        await runtime.close();
+      }
+      return;
+    }
+
+    if (action === "run-dispatch") {
+      const dispatchId = args[1];
+      if (!dispatchId) {
+        printHelp();
+        process.exitCode = 1;
+        return;
+      }
+      const runtime = await createRuntime();
+      try {
+        const result = await runDispatchExecution(runtime, repository, dispatchId);
+        console.log(`Dispatch ${dispatchId} executed as ${result.executionSessionId} [${result.status}]`);
+        if (result.summary) {
+          console.log(result.summary);
+        }
+      } finally {
+        await runtime.close();
       }
       return;
     }

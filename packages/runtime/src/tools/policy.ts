@@ -1,4 +1,4 @@
-import type { DangerLevel } from "../../../../src/engine/agent/types.js";
+import type { DangerLevel } from "../agent/types.js";
 import type { ConnectorType, ToolApprovalMode } from "@aria/shared/types.js";
 import type { ToolPolicyConfig, ToolVerbosity } from "../config/types.js";
 

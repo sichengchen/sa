@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Message } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../../../src/engine/agent/types.js";
+import type { ToolImpl } from "./agent/types.js";
 import type { ConfigManager } from "./config/index.js";
 import { buildContextFilesPrompt } from "./context-files.js";
 import type { MemoryManager } from "./memory/index.js";

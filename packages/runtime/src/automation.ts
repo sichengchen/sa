@@ -1,10 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { Agent } from "../../../src/engine/agent/index.js";
+import { Agent } from "./agent/index.js";
 import type { EngineRuntime } from "./runtime.js";
-import { createSessionToolEnvironment } from "../../../src/engine/session-tool-environment.js";
+import { createSessionToolEnvironment } from "./session-tool-environment.js";
 import { computeNextRunAt } from "./automation-schedule.js";
-import { mergeAllowedTools } from "../../../src/engine/toolsets.js";
+import { mergeAllowedTools } from "./toolsets.js";
 import { CRON_DEFAULT_TOOLS, WEBHOOK_DEFAULT_TOOLS } from "./config/defaults.js";
 import type { CronTask, DeliveryTarget, RetryPolicy, WebhookTask } from "./config/types.js";
 import type { AutomationDeliveryStatus, AutomationTaskType, AutomationRunStatus } from "./operational-store.js";
