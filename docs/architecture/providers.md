@@ -2,16 +2,13 @@
 
 Aria separates execution backends from runtime orchestration.
 
-## Packages
+## Package
 
-- `packages/providers-aria`
-- `packages/providers-codex`
-- `packages/providers-claude-code`
-- `packages/providers-opencode`
+- `packages/agents-coding`
 
-## Why Separate Packages
+## Why Separate Adapters
 
-Each backend has its own:
+Each backend adapter still has its own:
 
 - auth and availability checks
 - execution command model
@@ -19,7 +16,7 @@ Each backend has its own:
 - cancellation behavior
 - capability matrix
 
-The runtime resolves a backend through its registry rather than hard-coding one execution path.
+The runtime/jobs layer resolves a backend through the shared coding-agent registry rather than hard-coding one execution path.
 
 ## Runtime Integration
 
