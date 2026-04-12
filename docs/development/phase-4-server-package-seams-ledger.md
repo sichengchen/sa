@@ -13,7 +13,7 @@ Phase 4 is about making the following package boundaries explicit without breaki
 
 During this phase:
 
-1. Keep current `@aria/projects-engine`, `@aria/handoff`, and `@aria/runtime` entrypoints working while the new seams are introduced.
+1. Keep current `@aria/handoff` and `@aria/runtime` entrypoints working while the new seams are introduced.
 2. Keep the existing `aria projects` command names and operator-visible behavior stable, especially `runnable`, `queue`, `backends`, `run-dispatch`, `worktree-*`, review, publish, and handoff flows.
 3. Preserve the existing backend IDs (`aria`, `codex`, `claude-code`, `opencode`) and provider-specific packages while the higher-level coding-agent seam is seeded.
 4. Move ownership first; delay broad CLI renames, route-shape changes, or schema redesign until the compatibility surfaces are proven.
@@ -22,16 +22,16 @@ During this phase:
 
 | Target package | Current source owner | Seeded package seam should own | Compatibility surface kept at |
 | --- | --- | --- | --- |
-| `@aria/projects` | `packages/projects/src/*` plus tracked-work materialization in `packages/handoff/src/service.ts` | Project registry, task/thread/dispatch/review/publish coordination, project-thread orchestration APIs | `@aria/projects-engine`, `@aria/handoff`, and current `aria projects` command names |
-| `@aria/workspaces` | `packages/workspaces/src/*` over the target-owned `@aria/projects` persistence APIs | Workspace, repo, worktree, sandbox, and environment models that should stay below project orchestration | `@aria/projects-engine` compatibility wrappers and `aria projects worktree-*` flows |
-| `@aria/jobs` | `packages/jobs/src/{backend-registry,dispatch-runner}.ts`, dispatch state types referenced through `packages/projects-engine/src/types.ts`, and CLI dispatch execution wiring in `packages/cli/src/projects.ts` | Remote job launch, backend selection, execution lifecycle, approval-wait transitions, and resumable job orchestration | `@aria/runtime/{dispatch-runner,backend-registry}`, queued dispatch records in `@aria/projects-engine`, and `aria projects run-dispatch` / `backends` |
+| `@aria/projects` | `packages/projects/src/*` plus tracked-work materialization in `packages/handoff/src/service.ts` | Project registry, task/thread/dispatch/review/publish coordination, project-thread orchestration APIs | `@aria/handoff` and current `aria projects` command names |
+| `@aria/workspaces` | `packages/workspaces/src/*` over the target-owned `@aria/projects` persistence APIs | Workspace, repo, worktree, sandbox, and environment models that should stay below project orchestration | `aria projects worktree-*` flows |
+| `@aria/jobs` | `packages/jobs/src/{backend-registry,dispatch-runner}.ts`, dispatch state types referenced through `packages/projects/src/types.ts`, and CLI dispatch execution wiring in `packages/cli/src/projects.ts` | Remote job launch, backend selection, execution lifecycle, approval-wait transitions, and resumable job orchestration | `@aria/runtime/{dispatch-runner,backend-registry}` and `aria projects run-dispatch` / `backends` |
 | `@aria/agents-coding` | `packages/agents-coding/src/*` | Shared coding-agent contracts, adapter composition, capability metadata, and a target-state package for Codex / Claude Code / OpenCode orchestration | direct target package imports and the current backend IDs |
 
 ## Review Notes And Hotspots
 
 ### `@aria/projects`
 
-- `packages/projects-engine` is still the durable source of truth for tracked work, so the `@aria/projects` seam should start as an ownership boundary rather than a storage rewrite.
+- `packages/projects`, `packages/workspaces`, and `packages/jobs` are now the durable tracked-work owners on `new-aria`.
 - `packages/handoff/src/service.ts` currently materializes thread, job, and dispatch records directly into `Projects Engine`; keep that integration stable while the package boundary is introduced.
 - This seam should align with the target-state `Projects Control` wording in the new-architecture docs and must not absorb low-level repo/worktree mechanics that belong under `@aria/workspaces`.
 
@@ -75,4 +75,4 @@ Every Phase 4 seam-seeding step should still pass:
 
 ## Exit Condition
 
-Phase 4 is complete when the repo has explicit target-owned surfaces for `@aria/projects`, `@aria/workspaces`, `@aria/jobs`, and `@aria/agents-coding`, the remaining `projects-engine` / runtime compatibility entrypoints still work where needed, and the package names used in implementation, docs, and CLI guidance match the target-state server architecture.
+Phase 4 is complete when the repo has explicit target-owned surfaces for `@aria/projects`, `@aria/workspaces`, `@aria/jobs`, and `@aria/agents-coding`, the remaining runtime compatibility entrypoints still work where needed, and the package names used in implementation, docs, and CLI guidance match the target-state server architecture.

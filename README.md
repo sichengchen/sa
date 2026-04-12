@@ -19,7 +19,7 @@ Esperta Aria is a local-first agent platform built around one durable runtime, o
 - `packages/relay` owns paired-device trust, session attachment, and queued remote-control envelopes
 - `packages/console` and `packages/connectors-im` own the console and IM connector surfaces
 
-Legacy compatibility packages such as `projects-engine`, `shared-types`, `providers-*`, and `connectors` still exist, but they now primarily preserve older import surfaces.
+Legacy compatibility surfaces such as `@aria/runtime` and `packages/connectors` still remain, but the old tracked-work, shared-types, and provider wrapper packages have been removed.
 
 One tracked dispatch creates one runtime execution.
 
@@ -88,17 +88,14 @@ packages/
   mobile/
   policy/
   projects/
-  projects-engine/
   prompt/
   relay/
   runtime/
   server/
   store/
-  shared-types/
   tools/
   ui/
   workspaces/
-  providers-*/
 apps/
   aria-server/
   aria-desktop/

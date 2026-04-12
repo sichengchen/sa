@@ -46,9 +46,9 @@ During phase 1, the current `packages/runtime` and `packages/shared-types` entry
 
 | Target package | Current source owner | New compatibility owner | Compatibility surface kept at |
 | --- | --- | --- | --- |
-| `@aria/projects` | `packages/projects-engine/src/{blockers,bridge,dispatch,external-refs,planning,publish,repository,reviews,schema,store,types}` | `packages/projects/src/index.ts` | `@aria/projects-engine` |
-| `@aria/workspaces` | `packages/projects-engine/src/{repos,worktrees,types}` | `packages/workspaces/src/index.ts` | `@aria/projects-engine` |
-| `@aria/jobs` | `packages/projects-engine/src/{bridge,dispatch,types}` | `packages/jobs/src/index.ts` | `@aria/projects-engine` |
+| `@aria/projects` | `packages/projects-engine/src/{blockers,bridge,dispatch,external-refs,planning,publish,repository,reviews,schema,store,types}` | `packages/projects/src/index.ts` | historical compatibility path removed |
+| `@aria/workspaces` | `packages/projects-engine/src/{repos,worktrees,types}` | `packages/workspaces/src/index.ts` | historical compatibility path removed |
+| `@aria/jobs` | `packages/projects-engine/src/{bridge,dispatch,types}` | `packages/jobs/src/index.ts` | historical compatibility path removed |
 | `@aria/agents-coding` | `packages/agents-coding/src/index.ts` | `packages/agents-coding/src/index.ts` | target package imports |
 
 ## Phase 4 Notes
@@ -70,9 +70,9 @@ This phase seeds the remaining target-state server package names needed for proj
 
 | Target package | Current source owner | Seeded package entrypoints | Compatibility surface kept at |
 | --- | --- | --- | --- |
-| `@aria/projects` | `packages/projects/src/*` | `packages/projects/src/*` | `@aria/projects-engine` |
-| `@aria/workspaces` | `packages/workspaces/src/*` | `packages/workspaces/src/*` | `@aria/projects-engine` |
-| `@aria/jobs` | `packages/jobs/src/{backend-registry,dispatch-runner}.ts` plus durable dispatch records referenced through `packages/projects-engine/src/types.ts` | `packages/jobs/src/*` | `@aria/projects-engine`, `packages/runtime/src/{dispatch-runner,backend-registry}.ts` |
+| `@aria/projects` | `packages/projects/src/*` | `packages/projects/src/*` | direct target package imports |
+| `@aria/workspaces` | `packages/workspaces/src/*` | `packages/workspaces/src/*` | direct target package imports |
+| `@aria/jobs` | `packages/jobs/src/{backend-registry,dispatch-runner}.ts` plus durable dispatch records referenced through `packages/projects/src/types.ts` | `packages/jobs/src/*` | `packages/runtime/src/{dispatch-runner,backend-registry}.ts` |
 | `@aria/agents-coding` | `packages/agents-coding/src/*` | `packages/agents-coding/src/*` | direct target package imports |
 
 ### Phase 4 Notes

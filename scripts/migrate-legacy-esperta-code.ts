@@ -5,7 +5,7 @@ import {
   createLegacyLinearThreadExternalRefs,
   type DispatchRecord,
   ProjectsEngineStore,
-} from "@aria/projects-engine";
+} from "@aria/projects";
 
 interface LegacyProjectRow {
   id: string;

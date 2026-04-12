@@ -13,7 +13,6 @@ const LEGACY_IMPORT_PATTERNS = [
 ];
 
 const EXCLUDED_PREFIXES = [
-  "packages/projects-engine/",
   "packages/connectors/",
   "packages/runtime/src/skills/",
   "scripts/migrate-legacy-esperta-code.ts",

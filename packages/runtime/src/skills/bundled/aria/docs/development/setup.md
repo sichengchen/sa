@@ -35,7 +35,6 @@ bun run build
 The repo is package-first:
 
 - `packages/runtime`
-- `packages/projects-engine`
 - `packages/handoff`
 - `packages/relay`
 - `packages/connectors`

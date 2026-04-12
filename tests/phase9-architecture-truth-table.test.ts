@@ -17,7 +17,6 @@ const REQUIRED_TARGET_SURFACES = [
 ];
 const REQUIRED_LEGACY_SURFACES = [
   "@aria/runtime",
-  "@aria/projects-engine",
   "packages/connectors",
   "packages/cli",
 ];

@@ -17,8 +17,6 @@ Aria is implemented as a package-oriented monorepo.
 | `packages/console` | server-local console surface |
 | `packages/connectors-im` | IM connector surfaces |
 | `packages/connectors` | compatibility wrappers for older connector entrypoints |
-| `packages/projects-engine` | compatibility re-exports for older tracked-work import paths |
-| `packages/providers-*` | compatibility re-exports for older coding-agent adapter paths |
 | `packages/cli` | operator CLI surface |
 
 ## System Model
@@ -47,4 +45,4 @@ One tracked dispatch creates one runtime execution.
 
 ## Practical State
 
-The repo is now package-first. Most target-state packages are real owners on `new-aria`, while a smaller set of legacy packages remain only as compatibility layers.
+The repo is now package-first. Most target-state packages are real owners on `new-aria`, while a smaller set of legacy surfaces remain only as compatibility layers.

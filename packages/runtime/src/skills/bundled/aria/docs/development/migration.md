@@ -7,7 +7,6 @@ Converge the repo on package-owned implementations and retire old assumptions ab
 ## Target Boundaries
 
 - `packages/runtime`
-- `packages/projects-engine`
 - `packages/handoff`
 - `packages/relay`
 - `packages/connectors`
@@ -19,7 +18,7 @@ Converge the repo on package-owned implementations and retire old assumptions ab
 - prefer package-owned implementations over compatibility wrappers
 - remove temporary trees once replacements are live
 - keep runtime responsible for execution
-- keep Projects Engine responsible for durable work state
+- keep `projects`, `workspaces`, and `jobs` responsible for durable tracked-work state
 - keep Relay responsible for remote trust and transport
 - keep Handoff responsible for submission into Projects
 
@@ -37,7 +36,7 @@ The migration tool supports dry-run reporting before mutation.
 ## Current State
 
 - the root `src` tree is removed
-- runtime, connectors, CLI, Projects Engine, Handoff, Relay, and shared types are package-owned
+- runtime, server, projects, workspaces, jobs, connectors-im, console, CLI, handoff, and relay are package-owned
 - docs are becoming the only canonical documentation tree
 
 ## Phase 1 Runtime Extraction

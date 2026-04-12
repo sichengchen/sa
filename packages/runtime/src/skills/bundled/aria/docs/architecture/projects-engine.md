@@ -1,23 +1,11 @@
 # Projects Engine
 
-`packages/projects-engine` is now a compatibility layer for older tracked-work imports.
+`projects-engine` was the historical tracked-work package during the migration.
 
-The real owners on `new-aria` are:
+It has now been retired on `new-aria`. The owning surfaces are:
 
 - `packages/projects` — tracked-work coordination and persistence APIs
 - `packages/workspaces` — repo/worktree behavior
 - `packages/jobs` — dispatch execution and backend selection
 
-## What This Compatibility Layer Does
-
-- preserves older import paths that still reference `@aria/projects-engine`
-- forwards repository/store/schema/type, workspace, and job surfaces to their target owners
-- allows incremental migration without breaking downstream callers
-
-## What It Does Not Own
-
-Projects Engine no longer owns the primary tracked-work implementation. New work should land in `projects`, `workspaces`, or `jobs`, not here.
-
-## CLI Surface
-
-`aria projects` still works over the same durable state, but the owning package surfaces are now the target seams described above.
+This page remains only as historical context for older migration notes.
