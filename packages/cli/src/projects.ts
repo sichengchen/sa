@@ -3,15 +3,189 @@ import { randomUUID } from "node:crypto";
 import { CLI_NAME, getRuntimeHome } from "@aria/server/brand";
 import { ProjectsDispatchService, listRuntimeBackends, runDispatchExecution } from "@aria/jobs";
 import {
+  THREAD_TYPES,
+  describeThreadType,
   ProjectsEngineRepository,
   ProjectsEngineStore,
   ProjectsPlanningService,
   ProjectsPublishService,
   ProjectsReviewService,
+  resolveThreadType,
+  type ThreadEnvironmentBindingRecord,
+  type ThreadStatus,
+  type ThreadType,
+  type ThreadRecord,
 } from "@aria/projects";
 import { ProjectsWorktreeService } from "@aria/workspaces";
 import { HandoffService, HandoffStore } from "@aria/handoff";
 import { createRuntime } from "@aria/runtime";
+
+const THREAD_TYPE_SET = new Set<ThreadType>(THREAD_TYPES);
+
+interface ThreadCreateOptions {
+  threadId: string;
+  projectId: string;
+  title: string;
+  status?: ThreadStatus;
+  threadType?: ThreadType;
+  taskId?: string | null;
+  repoId?: string | null;
+  workspaceId?: string | null;
+  environmentId?: string | null;
+  environmentBindingId?: string | null;
+  agentId?: string | null;
+}
+
+function isThreadType(value: string | undefined): value is ThreadType {
+  return Boolean(value && THREAD_TYPE_SET.has(value as ThreadType));
+}
+
+function formatThreadSummary(
+  thread: ThreadRecord,
+  activeBinding?: ThreadEnvironmentBindingRecord,
+): string {
+  const details = [
+    thread.threadId,
+    `[${thread.status}]`,
+    `[${describeThreadType(resolveThreadType(thread))}]`,
+    thread.title,
+  ];
+  const metadata: string[] = [];
+  if (thread.projectId) metadata.push(`project=${thread.projectId}`);
+  if (thread.taskId) metadata.push(`task=${thread.taskId}`);
+  if (thread.repoId) metadata.push(`repo=${thread.repoId}`);
+  if (thread.workspaceId) metadata.push(`workspace=${thread.workspaceId}`);
+  if (thread.environmentId) metadata.push(`environment=${thread.environmentId}`);
+  if (thread.environmentBindingId) metadata.push(`binding=${thread.environmentBindingId}`);
+  if (thread.agentId) metadata.push(`agent=${thread.agentId}`);
+  if (activeBinding?.bindingId && activeBinding.bindingId !== thread.environmentBindingId) {
+    metadata.push(`active-binding=${activeBinding.bindingId}`);
+  }
+  return metadata.length > 0 ? `${details.join("  ")}  ${metadata.join("  ")}` : details.join("  ");
+}
+
+function formatBindingSummary(binding: ThreadEnvironmentBindingRecord): string {
+  const metadata = [
+    `thread=${binding.threadId}`,
+    `project=${binding.projectId}`,
+    `workspace=${binding.workspaceId}`,
+    `environment=${binding.environmentId}`,
+    `attached=${binding.attachedAt}`,
+    `detached=${binding.detachedAt ?? "n/a"}`,
+  ];
+  if (binding.reason) {
+    metadata.push(`reason=${binding.reason}`);
+  }
+  return `${binding.bindingId}  [${binding.isActive ? "active" : "inactive"}]  ${metadata.join("  ")}`;
+}
+
+function parseThreadCreateOptions(args: string[]): ThreadCreateOptions | null {
+  const [threadId, projectId, ...rest] = args;
+  if (!threadId || !projectId) {
+    return null;
+  }
+
+  const titleParts: string[] = [];
+  const options: Partial<ThreadCreateOptions> = {};
+  let parsingOptions = false;
+
+  for (let index = 0; index < rest.length; index += 1) {
+    const arg = rest[index];
+    if (!parsingOptions && !arg.startsWith("--")) {
+      titleParts.push(arg);
+      continue;
+    }
+
+    parsingOptions = true;
+    switch (arg) {
+      case "--status": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.status = value as ThreadStatus;
+        break;
+      }
+      case "--type": {
+        const threadType = rest[++index];
+        if (!isThreadType(threadType)) {
+          return null;
+        }
+        options.threadType = threadType;
+        break;
+      }
+      case "--task": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.taskId = value;
+        break;
+      }
+      case "--repo": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.repoId = value;
+        break;
+      }
+      case "--workspace": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.workspaceId = value;
+        break;
+      }
+      case "--environment": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.environmentId = value;
+        break;
+      }
+      case "--binding": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.environmentBindingId = value;
+        break;
+      }
+      case "--agent": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.agentId = value;
+        break;
+      }
+      default:
+        return null;
+    }
+  }
+
+  const title = titleParts.join(" ").trim();
+  if (!title) {
+    return null;
+  }
+
+  return {
+    threadId,
+    projectId,
+    title,
+    status: options.status,
+    threadType: options.threadType,
+    taskId: options.taskId ?? undefined,
+    repoId: options.repoId ?? undefined,
+    workspaceId: options.workspaceId ?? undefined,
+    environmentId: options.environmentId ?? undefined,
+    environmentBindingId: options.environmentBindingId ?? undefined,
+    agentId: options.agentId ?? undefined,
+  };
+}
 
 function printHelp(): void {
   console.log(`Usage: ${CLI_NAME} projects <subcommand>\n`);
@@ -24,7 +198,9 @@ function printHelp(): void {
   console.log("  task-create <taskId> <projectId> <title>  Create or update a task");
   console.log("  task-status <taskId> <status>  Update a task status");
   console.log("  threads [projectId]    List tracked threads, optionally filtered by project");
-  console.log("  thread-create <threadId> <projectId> <title>  Create or update a thread");
+  console.log("  thread-create <threadId> <projectId> <title...> [--type <threadType>] [--status <status>] [--workspace <workspaceId>] [--environment <environmentId>] [--binding <bindingId>] [--agent <agentId>]  Create or update a thread");
+  console.log("  thread-bind <bindingId> <threadId> <projectId> <workspaceId> <environmentId> [reason]  Create or update an environment binding");
+  console.log("  thread-bindings [threadId]  List tracked thread environment bindings");
   console.log("  job-add <threadId> <author> <body>  Append a job/event to a thread");
   console.log("  dispatches [threadId]  List dispatch records, optionally filtered by thread");
   console.log("  dispatch-create <dispatchId> <projectId> <threadId> [backend]  Create a queued dispatch");
@@ -199,32 +375,88 @@ export async function projectsCommand(args: string[]): Promise<void> {
         return;
       }
       for (const thread of threads) {
-        console.log(`${thread.threadId}  [${thread.status}]  ${thread.title}`);
+        const activeBinding = repository.getActiveThreadEnvironmentBinding(thread.threadId);
+        console.log(formatThreadSummary(thread, activeBinding));
       }
       return;
     }
 
     if (action === "thread-create") {
-      const [threadId, projectId, ...titleParts] = args.slice(1);
-      const title = titleParts.join(" ").trim();
-      if (!threadId || !projectId || !title) {
+      const parsed = parseThreadCreateOptions(args.slice(1));
+      if (!parsed) {
         printHelp();
         process.exitCode = 1;
         return;
       }
-      const existing = repository.getThread(threadId);
+      const existing = repository.getThread(parsed.threadId);
       const now = Date.now();
       repository.upsertThread({
-        threadId,
-        projectId,
-        taskId: existing?.taskId ?? null,
-        repoId: existing?.repoId ?? null,
-        title,
-        status: existing?.status ?? "idle",
+        threadId: parsed.threadId,
+        projectId: parsed.projectId,
+        taskId: parsed.taskId ?? existing?.taskId ?? null,
+        repoId: parsed.repoId ?? existing?.repoId ?? null,
+        title: parsed.title,
+        status: parsed.status ?? existing?.status ?? "idle",
+        threadType: parsed.threadType ?? existing?.threadType ?? null,
+        workspaceId: parsed.workspaceId ?? existing?.workspaceId ?? null,
+        environmentId: parsed.environmentId ?? existing?.environmentId ?? null,
+        environmentBindingId: parsed.environmentBindingId ?? existing?.environmentBindingId ?? null,
+        agentId: parsed.agentId ?? existing?.agentId ?? null,
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       });
-      console.log(`Saved thread ${threadId}.`);
+      console.log(`Saved thread ${parsed.threadId}.`);
+      return;
+    }
+
+    if (action === "thread-bind") {
+      const [bindingId, threadId, projectId, workspaceId, environmentId, ...reasonParts] = args.slice(1);
+      const reason = reasonParts.join(" ").trim() || null;
+      if (!bindingId || !threadId || !projectId || !workspaceId || !environmentId) {
+        printHelp();
+        process.exitCode = 1;
+        return;
+      }
+      const thread = repository.getThread(threadId);
+      if (!thread) {
+        console.log(`Thread not found: ${threadId}`);
+        process.exitCode = 1;
+        return;
+      }
+      const now = Date.now();
+      repository.upsertThreadEnvironmentBinding({
+        bindingId,
+        threadId,
+        projectId,
+        workspaceId,
+        environmentId,
+        attachedAt: now,
+        detachedAt: null,
+        isActive: true,
+        reason,
+      });
+      repository.upsertThread({
+        ...thread,
+        projectId: projectId ?? thread.projectId,
+        workspaceId,
+        environmentId,
+        environmentBindingId: bindingId,
+        updatedAt: now,
+      });
+      console.log(`Saved environment binding ${bindingId}.`);
+      return;
+    }
+
+    if (action === "thread-bindings") {
+      const threadId = args[1];
+      const bindings = repository.listThreadEnvironmentBindings(threadId);
+      if (bindings.length === 0) {
+        console.log("No tracked thread environment bindings found.");
+        return;
+      }
+      for (const binding of bindings) {
+        console.log(formatBindingSummary(binding));
+      }
       return;
     }
 

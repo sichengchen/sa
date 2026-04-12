@@ -117,4 +117,81 @@ describe("projectsCommand", () => {
     expect(logs.some((line) => line.includes("dispatch:"))).toBe(true);
     expect(logs.some((line) => line.includes(handoffId))).toBe(true);
   });
+
+  test("creates richer tracked threads and exposes environment bindings", async () => {
+    await projectsCommand(["project-create", "project-3", "aria-thread-model", "Aria Thread Model"]);
+    await projectsCommand([
+      "thread-create",
+      "thread-3",
+      "project-3",
+      "Tracked",
+      "project",
+      "thread",
+      "--type",
+      "local_project",
+      "--status",
+      "running",
+      "--workspace",
+      "workspace-1",
+      "--environment",
+      "environment-1",
+      "--binding",
+      "binding-1",
+      "--agent",
+      "codex",
+    ]);
+    await projectsCommand([
+      "thread-bind",
+      "binding-1",
+      "thread-3",
+      "project-3",
+      "workspace-1",
+      "environment-1",
+      "initial",
+      "local",
+      "attachment",
+    ]);
+    await projectsCommand([
+      "thread-bind",
+      "binding-2",
+      "thread-3",
+      "project-3",
+      "workspace-2",
+      "environment-2",
+      "switched",
+      "to",
+      "remote",
+    ]);
+
+    const threadLogs = await captureLogs(async () => {
+      await projectsCommand(["threads", "project-3"]);
+    });
+    const bindingLogs = await captureLogs(async () => {
+      await projectsCommand(["thread-bindings", "thread-3"]);
+    });
+
+    expect(threadLogs.join("\n")).toContain("[Local Project]");
+    expect(threadLogs.join("\n")).toContain("workspace=workspace-2");
+    expect(threadLogs.join("\n")).toContain("environment=environment-2");
+    expect(threadLogs.join("\n")).toContain("binding=binding-2");
+
+    expect(bindingLogs[0]).toContain("binding-2");
+    expect(bindingLogs[0]).toContain("[active]");
+    expect(bindingLogs[1]).toContain("binding-1");
+    expect(bindingLogs[1]).toContain("[inactive]");
+
+    await withRepository((repository) => {
+      const thread = repository.getThread("thread-3");
+      expect(thread?.threadType).toBe("local_project");
+      expect(thread?.workspaceId).toBe("workspace-2");
+      expect(thread?.environmentId).toBe("environment-2");
+      expect(thread?.environmentBindingId).toBe("binding-2");
+
+      const bindings = repository.listThreadEnvironmentBindings("thread-3");
+      expect(bindings.map((binding) => binding.bindingId)).toEqual(["binding-2", "binding-1"]);
+      expect(bindings[0]?.isActive).toBe(true);
+      expect(bindings[1]?.isActive).toBe(false);
+      expect(repository.getActiveThreadEnvironmentBinding("thread-3")?.bindingId).toBe("binding-2");
+    });
+  });
 });
