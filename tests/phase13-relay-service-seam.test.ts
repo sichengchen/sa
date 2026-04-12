@@ -24,6 +24,12 @@ describe("Phase 13 relay service seam", () => {
     }
   });
 
+  test("consumes the public relay package instead of package src internals", async () => {
+    const serviceSource = await readText("services/aria-relay/src/index.ts");
+    expect(serviceSource).toContain('from "@aria/relay"');
+    expect(serviceSource).not.toContain("packages/relay/src");
+  });
+
   test("tracks the relay service seam in docs and embedded docs", async () => {
     const [docsReadme, developmentReadme, migration, extractionLedger, packagesDoc, relayDoc, bundledLedger] = await Promise.all([
       readText("docs/README.md"),

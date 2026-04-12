@@ -1,4 +1,4 @@
-import { RelayService, RelayStore } from "../../../packages/relay/src/index.js";
+import { RelayService, RelayStore } from "@aria/relay";
 
 export const ariaRelayService = {
   id: "aria-relay",

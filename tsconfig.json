@@ -64,6 +64,8 @@
       "@aria/policy/*": ["packages/policy/src/*"],
       "@aria/prompt": ["packages/prompt/src/index.ts"],
       "@aria/prompt/*": ["packages/prompt/src/*"],
+      "@aria/relay": ["packages/relay/src/index.ts"],
+      "@aria/relay/*": ["packages/relay/src/*"],
       "@aria/store": ["packages/store/src/index.ts"],
       "@aria/store/*": ["packages/store/src/*"],
       "@aria/tools": ["packages/tools/src/index.ts"],
