@@ -29,7 +29,7 @@ During Phase 2:
 | `@aria/agent-aria` | `packages/runtime/src/agent/*` and runtime composition in `packages/runtime/src/runtime.ts` | `packages/agent-aria/src/` | `packages/runtime/src/agent/*`, `packages/runtime/src/index.ts` |
 | `@aria/memory` | `packages/runtime/src/memory/*` with runtime wiring in `packages/runtime/src/runtime.ts` and `packages/runtime/src/procedures.ts` | `packages/memory/src/` | `packages/runtime/src/memory/*`, `packages/runtime/src/index.ts` |
 | `@aria/automation` | `packages/runtime/src/automation.ts`, `automation-registry.ts`, `automation-schedule.ts`, `scheduler.ts`, plus automation bridges in `runtime.ts`, `server.ts`, and `procedures.ts` | `packages/automation/src/` | `packages/runtime/src/automation.ts`, `automation-registry.ts`, `automation-schedule.ts`, `scheduler.ts`, `packages/runtime/src/index.ts` |
-| `@aria/gateway` | `packages/runtime/src/server.ts`, `trpc.ts`, `context.ts`, and the auth-aware transport glue around the app router | `packages/gateway/src/` | `packages/runtime/src/server.ts`, `trpc.ts`, `context.ts`, `packages/runtime/src/index.ts` |
+| `@aria/gateway` | `packages/gateway/src/*` with `@aria/runtime/{server,procedures,trpc,context}` kept as compatibility shims | `packages/gateway/src/` | `packages/runtime/src/server.ts`, `trpc.ts`, `context.ts`, `procedures.ts`, `packages/runtime/src/index.ts` |
 | `@aria/connectors-im` | `packages/connectors/src/chat-sdk/*`, `shared/stream-handler.ts`, and connector entrypoints under `discord/`, `gchat/`, `github/`, `linear/`, `slack/`, `teams/`, `telegram/`, `wechat/` | `packages/connectors-im/src/` | current `packages/connectors/src/*` leaf entrypoints and `@aria/connectors` package exports |
 | `@aria/console` | `packages/connectors/src/tui/*` | `packages/console/src/` | `packages/connectors/src/tui/*` and `@aria/connectors/tui/*` package exports |
 
@@ -55,8 +55,8 @@ During Phase 2:
 
 ### `@aria/gateway`
 
-- `packages/runtime/src/server.ts` currently mixes HTTP/WebSocket transport, webhook auth, webhook task dispatch, and app-router wiring.
-- `packages/runtime/src/trpc.ts` and `context.ts` are already obvious transport seams; move them before attempting broader route refactors.
+- `packages/gateway/src/server.ts` owns HTTP/WebSocket transport, webhook auth, webhook task dispatch, and app-router wiring.
+- `packages/runtime/src/{server,trpc,context,procedures}.ts` should remain thin compatibility seams rather than the long-term gateway owner.
 - Treat gateway as a transport/auth shell. Do not let it absorb assistant logic, automation policy, or memory ownership.
 
 ### `@aria/connectors-im`

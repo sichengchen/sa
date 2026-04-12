@@ -46,15 +46,16 @@ describe("phase-1 extraction package verification", () => {
     expect(runtimeSource).toContain("../../automation/src/index.js");
     expect(runtimeSource).toContain("../../gateway/src/auth.js");
     const backendRegistrySource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/backend-registry.ts", import.meta.url), "utf-8"));
-    expect(backendRegistrySource).toContain("../../gateway/src/procedures.js");
-    expect(backendRegistrySource).toContain("../../gateway/src/context.js");
+    expect(backendRegistrySource).toContain("../../jobs/src/backend-registry.js");
     const runtimeEngineSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/engine.ts", import.meta.url), "utf-8"));
-    expect(runtimeEngineSource).toContain("../../gateway/src/server.js");
+    expect(runtimeEngineSource).toContain("../../server/src/engine.js");
     const proceduresSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/procedures.ts", import.meta.url), "utf-8"));
-    expect(proceduresSource).toContain("../../gateway/src/trpc.js");
-    expect(proceduresSource).toContain("../../tools/src/session-tool-environment.js");
-    expect(proceduresSource).toContain("../../audit/src/index.js");
-    expect(proceduresSource).toContain("../../policy/src/policy.js");
+    expect(proceduresSource).toContain("../../gateway/src/procedures.js");
+    const gatewayProceduresSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/gateway/src/procedures.ts", import.meta.url), "utf-8"));
+    expect(gatewayProceduresSource).toContain("./trpc.js");
+    expect(gatewayProceduresSource).toContain("../../tools/src/session-tool-environment.js");
+    expect(gatewayProceduresSource).toContain("../../audit/src/index.js");
+    expect(gatewayProceduresSource).toContain("../../policy/src/policy.js");
   });
 
   test("@aria/audit writes and queries entries through the package barrel", async () => {

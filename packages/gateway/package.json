@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./auth": "./src/auth.ts",
+    "./procedures": "./src/procedures.ts",
     "./server": "./src/server.ts",
     "./trpc": "./src/trpc.ts",
     "./router": "./src/router/index.ts",
