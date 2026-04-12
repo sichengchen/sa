@@ -12,8 +12,8 @@ describe("Phase 6 CLI/server stability", () => {
     const runtimeDiscovery = readRepoFile("packages/runtime/src/discovery.ts");
     const serverEngine = readRepoFile("packages/server/src/engine.ts");
 
-    expect(runtimeEngine).toContain('export * from "../../server/src/engine.js";');
-    expect(runtimeDiscovery).toContain('from "../../server/src/discovery.js";');
+    expect(runtimeEngine).toContain('export * from "@aria/server/engine";');
+    expect(runtimeDiscovery).toContain('from "@aria/server/discovery";');
     expect(serverEngine).toContain('import { getRuntimeDiscoveryPaths } from "./discovery.js";');
     expect(serverEngine).toContain("restartMarkerFile: RESTART_MARKER");
     expect(serverEngine).toContain("const logFd = openSync(LOG_FILE, \"a\");");

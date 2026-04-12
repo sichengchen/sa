@@ -39,8 +39,8 @@ describe("Phase 7 CLI/server/runtime stability", () => {
 
     expect(cliIndex).toContain('await import("@aria/server/engine");');
     expect(cliEngine).toContain('from "@aria/server/daemon";');
-    expect(runtimeEngine).toContain('export * from "../../server/src/engine.js";');
-    expect(runtimeDiscovery).toContain('from "../../server/src/discovery.js";');
+    expect(runtimeEngine).toContain('export * from "@aria/server/engine";');
+    expect(runtimeDiscovery).toContain('from "@aria/server/discovery";');
     expect(serverEngine).toContain('import { startAriaServer } from "./app.js";');
     expect(serverEngine).toContain('import { getRuntimeDiscoveryPaths } from "./discovery.js";');
     expect(appIndex.trim()).toBe('import "@aria/server/engine";');
