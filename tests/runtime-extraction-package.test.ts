@@ -44,6 +44,10 @@ describe("phase-1 extraction package verification", () => {
     expect(runtimeSource).toContain("../../memory/src/index.js");
     expect(runtimeSource).toContain("../../policy/src/index.js");
     expect(runtimeSource).toContain("../../automation/src/index.js");
+    const proceduresSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/procedures.ts", import.meta.url), "utf-8"));
+    expect(proceduresSource).toContain("../../gateway/src/trpc.js");
+    expect(proceduresSource).toContain("../../tools/src/session-tool-environment.js");
+    expect(proceduresSource).toContain("../../audit/src/index.js");
   });
 
   test("@aria/audit writes and queries entries through the package barrel", async () => {

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { router, publicProcedure, middleware } from "./trpc.js";
+import { router, publicProcedure, middleware } from "../../gateway/src/trpc.js";
 import type { EngineRuntime } from "./runtime.js";
 import { getRuntimeSessionCoordinator } from "./session-coordinator.js";
 import { Agent } from "./agent/index.js";
@@ -13,14 +13,16 @@ import { ToolPolicyManager, type ToolEventContext } from "./tools/policy.js";
 import { ConnectorTypeSchema } from "@aria/shared/types.js";
 import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode, EscalationChoice } from "@aria/shared/types.js";
 import type { ModelConfig, ProviderConfig } from "./router/types.js";
+import { buildDelegationOptions, deleteWebhookTaskRecord, registerCronTask, persistCronTask, removeCronTaskFromConfig, upsertHeartbeatTaskRecord } from "../../automation/src/automation.js";
+import { computeNextRunAt, parseScheduleInput } from "../../automation/src/automation-schedule.js";
 import { heartbeatState, createHeartbeatTask } from "../../automation/src/index.js";
-import { describeModeEffects } from "./security-mode.js";
-import { createSessionToolEnvironment } from "./session-tool-environment.js";
+import { buildToolCapabilityCatalog, describeModeEffects, resolveCapabilityPolicyDecision } from "../../policy/src/index.js";
+import { createSessionToolEnvironment } from "../../tools/src/session-tool-environment.js";
 import { preprocessContextReferences } from "../../prompt/src/context-references.js";
 import type { CronTask } from "./config/types.js";
-import { computeNextRunAt, parseScheduleInput } from "./automation-schedule.js";
-import { listToolsets } from "./toolsets.js";
-import { buildToolCapabilityCatalog, resolveCapabilityPolicyDecision } from "./capability-policy.js";
+
+import { listToolsets } from "../../tools/src/toolsets.js";
+
 import {
   buildDelegationOptions,
   deleteWebhookTaskRecord,
@@ -31,7 +33,7 @@ import {
   upsertWebhookTaskRecord,
   updateCronTaskState,
 } from "./automation.js";
-import { queryAuditEntries } from "./audit.js";
+import { queryAuditEntries } from "../../audit/src/index.js";
 
 /** Format tool args as a compact summary for IM display */
 function formatArgsForIM(toolName: string, args: Record<string, unknown>): string {
