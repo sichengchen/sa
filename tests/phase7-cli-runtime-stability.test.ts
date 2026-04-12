@@ -33,15 +33,16 @@ describe("Phase 7 CLI/server/runtime stability", () => {
     const cliIndex = readRepoFile("packages/cli/src/index.ts");
     const cliEngine = readRepoFile("packages/cli/src/engine.ts");
     const runtimeEngine = readRepoFile("packages/runtime/src/engine.ts");
+    const runtimeDiscovery = readRepoFile("packages/runtime/src/discovery.ts");
     const serverEngine = readRepoFile("packages/server/src/engine.ts");
     const appIndex = readRepoFile("apps/aria-server/src/index.ts");
 
-    expect(cliIndex).toContain('await import("../../runtime/src/engine.js");');
-    expect(cliEngine).toContain('import { getRuntimeDiscoveryPaths } from "../../runtime/src/discovery.js";');
-    expect(runtimeEngine).toContain('import { createRuntime } from "./runtime.js";');
-    expect(runtimeEngine).toContain('import { startServer } from "./server.js";');
+    expect(cliIndex).toContain('await import("@aria/server/engine");');
+    expect(cliEngine).toContain('from "@aria/server/daemon";');
+    expect(runtimeEngine).toContain('export * from "../../server/src/engine.js";');
+    expect(runtimeDiscovery).toContain('from "../../server/src/discovery.js";');
     expect(serverEngine).toContain('import { startAriaServer } from "./app.js";');
-    expect(serverEngine).toContain('import { getRuntimeDiscoveryPaths } from "../../runtime/src/discovery.js";');
+    expect(serverEngine).toContain('import { getRuntimeDiscoveryPaths } from "./discovery.js";');
     expect(appIndex.trim()).toBe('import "@aria/server/engine";');
   });
 

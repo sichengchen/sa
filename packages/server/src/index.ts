@@ -1,5 +1,9 @@
 export { startAriaServer } from "./app.js";
 export {
+  getRuntimeDiscoveryPaths,
+  type RuntimeDiscoveryPaths,
+} from "./discovery.js";
+export {
   engineCommand,
   ensureEngine,
   logsEngine,

@@ -9,10 +9,12 @@ function readRepoFile(relativePath: string): string {
 describe("Phase 6 CLI/server stability", () => {
   test("keeps runtime discovery-file paths centralized across engine entrypoints", () => {
     const runtimeEngine = readRepoFile("packages/runtime/src/engine.ts");
+    const runtimeDiscovery = readRepoFile("packages/runtime/src/discovery.ts");
     const serverEngine = readRepoFile("packages/server/src/engine.ts");
 
-    expect(runtimeEngine).toContain('import { getRuntimeDiscoveryPaths } from "./discovery.js";');
-    expect(serverEngine).toContain('import { getRuntimeDiscoveryPaths } from "../../runtime/src/discovery.js";');
+    expect(runtimeEngine).toContain('export * from "../../server/src/engine.js";');
+    expect(runtimeDiscovery).toContain('from "../../server/src/discovery.js";');
+    expect(serverEngine).toContain('import { getRuntimeDiscoveryPaths } from "./discovery.js";');
     expect(serverEngine).toContain("restartMarkerFile: RESTART_MARKER");
     expect(serverEngine).toContain("const logFd = openSync(LOG_FILE, \"a\");");
   });
@@ -21,7 +23,7 @@ describe("Phase 6 CLI/server stability", () => {
     const cliIndex = readRepoFile("packages/cli/src/index.ts");
     const appIndex = readRepoFile("apps/aria-server/src/index.ts");
 
-    expect(cliIndex).toContain('await import("../../runtime/src/engine.js");');
+    expect(cliIndex).toContain('await import("@aria/server/engine");');
     expect(appIndex.trim()).toBe('import "@aria/server/engine";');
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { engineCommand, ensureEngine, startAriaServer } from "@aria/server";
+import { engineCommand, ensureEngine, getRuntimeDiscoveryPaths, startAriaServer } from "@aria/server";
 import type { EngineServer } from "@aria/gateway/server";
 import type { EngineRuntime } from "@aria/runtime/runtime";
 
@@ -81,5 +81,6 @@ describe("Phase 5 server app seam", () => {
   test("exports daemon lifecycle helpers from @aria/server", () => {
     expect(typeof ensureEngine).toBe("function");
     expect(typeof engineCommand).toBe("function");
+    expect(getRuntimeDiscoveryPaths("/tmp/aria-test").pidFile).toBe("/tmp/aria-test/engine.pid");
   });
 });

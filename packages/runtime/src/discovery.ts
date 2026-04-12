@@ -1,20 +1,4 @@
-import { join } from "node:path";
-import { getRuntimeHome } from "@aria/shared/brand.js";
-
-export interface RuntimeDiscoveryPaths {
-  runtimeHome: string;
-  pidFile: string;
-  urlFile: string;
-  logFile: string;
-  restartMarkerFile: string;
-}
-
-export function getRuntimeDiscoveryPaths(runtimeHome = getRuntimeHome()): RuntimeDiscoveryPaths {
-  return {
-    runtimeHome,
-    pidFile: join(runtimeHome, "engine.pid"),
-    urlFile: join(runtimeHome, "engine.url"),
-    logFile: join(runtimeHome, "engine.log"),
-    restartMarkerFile: join(runtimeHome, "engine.restart"),
-  };
-}
+export {
+  getRuntimeDiscoveryPaths,
+  type RuntimeDiscoveryPaths,
+} from "../../server/src/discovery.js";

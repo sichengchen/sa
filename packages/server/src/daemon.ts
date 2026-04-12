@@ -2,7 +2,7 @@ import { readFile, writeFile, unlink } from "node:fs/promises";
 import { existsSync, openSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { CLI_NAME, HOME_ENV_VAR, RUNTIME_NAME } from "@aria/shared/brand.js";
-import { getRuntimeDiscoveryPaths } from "../../runtime/src/discovery.js";
+import { getRuntimeDiscoveryPaths } from "./discovery.js";
 
 const { runtimeHome, pidFile: PID_FILE, urlFile: URL_FILE, logFile: LOG_FILE } = getRuntimeDiscoveryPaths();
 
