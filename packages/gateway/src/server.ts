@@ -9,7 +9,7 @@ import type { EngineRuntime } from "../../runtime/src/runtime.js";
 import { heartbeatState } from "../../automation/src/scheduler.js";
 import { frameAsData } from "../../agent-aria/src/content-frame.js";
 import { logAutomationResult, runAutomationAgent, upsertWebhookTaskRecord } from "../../automation/src/automation.js";
-import { RUNTIME_NAME, getRuntimeHome } from "@aria/shared/brand.js";
+import { RUNTIME_NAME, getRuntimeHome } from "@aria/server/brand";
 
 const DEFAULT_PORT = 7420;
 

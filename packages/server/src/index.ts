@@ -1,4 +1,5 @@
 export { startAriaServer } from "./app.js";
+export * from "./brand.js";
 export {
   getRuntimeDiscoveryPaths,
   type RuntimeDiscoveryPaths,

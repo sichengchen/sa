@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { getRuntimeHome } from "@aria/shared/brand.js";
+import { getRuntimeHome } from "@aria/server/brand";
 
 export interface RuntimeDiscoveryPaths {
   runtimeHome: string;

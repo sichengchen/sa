@@ -2,7 +2,7 @@
 
 import { existsSync, openSync, unlinkSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
-import { HOME_ENV_VAR, ENGINE_PORT_ENV_VAR, RUNTIME_NAME } from "@aria/shared/brand.js";
+import { HOME_ENV_VAR, ENGINE_PORT_ENV_VAR, RUNTIME_NAME } from "@aria/server/brand";
 import { getRuntimeDiscoveryPaths } from "./discovery.js";
 import { startAriaServer } from "./app.js";
 

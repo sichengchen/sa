@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { createEngineClient } from "@aria/access-client/client";
 import { AuthManager } from "@aria/gateway/auth";
-import { getRuntimeHome } from "@aria/shared/brand.js";
+import { getRuntimeHome } from "@aria/server/brand";
 
 const DEFAULT_HTTP_PORT = 7420;
 

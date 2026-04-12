@@ -86,7 +86,7 @@ This phase seeds the remaining target-state server package names needed for proj
 
 | Target surface | Current source owner | New compatibility owner | Compatibility surface kept at |
 | --- | --- | --- | --- |
-| `@aria/server` | `packages/runtime/src/{engine,index,runtime}.ts`, `packages/gateway/src/server.ts`, and CLI bootstrap wiring in `packages/cli/src/{engine,index}.ts` | `packages/server/src/index.ts` | `@aria/runtime`, `@aria/gateway`, and the current `aria` CLI engine flow |
+| `@aria/server` | `packages/server/src/{app,brand,daemon,discovery,engine}.ts`, `packages/gateway/src/server.ts`, and CLI bootstrap wiring in `packages/cli/src/{engine,index}.ts` | `packages/server/src/index.ts` | `@aria/runtime`, `@aria/gateway`, `@aria/shared-types`, and the current `aria` CLI engine flow |
 | `apps/aria-server` | Root `package.json` scripts plus the current CLI/daemon boot path | `apps/aria-server/*` | Root repo scripts, `dist/index.js`, and the current `aria` binary |
 
 ## Phase 5 Notes

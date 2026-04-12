@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import type { Identity, RuntimeConfig, AriaConfig, AriaConfigFile, SecretsFile } from "./types.js";
 import { DEFAULT_IDENTITY_MD, DEFAULT_CONFIG } from "./defaults.js";
 import { loadSecrets as _loadSecrets, saveSecrets as _saveSecrets } from "./secrets.js";
-import { PRODUCT_NAME, getRuntimeHome } from "@aria/shared/brand.js";
+import { PRODUCT_NAME, getRuntimeHome } from "@aria/server/brand";
 
 export class ConfigManager {
   readonly homeDir: string;

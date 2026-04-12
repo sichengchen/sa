@@ -6,7 +6,7 @@ import { scanSkillDirectory, loadSkillContent, parseEmbeddedSkills, loadEmbedded
 import { EMBEDDED_SKILLS } from "./embedded-skills.generated.js";
 import type { SkillMetadata, LoadedSkill } from "./types.js";
 import { isPathInside } from "../path-boundary.js";
-import { getRuntimeHome } from "@aria/shared/brand.js";
+import { getRuntimeHome } from "@aria/server/brand";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const BUNDLED_SKILLS_DIR = resolve(__dirname, "./bundled");

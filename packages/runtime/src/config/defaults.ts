@@ -1,5 +1,5 @@
 import type { AriaConfigFile, HeartbeatConfig } from "./types.js";
-import { PRODUCT_NAME } from "@aria/shared/brand.js";
+import { PRODUCT_NAME } from "@aria/server/brand";
 
 /** Default tool allowlist for cron tasks — read + search, memory, notify */
 export const CRON_DEFAULT_TOOLS = [

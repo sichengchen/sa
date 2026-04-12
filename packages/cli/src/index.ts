@@ -12,7 +12,7 @@ import { relayCommand } from "./relay.js";
 import { loadConnectorRuntimeEnv } from "./connector-env.js";
 import { createTuiClient } from "@aria/console/client.js";
 import { App } from "@aria/console/App.js";
-import { CLI_NAME, PRODUCT_NAME, RUNTIME_NAME, getRuntimeHome } from "@aria/shared/brand.js";
+import { CLI_NAME, PRODUCT_NAME, RUNTIME_NAME, getRuntimeHome } from "@aria/server/brand";
 
 const runtimeHome = getRuntimeHome();
 const [subcommand, ...args] = process.argv.slice(2);

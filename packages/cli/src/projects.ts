@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { CLI_NAME, getRuntimeHome } from "@aria/shared/brand.js";
+import { CLI_NAME, getRuntimeHome } from "@aria/server/brand";
 import { ProjectsDispatchService, runDispatchExecution } from "@aria/jobs";
 import {
   ProjectsEngineRepository,

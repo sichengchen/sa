@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { CLI_NAME, getRuntimeHome } from "@aria/shared/brand.js";
+import { CLI_NAME, getRuntimeHome } from "@aria/server/brand";
 import { RelayService } from "../../relay/src/service.js";
 import { RelayStore } from "../../relay/src/store.js";
 

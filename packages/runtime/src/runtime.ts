@@ -30,7 +30,7 @@ import { CheckpointManager } from "./checkpoints.js";
 import { MCPManager } from "./mcp.js";
 import { OperationalStore } from "../../store/src/index.js";
 import { PromptEngine } from "../../prompt/src/index.js";
-import { CLI_NAME, getRuntimeHome } from "@aria/shared/brand.js";
+import { CLI_NAME, getRuntimeHome } from "@aria/server/brand";
 
 /** Engine runtime — holds all bootstrapped subsystems */
 export interface EngineRuntime {

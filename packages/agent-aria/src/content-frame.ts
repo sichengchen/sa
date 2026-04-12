@@ -1,4 +1,4 @@
-import { HOME_PLACEHOLDER } from "@aria/shared/brand.js";
+import { HOME_PLACEHOLDER } from "@aria/server/brand";
 
 /**
  * Content framing — wraps external data in `<data-*>` tags to signal
