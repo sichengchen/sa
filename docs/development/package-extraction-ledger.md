@@ -122,3 +122,16 @@ This phase seeds the remaining target-state server package names needed for proj
 - This phase seeds the target-state desktop/mobile shell package names over the existing thin app wrappers and shared client seams.
 - `@aria/desktop` should own shell composition and desktop-facing thread/project surfaces without absorbing bridge, git, or coding-agent execution ownership.
 - `@aria/mobile` should stay a remote-first shell over the shared client seams and must not become a local execution surface.
+
+## Phase 9 Architecture Truth Table
+
+Phase 9 is the cross-phase owner-classification pass. It does not move code by itself; it says which package/app is already target-owned, which package/app is a hybrid target shell over compatibility seams, and which target seams are still legacy-owned today.
+
+| Classification | Meaning |
+| --- | --- |
+| `target-owned` | Edit the target package/app first; any older surface is just a compatibility shim. |
+| `hybrid target shell` | Edit the target shell/composition root first, but preserve the listed compatibility seams. |
+| `legacy-owned seam` | The target name exists, but the listed legacy owner still ships the behavior. |
+| `legacy-only compatibility surface` | Only change this surface to preserve compatibility or to move behavior into its target owner. |
+
+The authoritative package/app-by-package/app truth table lives in [phase-9-architecture-truth-table.md](./phase-9-architecture-truth-table.md).

@@ -300,7 +300,7 @@ Both desktop and mobile should share the same access model:
 
 ## Recommended Internal Packages
 
-Current repo migration note: the thin seam wave for `@aria/access-client`, `@aria/ui`, `apps/aria-desktop`, and `apps/aria-mobile` is tracked in [../development/phase-6-client-app-seams-ledger.md](../development/phase-6-client-app-seams-ledger.md). The follow-on shell-package wave for `@aria/desktop` and `@aria/mobile` is tracked in [../development/phase-8-client-shell-seams-ledger.md](../development/phase-8-client-shell-seams-ledger.md). Those seams are compatibility-first wrappers that let the desktop/mobile shells appear incrementally over the existing app and shared-client surfaces.
+Current repo migration note: the thin seam wave for `@aria/access-client`, `@aria/ui`, `apps/aria-desktop`, and `apps/aria-mobile` is tracked in [../development/phase-6-client-app-seams-ledger.md](../development/phase-6-client-app-seams-ledger.md). The follow-on shell-package wave for `@aria/desktop` and `@aria/mobile` is tracked in [../development/phase-8-client-shell-seams-ledger.md](../development/phase-8-client-shell-seams-ledger.md). The cross-phase owner classification that says whether a change belongs in the target shell or in a compatibility seam is tracked in [../development/phase-9-architecture-truth-table.md](../development/phase-9-architecture-truth-table.md). Those seams are compatibility-first wrappers that let the desktop/mobile shells appear incrementally over the existing app and shared-client surfaces.
 
 | Responsibility | Package |
 | --- | --- |
@@ -315,7 +315,7 @@ Current repo migration note: the thin seam wave for `@aria/access-client`, `@ari
 
 ## Current Repo Migration Note
 
-The target-state package names on this page are ahead of the current implementation. The current client shared-seam wave for `@aria/access-client`, `@aria/ui`, `apps/aria-desktop`, and `apps/aria-mobile` is tracked in [../development/phase-6-client-app-seams-ledger.md](../development/phase-6-client-app-seams-ledger.md), the follow-on client shell-package wave for `@aria/desktop` and `@aria/mobile` is tracked in [../development/phase-8-client-shell-seams-ledger.md](../development/phase-8-client-shell-seams-ledger.md), and the server/runtime/project compatibility surfaces remain active behind `@aria/runtime`, `@aria/gateway`, `@aria/projects`, and the current console/CLI flows.
+The target-state package names on this page are ahead of the current implementation. The current client shared-seam wave for `@aria/access-client`, `@aria/ui`, `apps/aria-desktop`, and `apps/aria-mobile` is tracked in [../development/phase-6-client-app-seams-ledger.md](../development/phase-6-client-app-seams-ledger.md), the follow-on client shell-package wave for `@aria/desktop` and `@aria/mobile` is tracked in [../development/phase-8-client-shell-seams-ledger.md](../development/phase-8-client-shell-seams-ledger.md), the cross-phase owner classification is tracked in [../development/phase-9-architecture-truth-table.md](../development/phase-9-architecture-truth-table.md), and the server/runtime/project compatibility surfaces remain active behind `@aria/runtime`, `@aria/gateway`, `@aria/projects`, and the current console/CLI flows.
 
 ## Toolchain References
 

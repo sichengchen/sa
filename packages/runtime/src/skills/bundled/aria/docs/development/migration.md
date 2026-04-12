@@ -96,6 +96,17 @@ Use the [phase 8 client shell seams ledger](./phase-8-client-shell-seams-ledger.
 - the extraction order and review hotspots for the desktop/mobile shell-package wave
 - focused verification expectations for docs, bundled docs, embedded-skill refreshes, and client-shell stability checks
 
+## Phase 9 Architecture Truth Table
+
+Phase 9 does not seed a new package name. It closes the remaining ambiguity about which surfaces are target-owned today, which surfaces are hybrid target shells over compatibility seams, and which surfaces still ship from legacy owners.
+
+Use the [phase 9 architecture truth table](./phase-9-architecture-truth-table.md) as the source of truth for:
+
+- whether a target package/app name is already the current implementation owner
+- which legacy compatibility surface still ships behavior when a target seam exists only as a facade
+- which package/app should be edited first when target architecture docs and repo history appear to disagree
+- which earlier phase ledger still governs a surface after the owner classification is known
+
 ## Cutover Criteria
 
 Before legacy repos are archived:
