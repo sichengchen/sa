@@ -1,12 +1,7 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { afterAll, beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { initTRPC } from "@trpc/server";
-import superjson from "superjson";
-import { WebSocketServer } from "ws";
-import { z } from "zod";
 
 type MemoryOverview = {
   curatedLength: number;
@@ -81,44 +76,42 @@ const state: {
   automationRuns: [],
 };
 
-const t = initTRPC.create({ transformer: superjson });
-const appRouter = t.router({
-  memory: t.router({
-    overview: t.procedure.query(() => state.memoryOverview),
-    read: t.procedure.input(z.object({
-      layer: z.string(),
-      key: z.string().optional(),
-    })).query(({ input }) => {
-      state.lastReadInput = input as { layer: string; key?: string };
-      return state.memoryRead;
-    }),
-    search: t.procedure.input(z.object({
-      query: z.string(),
-      limit: z.number().optional(),
-    })).query(({ input }) => {
-      state.lastSearchInput = input as { query: string; limit?: number };
-      return state.memorySearch;
-    }),
-  }),
-  automation: t.router({
-    list: t.procedure.query(() => state.automationTasks),
-    runs: t.procedure.input(z.object({
-      taskId: z.string().optional(),
-      limit: z.number().optional(),
-    }).optional()).query(({ input }) => {
-      state.lastRunsInput = (input as { taskId?: string; limit?: number } | undefined) ?? undefined;
-      return state.automationRuns;
-    }),
-  }),
-});
-
 let runtimeHome = "";
-let server: ReturnType<typeof Bun.serve>;
-let wsServer: WebSocketServer;
 let memoryCommand: (args: string[]) => Promise<void>;
 let automationCommand: (args: string[]) => Promise<void>;
 let capturedLogs: string[] = [];
 let originalConsoleLog: typeof console.log;
+
+const mockClient = {
+  memory: {
+    overview: {
+      query: async () => state.memoryOverview,
+    },
+    read: {
+      query: async (input: { layer: string; key?: string }) => {
+        state.lastReadInput = input;
+        return state.memoryRead;
+      },
+    },
+    search: {
+      query: async (input: { query: string; limit?: number }) => {
+        state.lastSearchInput = input;
+        return state.memorySearch;
+      },
+    },
+  },
+  automation: {
+    list: {
+      query: async () => state.automationTasks,
+    },
+    runs: {
+      query: async (input?: { taskId?: string; limit?: number }) => {
+        state.lastRunsInput = input ?? undefined;
+        return state.automationRuns;
+      },
+    },
+  },
+};
 
 function resetState() {
   state.memoryOverview = {
@@ -139,24 +132,12 @@ function resetState() {
 beforeAll(async () => {
   runtimeHome = await mkdtemp(join(tmpdir(), "aria-phase2-cli-compat-"));
   process.env.ARIA_HOME = runtimeHome;
-
-  server = Bun.serve({
-    port: 0,
-    hostname: "127.0.0.1",
-    fetch(req) {
-      return fetchRequestHandler({
-        endpoint: "/trpc",
-        req,
-        router: appRouter,
-        createContext: () => ({}),
-      });
-    },
-  });
-
-  wsServer = new WebSocketServer({ port: server.port! + 1, host: "127.0.0.1" });
-
-  await writeFile(join(runtimeHome, "engine.pid"), String(process.pid));
-  await writeFile(join(runtimeHome, "engine.url"), `http://127.0.0.1:${server.port!}`);
+  mock.module("../packages/cli/src/engine.js", () => ({
+    ensureEngine: async () => {},
+  }));
+  mock.module("@aria/console/client.js", () => ({
+    createTuiClient: () => mockClient,
+  }));
 
   ({ memoryCommand } = await import("../packages/cli/src/memory.js"));
   ({ automationCommand } = await import("../packages/cli/src/automation.js"));
@@ -166,8 +147,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   console.log = originalConsoleLog;
-  wsServer.close();
-  server.stop(true);
   delete process.env.ARIA_HOME;
   await rm(runtimeHome, { recursive: true, force: true });
 });
