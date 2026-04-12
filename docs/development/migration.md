@@ -85,6 +85,17 @@ Use the [phase 6 client app seams ledger](./phase-6-client-app-seams-ledger.md) 
 - the extraction order and review hotspots for the shared-client and thin-app wave
 - focused verification expectations for docs, bundled docs, and embedded-skill refreshes
 
+## Phase 8 Client Shell Seams
+
+Phase 8 keeps the current app wrappers and shared client seams stable while seeding the target-state shell packages for `@aria/desktop` and `@aria/mobile`.
+
+Use the [phase 8 client shell seams ledger](./phase-8-client-shell-seams-ledger.md) as the source of truth for:
+
+- the current app-wrapper and shared-client entrypoints behind the new shell packages
+- the compatibility surfaces that must stay stable while the `@aria/desktop` and `@aria/mobile` package names appear
+- the extraction order and review hotspots for the desktop/mobile shell-package wave
+- focused verification expectations for docs, bundled docs, embedded-skill refreshes, and client-shell stability checks
+
 ## Cutover Criteria
 
 Before legacy repos are archived:
