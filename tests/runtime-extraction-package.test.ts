@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { AuditLogger, queryAuditEntries, readAuditEntries } from "../packages/audit/src/index.js";
-import { SecurityModeManager, ToolPolicyManager, buildToolCapabilityCatalog, describeModeEffects, isPathInside, resolveCapabilityPolicyDecision, toRelativeIfInside } from "../packages/policy/src/index.js";
+import { MAX_REDIRECTS, SecurityModeManager, ToolPolicyManager, buildToolCapabilityCatalog, describeModeEffects, isPathInside, resolveCapabilityPolicyDecision, toRelativeIfInside, validateHeaders, validateUrl } from "../packages/policy/src/index.js";
 import { buildContextFilesPrompt, parseContextReferences, preprocessContextReferences, PromptEngine } from "../packages/prompt/src/index.js";
 import { ConnectorTypeSchema } from "../packages/protocol/src/index.js";
 import { OperationalStore } from "../packages/store/src/index.js";
@@ -63,6 +63,10 @@ describe("phase-1 extraction package verification", () => {
     expect(describeModeEffects("trusted", 3600)).toContain("TRUSTED");
     expect(isPathInside("/tmp/project", "/tmp/project/src/file.ts")).toBe(true);
     expect(toRelativeIfInside("/tmp/project", "/tmp/project/src/file.ts")).toBe("src/file.ts");
+    expect(validateUrl("https://example.com")).toEqual({ ok: true });
+    expect(validateUrl("http://localhost:3000").ok).toBe(false);
+    expect(validateHeaders({ Authorization: "nope", Accept: "application/json" })).toEqual({ Accept: "application/json" });
+    expect(MAX_REDIRECTS).toBe(5);
   });
 
   test("@aria/policy preserves capability catalog and approval decisions", () => {

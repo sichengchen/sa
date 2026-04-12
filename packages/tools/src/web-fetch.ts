@@ -1,7 +1,7 @@
 import { Type } from "@mariozechner/pi-ai";
 import { NodeHtmlMarkdown } from "node-html-markdown";
 import type { ToolImpl } from "../../runtime/src/agent/types.js";
-import { validateUrl, validateHeaders, MAX_REDIRECTS, type UrlPolicyConfig } from "../../runtime/src/tools/url-policy.js";
+import { validateUrl, validateHeaders, MAX_REDIRECTS, type UrlPolicyConfig } from "../../policy/src/url-policy.js";
 import { frameAsData, sanitizeContent } from "../../runtime/src/agent/content-frame.js";
 
 const DEFAULT_MAX_LENGTH = 50_000;

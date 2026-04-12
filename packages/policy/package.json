@@ -8,6 +8,7 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./url-policy": "./src/url-policy.ts",
     "./capability-policy": "./src/capability-policy.ts",
     "./path-boundary": "./src/path-boundary.ts",
     "./policy": "./src/policy.ts",
