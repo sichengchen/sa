@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { AuditLogger, queryAuditEntries, readAuditEntries } from "../packages/audit/src/index.js";
-import { MAX_REDIRECTS, SecurityModeManager, ToolPolicyManager, buildToolCapabilityCatalog, describeModeEffects, isPathInside, resolveCapabilityPolicyDecision, toRelativeIfInside, validateHeaders, validateUrl } from "../packages/policy/src/index.js";
+import { MAX_REDIRECTS, SecurityModeManager, ToolPolicyManager, buildToolCapabilityCatalog, classifyExecCommand, describeModeEffects, isPathInside, resolveCapabilityPolicyDecision, toRelativeIfInside, validateExecPaths, validateHeaders, validateUrl } from "../packages/policy/src/index.js";
 import { buildContextFilesPrompt, parseContextReferences, preprocessContextReferences, PromptEngine } from "../packages/prompt/src/index.js";
 import { ConnectorTypeSchema } from "../packages/protocol/src/index.js";
 import { OperationalStore } from "../packages/store/src/index.js";
@@ -67,6 +67,9 @@ describe("phase-1 extraction package verification", () => {
     expect(validateUrl("http://localhost:3000").ok).toBe(false);
     expect(validateHeaders({ Authorization: "nope", Accept: "application/json" })).toEqual({ Accept: "application/json" });
     expect(MAX_REDIRECTS).toBe(5);
+    expect(classifyExecCommand("ls -la", "dangerous")).toBe("safe");
+    expect(classifyExecCommand("rm -rf /tmp/foo", "safe")).toBe("dangerous");
+    expect(validateExecPaths("cat /tmp/test.txt", undefined, { fence: ["/tmp"], alwaysDeny: [] })).toEqual({ ok: true });
   });
 
   test("@aria/policy preserves capability catalog and approval decisions", () => {
