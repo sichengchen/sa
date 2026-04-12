@@ -8,6 +8,7 @@ export const ariaDesktopApp = {
   surface: "desktop",
   sharedPackages: [
     "@aria/access-client",
+    "@aria/desktop-bridge",
     "@aria/ui",
     "@aria/projects",
     "@aria/agents-coding",
