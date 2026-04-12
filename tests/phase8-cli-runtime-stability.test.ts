@@ -26,11 +26,15 @@ const futureClientPackages = [
     packageName: "@aria/desktop",
     packageJsonPath: "packages/desktop/package.json",
     sourcePath: "packages/desktop/src/index.ts",
+    appWrapperPath: "apps/aria-desktop/src/index.ts",
+    expectedWrapperSource: 'export * from "@aria/desktop";',
   },
   {
     packageName: "@aria/mobile",
     packageJsonPath: "packages/mobile/package.json",
     sourcePath: "packages/mobile/src/index.ts",
+    appWrapperPath: "apps/aria-mobile/src/index.ts",
+    expectedWrapperSource: 'export * from "@aria/mobile";',
   },
 ] as const;
 
@@ -71,19 +75,22 @@ describe("Phase 8 CLI/server/runtime stability", () => {
     for (const candidate of futureClientPackages) {
       const packageJsonPath = join(import.meta.dir, "..", candidate.packageJsonPath);
       const sourcePath = join(import.meta.dir, "..", candidate.sourcePath);
+      const appWrapperPath = join(import.meta.dir, "..", candidate.appWrapperPath);
 
-      if (!existsSync(packageJsonPath) || !existsSync(sourcePath)) {
+      if (!existsSync(packageJsonPath) || !existsSync(sourcePath) || !existsSync(appWrapperPath)) {
         continue;
       }
 
       const manifest = readRepoJson<WorkspacePackageJson>(candidate.packageJsonPath);
       const source = readRepoFile(candidate.sourcePath);
+      const appWrapperSource = readRepoFile(candidate.appWrapperPath).trim();
 
       expect(manifest.name).toBe(candidate.packageName);
       expect(manifest.main).toBe("./src/index.ts");
       expect(manifest.types).toBe("./src/index.ts");
       expect(manifest.bin).toBeUndefined();
       expect(manifest.exports?.["."]).toBe("./src/index.ts");
+      expect(appWrapperSource).toBe(candidate.expectedWrapperSource);
 
       for (const disallowedImport of ["@aria/runtime", "@aria/server", "packages/runtime", "packages/server"]) {
         expect(source).not.toContain(disallowedImport);
