@@ -8,7 +8,7 @@ import { MAX_REDIRECTS, SecurityModeManager, ToolPolicyManager, buildToolCapabil
 import { buildContextFilesPrompt, parseContextReferences, preprocessContextReferences, PromptEngine } from "../packages/prompt/src/index.js";
 import { ConnectorTypeSchema } from "../packages/protocol/src/index.js";
 import { OperationalStore } from "../packages/store/src/index.js";
-import { askUserTool, buildDynamicToolsets, createMemoryDeleteTool, createMemoryReadTool, createMemorySearchTool, createMemoryWriteTool, createNotifyTool, createReadSkillTool, createSessionToolEnvironment, createSetEnvSecretTool, createSetEnvVariableTool, createSkillManageTool, createWebFetchTool, editTool, formatToolsSection, getBuiltinTools, mergeAllowedTools, reactionTool, readTool, validateEnvVarName, webSearchTool, writeTool } from "../packages/tools/src/index.js";
+import { askUserTool, bashTool, buildDynamicToolsets, createMemoryDeleteTool, createMemoryReadTool, createMemorySearchTool, createMemoryWriteTool, createNotifyTool, createReadSkillTool, createSessionToolEnvironment, createSetEnvSecretTool, createSetEnvVariableTool, createSkillManageTool, createWebFetchTool, editTool, execKillTool, execStatusTool, formatToolsSection, generateHandle, getBuiltinTools, mergeAllowedTools, reactionTool, readTool, registerBackground, validateEnvVarName, webSearchTool, writeTool } from "../packages/tools/src/index.js";
 
 const tempDirs: string[] = [];
 
@@ -278,6 +278,17 @@ describe("phase-1 extraction package verification", () => {
     expect(store.getPromptCache("base-cache")?.metadata).toEqual({ phase: 1 });
 
     store.close();
+  });
+
+  test("@aria/tools exposes package-owned bash and background exec helpers", async () => {
+    await expect(bashTool.execute({ command: "echo hi" } as any)).resolves.toMatchObject({ content: "hi\n", isError: false });
+    const handle = generateHandle();
+    const proc = Bun.spawn(["sh", "-c", "sleep 5"], { stdout: "pipe", stderr: "pipe" });
+    registerBackground(handle, "sleep 5", proc);
+    const status = await execStatusTool.execute({ handle } as any);
+    expect(status.content).toContain("status:");
+    const killed = await execKillTool.execute({ handle } as any);
+    expect(killed.isError).toBe(false);
   });
 
   test("@aria/tools exposes package-owned read/write/edit builtins", async () => {

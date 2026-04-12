@@ -8,6 +8,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./exec-background": "./src/exec-background.ts",
+    "./bash": "./src/bash.ts",
     "./skill-manage": "./src/skill-manage.ts",
     "./read-skill": "./src/read-skill.ts",
     "./set-api-key": "./src/set-api-key.ts",
