@@ -9,6 +9,8 @@ import {
   createProjectThreadListItem,
   createStatusBadgeLabel,
   describeUiEngineEvent,
+  markdownToHtml,
+  parseInlineMarkdown,
 } from "@aria/ui";
 import { ariaDesktopApp, createAriaDesktopBootstrap } from "../apps/aria-desktop/src/index.js";
 import { ariaMobileApp, createAriaMobileBootstrap } from "../apps/aria-mobile/src/index.js";
@@ -36,6 +38,11 @@ describe("Phase 6 client seams", () => {
       wsUrl: "wss://aria.example.test/root",
       token: "secret",
     });
+  });
+
+  test("@aria/ui owns markdown formatting helpers for client shells", () => {
+    expect(parseInlineMarkdown("hello **world**")).toEqual([{ text: "hello " }, { text: "world", bold: true }]);
+    expect(markdownToHtml("`code` and **bold**")).toContain("<code>code</code>");
   });
 
   test("@aria/access-client and @aria/ui shape project-thread data for client surfaces", () => {
