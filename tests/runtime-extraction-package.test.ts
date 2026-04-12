@@ -8,7 +8,7 @@ import { SecurityModeManager, ToolPolicyManager, buildToolCapabilityCatalog, des
 import { buildContextFilesPrompt, parseContextReferences, preprocessContextReferences, PromptEngine } from "../packages/prompt/src/index.js";
 import { ConnectorTypeSchema } from "../packages/protocol/src/index.js";
 import { OperationalStore } from "../packages/store/src/index.js";
-import { askUserTool, buildDynamicToolsets, createNotifyTool, createSessionToolEnvironment, createWebFetchTool, editTool, formatToolsSection, getBuiltinTools, mergeAllowedTools, reactionTool, readTool, webSearchTool, writeTool } from "../packages/tools/src/index.js";
+import { askUserTool, buildDynamicToolsets, createMemoryDeleteTool, createMemoryReadTool, createMemorySearchTool, createMemoryWriteTool, createNotifyTool, createSessionToolEnvironment, createWebFetchTool, editTool, formatToolsSection, getBuiltinTools, mergeAllowedTools, reactionTool, readTool, webSearchTool, writeTool } from "../packages/tools/src/index.js";
 
 const tempDirs: string[] = [];
 
@@ -278,6 +278,20 @@ describe("phase-1 extraction package verification", () => {
     const webFetch = createWebFetchTool();
     await expect(webFetch.execute({ url: "http://127.0.0.1:1234" } as any)).resolves.toMatchObject({ isError: true });
     expect(webFetch.name).toBe("web_fetch");
+  });
+
+  test("@aria/tools exposes package-owned memory helpers", async () => {
+    const dir = await makeTempDir("aria-tools-memory-");
+    const memory = new (await import("../packages/runtime/src/memory/index.js")).MemoryManager(dir);
+    await memory.init();
+    const write = createMemoryWriteTool(memory);
+    const search = createMemorySearchTool(memory);
+    const read = createMemoryReadTool(memory);
+    const del = createMemoryDeleteTool(memory);
+    await expect(write.execute({ key: "pref", content: "likes concise output" } as any)).resolves.toMatchObject({ content: "Saved memory: pref" });
+    await expect(search.execute({ query: "concise" } as any)).resolves.toMatchObject({ content: expect.stringContaining("likes concise output") });
+    await expect(read.execute({ key: "pref" } as any)).resolves.toMatchObject({ content: "likes concise output" });
+    await expect(del.execute({ key: "pref" } as any)).resolves.toMatchObject({ content: "Deleted memory: pref" });
   });
 
   test("@aria/tools exposes package-owned notify and ask-user helpers", async () => {

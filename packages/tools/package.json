@@ -8,6 +8,10 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./memory-delete": "./src/memory-delete.ts",
+    "./memory-read": "./src/memory-read.ts",
+    "./memory-search": "./src/memory-search.ts",
+    "./memory-write": "./src/memory-write.ts",
     "./notify": "./src/notify.ts",
     "./ask-user": "./src/ask-user.ts",
     "./web-search": "./src/web-search.ts",
