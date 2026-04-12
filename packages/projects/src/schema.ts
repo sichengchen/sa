@@ -39,6 +39,11 @@ CREATE TABLE IF NOT EXISTS projects_threads (
   repo_id TEXT,
   title TEXT NOT NULL,
   status TEXT NOT NULL,
+  thread_type TEXT,
+  workspace_id TEXT,
+  environment_id TEXT,
+  environment_binding_id TEXT,
+  agent_id TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
   FOREIGN KEY (project_id) REFERENCES projects_projects(project_id) ON DELETE CASCADE,
@@ -53,6 +58,20 @@ CREATE TABLE IF NOT EXISTS projects_jobs (
   body TEXT NOT NULL,
   created_at INTEGER NOT NULL,
   FOREIGN KEY (thread_id) REFERENCES projects_threads(thread_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS projects_thread_environment_bindings (
+  binding_id TEXT PRIMARY KEY,
+  thread_id TEXT NOT NULL,
+  project_id TEXT NOT NULL,
+  workspace_id TEXT NOT NULL,
+  environment_id TEXT NOT NULL,
+  attached_at INTEGER NOT NULL,
+  detached_at INTEGER,
+  is_active INTEGER NOT NULL,
+  reason TEXT,
+  FOREIGN KEY (thread_id) REFERENCES projects_threads(thread_id) ON DELETE CASCADE,
+  FOREIGN KEY (project_id) REFERENCES projects_projects(project_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS projects_dispatches (
@@ -145,6 +164,8 @@ CREATE INDEX IF NOT EXISTS idx_projects_tasks_project_status
   ON projects_tasks(project_id, status, created_at);
 CREATE INDEX IF NOT EXISTS idx_projects_threads_project_status
   ON projects_threads(project_id, status, created_at);
+CREATE INDEX IF NOT EXISTS idx_projects_thread_bindings_thread_active
+  ON projects_thread_environment_bindings(thread_id, is_active, attached_at);
 CREATE INDEX IF NOT EXISTS idx_projects_jobs_thread_created
   ON projects_jobs(thread_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_projects_dispatches_thread_status

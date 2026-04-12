@@ -8,6 +8,7 @@ import type {
   ReviewRecord,
   TaskRecord,
   ThreadRecord,
+  ThreadEnvironmentBindingRecord,
   WorktreeRecord,
 } from "./types.js";
 import { ProjectsEngineStore } from "./store.js";
@@ -69,6 +70,18 @@ export class ProjectsEngineRepository {
 
   getThread(threadId: string): ThreadRecord | undefined {
     return this.store.getThread(threadId);
+  }
+
+  upsertThreadEnvironmentBinding(binding: ThreadEnvironmentBindingRecord): void {
+    this.store.upsertThreadEnvironmentBinding(binding);
+  }
+
+  listThreadEnvironmentBindings(threadId?: string): ThreadEnvironmentBindingRecord[] {
+    return this.store.listThreadEnvironmentBindings(threadId);
+  }
+
+  getActiveThreadEnvironmentBinding(threadId: string): ThreadEnvironmentBindingRecord | undefined {
+    return this.store.getActiveThreadEnvironmentBinding(threadId);
   }
 
   upsertJob(job: JobRecord): void {

@@ -13,6 +13,7 @@ import type {
   ReviewRecord,
   TaskRecord,
   ThreadRecord,
+  ThreadEnvironmentBindingRecord,
   WorktreeRecord,
 } from "./types.js";
 
@@ -74,9 +75,50 @@ function normalizeThreadRow(row: SqliteRow | null | undefined): ThreadRecord | u
     repoId: asOptionalText(row.repo_id),
     title: asText(row.title),
     status: asText(row.status) as ThreadRecord["status"],
+    threadType: asOptionalText(row.thread_type) as ThreadRecord["threadType"],
+    workspaceId: asOptionalText(row.workspace_id),
+    environmentId: asOptionalText(row.environment_id),
+    environmentBindingId: asOptionalText(row.environment_binding_id),
+    agentId: asOptionalText(row.agent_id),
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
   };
+}
+
+function normalizeThreadEnvironmentBindingRow(row: SqliteRow | null | undefined): ThreadEnvironmentBindingRecord | undefined {
+  if (!row) return undefined;
+  return {
+    bindingId: asText(row.binding_id),
+    threadId: asText(row.thread_id),
+    projectId: asText(row.project_id),
+    workspaceId: asText(row.workspace_id),
+    environmentId: asText(row.environment_id),
+    attachedAt: Number(row.attached_at),
+    detachedAt: row.detached_at == null ? null : Number(row.detached_at),
+    isActive: Boolean(row.is_active),
+    reason: asOptionalText(row.reason),
+  };
+}
+
+function hasColumn(db: Database, tableName: string, columnName: string): boolean {
+  const rows = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name?: string }>;
+  return rows.some((row) => row.name === columnName);
+}
+
+function ensureProjectsStoreSchema(db: Database): void {
+  const threadColumns = [
+    ["thread_type", "TEXT"],
+    ["workspace_id", "TEXT"],
+    ["environment_id", "TEXT"],
+    ["environment_binding_id", "TEXT"],
+    ["agent_id", "TEXT"],
+  ] as const;
+
+  for (const [columnName, columnType] of threadColumns) {
+    if (!hasColumn(db, "projects_threads", columnName)) {
+      db.exec(`ALTER TABLE projects_threads ADD COLUMN ${columnName} ${columnType}`);
+    }
+  }
 }
 
 function normalizeJobRow(row: SqliteRow | null | undefined): JobRecord | undefined {
@@ -194,6 +236,7 @@ export class ProjectsEngineStore {
     this.db.exec("PRAGMA journal_mode=WAL");
     this.db.exec("PRAGMA foreign_keys=ON");
     this.db.exec(PROJECTS_ENGINE_SCHEMA_SQL);
+    ensureProjectsStoreSchema(this.db);
   }
 
   close(): void {
@@ -415,14 +458,20 @@ export class ProjectsEngineStore {
     this.run(
       `
       INSERT INTO projects_threads (
-        thread_id, project_id, task_id, repo_id, title, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        thread_id, project_id, task_id, repo_id, title, status, thread_type, workspace_id,
+        environment_id, environment_binding_id, agent_id, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(thread_id) DO UPDATE SET
         project_id = excluded.project_id,
         task_id = excluded.task_id,
         repo_id = excluded.repo_id,
         title = excluded.title,
         status = excluded.status,
+        thread_type = excluded.thread_type,
+        workspace_id = excluded.workspace_id,
+        environment_id = excluded.environment_id,
+        environment_binding_id = excluded.environment_binding_id,
+        agent_id = excluded.agent_id,
         created_at = excluded.created_at,
         updated_at = excluded.updated_at
       `,
@@ -432,6 +481,11 @@ export class ProjectsEngineStore {
       thread.repoId ?? null,
       thread.title,
       thread.status,
+      thread.threadType ?? null,
+      thread.workspaceId ?? null,
+      thread.environmentId ?? null,
+      thread.environmentBindingId ?? null,
+      thread.agentId ?? null,
       thread.createdAt,
       thread.updatedAt,
     );
@@ -442,7 +496,8 @@ export class ProjectsEngineStore {
     if (projectId && taskId) {
       rows = this.all<SqliteRow>(
         `
-        SELECT thread_id, project_id, task_id, repo_id, title, status, created_at, updated_at
+        SELECT thread_id, project_id, task_id, repo_id, title, status, thread_type, workspace_id,
+               environment_id, environment_binding_id, agent_id, created_at, updated_at
         FROM projects_threads
         WHERE project_id = ? AND task_id = ?
         ORDER BY updated_at DESC, created_at DESC
@@ -453,7 +508,8 @@ export class ProjectsEngineStore {
     } else if (projectId) {
       rows = this.all<SqliteRow>(
         `
-        SELECT thread_id, project_id, task_id, repo_id, title, status, created_at, updated_at
+        SELECT thread_id, project_id, task_id, repo_id, title, status, thread_type, workspace_id,
+               environment_id, environment_binding_id, agent_id, created_at, updated_at
         FROM projects_threads
         WHERE project_id = ?
         ORDER BY updated_at DESC, created_at DESC
@@ -463,7 +519,8 @@ export class ProjectsEngineStore {
     } else if (taskId) {
       rows = this.all<SqliteRow>(
         `
-        SELECT thread_id, project_id, task_id, repo_id, title, status, created_at, updated_at
+        SELECT thread_id, project_id, task_id, repo_id, title, status, thread_type, workspace_id,
+               environment_id, environment_binding_id, agent_id, created_at, updated_at
         FROM projects_threads
         WHERE task_id = ?
         ORDER BY updated_at DESC, created_at DESC
@@ -473,7 +530,8 @@ export class ProjectsEngineStore {
     } else {
       rows = this.all<SqliteRow>(
         `
-        SELECT thread_id, project_id, task_id, repo_id, title, status, created_at, updated_at
+        SELECT thread_id, project_id, task_id, repo_id, title, status, thread_type, workspace_id,
+               environment_id, environment_binding_id, agent_id, created_at, updated_at
         FROM projects_threads
         ORDER BY updated_at DESC, created_at DESC
         `,
@@ -487,9 +545,107 @@ export class ProjectsEngineStore {
     return normalizeThreadRow(
       this.get<SqliteRow>(
         `
-        SELECT thread_id, project_id, task_id, repo_id, title, status, created_at, updated_at
+        SELECT thread_id, project_id, task_id, repo_id, title, status, thread_type, workspace_id,
+               environment_id, environment_binding_id, agent_id, created_at, updated_at
         FROM projects_threads
         WHERE thread_id = ?
+        `,
+        threadId,
+      ),
+    );
+  }
+
+  upsertThreadEnvironmentBinding(binding: ThreadEnvironmentBindingRecord): void {
+    if (binding.isActive) {
+      this.run(
+        `
+        UPDATE projects_thread_environment_bindings
+        SET is_active = 0, detached_at = COALESCE(detached_at, ?)
+        WHERE thread_id = ? AND binding_id != ? AND is_active = 1
+        `,
+        binding.attachedAt,
+        binding.threadId,
+        binding.bindingId,
+      );
+
+      this.run(
+        `
+        UPDATE projects_threads
+        SET workspace_id = ?, environment_id = ?, environment_binding_id = ?, updated_at = MAX(updated_at, ?)
+        WHERE thread_id = ?
+        `,
+        binding.workspaceId,
+        binding.environmentId,
+        binding.bindingId,
+        binding.attachedAt,
+        binding.threadId,
+      );
+    }
+
+    this.run(
+      `
+      INSERT INTO projects_thread_environment_bindings (
+        binding_id, thread_id, project_id, workspace_id, environment_id, attached_at,
+        detached_at, is_active, reason
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(binding_id) DO UPDATE SET
+        thread_id = excluded.thread_id,
+        project_id = excluded.project_id,
+        workspace_id = excluded.workspace_id,
+        environment_id = excluded.environment_id,
+        attached_at = excluded.attached_at,
+        detached_at = excluded.detached_at,
+        is_active = excluded.is_active,
+        reason = excluded.reason
+      `,
+      binding.bindingId,
+      binding.threadId,
+      binding.projectId,
+      binding.workspaceId,
+      binding.environmentId,
+      binding.attachedAt,
+      binding.detachedAt ?? null,
+      binding.isActive ? 1 : 0,
+      binding.reason ?? null,
+    );
+  }
+
+  listThreadEnvironmentBindings(threadId?: string): ThreadEnvironmentBindingRecord[] {
+    const rows = threadId
+      ? this.all<SqliteRow>(
+          `
+          SELECT binding_id, thread_id, project_id, workspace_id, environment_id, attached_at,
+                 detached_at, is_active, reason
+          FROM projects_thread_environment_bindings
+          WHERE thread_id = ?
+          ORDER BY attached_at DESC
+          `,
+          threadId,
+        )
+      : this.all<SqliteRow>(
+          `
+          SELECT binding_id, thread_id, project_id, workspace_id, environment_id, attached_at,
+                 detached_at, is_active, reason
+          FROM projects_thread_environment_bindings
+          ORDER BY attached_at DESC
+          `,
+        );
+
+    return rows
+      .map((row) => normalizeThreadEnvironmentBindingRow(row))
+      .filter((row): row is ThreadEnvironmentBindingRecord => Boolean(row));
+  }
+
+  getActiveThreadEnvironmentBinding(threadId: string): ThreadEnvironmentBindingRecord | undefined {
+    return normalizeThreadEnvironmentBindingRow(
+      this.get<SqliteRow>(
+        `
+        SELECT binding_id, thread_id, project_id, workspace_id, environment_id, attached_at,
+               detached_at, is_active, reason
+        FROM projects_thread_environment_bindings
+        WHERE thread_id = ? AND is_active = 1
+        ORDER BY attached_at DESC
+        LIMIT 1
         `,
         threadId,
       ),

@@ -11,6 +11,9 @@ interface ParsedHandoffPayload {
   repoId?: string | null;
   taskId?: string | null;
   threadId?: string | null;
+  workspaceId?: string | null;
+  environmentId?: string | null;
+  agentId?: string | null;
   requestedBackend?: string | null;
   requestedModel?: string | null;
 }
@@ -28,12 +31,19 @@ function parsePayload(payloadJson?: string | null): ParsedHandoffPayload {
       repoId: typeof parsed.repoId === "string" ? parsed.repoId : null,
       taskId: typeof parsed.taskId === "string" ? parsed.taskId : null,
       threadId: typeof parsed.threadId === "string" ? parsed.threadId : null,
+      workspaceId: typeof parsed.workspaceId === "string" ? parsed.workspaceId : null,
+      environmentId: typeof parsed.environmentId === "string" ? parsed.environmentId : null,
+      agentId: typeof parsed.agentId === "string" ? parsed.agentId : null,
       requestedBackend: typeof parsed.requestedBackend === "string" ? parsed.requestedBackend : null,
       requestedModel: typeof parsed.requestedModel === "string" ? parsed.requestedModel : null,
     };
   } catch {
     return { body: payloadJson };
   }
+}
+
+function resolveProjectThreadType(sourceKind: HandoffSubmission["sourceKind"]): "local_project" | "remote_project" {
+  return sourceKind === "local_session" ? "local_project" : "remote_project";
 }
 
 export class HandoffService {
@@ -131,8 +141,27 @@ export class HandoffService {
         repoId: payload.repoId ?? null,
         title: payload.title ?? `Handoff ${handoff.handoffId}`,
         status: "queued",
+        threadType: resolveProjectThreadType(handoff.sourceKind),
+        workspaceId: payload.workspaceId ?? null,
+        environmentId: payload.environmentId ?? null,
+        environmentBindingId: null,
+        agentId: payload.agentId ?? payload.requestedBackend ?? null,
         createdAt: now,
         updatedAt: now,
+      });
+    }
+
+    if (payload.workspaceId && payload.environmentId) {
+      repository.upsertThreadEnvironmentBinding({
+        bindingId: `binding:${handoff.handoffId}`,
+        threadId,
+        projectId: handoff.projectId,
+        workspaceId: payload.workspaceId,
+        environmentId: payload.environmentId,
+        attachedAt: now,
+        detachedAt: null,
+        isActive: true,
+        reason: `Materialized from ${handoff.sourceKind}`,
       });
     }
 
@@ -172,10 +201,20 @@ export class HandoffService {
         taskId,
         repoId: payload.repoId ?? null,
         title: payload.title ?? `Handoff ${handoff.handoffId}`,
+        threadType: resolveProjectThreadType(handoff.sourceKind),
+        workspaceId: payload.workspaceId ?? null,
+        environmentId: payload.environmentId ?? null,
+        environmentBindingId: null,
+        agentId: payload.agentId ?? payload.requestedBackend ?? null,
         createdAt: now,
       }),
       title: repository.getThread(threadId)?.title ?? payload.title ?? `Handoff ${handoff.handoffId}`,
       status: "queued",
+      threadType: repository.getThread(threadId)?.threadType ?? resolveProjectThreadType(handoff.sourceKind),
+      workspaceId: repository.getThread(threadId)?.workspaceId ?? payload.workspaceId ?? null,
+      environmentId: repository.getThread(threadId)?.environmentId ?? payload.environmentId ?? null,
+      environmentBindingId: repository.getThread(threadId)?.environmentBindingId ?? null,
+      agentId: repository.getThread(threadId)?.agentId ?? payload.agentId ?? payload.requestedBackend ?? null,
       updatedAt: now,
     });
 

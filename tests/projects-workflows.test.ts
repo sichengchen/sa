@@ -272,6 +272,8 @@ describe("projects workflow services", () => {
       payloadJson: JSON.stringify({
         title: "Imported handoff thread",
         body: "Please continue this tracked work.",
+        workspaceId: "workspace-local",
+        environmentId: "env-main",
         requestedBackend: "codex",
       }),
     }, now);
@@ -284,6 +286,14 @@ describe("projects workflow services", () => {
     expect(repository.getThread(first.threadId)?.title).toBe("Imported handoff thread");
     expect(repository.getThread(first.threadId)?.threadType).toBe("local_project");
     expect(repository.getThread(first.threadId)?.agentId).toBe("codex");
+    expect(repository.getThread(first.threadId)?.workspaceId).toBe("workspace-local");
+    expect(repository.getThread(first.threadId)?.environmentId).toBe("env-main");
+    expect(repository.getActiveThreadEnvironmentBinding(first.threadId)).toMatchObject({
+      bindingId: "binding:handoff-1",
+      workspaceId: "workspace-local",
+      environmentId: "env-main",
+      isActive: true,
+    });
     expect(repository.listJobs(first.threadId)).toHaveLength(1);
     expect(repository.getDispatch(first.dispatchId)?.status).toBe("queued");
     expect(handoffService.get("handoff-1")?.createdDispatchId).toBe(first.dispatchId);
