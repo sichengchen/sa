@@ -3,7 +3,10 @@ import { describe, expect, test } from "bun:test";
 
 import {
   AriaDesktopAppShell,
+  AriaDesktopApplicationRoot,
   createAriaDesktopApplicationShell,
+  createAriaDesktopApplicationRoot,
+  type AriaDesktopAppShellModel,
 } from "../apps/aria-desktop/src/index.js";
 
 type ElementWithProps = {
@@ -107,5 +110,36 @@ describe("aria-desktop React shell", () => {
     const railSections = childElements(rail);
     expect(railSections.map((section) => section.props["data-slot"])).toEqual(["context-panels"]);
     expect(railSections[0].props.children).toBeTruthy();
+  });
+
+  test("routes the application root through the desktop shell component", () => {
+    const root = createAriaDesktopApplicationRoot({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      initialThread: {
+        project: { name: "Aria" },
+        thread: {
+          threadId: "thread-2",
+          title: "Desktop root",
+          status: "running",
+          threadType: "local_project",
+          environmentId: "desktop-main",
+          agentId: "codex",
+        },
+      },
+    });
+
+    expect(root.type).toBe(AriaDesktopAppShell);
+    const rootProps = asElementWithProps(root);
+    const model = rootProps.props.model as AriaDesktopAppShellModel;
+    expect(model.shell.projectThreadListScreen.title).toBe(
+      "Unified project threads",
+    );
+
+    const rendered = AriaDesktopApplicationRoot({
+      model,
+    });
+    expect(rendered.type).toBe(AriaDesktopAppShell);
+    const shellRendered = AriaDesktopAppShell({ model });
+    expect(asElementWithProps(shellRendered).props["data-app-shell"]).toBe("aria-desktop");
   });
 });

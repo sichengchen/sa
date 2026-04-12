@@ -3,11 +3,14 @@ import { describe, expect, test } from "bun:test";
 
 import {
   AriaDesktopAppShell,
+  AriaDesktopApplicationRoot,
   ariaDesktopApplication,
   ariaDesktopHost,
   createAriaDesktopAppShell,
   createAriaDesktopAppShellModel,
+  createAriaDesktopApplicationRoot,
   createAriaDesktopApplicationBootstrap,
+  type AriaDesktopAppShellModel,
 } from "../apps/aria-desktop/src/index.js";
 
 function collectTextContent(node: ReactNode): string[] {
@@ -210,5 +213,36 @@ describe("aria-desktop app assembly", () => {
     expect(text).toContain("Context Panels");
     expect(text).toContain("Home Server / main");
     expect(text.replace(/\s+/g, " ")).toContain("Placement: bottom-docked");
+  });
+
+  test("exposes a desktop application root over the app shell", () => {
+    const root = createAriaDesktopApplicationRoot({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      initialThread: {
+        project: { name: "Aria" },
+        thread: {
+          threadId: "thread-1",
+          title: "Desktop thread",
+          status: "running",
+          threadType: "local_project",
+          environmentId: "desktop-main",
+          agentId: "codex",
+        },
+      },
+    });
+
+    expect(root.type).toBe(AriaDesktopAppShell);
+    const rootProps = asElementWithProps(root);
+    const model = rootProps.props.model as AriaDesktopAppShellModel;
+    expect(model.application).toBe(ariaDesktopApplication);
+    expect(model.shell.projectSidebar.label).toBe("Projects");
+
+    const manualRoot = AriaDesktopApplicationRoot({
+      model,
+    });
+    expect(manualRoot.type).toBe(AriaDesktopAppShell);
+    const rendered = AriaDesktopAppShell({ model });
+    const renderedProps = asElementWithProps(rendered);
+    expect(renderedProps.props["data-app-shell"]).toBe("aria-desktop");
   });
 });
