@@ -22,8 +22,13 @@ describe("Phase 6 CLI/server stability", () => {
   test("preserves the current CLI and app bootstrap wiring", () => {
     const cliIndex = readRepoFile("packages/cli/src/index.ts");
     const appIndex = readRepoFile("apps/aria-server/src/index.ts");
+    const appMain = readRepoFile("apps/aria-server/src/main.ts");
 
     expect(cliIndex).toContain('await import("@aria/server/engine");');
-    expect(appIndex.trim()).toBe('import "@aria/server/engine";');
+    expect(appIndex).toContain('export * from "@aria/server";');
+    expect(appIndex).toContain('export const ariaServerHost = {');
+    expect(appIndex).toContain('shellPackage: "@aria/server"');
+    expect(appIndex).toContain("createAriaServerHostBootstrap");
+    expect(appMain.trim()).toBe('import "@aria/server/engine";');
   });
 });

@@ -1,5 +1,7 @@
 import { startServer, type EngineServer, type EngineServerOptions } from "@aria/gateway/server";
 import { createRuntime, type EngineRuntime } from "@aria/runtime";
+import { CLI_NAME, PRODUCT_NAME, RUNTIME_NAME, getRuntimeHome } from "./brand.js";
+import { getRuntimeDiscoveryPaths, type RuntimeDiscoveryPaths } from "./discovery.js";
 
 export interface AriaServerFactories {
   createRuntime?: () => Promise<EngineRuntime>;
@@ -15,6 +17,15 @@ export interface AriaServerApp {
   server: EngineServer;
   stop(): Promise<void>;
 }
+
+export const ariaServerApp = {
+  id: "aria-server",
+  displayName: PRODUCT_NAME,
+  runtimeName: RUNTIME_NAME,
+  cliName: CLI_NAME,
+  surface: "server",
+  sharedPackages: ["@aria/runtime", "@aria/gateway"],
+} as const;
 
 export interface AriaServerBootstrap {
   app: typeof ariaServerApp;

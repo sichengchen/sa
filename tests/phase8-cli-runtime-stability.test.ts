@@ -27,14 +27,16 @@ const futureClientPackages = [
     packageJsonPath: "packages/desktop/package.json",
     sourcePath: "packages/desktop/src/index.ts",
     appWrapperPath: "apps/aria-desktop/src/index.ts",
-    expectedWrapperSource: 'export * from "@aria/desktop";',
+    expectedHostId: "aria-desktop",
+    expectedShellPackage: "@aria/desktop",
   },
   {
     packageName: "@aria/mobile",
     packageJsonPath: "packages/mobile/package.json",
     sourcePath: "packages/mobile/src/index.ts",
     appWrapperPath: "apps/aria-mobile/src/index.ts",
-    expectedWrapperSource: 'export * from "@aria/mobile";',
+    expectedHostId: "aria-mobile",
+    expectedShellPackage: "@aria/mobile",
   },
 ] as const;
 
@@ -90,7 +92,10 @@ describe("Phase 8 CLI/server/runtime stability", () => {
       expect(manifest.types).toBe("./src/index.ts");
       expect(manifest.bin).toBeUndefined();
       expect(manifest.exports?.["."]).toBe("./src/index.ts");
-      expect(appWrapperSource).toBe(candidate.expectedWrapperSource);
+      expect(appWrapperSource).toContain(`export * from "${candidate.expectedShellPackage}";`);
+      expect(appWrapperSource).toContain(`id: "${candidate.expectedHostId}"`);
+      expect(appWrapperSource).toContain(`shellPackage: "${candidate.expectedShellPackage}"`);
+      expect(appWrapperSource).toContain("HostBootstrap");
 
       for (const disallowedImport of ["@aria/runtime", "@aria/server", "packages/runtime", "packages/server"]) {
         expect(source).not.toContain(disallowedImport);
