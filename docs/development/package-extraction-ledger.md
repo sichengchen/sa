@@ -109,3 +109,16 @@ This phase seeds the remaining target-state server package names needed for proj
 - This phase seeds the thin client package/app seams without pretending the full desktop or mobile implementations already exist.
 - `@aria/access-client` should stay a shared client transport and project-summary seam instead of becoming a second protocol implementation.
 - `@aria/ui` should stay pure and host-agnostic so both app wrappers can compose it safely.
+
+## Phase 8 Extracted Ownership
+
+| Target surface | Current source owner | New compatibility owner | Compatibility surface kept at |
+| --- | --- | --- | --- |
+| `@aria/desktop` | `apps/aria-desktop/src/index.ts` plus shared client shell composition across `@aria/access-client`, `@aria/ui`, and `@aria/projects` | `packages/desktop/src/index.ts` | `apps/aria-desktop`, `@aria/access-client`, `@aria/ui`, and `@aria/projects` |
+| `@aria/mobile` | `apps/aria-mobile/src/index.ts` plus shared client shell composition across `@aria/access-client`, `@aria/ui`, and `@aria/projects` | `packages/mobile/src/index.ts` | `apps/aria-mobile`, `@aria/access-client`, `@aria/ui`, and `@aria/projects` |
+
+## Phase 8 Notes
+
+- This phase seeds the target-state desktop/mobile shell package names over the existing thin app wrappers and shared client seams.
+- `@aria/desktop` should own shell composition and desktop-facing thread/project surfaces without absorbing bridge, git, or coding-agent execution ownership.
+- `@aria/mobile` should stay a remote-first shell over the shared client seams and must not become a local execution surface.
