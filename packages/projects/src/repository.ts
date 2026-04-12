@@ -6,9 +6,12 @@ import type {
   PublishRunRecord,
   RepoRecord,
   ReviewRecord,
+  ServerRecord,
   TaskRecord,
   ThreadRecord,
   ThreadEnvironmentBindingRecord,
+  EnvironmentRecord,
+  WorkspaceRecord,
   WorktreeRecord,
 } from "./types.js";
 import { ProjectsEngineStore } from "./store.js";
@@ -34,6 +37,42 @@ export class ProjectsEngineRepository {
 
   getProject(projectId: string): ProjectRecord | undefined {
     return this.store.getProject(projectId);
+  }
+
+  upsertServer(server: ServerRecord): void {
+    this.store.upsertServer(server);
+  }
+
+  listServers(): ServerRecord[] {
+    return this.store.listServers();
+  }
+
+  getServer(serverId: string): ServerRecord | undefined {
+    return this.store.getServer(serverId);
+  }
+
+  upsertWorkspace(workspace: WorkspaceRecord): void {
+    this.store.upsertWorkspace(workspace);
+  }
+
+  listWorkspaces(serverId?: string): WorkspaceRecord[] {
+    return this.store.listWorkspaces(serverId);
+  }
+
+  getWorkspace(workspaceId: string): WorkspaceRecord | undefined {
+    return this.store.getWorkspace(workspaceId);
+  }
+
+  upsertEnvironment(environment: EnvironmentRecord): void {
+    this.store.upsertEnvironment(environment);
+  }
+
+  listEnvironments(projectId?: string, workspaceId?: string): EnvironmentRecord[] {
+    return this.store.listEnvironments(projectId, workspaceId);
+  }
+
+  getEnvironment(environmentId: string): EnvironmentRecord | undefined {
+    return this.store.getEnvironment(environmentId);
   }
 
   upsertRepo(repo: RepoRecord): void {

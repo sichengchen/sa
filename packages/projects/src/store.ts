@@ -11,9 +11,12 @@ import type {
   PublishRunRecord,
   RepoRecord,
   ReviewRecord,
+  ServerRecord,
   TaskRecord,
   ThreadRecord,
   ThreadEnvironmentBindingRecord,
+  EnvironmentRecord,
+  WorkspaceRecord,
   WorktreeRecord,
 } from "./types.js";
 
@@ -47,6 +50,45 @@ function normalizeRepoRow(row: SqliteRow | null | undefined): RepoRecord | undef
     name: asText(row.name),
     remoteUrl: asText(row.remote_url),
     defaultBranch: asText(row.default_branch),
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+  };
+}
+
+function normalizeServerRow(row: SqliteRow | null | undefined): ServerRecord | undefined {
+  if (!row) return undefined;
+  return {
+    serverId: asText(row.server_id),
+    label: asText(row.label),
+    relayId: asOptionalText(row.relay_id),
+    directBaseUrl: asOptionalText(row.direct_base_url),
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+  };
+}
+
+function normalizeWorkspaceRow(row: SqliteRow | null | undefined): WorkspaceRecord | undefined {
+  if (!row) return undefined;
+  return {
+    workspaceId: asText(row.workspace_id),
+    host: asText(row.host) as WorkspaceRecord["host"],
+    serverId: asOptionalText(row.server_id),
+    label: asText(row.label),
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+  };
+}
+
+function normalizeEnvironmentRow(row: SqliteRow | null | undefined): EnvironmentRecord | undefined {
+  if (!row) return undefined;
+  return {
+    environmentId: asText(row.environment_id),
+    workspaceId: asText(row.workspace_id),
+    projectId: asText(row.project_id),
+    label: asText(row.label),
+    mode: asText(row.mode) as EnvironmentRecord["mode"],
+    kind: asText(row.kind) as EnvironmentRecord["kind"],
+    locator: asText(row.locator),
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
   };
@@ -306,6 +348,197 @@ export class ProjectsEngineStore {
         WHERE project_id = ?
         `,
         projectId,
+      ),
+    );
+  }
+
+  upsertServer(server: ServerRecord): void {
+    this.run(
+      `
+      INSERT INTO projects_servers (
+        server_id, label, relay_id, direct_base_url, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(server_id) DO UPDATE SET
+        label = excluded.label,
+        relay_id = excluded.relay_id,
+        direct_base_url = excluded.direct_base_url,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+      `,
+      server.serverId,
+      server.label,
+      server.relayId ?? null,
+      server.directBaseUrl ?? null,
+      server.createdAt,
+      server.updatedAt,
+    );
+  }
+
+  listServers(): ServerRecord[] {
+    return this.all<SqliteRow>(
+      `
+      SELECT server_id, label, relay_id, direct_base_url, created_at, updated_at
+      FROM projects_servers
+      ORDER BY updated_at DESC, created_at DESC
+      `,
+    )
+      .map((row) => normalizeServerRow(row))
+      .filter((row): row is ServerRecord => Boolean(row));
+  }
+
+  getServer(serverId: string): ServerRecord | undefined {
+    return normalizeServerRow(
+      this.get<SqliteRow>(
+        `
+        SELECT server_id, label, relay_id, direct_base_url, created_at, updated_at
+        FROM projects_servers
+        WHERE server_id = ?
+        `,
+        serverId,
+      ),
+    );
+  }
+
+  upsertWorkspace(workspace: WorkspaceRecord): void {
+    this.run(
+      `
+      INSERT INTO projects_workspaces (
+        workspace_id, host, server_id, label, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(workspace_id) DO UPDATE SET
+        host = excluded.host,
+        server_id = excluded.server_id,
+        label = excluded.label,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+      `,
+      workspace.workspaceId,
+      workspace.host,
+      workspace.serverId ?? null,
+      workspace.label,
+      workspace.createdAt,
+      workspace.updatedAt,
+    );
+  }
+
+  listWorkspaces(serverId?: string): WorkspaceRecord[] {
+    const rows = serverId
+      ? this.all<SqliteRow>(
+          `
+          SELECT workspace_id, host, server_id, label, created_at, updated_at
+          FROM projects_workspaces
+          WHERE server_id = ?
+          ORDER BY updated_at DESC, created_at DESC
+          `,
+          serverId,
+        )
+      : this.all<SqliteRow>(
+          `
+          SELECT workspace_id, host, server_id, label, created_at, updated_at
+          FROM projects_workspaces
+          ORDER BY updated_at DESC, created_at DESC
+          `,
+        );
+
+    return rows.map((row) => normalizeWorkspaceRow(row)).filter((row): row is WorkspaceRecord => Boolean(row));
+  }
+
+  getWorkspace(workspaceId: string): WorkspaceRecord | undefined {
+    return normalizeWorkspaceRow(
+      this.get<SqliteRow>(
+        `
+        SELECT workspace_id, host, server_id, label, created_at, updated_at
+        FROM projects_workspaces
+        WHERE workspace_id = ?
+        `,
+        workspaceId,
+      ),
+    );
+  }
+
+  upsertEnvironment(environment: EnvironmentRecord): void {
+    this.run(
+      `
+      INSERT INTO projects_environments (
+        environment_id, workspace_id, project_id, label, mode, kind, locator, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(environment_id) DO UPDATE SET
+        workspace_id = excluded.workspace_id,
+        project_id = excluded.project_id,
+        label = excluded.label,
+        mode = excluded.mode,
+        kind = excluded.kind,
+        locator = excluded.locator,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+      `,
+      environment.environmentId,
+      environment.workspaceId,
+      environment.projectId,
+      environment.label,
+      environment.mode,
+      environment.kind,
+      environment.locator,
+      environment.createdAt,
+      environment.updatedAt,
+    );
+  }
+
+  listEnvironments(projectId?: string, workspaceId?: string): EnvironmentRecord[] {
+    let rows: SqliteRow[];
+    if (projectId && workspaceId) {
+      rows = this.all<SqliteRow>(
+        `
+        SELECT environment_id, workspace_id, project_id, label, mode, kind, locator, created_at, updated_at
+        FROM projects_environments
+        WHERE project_id = ? AND workspace_id = ?
+        ORDER BY updated_at DESC, created_at DESC
+        `,
+        projectId,
+        workspaceId,
+      );
+    } else if (projectId) {
+      rows = this.all<SqliteRow>(
+        `
+        SELECT environment_id, workspace_id, project_id, label, mode, kind, locator, created_at, updated_at
+        FROM projects_environments
+        WHERE project_id = ?
+        ORDER BY updated_at DESC, created_at DESC
+        `,
+        projectId,
+      );
+    } else if (workspaceId) {
+      rows = this.all<SqliteRow>(
+        `
+        SELECT environment_id, workspace_id, project_id, label, mode, kind, locator, created_at, updated_at
+        FROM projects_environments
+        WHERE workspace_id = ?
+        ORDER BY updated_at DESC, created_at DESC
+        `,
+        workspaceId,
+      );
+    } else {
+      rows = this.all<SqliteRow>(
+        `
+        SELECT environment_id, workspace_id, project_id, label, mode, kind, locator, created_at, updated_at
+        FROM projects_environments
+        ORDER BY updated_at DESC, created_at DESC
+        `,
+      );
+    }
+
+    return rows.map((row) => normalizeEnvironmentRow(row)).filter((row): row is EnvironmentRecord => Boolean(row));
+  }
+
+  getEnvironment(environmentId: string): EnvironmentRecord | undefined {
+    return normalizeEnvironmentRow(
+      this.get<SqliteRow>(
+        `
+        SELECT environment_id, workspace_id, project_id, label, mode, kind, locator, created_at, updated_at
+        FROM projects_environments
+        WHERE environment_id = ?
+        `,
+        environmentId,
       ),
     );
   }

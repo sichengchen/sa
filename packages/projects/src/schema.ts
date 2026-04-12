@@ -8,6 +8,39 @@ CREATE TABLE IF NOT EXISTS projects_projects (
   updated_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS projects_servers (
+  server_id TEXT PRIMARY KEY,
+  label TEXT NOT NULL,
+  relay_id TEXT,
+  direct_base_url TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS projects_workspaces (
+  workspace_id TEXT PRIMARY KEY,
+  host TEXT NOT NULL,
+  server_id TEXT,
+  label TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (server_id) REFERENCES projects_servers(server_id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS projects_environments (
+  environment_id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL,
+  project_id TEXT NOT NULL,
+  label TEXT NOT NULL,
+  mode TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  locator TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (workspace_id) REFERENCES projects_workspaces(workspace_id) ON DELETE CASCADE,
+  FOREIGN KEY (project_id) REFERENCES projects_projects(project_id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS projects_repos (
   repo_id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,
@@ -164,6 +197,8 @@ CREATE INDEX IF NOT EXISTS idx_projects_tasks_project_status
   ON projects_tasks(project_id, status, created_at);
 CREATE INDEX IF NOT EXISTS idx_projects_threads_project_status
   ON projects_threads(project_id, status, created_at);
+CREATE INDEX IF NOT EXISTS idx_projects_environments_workspace_project
+  ON projects_environments(workspace_id, project_id, updated_at);
 CREATE INDEX IF NOT EXISTS idx_projects_thread_bindings_thread_active
   ON projects_thread_environment_bindings(thread_id, is_active, attached_at);
 CREATE INDEX IF NOT EXISTS idx_projects_jobs_thread_created

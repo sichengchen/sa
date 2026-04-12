@@ -433,4 +433,64 @@ describe("projects workflow services", () => {
       expect.objectContaining({ bindingId: "binding-1", isActive: false, detachedAt: null }),
     ]);
   });
+
+  test("server, workspace, and environment records persist the target execution hierarchy", async () => {
+    const repository = await createProjectsRepository();
+    const now = Date.now();
+
+    repository.upsertProject({
+      projectId: "project-hierarchy",
+      name: "Aria",
+      slug: "aria-hierarchy",
+      description: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+    repository.upsertServer({
+      serverId: "server-home",
+      label: "Home Server",
+      relayId: "relay-home",
+      directBaseUrl: "https://aria.example.test",
+      createdAt: now,
+      updatedAt: now,
+    });
+    repository.upsertWorkspace({
+      workspaceId: "workspace-home",
+      host: "aria_server",
+      serverId: "server-home",
+      label: "Home Workspace",
+      createdAt: now,
+      updatedAt: now,
+    });
+    repository.upsertEnvironment({
+      environmentId: "environment-sandbox",
+      workspaceId: "workspace-home",
+      projectId: "project-hierarchy",
+      label: "sandbox/pr-128",
+      mode: "remote",
+      kind: "sandbox",
+      locator: "sandbox/pr-128",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    expect(repository.getServer("server-home")).toMatchObject({
+      label: "Home Server",
+      relayId: "relay-home",
+    });
+    expect(repository.listWorkspaces("server-home")).toEqual([
+      expect.objectContaining({
+        workspaceId: "workspace-home",
+        host: "aria_server",
+      }),
+    ]);
+    expect(repository.listEnvironments("project-hierarchy", "workspace-home")).toEqual([
+      expect.objectContaining({
+        environmentId: "environment-sandbox",
+        mode: "remote",
+        kind: "sandbox",
+        locator: "sandbox/pr-128",
+      }),
+    ]);
+  });
 });
