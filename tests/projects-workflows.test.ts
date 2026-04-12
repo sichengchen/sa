@@ -11,6 +11,7 @@ import {
   ProjectsEngineStore,
   ProjectsPublishService,
   ProjectsReviewService,
+  type ThreadEnvironmentBindingRecord,
 } from "@aria/projects";
 import { ProjectsWorktreeService } from "@aria/workspaces";
 import { HandoffService, HandoffStore } from "@aria/handoff";
@@ -40,6 +41,68 @@ afterEach(() => {
 });
 
 describe("projects workflow services", () => {
+  test("thread environment bindings persist active environment history", async () => {
+    const repository = await createProjectsRepository();
+    const now = Date.now();
+
+    repository.upsertProject({
+      projectId: "project-bindings",
+      name: "Aria",
+      slug: "aria-bindings",
+      description: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+    repository.upsertThread({
+      threadId: "thread-binding",
+      projectId: "project-bindings",
+      taskId: null,
+      repoId: null,
+      title: "Binding thread",
+      status: "idle",
+      threadType: "local_project",
+      workspaceId: "workspace-local",
+      environmentId: "env-main",
+      environmentBindingId: "binding-1",
+      agentId: "codex",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    repository.upsertThreadEnvironmentBinding({
+      bindingId: "binding-1",
+      threadId: "thread-binding",
+      projectId: "project-bindings",
+      workspaceId: "workspace-local",
+      environmentId: "env-main",
+      attachedAt: now,
+      detachedAt: null,
+      isActive: true,
+      reason: "Initial local main binding",
+    });
+    repository.upsertThreadEnvironmentBinding({
+      bindingId: "binding-2",
+      threadId: "thread-binding",
+      projectId: "project-bindings",
+      workspaceId: "workspace-local",
+      environmentId: "env-worktree",
+      attachedAt: now + 1,
+      detachedAt: null,
+      isActive: true,
+      reason: "Switch to worktree",
+    });
+
+    expect(repository.listThreadEnvironmentBindings("thread-binding").map((binding) => binding.bindingId)).toEqual([
+      "binding-2",
+      "binding-1",
+    ]);
+    expect(repository.getActiveThreadEnvironmentBinding("thread-binding")).toMatchObject({
+      bindingId: "binding-2",
+      environmentId: "env-worktree",
+      isActive: true,
+    });
+  });
+
   test("review and publish services persist lifecycle updates", async () => {
     const repository = await createProjectsRepository();
     const now = Date.now();
@@ -219,6 +282,8 @@ describe("projects workflow services", () => {
     expect(first.dispatchId).toBe("dispatch:handoff-1");
     expect(second.dispatchId).toBe(first.dispatchId);
     expect(repository.getThread(first.threadId)?.title).toBe("Imported handoff thread");
+    expect(repository.getThread(first.threadId)?.threadType).toBe("local_project");
+    expect(repository.getThread(first.threadId)?.agentId).toBe("codex");
     expect(repository.listJobs(first.threadId)).toHaveLength(1);
     expect(repository.getDispatch(first.dispatchId)?.status).toBe("queued");
     expect(handoffService.get("handoff-1")?.createdDispatchId).toBe(first.dispatchId);
@@ -268,5 +333,94 @@ describe("projects workflow services", () => {
     expect(() => handoffService.materialize("handoff-missing", repository)).toThrow(
       "Project not found: missing-project",
     );
+  });
+
+  test("thread environment bindings persist active history and thread metadata", async () => {
+    const repository = await createProjectsRepository();
+    const now = Date.now();
+
+    repository.upsertProject({
+      projectId: "project-binding",
+      name: "Binding project",
+      slug: "binding-project",
+      description: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+    repository.upsertThread({
+      threadId: "thread-binding",
+      projectId: "project-binding",
+      taskId: null,
+      repoId: null,
+      title: "Environment tracked thread",
+      status: "queued",
+      threadType: "local_project",
+      workspaceId: "workspace-1",
+      environmentId: "env-2",
+      environmentBindingId: "binding-2",
+      agentId: "codex",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const firstBinding: ThreadEnvironmentBindingRecord = {
+      bindingId: "binding-1",
+      threadId: "thread-binding",
+      projectId: "project-binding",
+      workspaceId: "workspace-1",
+      environmentId: "env-1",
+      attachedAt: now - 20,
+      detachedAt: null,
+      isActive: false,
+      reason: "initial checkout",
+    };
+    const secondBinding: ThreadEnvironmentBindingRecord = {
+      bindingId: "binding-2",
+      threadId: "thread-binding",
+      projectId: "project-binding",
+      workspaceId: "workspace-1",
+      environmentId: "env-2",
+      attachedAt: now - 10,
+      detachedAt: null,
+      isActive: true,
+      reason: "switched to feature worktree",
+    };
+
+    repository.upsertThreadEnvironmentBinding(firstBinding);
+    repository.upsertThreadEnvironmentBinding(secondBinding);
+
+    expect(repository.getThread("thread-binding")).toMatchObject({
+      workspaceId: "workspace-1",
+      environmentId: "env-2",
+      environmentBindingId: "binding-2",
+    });
+    expect(repository.getActiveThreadEnvironmentBinding("thread-binding")).toMatchObject(secondBinding);
+    expect(repository.listThreadEnvironmentBindings("thread-binding")).toEqual([secondBinding, firstBinding]);
+
+    repository.upsertThreadEnvironmentBinding({
+      bindingId: "binding-3",
+      threadId: "thread-binding",
+      projectId: "project-binding",
+      workspaceId: "workspace-1",
+      environmentId: "env-3",
+      attachedAt: now,
+      detachedAt: null,
+      isActive: true,
+      reason: "rebound to current workspace",
+    });
+
+    expect(repository.getActiveThreadEnvironmentBinding("thread-binding")).toMatchObject({
+      bindingId: "binding-3",
+      threadId: "thread-binding",
+      projectId: "project-binding",
+      workspaceId: "workspace-1",
+      environmentId: "env-3",
+      isActive: true,
+    });
+    expect(repository.listThreadEnvironmentBindings("thread-binding")).toEqual([
+      expect.objectContaining({ bindingId: "binding-3", isActive: true, detachedAt: null }),
+      expect.objectContaining({ bindingId: "binding-2", isActive: false, detachedAt: now }),
+      expect.objectContaining({ bindingId: "binding-1", isActive: false, detachedAt: null }),
+    ]);
   });
 });
