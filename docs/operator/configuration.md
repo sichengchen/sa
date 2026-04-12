@@ -30,7 +30,7 @@ Illustrative layout:
 
 Notes:
 
-- runtime, projects-engine, and handoff durable records currently share `aria.db`
+- runtime, projects, workspaces, jobs, and handoff durable records currently share `aria.db`
 - relay persists paired-device state separately in `relay-state.json`
 - bundled skills are package-owned in the repo under `packages/runtime/src/skills/bundled/`
 

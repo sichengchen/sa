@@ -1,39 +1,23 @@
 # Projects Engine
 
-`packages/projects-engine` owns durable tracked-work state for Aria Projects.
+`packages/projects-engine` is now a compatibility layer for older tracked-work imports.
 
-## What It Owns
+The real owners on `new-aria` are:
 
-- projects
-- repos
-- tasks
-- threads
-- jobs
-- dispatches
-- worktrees
-- reviews
-- publish runs
-- external references
+- `packages/projects` — tracked-work coordination and persistence APIs
+- `packages/workspaces` — repo/worktree behavior
+- `packages/jobs` — dispatch execution and backend selection
+
+## What This Compatibility Layer Does
+
+- preserves older import paths that still reference `@aria/projects-engine`
+- forwards repository/store/schema/type, workspace, and job surfaces to their target owners
+- allows incremental migration without breaking downstream callers
 
 ## What It Does Not Own
 
-Projects Engine does not own live model execution, process lifecycle, streaming, or tool approvals. Those remain runtime responsibilities.
-
-## Core Rule
-
-One dispatch creates one runtime execution.
-
-Projects Engine records why work exists and what durable state describes it. Runtime performs the live execution and reports lifecycle changes back.
-
-## Current Services
-
-- repository and SQLite store
-- dispatch planning and blocking evaluation
-- dispatch lifecycle helpers
-- repo and worktree services
-- review and publish services
-- external reference management
+Projects Engine no longer owns the primary tracked-work implementation. New work should land in `projects`, `workspaces`, or `jobs`, not here.
 
 ## CLI Surface
 
-`aria projects` now exposes both inspection and mutation flows over these records.
+`aria projects` still works over the same durable state, but the owning package surfaces are now the target seams described above.
