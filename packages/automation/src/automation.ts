@@ -1,13 +1,27 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { Agent } from "../../runtime/src/agent/index.js";
-import type { EngineRuntime } from "../../runtime/src/runtime.js";
-import { createSessionToolEnvironment } from "../../tools/src/session-tool-environment.js";
+import { Agent } from "@aria/agent-aria";
+import type { EngineRuntime } from "@aria/runtime";
+import {
+  createSessionToolEnvironment,
+  mergeAllowedTools,
+} from "@aria/tools";
+import type {
+  AutomationDeliveryStatus,
+  AutomationTaskType,
+  AutomationRunStatus,
+} from "@aria/store/operational-store";
+import {
+  CRON_DEFAULT_TOOLS,
+  WEBHOOK_DEFAULT_TOOLS,
+} from "@aria/runtime/config/defaults";
+import type {
+  CronTask,
+  DeliveryTarget,
+  RetryPolicy,
+  WebhookTask,
+} from "@aria/runtime/config/types";
 import { computeNextRunAt } from "./automation-schedule.js";
-import { mergeAllowedTools } from "../../tools/src/toolsets.js";
-import { CRON_DEFAULT_TOOLS, WEBHOOK_DEFAULT_TOOLS } from "../../runtime/src/config/defaults.js";
-import type { CronTask, DeliveryTarget, RetryPolicy, WebhookTask } from "../../runtime/src/config/types.js";
-import type { AutomationDeliveryStatus, AutomationTaskType, AutomationRunStatus } from "../../store/src/operational-store.js";
 
 export interface AutomationTaskRunInput {
   taskId?: string;

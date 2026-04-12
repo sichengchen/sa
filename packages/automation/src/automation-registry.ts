@@ -1,5 +1,5 @@
-import type { EngineRuntime } from "../../runtime/src/runtime.js";
-import type { CronTask, WebhookTask } from "../../runtime/src/config/types.js";
+import type { EngineRuntime } from "@aria/runtime";
+import type { CronTask, WebhookTask } from "@aria/runtime/config/types";
 import { registerCronTask, upsertCronTaskRecord, upsertHeartbeatTaskRecord, upsertWebhookTaskRecord } from "./automation.js";
 
 export class AutomationRegistry {
