@@ -3,9 +3,9 @@ import type { Message } from "@mariozechner/pi-ai";
 import type { ToolImpl } from "@aria/agent-aria";
 import type { ModelRouter } from "@aria/gateway/router";
 import type { ConfigManager } from "@aria/runtime/config";
-import type { MemoryManager } from "@aria/memory";
+import type { MemoryManager, SkillRegistry } from "@aria/memory";
 import type { OperationalStore } from "@aria/store";
-import { formatSkillsDiscovery, type SkillRegistry } from "@aria/runtime/skills";
+import { formatSkillsDiscovery } from "@aria/memory";
 import { listToolsets } from "@aria/tools";
 import { buildContextFilesPrompt } from "./context-files.js";
 

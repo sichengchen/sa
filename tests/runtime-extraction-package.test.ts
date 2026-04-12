@@ -66,6 +66,24 @@ describe("phase-1 extraction package verification", () => {
     expect(toolsIndexSource).toContain("./claude-code.js");
     expect(toolsIndexSource).toContain("./codex.js");
 
+    const memoryIndexSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/memory/src/index.ts", import.meta.url), "utf-8"));
+    expect(memoryIndexSource).toContain("@aria/runtime/skills");
+    expect(memoryIndexSource).toContain("formatSkillsDiscovery");
+    expect(memoryIndexSource).toContain("formatActiveSkills");
+
+    const promptEngineSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/prompt/src/prompt-engine.ts", import.meta.url), "utf-8"));
+    expect(promptEngineSource).not.toContain("@aria/runtime/skills");
+    expect(promptEngineSource).toContain("@aria/memory");
+    expect(promptEngineSource).toContain("formatSkillsDiscovery");
+
+    const readSkillSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/read-skill.ts", import.meta.url), "utf-8"));
+    expect(readSkillSource).not.toContain("@aria/runtime/skills");
+    expect(readSkillSource).toContain("@aria/memory");
+
+    const skillManageSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/skill-manage.ts", import.meta.url), "utf-8"));
+    expect(skillManageSource).not.toContain("@aria/runtime/skills");
+    expect(skillManageSource).toContain("@aria/memory");
+
     const localToolFiles = [
       "exec.ts",
       "delegate.ts",
@@ -456,5 +474,13 @@ describe("phase-1 extraction package verification", () => {
     const toolsSection = formatToolsSection([makeTool("read"), makeTool("exec", "dangerous")]);
     expect(toolsSection).toContain("- read [safe]: read tool");
     expect(toolsSection).toContain("- exec [dangerous]: exec tool");
+  });
+
+  test("@aria/memory exposes the package-owned skill surface", async () => {
+    const memoryModule = await import("../packages/memory/src/index.js");
+    const registry = new memoryModule.SkillRegistry();
+    expect(registry.size).toBe(0);
+    expect(memoryModule.formatSkillsDiscovery([])).toBe("");
+    expect(memoryModule.formatActiveSkills([])).toBe("");
   });
 });

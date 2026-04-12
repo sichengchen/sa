@@ -2,7 +2,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { Type } from "@sinclair/typebox";
 import type { ToolImpl } from "@aria/agent-aria";
-import type { SkillRegistry } from "@aria/runtime/skills";
+import type { SkillRegistry } from "@aria/memory";
 import { isPathInside } from "@aria/policy/path-boundary";
 
 const MAX_SKILL_CONTENT_CHARS = 100_000;
