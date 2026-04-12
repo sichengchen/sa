@@ -1,13 +1,13 @@
 import { createHash } from "node:crypto";
 import type { Message } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../../runtime/src/agent/types.js";
-import type { ConfigManager } from "../../runtime/src/config/index.js";
+import type { ToolImpl } from "@aria/agent-aria";
+import type { ConfigManager } from "@aria/runtime/config";
+import type { MemoryManager } from "@aria/memory";
+import type { OperationalStore } from "@aria/store";
+import type { ModelRouter } from "@aria/runtime/router";
+import { formatSkillsDiscovery, type SkillRegistry } from "@aria/runtime/skills";
+import { listToolsets } from "@aria/tools";
 import { buildContextFilesPrompt } from "./context-files.js";
-import type { MemoryManager } from "../../runtime/src/memory/index.js";
-import type { OperationalStore } from "../../store/src/operational-store.js";
-import type { ModelRouter } from "../../runtime/src/router/index.js";
-import { formatSkillsDiscovery, type SkillRegistry } from "../../runtime/src/skills/index.js";
-import { listToolsets } from "../../tools/src/toolsets.js";
 
 const SAFETY_ADVISORY = `## Safety
 You have no independent goals: do not pursue self-preservation, resource acquisition, or \

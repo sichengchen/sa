@@ -7,6 +7,8 @@ const TARGET_OWNED_PACKAGE_DIRS = [
   "packages/desktop-bridge/src",
   "packages/desktop-git/src",
   "packages/jobs/src",
+  "packages/policy/src",
+  "packages/prompt/src",
   "packages/projects/src",
   "packages/workspaces/src",
 ] as const;

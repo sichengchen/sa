@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { isPathInside, toRelativeIfInside } from "../../policy/src/path-boundary.js";
+import { isPathInside, toRelativeIfInside } from "@aria/policy";
 
 const REFERENCE_PATTERN = /(?<![\w/])@(?:(?<simple>diff|staged)\b|(?<kind>file|folder|url):(?<value>\S+))/g;
 const TRAILING_PUNCTUATION = /[.,;!?]+$/;

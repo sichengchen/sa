@@ -1,7 +1,7 @@
-import type { ToolImpl, DangerLevel } from "../../runtime/src/agent/types.js";
-import type { ToolApprovalMode } from "../../protocol/src/types.js";
-import type { MCPManager, MCPServerStatus } from "../../runtime/src/mcp.js";
-import { getPrimaryToolset } from "../../tools/src/toolsets.js";
+import type { DangerLevel, ToolImpl } from "@aria/agent-aria";
+import type { ToolApprovalMode } from "@aria/protocol";
+import type { MCPManager, MCPServerStatus } from "@aria/runtime/mcp";
+import { getPrimaryToolset } from "@aria/tools/toolsets";
 
 export type CapabilitySource = "builtin" | "mcp";
 
