@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   buildAccessClientConfig,
   buildClientProjectThreadSummary,
+  createEngineClient,
 } from "@aria/access-client";
 import {
   createProjectThreadListItem,
@@ -13,6 +14,15 @@ import { ariaDesktopApp, createAriaDesktopBootstrap } from "../apps/aria-desktop
 import { ariaMobileApp, createAriaMobileBootstrap } from "../apps/aria-mobile/src/index.js";
 
 describe("Phase 6 client seams", () => {
+  test("@aria/access-client owns the shared engine-client transport factory", () => {
+    const client = createEngineClient({
+      httpUrl: "http://127.0.0.1:7420",
+      wsUrl: "ws://127.0.0.1:7421",
+      token: "token",
+    });
+    expect(client).toBeTruthy();
+  });
+
   test("@aria/access-client normalizes shared client transport config", () => {
     const config = buildAccessClientConfig({
       serverId: "home",

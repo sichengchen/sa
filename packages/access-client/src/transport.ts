@@ -1,4 +1,4 @@
-import { createEngineClient, type ClientOptions } from "../../shared-types/src/client.js";
+import { createEngineClient, type ClientOptions } from "./client.js";
 
 export type {
   EngineEvent,
@@ -7,7 +7,7 @@ export type {
   ToolApprovalRequest,
 } from "@aria/protocol";
 
-export type { ClientOptions } from "../../shared-types/src/client.js";
+export type { ClientOptions } from "./client.js";
 
 export interface AccessClientTarget {
   serverId: string;

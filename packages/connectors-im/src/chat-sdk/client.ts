@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { createEngineClient } from "@aria/shared/client.js";
+import { createEngineClient } from "@aria/access-client/client";
 import { AuthManager } from "@aria/engine/auth.js";
 import { getRuntimeHome } from "@aria/shared/brand.js";
 
