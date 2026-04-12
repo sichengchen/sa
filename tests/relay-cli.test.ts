@@ -50,6 +50,71 @@ describe("relayCommand", () => {
     expect(relayCliSource).not.toContain("../../relay/src");
   });
 
+  test("manages relay servers and scoped access grants", async () => {
+    await relayCommand([
+      "server-register",
+      "server-1",
+      "Home",
+      "Server",
+      "--metadata",
+      "{\"tier\":\"prod\"}",
+    ]);
+    await relayCommand(["register", "device-1", "My", "Phone"]);
+    await relayCommand([
+      "grant",
+      "server-1",
+      "device-1",
+      "--workspace",
+      "workspace-1",
+      "--thread",
+      "thread-1",
+      "--kind",
+      "aria_thread",
+      "--transport",
+      "relay_tunnel",
+      "--send",
+      "yes",
+      "--respond",
+      "no",
+      "--issued-at",
+      "1000",
+      "--ttl",
+      "60000",
+      "--metadata",
+      "{\"scope\":\"mobile\"}",
+    ]);
+
+    const state = await new RelayStore(join(runtimeHome, "relay-state.json")).load();
+    expect(state.servers).toHaveLength(1);
+    expect(state.accessGrants).toHaveLength(1);
+    expect(state.accessGrants[0]).toMatchObject({
+      serverId: "server-1",
+      deviceId: "device-1",
+      workspaceId: "workspace-1",
+      threadId: "thread-1",
+      attachmentKind: "aria_thread",
+      transportMode: "relay_tunnel",
+      canSendMessages: true,
+      canRespondToApprovals: false,
+      issuedAt: 1000,
+      expiresAt: 61_000,
+    });
+
+    const logs = await captureLogs(async () => {
+      await relayCommand(["servers"]);
+      await relayCommand(["grants"]);
+      await relayCommand(["server-revoke", "server-1"]);
+      await relayCommand(["grant-revoke", state.accessGrants[0]!.grantId]);
+    });
+
+    expect(logs.some((line) => line.includes("server-1"))).toBe(true);
+    expect(logs.some((line) => line.includes("token="))).toBe(true);
+
+    const updated = await new RelayStore(join(runtimeHome, "relay-state.json")).load();
+    expect(updated.servers[0]?.revokedAt).toBeNumber();
+    expect(updated.accessGrants[0]?.revokedAt).toBeNumber();
+  });
+
   test("manages paired devices, attachments, and queued relay events", async () => {
     await relayCommand(["register", "device-1", "My", "Phone"]);
     await relayCommand(["attach", "device-1", "session-1"]);
