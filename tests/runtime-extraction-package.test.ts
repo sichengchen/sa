@@ -8,7 +8,7 @@ import { SecurityModeManager, ToolPolicyManager, buildToolCapabilityCatalog, des
 import { buildContextFilesPrompt, parseContextReferences, preprocessContextReferences, PromptEngine } from "../packages/prompt/src/index.js";
 import { ConnectorTypeSchema } from "../packages/protocol/src/index.js";
 import { OperationalStore } from "../packages/store/src/index.js";
-import { buildDynamicToolsets, createSessionToolEnvironment, formatToolsSection, getBuiltinTools, mergeAllowedTools } from "../packages/tools/src/index.js";
+import { buildDynamicToolsets, createSessionToolEnvironment, formatToolsSection, getBuiltinTools, mergeAllowedTools, reactionTool } from "../packages/tools/src/index.js";
 
 const tempDirs: string[] = [];
 
@@ -297,6 +297,9 @@ describe("phase-1 extraction package verification", () => {
 
     const merged = mergeAllowedTools(availableTools as any, ["read", "missing"], ["MCP:Docs"]);
     expect((merged ?? []).sort()).toEqual(["mcp_docs_fetch", "mcp_docs_search", "read"]);
+
+    expect(reactionTool.name).toBe("reaction");
+    expect(reactionTool.execute({ emoji: "👍" } as any)).resolves.toMatchObject({ content: "__reaction__:👍" });
 
     const toolsSection = formatToolsSection([makeTool("read"), makeTool("exec", "dangerous")]);
     expect(toolsSection).toContain("- read [safe]: read tool");
