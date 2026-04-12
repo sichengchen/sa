@@ -26,6 +26,7 @@
     "./teams": "./src/teams/index.ts",
     "./teams/config": "./src/teams/config.ts",
     "./telegram": "./src/telegram/index.ts",
-    "./telegram/config": "./src/telegram/config.ts"
+    "./telegram/config": "./src/telegram/config.ts",
+    "./wechat": "./src/wechat/index.ts"
   }
 }
