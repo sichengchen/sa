@@ -8,7 +8,7 @@ import { SecurityModeManager, ToolPolicyManager, buildToolCapabilityCatalog, des
 import { buildContextFilesPrompt, parseContextReferences, preprocessContextReferences, PromptEngine } from "../packages/prompt/src/index.js";
 import { ConnectorTypeSchema } from "../packages/protocol/src/index.js";
 import { OperationalStore } from "../packages/store/src/index.js";
-import { buildDynamicToolsets, createSessionToolEnvironment, createWebFetchTool, editTool, formatToolsSection, getBuiltinTools, mergeAllowedTools, reactionTool, readTool, webSearchTool, writeTool } from "../packages/tools/src/index.js";
+import { askUserTool, buildDynamicToolsets, createNotifyTool, createSessionToolEnvironment, createWebFetchTool, editTool, formatToolsSection, getBuiltinTools, mergeAllowedTools, reactionTool, readTool, webSearchTool, writeTool } from "../packages/tools/src/index.js";
 
 const tempDirs: string[] = [];
 
@@ -278,6 +278,13 @@ describe("phase-1 extraction package verification", () => {
     const webFetch = createWebFetchTool();
     await expect(webFetch.execute({ url: "http://127.0.0.1:1234" } as any)).resolves.toMatchObject({ isError: true });
     expect(webFetch.name).toBe("web_fetch");
+  });
+
+  test("@aria/tools exposes package-owned notify and ask-user helpers", async () => {
+    const notifyTool = createNotifyTool({ apiKeys: {} } as any);
+    await expect(notifyTool.execute({ message: "hello" } as any)).resolves.toMatchObject({ content: expect.stringContaining("No connectors configured") });
+    expect(askUserTool.name).toBe("ask_user");
+    await expect(askUserTool.execute({ question: "Continue?" } as any)).resolves.toMatchObject({ isError: true });
   });
 
   test("@aria/tools exposes a package-owned session tool environment", async () => {

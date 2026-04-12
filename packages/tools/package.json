@@ -8,6 +8,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./notify": "./src/notify.ts",
+    "./ask-user": "./src/ask-user.ts",
     "./web-search": "./src/web-search.ts",
     "./web-fetch": "./src/web-fetch.ts",
     "./edit": "./src/edit.ts",
