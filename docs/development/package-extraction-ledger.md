@@ -70,9 +70,9 @@ This phase seeds the remaining target-state server package names needed for proj
 
 | Target package | Current source owner | Seeded package entrypoints | Compatibility surface kept at |
 | --- | --- | --- | --- |
-| `@aria/projects` | `packages/projects-engine/src/{repository,store,planning,reviews,publish,external-refs,schema,types}.ts` | `packages/projects/src/*` | `@aria/projects-engine` |
+| `@aria/projects` | `packages/projects-engine/src/{repository,store,reviews,publish,external-refs,schema,types}.ts` plus planning/blocker coordination now moved into `packages/projects/src/*` | `packages/projects/src/*` | `@aria/projects-engine` |
 | `@aria/workspaces` | `packages/projects-engine/src/{repos,worktrees,types}.ts` | `packages/workspaces/src/*` | `@aria/projects-engine` |
-| `@aria/jobs` | `packages/projects-engine/src/{bridge,dispatch,types}.ts` plus `packages/runtime/src/dispatch-runner.ts` | `packages/jobs/src/*` | `@aria/projects-engine`, `packages/runtime/src/dispatch-runner.ts` |
+| `@aria/jobs` | `packages/runtime/src/dispatch-runner.ts` plus durable dispatch records referenced through `packages/projects-engine/src/types.ts` | `packages/jobs/src/*` | `@aria/projects-engine`, `packages/runtime/src/dispatch-runner.ts` |
 | `@aria/agents-coding` | `packages/providers-aria`, `packages/providers-codex`, `packages/providers-claude-code`, `packages/providers-opencode` | `packages/agents-coding/src/*` | provider packages remain valid |
 
 ### Phase 4 Notes
