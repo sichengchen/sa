@@ -3,7 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import { Type } from "@sinclair/typebox";
 import type { ToolImpl } from "../agent/types.js";
 import type { SkillRegistry } from "../skills/index.js";
-import { isPathInside } from "../path-boundary.js";
+import { isPathInside } from "../../../policy/src/path-boundary.js";
 
 const MAX_SKILL_CONTENT_CHARS = 100_000;
 const ALLOWED_SUBDIRS = new Set(["references", "templates", "scripts", "assets"]);

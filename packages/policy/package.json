@@ -9,6 +9,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./capability-policy": "./src/capability-policy.ts",
-    "./policy": "./src/policy.ts"
+    "./path-boundary": "./src/path-boundary.ts",
+    "./policy": "./src/policy.ts",
+    "./security-mode": "./src/security-mode.ts"
   }
 }

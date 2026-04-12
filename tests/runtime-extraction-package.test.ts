@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { AuditLogger, queryAuditEntries, readAuditEntries } from "../packages/audit/src/index.js";
-import { ToolPolicyManager, buildToolCapabilityCatalog, resolveCapabilityPolicyDecision } from "../packages/policy/src/index.js";
+import { SecurityModeManager, ToolPolicyManager, buildToolCapabilityCatalog, describeModeEffects, isPathInside, resolveCapabilityPolicyDecision, toRelativeIfInside } from "../packages/policy/src/index.js";
 import { PromptEngine } from "../packages/prompt/src/index.js";
 import { ConnectorTypeSchema } from "../packages/protocol/src/index.js";
 import { OperationalStore } from "../packages/store/src/index.js";
@@ -53,6 +53,16 @@ describe("phase-1 extraction package verification", () => {
     expect(entries[0]?.session).toBe("session-id-abcdefghijklmnopqrstuvwxyz-0123456789".slice(0, 36));
     expect(entries[0]?.summary?.endsWith("...")).toBe(true);
     expect(queryAuditEntries(logPath, { tool: "read" })).toHaveLength(1);
+  });
+
+  test("@aria/policy exposes path-boundary and security-mode helpers", () => {
+    const manager = new SecurityModeManager({ defaultMode: "default" });
+    const switched = manager.setMode("session-1", "trusted");
+    expect(switched.ok).toBe(true);
+    expect(manager.getMode("session-1")).toBe("trusted");
+    expect(describeModeEffects("trusted", 3600)).toContain("TRUSTED");
+    expect(isPathInside("/tmp/project", "/tmp/project/src/file.ts")).toBe(true);
+    expect(toRelativeIfInside("/tmp/project", "/tmp/project/src/file.ts")).toBe("src/file.ts");
   });
 
   test("@aria/policy preserves capability catalog and approval decisions", () => {
