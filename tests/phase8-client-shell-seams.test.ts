@@ -32,6 +32,8 @@ describe("Phase 8 client shell seam docs", () => {
     expect(migration).toContain("Phase 8 Client Shell Seams");
     expect(migration).toContain("./phase-8-client-shell-seams-ledger.md");
     expect(extractionLedger).toContain("## Phase 8 Extracted Ownership");
+    expect(ledger).toContain("phase-9-architecture-truth-table.md");
+    expect(ledger).toContain("hybrid target shells");
 
     for (const surface of [...REQUIRED_PHASE8_SURFACES, ...REQUIRED_PHASE8_FOUNDATIONS]) {
       expect(ledger).toContain(surface);

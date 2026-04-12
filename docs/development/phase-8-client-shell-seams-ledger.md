@@ -2,6 +2,8 @@
 
 This ledger tracks the next migration wave for seeding the target-state client shell packages described in [../new-architecture/packages.md](../new-architecture/packages.md) and [../new-architecture/desktop-and-mobile.md](../new-architecture/desktop-and-mobile.md).
 
+Current repo note: this ledger records the Phase 8 seam-seeding step. For current ownership truth after the Phase 9 follow-on pass, use [phase-9-architecture-truth-table.md](./phase-9-architecture-truth-table.md); `@aria/desktop`, `@aria/mobile`, `apps/aria-desktop`, and `apps/aria-mobile` are now treated as hybrid target shells rather than temporary wrappers.
+
 Phase 8 is about making the following client shell boundaries explicit without breaking the current app wrappers, shared client seams, or CLI/server/runtime behavior:
 
 - `@aria/desktop`
@@ -61,4 +63,4 @@ Every Phase 8 seam-seeding step should still pass:
 
 ## Exit Condition
 
-Phase 8 is complete when the repo has explicit `@aria/desktop` and `@aria/mobile` package surfaces, `apps/aria-desktop` and `apps/aria-mobile` remain thin wrappers over those shells, and the current CLI/server/runtime plus shared client compatibility behavior remains intact.
+Phase 8 is complete when the repo has explicit `@aria/desktop` and `@aria/mobile` package surfaces, `apps/aria-desktop` and `apps/aria-mobile` preserve compatibility with those shells, and the current CLI/server/runtime plus shared client compatibility behavior remains intact. Use the Phase 9 truth table for the current edit-first ownership model after this seam-seeding step.
