@@ -19,7 +19,6 @@ const EXCLUDED_PREFIXES = [
   "packages/providers-codex/",
   "packages/providers-claude-code/",
   "packages/providers-opencode/",
-  "packages/shared-types/",
   "packages/connectors/",
   "packages/runtime/src/skills/",
   "scripts/migrate-legacy-esperta-code.ts",

@@ -40,6 +40,5 @@ The repo is package-first:
 - `packages/relay`
 - `packages/connectors`
 - `packages/cli`
-- `packages/shared-types`
 
 Import through the package aliases rather than deep relative paths.

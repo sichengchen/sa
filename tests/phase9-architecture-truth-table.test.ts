@@ -20,7 +20,6 @@ const REQUIRED_LEGACY_SURFACES = [
   "@aria/projects-engine",
   "packages/connectors",
   "@aria/providers-{codex,claude-code,opencode}",
-  "@aria/shared-types",
   "packages/cli",
 ];
 

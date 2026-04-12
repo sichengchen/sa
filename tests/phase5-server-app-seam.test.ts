@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import { CLI_NAME, PRODUCT_NAME, engineCommand, ensureEngine, getRuntimeDiscoveryPaths, startAriaServer } from "@aria/server";
-import { CLI_NAME as sharedCliName, PRODUCT_NAME as sharedProductName } from "@aria/shared/brand.js";
 import type { EngineServer } from "@aria/gateway/server";
 import type { EngineRuntime } from "@aria/runtime/runtime";
 
@@ -85,7 +84,5 @@ describe("Phase 5 server app seam", () => {
     expect(getRuntimeDiscoveryPaths("/tmp/aria-test").pidFile).toBe("/tmp/aria-test/engine.pid");
     expect(CLI_NAME).toBe("aria");
     expect(PRODUCT_NAME).toBe("Esperta Aria");
-    expect(CLI_NAME).toBe(sharedCliName);
-    expect(PRODUCT_NAME).toBe(sharedProductName);
   });
 });

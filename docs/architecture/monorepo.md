@@ -17,7 +17,6 @@ Aria is implemented as a package-oriented monorepo.
 | `packages/console` | server-local console surface |
 | `packages/connectors-im` | IM connector surfaces |
 | `packages/connectors` | compatibility wrappers for older connector entrypoints |
-| `packages/shared-types` | compatibility re-exports for older shared import paths |
 | `packages/projects-engine` | compatibility re-exports for older tracked-work import paths |
 | `packages/providers-*` | compatibility re-exports for older coding-agent adapter paths |
 | `packages/cli` | operator CLI surface |

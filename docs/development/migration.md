@@ -11,7 +11,6 @@ Converge the repo on package-owned implementations and retire old assumptions ab
 - `packages/handoff`
 - `packages/relay`
 - `packages/connectors`
-- `packages/shared-types`
 - provider packages
 - CLI and future app surfaces
 
