@@ -8,6 +8,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./service": "./src/service.ts",
+    "./store": "./src/store.ts",
     "./types": "./src/types.ts"
   }
 }

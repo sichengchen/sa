@@ -1,9 +1,9 @@
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { RelayStore } from "@aria/relay/store";
 import { relayCommand } from "../packages/cli/src/relay.js";
-import { RelayStore } from "../packages/relay/src/store.js";
 
 let runtimeHome = "";
 let originalAriaHome: string | undefined;
@@ -20,6 +20,10 @@ async function captureLogs(fn: () => Promise<void>): Promise<string[]> {
     console.log = originalLog;
   }
   return logs;
+}
+
+async function readRepoText(path: string): Promise<string> {
+  return readFile(new URL(`../${path}`, import.meta.url), "utf-8");
 }
 
 beforeEach(async () => {
@@ -39,6 +43,13 @@ afterEach(() => {
 });
 
 describe("relayCommand", () => {
+  test("consumes the public relay package instead of package src internals", async () => {
+    const relayCliSource = await readRepoText("packages/cli/src/relay.ts");
+    expect(relayCliSource).toContain('from "@aria/relay/service"');
+    expect(relayCliSource).toContain('from "@aria/relay/store"');
+    expect(relayCliSource).not.toContain("../../relay/src");
+  });
+
   test("manages paired devices, attachments, and queued relay events", async () => {
     await relayCommand(["register", "device-1", "My", "Phone"]);
     await relayCommand(["attach", "device-1", "session-1"]);

@@ -1,7 +1,7 @@
 import { join } from "node:path";
+import { RelayService } from "@aria/relay/service";
+import { RelayStore } from "@aria/relay/store";
 import { CLI_NAME, getRuntimeHome } from "@aria/server/brand";
-import { RelayService } from "../../relay/src/service.js";
-import { RelayStore } from "../../relay/src/store.js";
 
 const RELAY_STORE_FILE = "relay-state.json";
 
