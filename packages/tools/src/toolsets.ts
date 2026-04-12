@@ -1,4 +1,4 @@
-import type { ToolImpl } from "@aria/runtime/agent";
+import type { ToolImpl } from "@aria/agent-aria";
 
 export interface ToolsetDefinition {
   name: string;

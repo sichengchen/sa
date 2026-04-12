@@ -1,6 +1,6 @@
 import { Type } from "@mariozechner/pi-ai";
 import { NodeHtmlMarkdown } from "node-html-markdown";
-import type { ToolImpl } from "@aria/runtime/agent";
+import type { ToolImpl } from "@aria/agent-aria";
 import { validateUrl, validateHeaders, MAX_REDIRECTS, type UrlPolicyConfig } from "@aria/policy/url-policy";
 import { frameAsData, sanitizeContent } from "@aria/agent-aria/content-frame";
 

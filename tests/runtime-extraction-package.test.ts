@@ -59,6 +59,7 @@ describe("phase-1 extraction package verification", () => {
 
     const toolsIndexSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/index.ts", import.meta.url), "utf-8"));
     expect(toolsIndexSource).not.toContain("@aria/runtime/tools/");
+    expect(toolsIndexSource).toContain("@aria/agent-aria");
     expect(toolsIndexSource).toContain("./exec.js");
     expect(toolsIndexSource).toContain("./delegate.js");
     expect(toolsIndexSource).toContain("./delegate-status.js");
@@ -67,6 +68,8 @@ describe("phase-1 extraction package verification", () => {
 
     const sessionToolEnvironmentSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/session-tool-environment.ts", import.meta.url), "utf-8"));
     expect(sessionToolEnvironmentSource).not.toContain("@aria/runtime/tools/");
+    expect(sessionToolEnvironmentSource).toContain("@aria/agent-aria");
+    expect(sessionToolEnvironmentSource).toContain("@aria/gateway/router");
     expect(sessionToolEnvironmentSource).toContain("./delegate.js");
     expect(sessionToolEnvironmentSource).toContain("./delegate-status.js");
 

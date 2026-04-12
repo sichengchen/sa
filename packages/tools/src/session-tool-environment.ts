@@ -1,5 +1,5 @@
-import type { ToolImpl } from "@aria/runtime/agent";
-import type { ModelRouter } from "@aria/runtime/router";
+import type { ToolImpl } from "@aria/agent-aria";
+import type { ModelRouter } from "@aria/gateway/router";
 import { Orchestrator } from "@aria/agent-aria/orchestrator";
 import { SubAgent } from "@aria/agent-aria/sub-agent";
 import { CheckpointManager, checkpointWorkdirForArgs } from "@aria/runtime/checkpoints";

@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import type { ToolImpl, ToolResult } from "@aria/runtime/agent";
+import type { ToolImpl, ToolResult } from "@aria/agent-aria";
 
 /**
  * ask_user tool — allows the agent to ask the user a clarifying question mid-turn.
