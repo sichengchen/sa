@@ -6,7 +6,7 @@ import { execTool } from "../../runtime/src/tools/exec.js";
 import { execStatusTool, execKillTool } from "../../runtime/src/tools/exec-background.js";
 import { webFetchTool, createWebFetchTool } from "../../runtime/src/tools/web-fetch.js";
 import { webSearchTool } from "../../runtime/src/tools/web-search.js";
-import { reactionTool } from "../../runtime/src/tools/reaction.js";
+import { reactionTool } from "./reaction.js";
 
 export { readTool } from "../../runtime/src/tools/read.js";
 export { writeTool } from "../../runtime/src/tools/write.js";
@@ -17,7 +17,7 @@ export { execStatusTool, execKillTool } from "../../runtime/src/tools/exec-backg
 export { bashTool } from "../../runtime/src/tools/bash.js";
 export { webFetchTool, createWebFetchTool } from "../../runtime/src/tools/web-fetch.js";
 export { webSearchTool } from "../../runtime/src/tools/web-search.js";
-export { reactionTool } from "../../runtime/src/tools/reaction.js";
+export { reactionTool } from "./reaction.js";
 export { createSetEnvSecretTool, createSetEnvVariableTool } from "../../runtime/src/tools/set-api-key.js";
 export { createMemoryWriteTool } from "../../runtime/src/tools/memory-write.js";
 export { createMemorySearchTool } from "../../runtime/src/tools/memory-search.js";
