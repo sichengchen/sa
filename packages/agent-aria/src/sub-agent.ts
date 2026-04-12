@@ -6,8 +6,8 @@
  */
 
 import { Agent } from "./agent.js";
+import type { ModelRouter } from "@aria/gateway/router";
 import type { ToolImpl } from "./types.js";
-import type { ModelRouter } from "../../runtime/src/router/index.js";
 
 export interface SubAgentOptions {
   /** Unique sub-agent ID: "subagent:<parentSessionId>:<uuid>" */

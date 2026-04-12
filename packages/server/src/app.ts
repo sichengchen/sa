@@ -1,5 +1,5 @@
 import { startServer, type EngineServer, type EngineServerOptions } from "@aria/gateway/server";
-import { createRuntime, type EngineRuntime } from "@aria/runtime/runtime";
+import { createRuntime, type EngineRuntime } from "@aria/runtime";
 
 export interface AriaServerFactories {
   createRuntime?: () => Promise<EngineRuntime>;
@@ -14,6 +14,31 @@ export interface AriaServerApp {
   runtime: EngineRuntime;
   server: EngineServer;
   stop(): Promise<void>;
+}
+
+export interface AriaServerBootstrap {
+  app: typeof ariaServerApp;
+  runtimeHome: string;
+  discovery: RuntimeDiscoveryPaths;
+  hostname?: string;
+  port?: number;
+}
+
+export interface CreateAriaServerBootstrapOptions extends Pick<EngineServerOptions, "hostname" | "port"> {
+  runtimeHome?: string;
+}
+
+export function createAriaServerBootstrap(
+  options: CreateAriaServerBootstrapOptions = {},
+): AriaServerBootstrap {
+  const runtimeHome = options.runtimeHome ?? getRuntimeHome();
+  return {
+    app: ariaServerApp,
+    runtimeHome,
+    discovery: getRuntimeDiscoveryPaths(runtimeHome),
+    hostname: options.hostname,
+    port: options.port,
+  };
 }
 
 export async function startAriaServer(options: StartAriaServerOptions = {}): Promise<AriaServerApp> {

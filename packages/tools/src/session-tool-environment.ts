@@ -4,8 +4,8 @@ import { Orchestrator } from "@aria/agent-aria/orchestrator";
 import { SubAgent } from "@aria/agent-aria/sub-agent";
 import { CheckpointManager, checkpointWorkdirForArgs } from "@aria/runtime/checkpoints";
 import { SubdirectoryContextTracker } from "@aria/prompt/context-files";
-import { createDelegateStatusTool } from "@aria/runtime/tools/delegate-status";
-import { createDelegateTool } from "@aria/runtime/tools/delegate";
+import { createDelegateStatusTool } from "./delegate-status.js";
+import { createDelegateTool } from "./delegate.js";
 
 export interface SessionToolEnvironment {
   tools: ToolImpl[];

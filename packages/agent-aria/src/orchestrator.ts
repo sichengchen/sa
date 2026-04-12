@@ -3,8 +3,8 @@
  */
 
 import { SubAgent, type SubAgentOptions, type SubAgentResult } from "./sub-agent.js";
+import type { ModelRouter } from "@aria/gateway/router";
 import type { ToolImpl } from "./types.js";
-import type { ModelRouter } from "../../runtime/src/router/index.js";
 
 export interface OrchestrationConfig {
   /** Max concurrent sub-agents (default: 3) */

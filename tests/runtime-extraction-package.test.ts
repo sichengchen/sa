@@ -56,6 +56,28 @@ describe("phase-1 extraction package verification", () => {
     expect(gatewayProceduresSource).toContain("@aria/tools/session-tool-environment");
     expect(gatewayProceduresSource).toContain("@aria/audit");
     expect(gatewayProceduresSource).toContain("@aria/policy/policy");
+
+    const toolsIndexSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/index.ts", import.meta.url), "utf-8"));
+    expect(toolsIndexSource).not.toContain("@aria/runtime/tools/");
+    expect(toolsIndexSource).toContain("./exec.js");
+    expect(toolsIndexSource).toContain("./delegate.js");
+    expect(toolsIndexSource).toContain("./delegate-status.js");
+    expect(toolsIndexSource).toContain("./claude-code.js");
+    expect(toolsIndexSource).toContain("./codex.js");
+
+    const sessionToolEnvironmentSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/session-tool-environment.ts", import.meta.url), "utf-8"));
+    expect(sessionToolEnvironmentSource).not.toContain("@aria/runtime/tools/");
+    expect(sessionToolEnvironmentSource).toContain("./delegate.js");
+    expect(sessionToolEnvironmentSource).toContain("./delegate-status.js");
+
+    const toolsPackageJson = JSON.parse(
+      await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/package.json", import.meta.url), "utf-8")),
+    ) as { exports: Record<string, string> };
+    expect(toolsPackageJson.exports["./exec"]).toBe("./src/exec.ts");
+    expect(toolsPackageJson.exports["./delegate"]).toBe("./src/delegate.ts");
+    expect(toolsPackageJson.exports["./delegate-status"]).toBe("./src/delegate-status.ts");
+    expect(toolsPackageJson.exports["./claude-code"]).toBe("./src/claude-code.ts");
+    expect(toolsPackageJson.exports["./codex"]).toBe("./src/codex.ts");
   });
 
   test("@aria/audit writes and queries entries through the package barrel", async () => {

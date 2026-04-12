@@ -8,6 +8,11 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./claude-code": "./src/claude-code.ts",
+    "./codex": "./src/codex.ts",
+    "./delegate": "./src/delegate.ts",
+    "./delegate-status": "./src/delegate-status.ts",
+    "./exec": "./src/exec.ts",
     "./exec-background": "./src/exec-background.ts",
     "./bash": "./src/bash.ts",
     "./skill-manage": "./src/skill-manage.ts",

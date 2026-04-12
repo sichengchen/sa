@@ -1,5 +1,5 @@
 import type { TSchema } from "@sinclair/typebox";
-import type { ModelRouter } from "../../runtime/src/router/index.js";
+import type { ModelRouter } from "@aria/gateway/router";
 
 /** Tool danger classification for approval policy */
 export type DangerLevel = "safe" | "moderate" | "dangerous";

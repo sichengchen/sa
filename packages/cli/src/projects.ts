@@ -11,7 +11,7 @@ import {
 } from "@aria/projects";
 import { ProjectsWorktreeService } from "@aria/workspaces";
 import { HandoffService, HandoffStore } from "@aria/handoff";
-import { createRuntime } from "../../runtime/src/runtime.js";
+import { createRuntime } from "@aria/runtime";
 
 function printHelp(): void {
   console.log(`Usage: ${CLI_NAME} projects <subcommand>\n`);
