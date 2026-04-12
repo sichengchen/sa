@@ -2,6 +2,20 @@ import { describe, expect, test } from "bun:test";
 import { CLI_NAME, PRODUCT_NAME, engineCommand, ensureEngine, getRuntimeDiscoveryPaths, startAriaServer } from "@aria/server";
 import type { EngineServer } from "@aria/gateway/server";
 import type { EngineRuntime } from "@aria/runtime/runtime";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+function readRepoJson<T>(relativePath: string): T {
+  return JSON.parse(readFileSync(join(import.meta.dir, "..", relativePath), "utf-8")) as T;
+}
+
+type WorkspacePackageJson = {
+  name?: string;
+  main?: string;
+  types?: string;
+  scripts?: Record<string, string>;
+  exports?: Record<string, string>;
+};
 
 describe("Phase 5 server app seam", () => {
   test("composes runtime and gateway through @aria/server", async () => {
@@ -84,5 +98,21 @@ describe("Phase 5 server app seam", () => {
     expect(getRuntimeDiscoveryPaths("/tmp/aria-test").pidFile).toBe("/tmp/aria-test/engine.pid");
     expect(CLI_NAME).toBe("aria");
     expect(PRODUCT_NAME).toBe("Esperta Aria");
+  });
+
+  test("keeps runnable dev entrypoints on the server package and thin server app wrapper", () => {
+    const serverPackage = readRepoJson<WorkspacePackageJson>("packages/server/package.json");
+    const serverApp = readRepoJson<WorkspacePackageJson>("apps/aria-server/package.json");
+
+    expect(serverPackage.name).toBe("@aria/server");
+    expect(serverPackage.main).toBe("./src/index.ts");
+    expect(serverPackage.types).toBe("./src/index.ts");
+    expect(serverPackage.exports?.["."]).toBe("./src/index.ts");
+    expect(serverPackage.scripts?.dev).toBe("bun ./src/engine.ts");
+
+    expect(serverApp.name).toBe("aria-server");
+    expect(serverApp.main).toBe("./src/index.ts");
+    expect(serverApp.scripts?.dev).toBe("bun ./src/index.ts");
+    expect(serverApp.scripts?.start).toBe("bun ./src/index.ts");
   });
 });
