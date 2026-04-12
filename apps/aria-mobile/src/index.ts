@@ -1,5 +1,6 @@
 import {
   ariaMobileApp,
+  ariaMobileActionSections,
   ariaMobileDetailPresentations,
   ariaMobileTabs,
   createAriaMobileBootstrap,
@@ -20,6 +21,7 @@ export const ariaMobileHost = {
   capabilities: ariaMobileApp.capabilities,
   tabs: ariaMobileTabs,
   detailPresentations: ariaMobileDetailPresentations,
+  actionSections: ariaMobileActionSections,
 } as const;
 
 export interface AriaMobileHostBootstrap {
@@ -32,7 +34,7 @@ export function createAriaMobileHostBootstrap(
   target: AccessClientTarget,
   initialThread?: {
     project: Pick<ProjectRecord, "name">;
-    thread: Pick<ThreadRecord, "threadId" | "title" | "status">;
+    thread: Pick<ThreadRecord, "threadId" | "title" | "status" | "threadType" | "environmentId" | "agentId">;
   },
 ): AriaMobileHostBootstrap {
   return {

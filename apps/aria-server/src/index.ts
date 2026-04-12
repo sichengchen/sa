@@ -1,6 +1,7 @@
 import {
   CLI_NAME,
   PRODUCT_NAME,
+  ariaServerApp,
   getRuntimeDiscoveryPaths,
   startAriaServer,
   type AriaServerApp,
@@ -17,7 +18,8 @@ export const ariaServerHost = {
   surface: "server",
   shellPackage: "@aria/server",
   sharedPackages: ["@aria/server", "@aria/runtime", "@aria/gateway"],
-  capabilities: ["runtime-bootstrap", "gateway-api", "daemon-lifecycle"],
+  capabilities: ariaServerApp.capabilities,
+  ownership: ariaServerApp.ownership,
   command: CLI_NAME,
 } as const;
 

@@ -112,6 +112,11 @@ describe("Phase 5 server app seam", () => {
     expect(bootstrap.host).toEqual(ariaServerHost);
     expect(bootstrap.host.shellPackage).toBe("@aria/server");
     expect(bootstrap.host.sharedPackages).toContain("@aria/runtime");
+    expect(bootstrap.host.capabilities).toContain("aria-agent-host");
+    expect(bootstrap.host.ownership).toMatchObject({
+      ariaAgent: "server-only",
+      projectLocalExecution: "desktop-only",
+    });
     expect(bootstrap.discoveryPaths.pidFile).toBe("/tmp/aria-server-app/engine.pid");
 
     const runtime = {

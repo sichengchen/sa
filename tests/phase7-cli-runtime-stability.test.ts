@@ -58,6 +58,8 @@ describe("Phase 7 CLI/server/runtime stability", () => {
     expect(ariaMobileApp.sharedPackages).not.toContain("@aria/server");
     expect(ariaDesktopHost.shellPackage).toBe("@aria/desktop");
     expect(ariaMobileHost.shellPackage).toBe("@aria/mobile");
+    expect(ariaDesktopHost.contextPanels.map((panel) => panel.id)).toContain("environment");
+    expect(ariaMobileHost.actionSections.map((section) => section.id)).toContain("remote-review");
 
     for (const disallowedImport of ["@aria/runtime", "@aria/server", "packages/runtime", "packages/server"]) {
       expect(desktopSource).not.toContain(disallowedImport);

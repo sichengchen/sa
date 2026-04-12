@@ -1,5 +1,6 @@
 import {
   ariaDesktopApp,
+  ariaDesktopContextPanels,
   ariaDesktopSpaces,
   createAriaDesktopBootstrap,
   type AriaDesktopBootstrap,
@@ -18,6 +19,7 @@ export const ariaDesktopHost = {
   sharedPackages: ariaDesktopApp.sharedPackages,
   capabilities: ariaDesktopApp.capabilities,
   spaces: ariaDesktopSpaces,
+  contextPanels: ariaDesktopContextPanels,
 } as const;
 
 export interface AriaDesktopHostBootstrap {
@@ -30,7 +32,7 @@ export function createAriaDesktopHostBootstrap(
   target: AccessClientTarget,
   initialThread?: {
     project: Pick<ProjectRecord, "name">;
-    thread: Pick<ThreadRecord, "threadId" | "title" | "status">;
+    thread: Pick<ThreadRecord, "threadId" | "title" | "status" | "threadType" | "environmentId" | "agentId">;
   },
 ): AriaDesktopHostBootstrap {
   return {
