@@ -85,9 +85,20 @@ describe("aria-desktop app assembly", () => {
   });
 
   test("creates app bootstraps with the same host and shell assembly", () => {
-    const bootstrap = createAriaDesktopApplicationBootstrap(
-      { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
-      {
+    const bootstrap = createAriaDesktopApplicationBootstrap({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "desktop",
+      initialThread: {
         project: { name: "Aria" },
         thread: {
           threadId: "thread-1",
@@ -98,11 +109,17 @@ describe("aria-desktop app assembly", () => {
           agentId: "codex",
         },
       },
-    );
+    });
 
     expect(bootstrap.application).toBe(ariaDesktopApplication);
     expect(bootstrap.host).toBe(ariaDesktopHost);
     expect(bootstrap.shell.sharedPackages).toContain("@aria/ui");
+    expect(bootstrap.bootstrap.servers.map((server) => server.label)).toEqual([
+      "Home Server",
+      "Relay Mirror",
+    ]);
+    expect(bootstrap.bootstrap.activeServerId).toBe("desktop");
+    expect(bootstrap.bootstrap.activeServerLabel).toBe("Home Server");
     expect(bootstrap.bootstrap.access).toMatchObject({
       serverId: "desktop",
       httpUrl: "http://127.0.0.1:7420",
@@ -118,6 +135,17 @@ describe("aria-desktop app assembly", () => {
   test("builds a React shell view-model from application/bootstrap assembly", () => {
     const model = createAriaDesktopAppShellModel({
       target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "desktop",
       initialThread: {
         project: { name: "Aria" },
         thread: {
@@ -144,6 +172,8 @@ describe("aria-desktop app assembly", () => {
     expect(model.application).toBe(ariaDesktopApplication);
     expect(model.bootstrap.application).toBe(ariaDesktopApplication);
     expect(model.bootstrap.host).toBe(ariaDesktopHost);
+    expect(model.activeServerId).toBe("desktop");
+    expect(model.activeServerLabel).toBe("Home Server");
     expect(model.activeSpaceId).toBe("projects");
     expect(model.activeContextPanelId).toBe("environment");
     expect(model.shell.projectSidebar.projects[0]).toMatchObject({
@@ -161,11 +191,26 @@ describe("aria-desktop app assembly", () => {
         mode: "local",
       }),
     ]);
+    expect(model.shell.serverSwitcher.availableServers.map((server) => server.label)).toEqual([
+      "Home Server",
+      "Relay Mirror",
+    ]);
   });
 
   test("exposes React app-shell component and factory element", () => {
     const built = createAriaDesktopAppShell({
       target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "desktop",
       initialThread: {
         project: { name: "Aria" },
         thread: {
@@ -191,6 +236,7 @@ describe("aria-desktop app assembly", () => {
     expect(built.element.type).toBe(AriaDesktopAppShell);
     const builtElement = asElementWithProps(built.element);
     expect(builtElement.props.model).toBe(built.model);
+    expect(built.model.activeServerLabel).toBe("Home Server");
 
     const rendered = AriaDesktopAppShell({ model: built.model });
     const [topChrome, workbench, statusStrip] = childElements(asElementWithProps(rendered));
@@ -206,6 +252,8 @@ describe("aria-desktop app assembly", () => {
     const text = collectTextContent(rendered).join(" ");
 
     expect(text).toContain("Aria Desktop");
+    expect(text).toContain("Home Server");
+    expect(text).toContain("Relay Mirror");
     expect(text).toContain("Projects");
     expect(text).toContain("Desktop thread");
     expect(text).toContain("Environment");

@@ -156,33 +156,62 @@ describe("Phase 6 client seams", () => {
   });
 
   test("apps/aria-desktop composes the shared client seams without owning new runtime behavior", () => {
-    const bootstrap = createAriaDesktopBootstrap(
-      { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
-      {
+    const bootstrap = createAriaDesktopBootstrap({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "desktop",
+      initialThread: {
         project: { name: "Aria" },
         thread: { threadId: "thread-1", title: "Desktop thread", status: "running", threadType: "local_project", environmentId: "desktop-main", agentId: "codex" },
       },
-    );
+    });
 
     expect(ariaDesktopApp.sharedPackages).toContain("@aria/access-client");
     expect(ariaDesktopApp.capabilities).toContain("local-bridge");
+    expect(ariaDesktopApp.serverSwitcher).toEqual(
+      expect.objectContaining({
+        placement: "top-chrome",
+        mode: "multi-server",
+      }),
+    );
     expect(bootstrap.access).toMatchObject({
       serverId: "desktop",
       httpUrl: "http://127.0.0.1:7420",
       wsUrl: "ws://127.0.0.1:7420",
     });
+    expect(bootstrap.activeServerLabel).toBe("Home Server");
     expect(bootstrap.initialThread?.status).toBe("Running");
     expect(bootstrap.initialThread?.threadType).toBe("local_project");
   });
 
   test("apps/aria-mobile stays a thin remote client seam", () => {
-    const bootstrap = createAriaMobileBootstrap(
-      { serverId: "mobile", baseUrl: "https://aria.example.test/" },
-      {
+    const bootstrap = createAriaMobileBootstrap({
+      target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "mobile",
+      initialThread: {
         project: { name: "Aria" },
         thread: { threadId: "thread-2", title: "Mobile review", status: "idle", threadType: "remote_project", agentId: "codex" },
       },
-    );
+    });
 
     expect(ariaMobileApp.sharedPackages).toContain("@aria/ui");
     expect(ariaMobileApp.capabilities).toEqual([
@@ -193,11 +222,18 @@ describe("Phase 6 client seams", () => {
       "automation",
       "reconnect",
     ]);
+    expect(ariaMobileApp.serverSwitcher).toEqual(
+      expect.objectContaining({
+        placement: "header",
+        mode: "multi-server",
+      }),
+    );
     expect(bootstrap.access).toMatchObject({
       serverId: "mobile",
       httpUrl: "https://aria.example.test",
       wsUrl: "wss://aria.example.test",
     });
+    expect(bootstrap.activeServerLabel).toBe("Home Server");
     expect(bootstrap.initialThread?.projectLabel).toBe("Aria");
     expect(bootstrap.initialThread?.threadType).toBe("remote_project");
   });

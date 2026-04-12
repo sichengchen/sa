@@ -19,6 +19,17 @@ describe("Aria mobile app surface", () => {
   test("composes a real app-level shell over the mobile client seam", () => {
     const appShell = createAriaMobileAppShell({
       target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "mobile",
       projects: [
         {
           project: { name: "Aria" },
@@ -69,6 +80,12 @@ describe("Aria mobile app surface", () => {
 
     expect(ariaMobileHost.navigation).toBe(ariaMobileNavigation);
     expect(ariaMobileAppModel.navigation).toBe(ariaMobileNavigation);
+    expect(ariaMobileAppModel.serverSwitcher).toEqual(
+      expect.objectContaining({
+        placement: "header",
+        mode: "multi-server",
+      }),
+    );
     expect(ariaMobileNavigation.tabs).toEqual([
       { id: "aria", label: "Aria" },
       { id: "projects", label: "Projects" },
@@ -117,10 +134,17 @@ describe("Aria mobile app surface", () => {
       status: "Idle",
       threadType: "remote_project",
     });
+    expect(appShell.activeServerId).toBe("mobile");
+    expect(appShell.activeServerLabel).toBe("Home Server");
+    expect(appShell.serverSwitcher.availableServers.map((server) => server.label)).toEqual([
+      "Home Server",
+      "Relay Mirror",
+    ]);
     expect(appShell.activeThreadContext).toMatchObject({
       threadId: "thread-2",
       threadType: "remote_project",
       threadTypeLabel: "Remote Project",
+      serverLabel: "Home Server",
       remoteStatusLabel: "Connected to Home Server",
       connectionLabel: "Connected to Home Server",
       approvalLabel: "2 approvals pending",
@@ -128,21 +152,48 @@ describe("Aria mobile app surface", () => {
       remoteReviewLabel: "Ready for remote review",
       reconnectLabel: "Reconnect after sleep",
     });
-    expect(createAriaMobileHostBootstrap({ serverId: "mobile", baseUrl: "https://aria.example.test/" }).appShell.navigation).toBe(
-      ariaMobileNavigation,
-    );
+    expect(
+      createAriaMobileHostBootstrap({
+        target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+        servers: [
+          {
+            label: "Home Server",
+            target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+          },
+          {
+            label: "Relay Mirror",
+            target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          },
+        ],
+        activeServerId: "mobile",
+      }).appShell.navigation,
+    ).toBe(ariaMobileNavigation);
   });
 
   test("declares a thin remote-first React application root over the app shell", () => {
     const target = { serverId: "mobile", baseUrl: "https://aria.example.test/" };
-    const applicationBootstrap = createAriaMobileApplicationBootstrap(target, {
-      project: { name: "Aria" },
-      thread: {
-        threadId: "thread-9",
-        title: "Reconnect review",
-        status: "idle",
-        threadType: "remote_project",
-        agentId: "codex",
+    const applicationBootstrap = createAriaMobileApplicationBootstrap({
+      target,
+      servers: [
+        {
+          label: "Home Server",
+          target,
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "mobile",
+      initialThread: {
+        project: { name: "Aria" },
+        thread: {
+          threadId: "thread-9",
+          title: "Reconnect review",
+          status: "idle",
+          threadType: "remote_project",
+          agentId: "codex",
+        },
       },
     });
 
@@ -151,9 +202,26 @@ describe("Aria mobile app surface", () => {
       defaultTabId: "aria",
       defaultScreenId: "chat",
     });
+    expect(ariaMobileApplication.serverSwitcher).toEqual(
+      expect.objectContaining({
+        placement: "header",
+        mode: "multi-server",
+      }),
+    );
     expect(applicationBootstrap.application).toBe(ariaMobileApplication);
     const shellElement = createAriaMobileApplicationShell({
       target,
+      servers: [
+        {
+          label: "Home Server",
+          target,
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "mobile",
       initialThread: {
         project: { name: "Aria" },
         thread: {
@@ -170,6 +238,7 @@ describe("Aria mobile app surface", () => {
           threadType: "remote_project",
           reconnectLabel: "Reconnect after sleep",
         },
+        serverLabel: "Home Server",
         remoteStatusLabel: "Connected to Home Server",
       },
     });
@@ -179,12 +248,24 @@ describe("Aria mobile app surface", () => {
 
     const root = createAriaMobileApplicationRoot({
       target,
+      servers: [
+        {
+          label: "Home Server",
+          target,
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "mobile",
       activeThreadContext: {
         thread: {
           threadId: "thread-9",
           threadType: "remote_project",
           reconnectLabel: "Reconnect after sleep",
         },
+        serverLabel: "Home Server",
         remoteStatusLabel: "Connected to Home Server",
       },
     });
