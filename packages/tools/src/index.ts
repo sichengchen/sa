@@ -40,3 +40,5 @@ export function formatToolsSection(tools: ToolImpl[]): string {
 }
 
 export * from "./toolsets.js";
+
+export * from "./session-tool-environment.js";

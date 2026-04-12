@@ -8,7 +8,7 @@ import { ToolPolicyManager, buildToolCapabilityCatalog, resolveCapabilityPolicyD
 import { PromptEngine } from "../packages/prompt/src/index.js";
 import { ConnectorTypeSchema } from "../packages/protocol/src/index.js";
 import { OperationalStore } from "../packages/store/src/index.js";
-import { buildDynamicToolsets, formatToolsSection, getBuiltinTools, mergeAllowedTools } from "../packages/tools/src/index.js";
+import { buildDynamicToolsets, createSessionToolEnvironment, formatToolsSection, getBuiltinTools, mergeAllowedTools } from "../packages/tools/src/index.js";
 
 const tempDirs: string[] = [];
 
@@ -237,6 +237,21 @@ describe("phase-1 extraction package verification", () => {
     expect(store.getPromptCache("base-cache")?.metadata).toEqual({ phase: 1 });
 
     store.close();
+  });
+
+  test("@aria/tools exposes a package-owned session tool environment", async () => {
+    const workingDir = await makeTempDir("aria-tools-session-env-");
+    const environment = createSessionToolEnvironment({
+      baseTools: [makeTool("read")],
+      workingDir,
+    });
+
+    environment.newTurn();
+
+    expect(environment.workingDir).toBe(workingDir);
+    expect(environment.tools).toHaveLength(1);
+    const result = await environment.tools[0]?.execute({});
+    expect(result?.content).toContain("ok");
   });
 
   test("@aria/tools exposes builtin and dynamic toolset helpers", () => {

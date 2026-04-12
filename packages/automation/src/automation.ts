@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Agent } from "../../runtime/src/agent/index.js";
 import type { EngineRuntime } from "../../runtime/src/runtime.js";
-import { createSessionToolEnvironment } from "../../runtime/src/session-tool-environment.js";
+import { createSessionToolEnvironment } from "../../tools/src/session-tool-environment.js";
 import { computeNextRunAt } from "./automation-schedule.js";
 import { mergeAllowedTools } from "../../tools/src/toolsets.js";
 import { CRON_DEFAULT_TOOLS, WEBHOOK_DEFAULT_TOOLS } from "../../runtime/src/config/defaults.js";
