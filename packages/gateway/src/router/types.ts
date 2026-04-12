@@ -1,10 +1,13 @@
 import type { KnownProvider } from "@mariozechner/pi-ai";
 
+/** Provider kinds supported by Aria's router layer. */
+export type ProviderType = KnownProvider | "minimax";
+
 export interface ProviderConfig {
   /** Unique ID for this provider configuration */
   id: string;
-  /** LLM provider type (e.g. "anthropic", "openai", "openrouter") */
-  type: KnownProvider;
+  /** LLM provider type (e.g. "anthropic", "openai", "openrouter", "minimax") */
+  type: ProviderType;
   /** Environment variable name that holds the API key */
   apiKeyEnvVar: string;
   /** Base URL for OpenAI-compatible providers with custom endpoints */

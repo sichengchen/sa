@@ -5,6 +5,31 @@ import type { ModelConfig, ProviderConfig } from "./types.js";
 import type { ModelTier, TaskType } from "./task-types.js";
 import { DEFAULT_TASK_TIER } from "./task-types.js";
 
+const OPENAI_COMPAT_BASE_URL = "https://api.openai.com";
+const MINIMAX_OPENAI_COMPAT_BASE_URL = "https://api.minimaxi.com/v1";
+
+function normalizeBaseUrl(baseUrl: string): string {
+  return baseUrl.replace(/\/+$/, "");
+}
+
+function resolveOpenAICompatibleBaseUrl(provider: ProviderConfig): string {
+  if (provider.baseUrl) {
+    return normalizeBaseUrl(provider.baseUrl);
+  }
+  if (provider.type === "minimax") {
+    return MINIMAX_OPENAI_COMPAT_BASE_URL;
+  }
+  return OPENAI_COMPAT_BASE_URL;
+}
+
+function buildOpenAICompatibleUrl(baseUrl: string, endpoint: string): string {
+  const normalizedBase = normalizeBaseUrl(baseUrl);
+  if (normalizedBase.endsWith("/v1")) {
+    return `${normalizedBase}/${endpoint}`;
+  }
+  return `${normalizedBase}/v1/${endpoint}`;
+}
+
 export interface ModelRouterData {
   providers: ProviderConfig[];
   models: ModelConfig[];
@@ -131,13 +156,14 @@ export class ModelRouter {
     const cfg = this.getConfig(name);
     const provider = this.getProvider(cfg.provider);
     const apiKey = this.resolveApiKey(provider.apiKeyEnvVar);
-    if (provider.baseUrl) {
+    if (provider.baseUrl || provider.type === "minimax") {
+      const baseUrl = resolveOpenAICompatibleBaseUrl(provider);
       return {
         id: cfg.model,
         name: cfg.model,
         api: "openai-completions" as const,
         provider: provider.type,
-        baseUrl: provider.baseUrl,
+        baseUrl,
         reasoning: false,
         input: ["text"] as ("text" | "image")[],
         cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
@@ -416,8 +442,10 @@ export class ModelRouter {
     if (providerType === "google" || providerType === "google-vertex") {
       return this.embedGoogle(cfg.model, apiKey, texts, provider.baseUrl);
     }
-    // OpenAI-compatible: openai, openrouter, nvidia, openai-compat, etc.
-    return this.embedOpenAI(cfg.model, apiKey, texts, provider.baseUrl);
+    // OpenAI-compatible: openai, openrouter, nvidia, openai-compat, minimax, etc.
+    const baseUrl =
+      provider.baseUrl ?? (providerType === "minimax" ? MINIMAX_OPENAI_COMPAT_BASE_URL : undefined);
+    return this.embedOpenAI(cfg.model, apiKey, texts, baseUrl);
   }
 
   /** Call OpenAI-compatible /v1/embeddings endpoint */
@@ -427,7 +455,7 @@ export class ModelRouter {
     texts: string[],
     baseUrl?: string,
   ): Promise<{ vectors: number[][]; dimensions: number }> {
-    const url = `${baseUrl ?? "https://api.openai.com"}/v1/embeddings`;
+    const url = buildOpenAICompatibleUrl(baseUrl ?? OPENAI_COMPAT_BASE_URL, "embeddings");
     const res = await fetch(url, {
       method: "POST",
       headers: {

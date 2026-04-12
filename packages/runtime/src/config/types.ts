@@ -272,6 +272,7 @@ export interface RuntimeConfig {
 export interface AriaConfigFile {
   version: 3;
   runtime: RuntimeConfig;
+  /** Provider configurations may include OpenAI-compatible MiniMax endpoints. */
   providers: ProviderConfig[];
   models: ModelConfig[];
   defaultModel: string;

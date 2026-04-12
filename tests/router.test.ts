@@ -149,6 +149,82 @@ describe("ModelRouter", () => {
     });
   });
 
+  describe("MiniMax provider", () => {
+    const minimaxConfig: ModelRouterData = {
+      defaultModel: "minimax-chat",
+      providers: [
+        {
+          id: "minimax",
+          type: "minimax" as any,
+          apiKeyEnvVar: "MINIMAX_API_KEY",
+          baseUrl: "https://api.minimaxi.com/v1",
+        },
+      ],
+      models: [
+        {
+          name: "minimax-chat",
+          provider: "minimax",
+          model: "MiniMax-M2.5",
+          temperature: 0.2,
+          maxTokens: 2048,
+        },
+        {
+          name: "minimax-embed",
+          provider: "minimax",
+          model: "MiniMax-Embedding",
+          type: "embedding",
+        },
+      ],
+    };
+
+    test("resolves provider metadata and OpenAI-compatible base URL", () => {
+      const router = ModelRouter.fromConfig(minimaxConfig);
+      const provider = router.getProvider("minimax");
+      expect(provider.type).toBe("minimax");
+      expect(provider.apiKeyEnvVar).toBe("MINIMAX_API_KEY");
+
+      process.env.MINIMAX_API_KEY = "minimax-test-key";
+      try {
+        const model = router.getModel("minimax-chat");
+        expect(model.provider).toBe("minimax");
+        expect(model.baseUrl).toBe("https://api.minimaxi.com/v1");
+        expect(router.getStreamOptions("minimax-chat").apiKey).toBe("minimax-test-key");
+      } finally {
+        delete process.env.MINIMAX_API_KEY;
+      }
+    });
+
+    test("uses the MiniMax /v1 base URL without duplicating the version prefix", async () => {
+      const router = ModelRouter.fromConfig(minimaxConfig);
+      process.env.MINIMAX_API_KEY = "minimax-test-key";
+      const originalFetch = globalThis.fetch;
+      const calls: string[] = [];
+
+      globalThis.fetch = (async (input: RequestInfo | URL) => {
+        calls.push(String(input));
+        return new Response(
+          JSON.stringify({
+            data: [{ embedding: [0.1, 0.2, 0.3], index: 0 }],
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }) as typeof fetch;
+
+      try {
+        const result = await router.embed(["hello minimax"]);
+        expect(calls).toEqual(["https://api.minimaxi.com/v1/embeddings"]);
+        expect(result.vectors).toEqual([[0.1, 0.2, 0.3]]);
+        expect(result.dimensions).toBe(3);
+      } finally {
+        globalThis.fetch = originalFetch;
+        delete process.env.MINIMAX_API_KEY;
+      }
+    });
+  });
+
   describe("CRUD — models", () => {
     let router: ModelRouter;
 

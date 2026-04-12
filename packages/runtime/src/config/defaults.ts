@@ -1,6 +1,12 @@
 import type { AriaConfigFile, HeartbeatConfig } from "./types.js";
 import { PRODUCT_NAME } from "@aria/server/brand";
 
+/** MiniMax OpenAI-compatible API base URL. */
+export const MINIMAX_OPENAI_BASE_URL = "https://api.minimaxi.com/v1";
+
+/** Default environment variable for MiniMax API keys. */
+export const MINIMAX_API_KEY_ENV_VAR = "MINIMAX_API_KEY";
+
 /** Default tool allowlist for cron tasks — read + search, memory, notify */
 export const CRON_DEFAULT_TOOLS = [
   "read", "web_fetch", "web_search",
