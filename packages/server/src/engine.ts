@@ -2,13 +2,17 @@
 
 import { existsSync, openSync, unlinkSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
-import { join } from "node:path";
-import { HOME_ENV_VAR, ENGINE_PORT_ENV_VAR, RUNTIME_NAME, getRuntimeHome } from "@aria/shared/brand.js";
+import { HOME_ENV_VAR, ENGINE_PORT_ENV_VAR, RUNTIME_NAME } from "@aria/shared/brand.js";
+import { getRuntimeDiscoveryPaths } from "../../runtime/src/discovery.js";
 import { startAriaServer } from "./app.js";
 
-const runtimeHome = getRuntimeHome();
-const PID_FILE = join(runtimeHome, "engine.pid");
-const URL_FILE = join(runtimeHome, "engine.url");
+const {
+  runtimeHome,
+  pidFile: PID_FILE,
+  urlFile: URL_FILE,
+  logFile: LOG_FILE,
+  restartMarkerFile: RESTART_MARKER,
+} = getRuntimeDiscoveryPaths();
 
 const port = process.env[ENGINE_PORT_ENV_VAR]
   ? parseInt(process.env[ENGINE_PORT_ENV_VAR]!, 10)
@@ -24,8 +28,6 @@ export async function runAriaServerProcess(): Promise<void> {
   writeFileSync(URL_FILE, httpUrl);
 
   // Graceful shutdown (with optional restart).
-  const RESTART_MARKER = join(runtimeHome, "engine.restart");
-
   function shutdown() {
     console.log(`\n${RUNTIME_NAME} shutting down...`);
     const shouldRestart = existsSync(RESTART_MARKER);
@@ -39,7 +41,7 @@ export async function runAriaServerProcess(): Promise<void> {
       () => {
         clearTimeout(forceTimer);
         if (shouldRestart) {
-          const logFd = openSync(join(runtimeHome, "engine.log"), "a");
+          const logFd = openSync(LOG_FILE, "a");
           const child = spawn(process.execPath, [process.argv[1]!, "__engine"], {
             detached: true,
             stdio: ["ignore", logFd, logFd],
