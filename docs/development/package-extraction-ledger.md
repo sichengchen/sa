@@ -70,7 +70,7 @@ This phase seeds the remaining target-state server package names needed for proj
 
 | Target package | Current source owner | Seeded package entrypoints | Compatibility surface kept at |
 | --- | --- | --- | --- |
-| `@aria/projects` | `packages/projects-engine/src/{repository,store,external-refs,schema,types}.ts` plus planning/review/publish coordination now moved into `packages/projects/src/*` | `packages/projects/src/*` | `@aria/projects-engine` |
+| `@aria/projects` | `packages/projects-engine/src/{repository,store,schema,types}.ts` plus planning/review/publish/external-ref coordination now moved into `packages/projects/src/*` | `packages/projects/src/*` | `@aria/projects-engine` |
 | `@aria/workspaces` | `packages/projects-engine/src/{repos,worktrees,types}.ts` | `packages/workspaces/src/*` | `@aria/projects-engine` |
 | `@aria/jobs` | `packages/runtime/src/dispatch-runner.ts` plus durable dispatch records referenced through `packages/projects-engine/src/types.ts` | `packages/jobs/src/*` | `@aria/projects-engine`, `packages/runtime/src/dispatch-runner.ts` |
 | `@aria/agents-coding` | `packages/providers-aria`, `packages/providers-codex`, `packages/providers-claude-code`, `packages/providers-opencode` | `packages/agents-coding/src/*` | provider packages remain valid |

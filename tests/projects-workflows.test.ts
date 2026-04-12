@@ -3,6 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
 import {
+  buildExternalRefId,
+  createExternalRefRecord,
+  createLegacyLinearThreadExternalRefs,
+  findThreadRefsByLinearIssueId,
   ProjectsEngineRepository,
   ProjectsEngineStore,
   ProjectsPublishService,
@@ -119,6 +123,64 @@ describe("projects workflow services", () => {
 
     expect(completedPublishRun.status).toBe("pr_created");
     expect(repository.getPublishRun(publishRun.publishRunId)?.prUrl).toBe("https://example.com/pr/1");
+  });
+
+  test("external ref helpers preserve legacy linear thread lookup behavior", async () => {
+    const repository = await createProjectsRepository();
+    const now = Date.now();
+
+    repository.upsertProject({
+      projectId: "project-refs",
+      name: "Aria",
+      slug: "aria-refs",
+      description: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+    repository.upsertThread({
+      threadId: "thread-linear",
+      projectId: "project-refs",
+      taskId: null,
+      repoId: null,
+      title: "Linear-linked thread",
+      status: "queued",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const refs = createLegacyLinearThreadExternalRefs({
+      projectId: "project-refs",
+      threadId: "thread-linear",
+      linearIssueId: "ARI-101",
+      linearIdentifier: "ARIA-101",
+      linearSessionId: "session-linear",
+      metadataJson: "{\"source\":\"test\"}",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    for (const ref of refs) {
+      repository.upsertExternalRef(ref);
+    }
+
+    const direct = createExternalRefRecord({
+      ownerType: "thread",
+      ownerId: "thread-linear",
+      system: "linear",
+      externalId: "ARI-102",
+      createdAt: now,
+      updatedAt: now,
+    });
+    repository.upsertExternalRef(direct);
+
+    expect(buildExternalRefId("thread", "thread-linear", "linear", "ARI-101")).toBe(
+      "thread:thread-linear:linear:ARI-101",
+    );
+    expect(findThreadRefsByLinearIssueId(repository, "ARI-101").map((ref) => ref.externalId)).toEqual(["ARI-101"]);
+    expect(findThreadRefsByLinearIssueId(repository, "ARIA-101").map((ref) => ref.externalId)).toEqual(["ARIA-101"]);
+    expect(findThreadRefsByLinearIssueId(repository, "ARI-102").map((ref) => ref.externalRefId)).toEqual([
+      direct.externalRefId,
+    ]);
   });
 
   test("handoff materialization creates a thread, job, and queued dispatch idempotently", async () => {

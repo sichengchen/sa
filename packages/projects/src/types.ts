@@ -1,6 +1,7 @@
 export type {
   ExternalRefRecord,
   ProjectRecord,
+  ProjectsExternalSystem,
   PublishRunRecord,
   ReviewRecord,
   TaskRecord,
