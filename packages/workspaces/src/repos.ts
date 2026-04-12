@@ -1,5 +1,5 @@
 import type { RepoRecord } from "./types.js";
-import { ProjectsEngineRepository } from "../../projects-engine/src/repository.js";
+import type { ProjectsEngineRepository } from "../../projects/src/repository.js";
 
 export class ProjectsRepoService {
   constructor(private readonly repository: ProjectsEngineRepository) {}

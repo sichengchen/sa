@@ -23,7 +23,7 @@ During this phase:
 | Target package | Current source owner | Seeded package seam should own | Compatibility surface kept at |
 | --- | --- | --- | --- |
 | `@aria/projects` | `packages/projects/src/*` plus tracked-work materialization in `packages/handoff/src/service.ts` | Project registry, task/thread/dispatch/review/publish coordination, project-thread orchestration APIs | `@aria/projects-engine`, `@aria/handoff`, and current `aria projects` command names |
-| `@aria/workspaces` | `packages/projects-engine/src/{repos,worktrees,types,schema,store}.ts` for repo/worktree records and helpers | Workspace, repo, worktree, sandbox, and environment models that should stay below project orchestration | Current repo/worktree records in `@aria/projects-engine` and `aria projects worktree-*` flows |
+| `@aria/workspaces` | `packages/workspaces/src/*` over the target-owned `@aria/projects` persistence APIs | Workspace, repo, worktree, sandbox, and environment models that should stay below project orchestration | `@aria/projects-engine` compatibility wrappers and `aria projects worktree-*` flows |
 | `@aria/jobs` | `packages/runtime/src/{dispatch-runner,backend-registry}.ts`, dispatch state types referenced through `packages/projects-engine/src/types.ts`, and CLI dispatch execution wiring in `packages/cli/src/projects.ts` | Remote job launch, backend selection, execution lifecycle, approval-wait transitions, and resumable job orchestration | `@aria/runtime/{dispatch-runner,backend-registry}`, queued dispatch records in `@aria/projects-engine`, and `aria projects run-dispatch` / `backends` |
 | `@aria/agents-coding` | Shared backend contracts in `packages/providers-aria/src/*` and provider-specific adapters in `packages/providers-{codex,claude-code,opencode}/src/*` | Shared coding-agent contracts, adapter composition, capability metadata, and a target-state package for Codex / Claude Code / OpenCode orchestration | `@aria/providers-aria`, `@aria/providers-codex`, `@aria/providers-claude-code`, `@aria/providers-opencode`, and current backend IDs |
 
@@ -37,9 +37,9 @@ During this phase:
 
 ### `@aria/workspaces`
 
-- Repo and worktree helpers already exist in `packages/projects-engine/src/repos.ts` and `worktrees.ts`, which makes them the safest extraction starting point.
-- The schema and store still persist repo/worktree records in the shared tracked-work database; Phase 4 should separate ownership before attempting any storage split.
-- Keep branch naming, retention, pruning, and repo registration behavior stable while moving the seam.
+- Repo and worktree helpers now live in `packages/workspaces/src/*` and build on the target-owned `@aria/projects` persistence APIs.
+- The schema and store still persist repo/worktree records in the shared tracked-work database; the workspace seam is now about behavioral ownership rather than a separate storage split.
+- Keep branch naming, retention, pruning, and repo registration behavior stable while older compatibility wrappers remain in place.
 
 ### `@aria/jobs`
 

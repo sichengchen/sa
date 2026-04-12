@@ -1,5 +1,5 @@
 import type { WorktreeRecord } from "./types.js";
-import { ProjectsEngineRepository } from "../../projects-engine/src/repository.js";
+import type { ProjectsEngineRepository } from "../../projects/src/repository.js";
 
 export function sanitizeWorktreeSegment(value: string): string {
   return value.replace(/[^A-Za-z0-9._-]/g, "_");
