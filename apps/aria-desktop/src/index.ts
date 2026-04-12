@@ -1,5 +1,11 @@
-import { buildAccessClientConfig, type AccessClientTarget } from "@aria/access-client";
-import { createProjectThreadListItem, type ProjectThreadListItem } from "@aria/ui";
+import {
+  buildAccessClientConfig,
+  type AccessClientTarget,
+} from "@aria/access-client";
+import {
+  createProjectThreadListItem,
+  type ProjectThreadListItem,
+} from "@aria/ui";
 import type { ProjectRecord, ThreadRecord } from "@aria/projects";
 
 export const ariaDesktopApp = {
@@ -14,11 +20,7 @@ export const ariaDesktopApp = {
     "@aria/agents-coding",
     "@aria/protocol",
   ],
-  capabilities: [
-    "server-access",
-    "project-threads",
-    "local-bridge",
-  ],
+  capabilities: ["server-access", "project-threads", "local-bridge"],
 } as const;
 
 export interface AriaDesktopBootstrap {

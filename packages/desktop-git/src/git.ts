@@ -11,7 +11,9 @@ export interface DesktopGitBridge {
   readonly worktrees: ProjectsWorktreeService;
 }
 
-export function createDesktopGitBridge(repository: ProjectsEngineRepository): DesktopGitBridge {
+export function createDesktopGitBridge(
+  repository: ProjectsEngineRepository,
+): DesktopGitBridge {
   return {
     repos: new ProjectsRepoService(repository),
     worktrees: new ProjectsWorktreeService(repository),
@@ -24,4 +26,8 @@ export {
   buildBranchName,
   sanitizeWorktreeSegment,
 };
-export type { RepoRecord, WorktreeRecord, WorktreeStatus } from "../../workspaces/src/types.js";
+export type {
+  RepoRecord,
+  WorktreeRecord,
+  WorktreeStatus,
+} from "../../workspaces/src/types.js";

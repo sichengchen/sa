@@ -62,7 +62,9 @@
       "@aria/providers-aria/*": ["packages/providers-aria/src/*"],
       "@aria/providers-codex": ["packages/providers-codex/src/index.ts"],
       "@aria/providers-codex/*": ["packages/providers-codex/src/*"],
-      "@aria/providers-claude-code": ["packages/providers-claude-code/src/index.ts"],
+      "@aria/providers-claude-code": [
+        "packages/providers-claude-code/src/index.ts"
+      ],
       "@aria/providers-claude-code/*": ["packages/providers-claude-code/src/*"],
       "@aria/providers-opencode": ["packages/providers-opencode/src/index.ts"],
       "@aria/providers-opencode/*": ["packages/providers-opencode/src/*"],

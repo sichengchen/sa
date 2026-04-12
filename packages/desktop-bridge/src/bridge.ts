@@ -2,7 +2,10 @@ import { createCodingAgentBackendRegistry } from "../../agents-coding/src/regist
 import type { RuntimeBackendAdapter } from "../../agents-coding/src/contracts.js";
 import { ProjectsPlanningService } from "../../projects/src/planning.js";
 import type { ProjectsEngineRepository } from "../../projects/src/repository.js";
-import { createDesktopGitBridge, type DesktopGitBridge } from "../../desktop-git/src/git.js";
+import {
+  createDesktopGitBridge,
+  type DesktopGitBridge,
+} from "../../desktop-git/src/git.js";
 
 export interface DesktopBridgeOptions {
   readonly repository: ProjectsEngineRepository;
@@ -15,7 +18,9 @@ export interface DesktopBridge {
   readonly codingAgents: Map<string, RuntimeBackendAdapter>;
 }
 
-export function createDesktopBridge(options: DesktopBridgeOptions): DesktopBridge {
+export function createDesktopBridge(
+  options: DesktopBridgeOptions,
+): DesktopBridge {
   return {
     planning: new ProjectsPlanningService(options.repository),
     git: createDesktopGitBridge(options.repository),
