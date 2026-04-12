@@ -68,14 +68,14 @@ describe("legacy Esperta Code migration script", () => {
     db.close();
 
     const proc = Bun.spawn([
-      "bun",
+      process.execPath,
       "run",
       "scripts/migrate-legacy-esperta-code.ts",
       legacyDbPath,
       ariaDbPath,
       "--dry-run",
     ], {
-      cwd: "/Users/sichengchen/.codex/worktrees/911d/sa",
+      cwd: join(import.meta.dir, ".."),
       stdout: "pipe",
       stderr: "pipe",
     });
