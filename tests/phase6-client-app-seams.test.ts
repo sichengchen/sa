@@ -17,12 +17,15 @@ async function readText(path: string): Promise<string> {
 
 describe("Phase 6 client app seam docs", () => {
   test("tracks the phase 6 ledger from the development docs", async () => {
-    const [developmentReadme, migration, ledger] = await Promise.all([
+    const [docsReadme, developmentReadme, migration, ledger] = await Promise.all([
+      readText("docs/README.md"),
       readText("docs/development/README.md"),
       readText("docs/development/migration.md"),
       readText(PHASE6_LEDGER_PATH),
     ]);
 
+    expect(docsReadme).toContain("phase-6-client-app-seams-ledger.md");
+    expect(docsReadme).not.toContain("phase-6-client-seams-ledger.md");
     expect(developmentReadme).toContain("phase-6-client-app-seams-ledger.md");
     expect(migration).toContain("Phase 6 Client App Seams");
     expect(migration).toContain("./phase-6-client-app-seams-ledger.md");
@@ -33,15 +36,19 @@ describe("Phase 6 client app seam docs", () => {
   });
 
   test("keeps architecture docs aligned with the phase 6 client seams", async () => {
-    const [packagesDoc, serverDoc, desktopMobileDoc] = await Promise.all([
+    const [packagesDoc, serverDoc, desktopMobileDoc, bundledDesktopMobileDoc] = await Promise.all([
       readText("docs/new-architecture/packages.md"),
       readText("docs/new-architecture/server.md"),
       readText("docs/new-architecture/desktop-and-mobile.md"),
+      readText("packages/runtime/src/skills/bundled/aria/docs/new-architecture/desktop-and-mobile.md"),
     ]);
 
     expect(packagesDoc).toContain("phase-6-client-app-seams-ledger.md");
     expect(serverDoc).toContain("phase-6-client-app-seams-ledger.md");
     expect(desktopMobileDoc).toContain("phase-6-client-app-seams-ledger.md");
+    expect(desktopMobileDoc).not.toContain("phase-6-client-seams-ledger.md");
+    expect(bundledDesktopMobileDoc).toContain("phase-6-client-app-seams-ledger.md");
+    expect(bundledDesktopMobileDoc).not.toContain("phase-6-client-seams-ledger.md");
 
     for (const surface of REQUIRED_PHASE6_SURFACES) {
       expect(packagesDoc).toContain(surface);
@@ -60,6 +67,9 @@ describe("Phase 6 client app seam docs", () => {
     }
 
     expect(embeddedDocs["docs/development/phase-6-client-app-seams-ledger.md"]).toBe(bundledLedger);
+    expect(embeddedDocs["docs/README.md"]).toContain("phase-6-client-app-seams-ledger.md");
     expect(embeddedDocs["docs/development/README.md"]).toContain("phase-6-client-app-seams-ledger.md");
+    expect(embeddedDocs["docs/new-architecture/desktop-and-mobile.md"]).toContain("phase-6-client-app-seams-ledger.md");
+    expect(embeddedDocs["docs/new-architecture/desktop-and-mobile.md"]).not.toContain("phase-6-client-seams-ledger.md");
   });
 });

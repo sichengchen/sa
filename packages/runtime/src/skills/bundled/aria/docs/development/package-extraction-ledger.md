@@ -94,3 +94,18 @@ This phase seeds the remaining target-state server package names needed for proj
 - This phase seeds the thin server app/composition-root seam without replacing the current operator-facing CLI during the transition.
 - `@aria/server` should compose the already-seeded server-oriented packages rather than collapsing their ownership boundaries back into one large runtime package.
 - `apps/aria-server` is intentionally a thin wrapper so deployment and packaging can move forward without duplicating daemon/bootstrap logic.
+
+## Phase 6 Extracted Ownership
+
+| Target surface | Current source owner | New compatibility owner | Compatibility surface kept at |
+| --- | --- | --- | --- |
+| `@aria/access-client` | `packages/shared-types/src/client.ts` plus `@aria/protocol` / `@aria/projects` types | `packages/access-client/src/index.ts` | `@aria/shared-types`, `@aria/protocol`, and `@aria/projects` |
+| `@aria/ui` | Client-facing protocol and project types with no package seam yet | `packages/ui/src/index.ts` | `@aria/protocol` and `@aria/projects` |
+| `apps/aria-desktop` | Architecture/docs only | `apps/aria-desktop/*` | Future desktop-specific packages and existing protocol/project surfaces |
+| `apps/aria-mobile` | Architecture/docs only | `apps/aria-mobile/*` | Future mobile-specific packages and existing protocol/project surfaces |
+
+## Phase 6 Notes
+
+- This phase seeds the thin client package/app seams without pretending the full desktop or mobile implementations already exist.
+- `@aria/access-client` should stay a shared client transport and project-summary seam instead of becoming a second protocol implementation.
+- `@aria/ui` should stay pure and host-agnostic so both app wrappers can compose it safely.

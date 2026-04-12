@@ -300,7 +300,7 @@ Both desktop and mobile should share the same access model:
 
 ## Recommended Internal Packages
 
-Current repo migration note: the thin seam wave for `@aria/access-client`, `@aria/ui`, `apps/aria-desktop`, and `apps/aria-mobile` is tracked in [../development/phase-6-client-seams-ledger.md](../development/phase-6-client-seams-ledger.md). Those seams are compatibility-first wrappers; the full desktop/mobile shells remain future work.
+Current repo migration note: the thin seam wave for `@aria/access-client`, `@aria/ui`, `apps/aria-desktop`, and `apps/aria-mobile` is tracked in [../development/phase-6-client-app-seams-ledger.md](../development/phase-6-client-app-seams-ledger.md). Those seams are compatibility-first wrappers; the full desktop/mobile shells remain future work.
 
 | Responsibility | Package |
 | --- | --- |
