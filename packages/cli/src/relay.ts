@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { RelayService } from "@aria/relay/service";
 import { RelayStore } from "@aria/relay/store";
+import type { RelayAttachmentKind, RelayTransportMode } from "@aria/relay/types";
 import { CLI_NAME, getRuntimeHome } from "@aria/server/brand";
 
 const RELAY_STORE_FILE = "relay-state.json";
@@ -11,6 +12,12 @@ function printHelp(): void {
   console.log("  list");
   console.log("  register <deviceId> <label>");
   console.log("  revoke <deviceId>");
+  console.log("  servers [serverId]");
+  console.log("  server-register <serverId> <label> [--enrollment-token <token>] [--metadata <json>]");
+  console.log("  server-revoke <serverId>");
+  console.log("  grants [serverId]");
+  console.log("  grant <serverId> <deviceId> [--workspace <workspaceId>] [--thread <threadId>] [--kind <aria_thread|remote_project_thread|remote_job_stream>] [--transport <direct|relay_assisted|relay_tunnel>] [--send <yes|no>] [--respond <yes|no>] [--issued-at <ms>] [--expires-at <ms>] [--ttl <ms>] [--metadata <json>]");
+  console.log("  grant-revoke <grantId>");
   console.log("  attach <deviceId> <sessionId>");
   console.log("  detach <deviceId> <sessionId>");
   console.log("  attachments [deviceId]");
@@ -18,6 +25,264 @@ function printHelp(): void {
   console.log("  approve <deviceId> <sessionId> <toolCallId> <approve|deny>");
   console.log("  events [deviceId]");
   console.log("  deliver <eventId>");
+}
+
+function formatIso(value?: number | null): string {
+  return value ? new Date(value).toISOString() : "no";
+}
+
+function parseBooleanFlag(value: string | undefined): boolean | null {
+  if (!value) {
+    return null;
+  }
+  if (["true", "yes", "1", "on", "enabled"].includes(value)) {
+    return true;
+  }
+  if (["false", "no", "0", "off", "disabled"].includes(value)) {
+    return false;
+  }
+  return null;
+}
+
+function parseNumberishFlag(value: string | undefined): number | null {
+  if (!value) {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isAttachmentKind(value: string | undefined): value is RelayAttachmentKind {
+  return value === "aria_thread" || value === "remote_project_thread" || value === "remote_job_stream";
+}
+
+function isTransportMode(value: string | undefined): value is RelayTransportMode {
+  return value === "direct" || value === "relay_assisted" || value === "relay_tunnel";
+}
+
+function parseServerRegistrationArgs(args: string[]): {
+  serverId: string;
+  label: string;
+  enrollmentToken?: string | null;
+  metadataJson?: string | null;
+} | null {
+  const [serverId, ...rest] = args;
+  if (!serverId) {
+    return null;
+  }
+
+  const labelParts: string[] = [];
+  const options: { enrollmentToken?: string | null; metadataJson?: string | null } = {};
+  let parsingOptions = false;
+
+  for (let index = 0; index < rest.length; index += 1) {
+    const arg = rest[index];
+    if (!parsingOptions && !arg.startsWith("--")) {
+      labelParts.push(arg);
+      continue;
+    }
+
+    parsingOptions = true;
+    switch (arg) {
+      case "--enrollment-token": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.enrollmentToken = value;
+        break;
+      }
+      case "--metadata": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.metadataJson = value;
+        break;
+      }
+      default:
+        return null;
+    }
+  }
+
+  const label = labelParts.join(" ").trim();
+  if (!label) {
+    return null;
+  }
+
+  return {
+    serverId,
+    label,
+    enrollmentToken: options.enrollmentToken ?? undefined,
+    metadataJson: options.metadataJson ?? undefined,
+  };
+}
+
+function parseGrantIssueArgs(args: string[]): {
+  serverId: string;
+  deviceId: string;
+  workspaceId?: string | null;
+  threadId?: string | null;
+  attachmentKind?: RelayAttachmentKind | null;
+  transportMode?: RelayTransportMode | null;
+  canSendMessages?: boolean;
+  canRespondToApprovals?: boolean;
+  issuedAt?: number;
+  expiresAt?: number;
+  metadataJson?: string | null;
+} | null {
+  const [serverId, deviceId, ...rest] = args;
+  if (!serverId || !deviceId) {
+    return null;
+  }
+
+  const options: {
+    workspaceId?: string | null;
+    threadId?: string | null;
+    attachmentKind?: RelayAttachmentKind | null;
+    transportMode?: RelayTransportMode | null;
+    canSendMessages?: boolean;
+    canRespondToApprovals?: boolean;
+    issuedAt?: number;
+    expiresAt?: number;
+    ttl?: number;
+    metadataJson?: string | null;
+  } = {};
+
+  for (let index = 0; index < rest.length; index += 1) {
+    const arg = rest[index];
+    switch (arg) {
+      case "--workspace": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.workspaceId = value;
+        break;
+      }
+      case "--thread": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.threadId = value;
+        break;
+      }
+      case "--kind": {
+        const value = rest[++index];
+        if (!isAttachmentKind(value)) {
+          return null;
+        }
+        options.attachmentKind = value;
+        break;
+      }
+      case "--transport": {
+        const value = rest[++index];
+        if (!isTransportMode(value)) {
+          return null;
+        }
+        options.transportMode = value;
+        break;
+      }
+      case "--send": {
+        const value = parseBooleanFlag(rest[++index]);
+        if (value === null) {
+          return null;
+        }
+        options.canSendMessages = value;
+        break;
+      }
+      case "--respond": {
+        const value = parseBooleanFlag(rest[++index]);
+        if (value === null) {
+          return null;
+        }
+        options.canRespondToApprovals = value;
+        break;
+      }
+      case "--issued-at": {
+        const value = parseNumberishFlag(rest[++index]);
+        if (value === null) {
+          return null;
+        }
+        options.issuedAt = value;
+        break;
+      }
+      case "--expires-at": {
+        const value = parseNumberishFlag(rest[++index]);
+        if (value === null) {
+          return null;
+        }
+        options.expiresAt = value;
+        break;
+      }
+      case "--ttl": {
+        const value = parseNumberishFlag(rest[++index]);
+        if (value === null) {
+          return null;
+        }
+        options.ttl = value;
+        break;
+      }
+      case "--metadata": {
+        const value = rest[++index];
+        if (!value) {
+          return null;
+        }
+        options.metadataJson = value;
+        break;
+      }
+      default:
+        return null;
+    }
+  }
+
+  const issuedAt = options.issuedAt ?? Date.now();
+  const expiresAt = options.expiresAt ?? (options.ttl !== undefined ? issuedAt + options.ttl : undefined);
+
+  return {
+    serverId,
+    deviceId,
+    workspaceId: options.workspaceId ?? undefined,
+    threadId: options.threadId ?? undefined,
+    attachmentKind: options.attachmentKind ?? undefined,
+    transportMode: options.transportMode ?? undefined,
+    canSendMessages: options.canSendMessages,
+    canRespondToApprovals: options.canRespondToApprovals,
+    issuedAt,
+    expiresAt,
+    metadataJson: options.metadataJson ?? undefined,
+  };
+}
+
+function formatServerSummary(server: Awaited<ReturnType<RelayService["listServers"]>>[number]): string {
+  const metadata = [
+    `registered=${new Date(server.registeredAt).toISOString()}`,
+    `revoked=${formatIso(server.revokedAt)}`,
+    `token=${server.enrollmentToken ?? "n/a"}`,
+  ];
+  if (server.lastSeenAt) {
+    metadata.push(`last-seen=${new Date(server.lastSeenAt).toISOString()}`);
+  }
+  return `${server.serverId}  ${server.label}  ${metadata.join("  ")}`;
+}
+
+function formatGrantSummary(grant: Awaited<ReturnType<RelayService["listAccessGrants"]>>[number]): string {
+  const metadata = [
+    `server=${grant.serverId}`,
+    `device=${grant.deviceId}`,
+    `workspace=${grant.workspaceId ?? "n/a"}`,
+    `thread=${grant.threadId ?? "n/a"}`,
+    `kind=${grant.attachmentKind ?? "n/a"}`,
+    `transport=${grant.transportMode ?? "n/a"}`,
+    `send=${grant.canSendMessages ? "yes" : "no"}`,
+    `approve=${grant.canRespondToApprovals ? "yes" : "no"}`,
+    `issued=${new Date(grant.issuedAt).toISOString()}`,
+    `expires=${new Date(grant.expiresAt).toISOString()}`,
+    `revoked=${formatIso(grant.revokedAt)}`,
+    `token=${grant.grantToken}`,
+  ];
+  return `${grant.grantId}  ${metadata.join("  ")}`;
 }
 
 export async function relayCommand(args: string[]): Promise<void> {
@@ -39,6 +304,101 @@ export async function relayCommand(args: string[]): Promise<void> {
     for (const device of devices) {
       console.log(`${device.deviceId}  ${device.label}  paired=${new Date(device.pairedAt).toISOString()}  revoked=${device.revokedAt ? new Date(device.revokedAt).toISOString() : "no"}  token=${device.pairingToken ?? "n/a"}`);
     }
+    return;
+  }
+
+  if (action === "servers") {
+    const servers = await relay.listServers();
+    const serverId = args[1];
+    const filtered = serverId ? servers.filter((server) => server.serverId === serverId) : servers;
+    if (filtered.length === 0) {
+      console.log("No relay servers registered.");
+      return;
+    }
+    for (const server of filtered) {
+      console.log(formatServerSummary(server));
+    }
+    return;
+  }
+
+  if (action === "server-register") {
+    const parsed = parseServerRegistrationArgs(args.slice(1));
+    if (!parsed) {
+      printHelp();
+      process.exitCode = 1;
+      return;
+    }
+    const server = await relay.registerServer({
+      serverId: parsed.serverId,
+      label: parsed.label,
+      registeredAt: Date.now(),
+      revokedAt: null,
+      lastSeenAt: null,
+      metadataJson: parsed.metadataJson ?? null,
+      enrollmentToken: parsed.enrollmentToken ?? null,
+    });
+    console.log(`Registered relay server ${server.serverId}.`);
+    return;
+  }
+
+  if (action === "server-revoke") {
+    const serverId = args[1];
+    if (!serverId) {
+      printHelp();
+      process.exitCode = 1;
+      return;
+    }
+    await relay.revokeServer(serverId);
+    console.log(`Revoked relay server ${serverId}.`);
+    return;
+  }
+
+  if (action === "grants") {
+    const serverId = args[1];
+    const grants = await relay.listAccessGrants(serverId ? { serverId } : {});
+    if (grants.length === 0) {
+      console.log("No relay access grants found.");
+      return;
+    }
+    for (const grant of grants) {
+      console.log(formatGrantSummary(grant));
+    }
+    return;
+  }
+
+  if (action === "grant") {
+    const parsed = parseGrantIssueArgs(args.slice(1));
+    if (!parsed) {
+      printHelp();
+      process.exitCode = 1;
+      return;
+    }
+    const grant = await relay.issueAccessGrant({
+      serverId: parsed.serverId,
+      deviceId: parsed.deviceId,
+      workspaceId: parsed.workspaceId ?? null,
+      threadId: parsed.threadId ?? null,
+      attachmentKind: parsed.attachmentKind ?? null,
+      transportMode: parsed.transportMode ?? null,
+      canSendMessages: parsed.canSendMessages,
+      canRespondToApprovals: parsed.canRespondToApprovals,
+      issuedAt: parsed.issuedAt,
+      expiresAt: parsed.expiresAt,
+      metadataJson: parsed.metadataJson ?? null,
+    });
+    console.log(`Issued relay access grant ${grant.grantId}. token=${grant.grantToken}`);
+    return;
+  }
+
+  if (action === "grant-revoke") {
+    const grantId = args[1];
+    if (!grantId) {
+      printHelp();
+      process.exitCode = 1;
+      return;
+    }
+    await relay.revokeAccessGrant(grantId);
+    console.log(`Revoked relay access grant ${grantId}.`);
     return;
   }
 
