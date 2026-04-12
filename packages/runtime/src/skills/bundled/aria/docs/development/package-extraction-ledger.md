@@ -72,7 +72,7 @@ This phase seeds the remaining target-state server package names needed for proj
 | --- | --- | --- | --- |
 | `@aria/projects` | `packages/projects/src/*` | `packages/projects/src/*` | `@aria/projects-engine` |
 | `@aria/workspaces` | `packages/workspaces/src/*` | `packages/workspaces/src/*` | `@aria/projects-engine` |
-| `@aria/jobs` | `packages/runtime/src/dispatch-runner.ts` plus durable dispatch records referenced through `packages/projects-engine/src/types.ts` | `packages/jobs/src/*` | `@aria/projects-engine`, `packages/runtime/src/dispatch-runner.ts` |
+| `@aria/jobs` | `packages/jobs/src/{backend-registry,dispatch-runner}.ts` plus durable dispatch records referenced through `packages/projects-engine/src/types.ts` | `packages/jobs/src/*` | `@aria/projects-engine`, `packages/runtime/src/{dispatch-runner,backend-registry}.ts` |
 | `@aria/agents-coding` | `packages/agents-coding/src/*` | `packages/agents-coding/src/*` | provider packages remain valid |
 
 ### Phase 4 Notes
