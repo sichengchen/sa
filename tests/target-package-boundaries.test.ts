@@ -4,6 +4,9 @@ import { extname, join } from "node:path";
 
 const ROOT = join(import.meta.dir, "..");
 const TARGET_OWNED_PACKAGE_DIRS = [
+  "packages/gateway/src",
+  "packages/runtime/src",
+  "packages/tools/src",
   "packages/desktop-bridge/src",
   "packages/desktop-git/src",
   "packages/jobs/src",
@@ -33,7 +36,7 @@ async function listFiles(relativeDir: string): Promise<string[]> {
 }
 
 describe("target package boundary audit", () => {
-  test("desktop/project target-owned packages consume package entrypoints instead of sibling src internals", async () => {
+  test("target-owned packages consume package entrypoints instead of sibling src internals", async () => {
     const offenders: string[] = [];
 
     for (const relativeDir of TARGET_OWNED_PACKAGE_DIRS) {

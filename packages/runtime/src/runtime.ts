@@ -3,8 +3,8 @@ import { ConfigManager } from "./config/index.js";
 import { ModelRouter } from "./router/index.js";
 import { Agent } from "./agent/index.js";
 import type { ToolImpl, ToolApprovalCallback, AskUserCallback } from "./agent/index.js";
-import { MemoryManager } from "../../memory/src/index.js";
-import { askUserTool, createClaudeCodeTool, createCodexTool, createDelegateStatusTool, createDelegateTool, createMemoryDeleteTool, createMemoryReadTool, createMemorySearchTool, createMemoryWriteTool, createNotifyTool, createReadSkillTool, createSetEnvSecretTool, createSetEnvVariableTool, createSkillManageTool, createWebFetchTool, getBuiltinTools } from "../../tools/src/index.js";
+import { MemoryManager } from "@aria/memory";
+import { askUserTool, createClaudeCodeTool, createCodexTool, createDelegateStatusTool, createDelegateTool, createMemoryDeleteTool, createMemoryReadTool, createMemorySearchTool, createMemoryWriteTool, createNotifyTool, createReadSkillTool, createSetEnvSecretTool, createSetEnvVariableTool, createSkillManageTool, createWebFetchTool, getBuiltinTools } from "@aria/tools";
 import { Orchestrator } from "./agent/orchestrator.js";
 
 
@@ -13,23 +13,23 @@ import { Orchestrator } from "./agent/orchestrator.js";
 
 
 import { SessionManager } from "./sessions.js";
-import { AuthManager } from "../../gateway/src/auth.js";
+import { AuthManager } from "@aria/gateway/auth";
 import { SkillRegistry } from "./skills/index.js";
 
-import { AutomationRegistry, Scheduler, createHeartbeatTask } from "../../automation/src/index.js";
+import { AutomationRegistry, Scheduler, createHeartbeatTask } from "@aria/automation";
 import { DEFAULT_HEARTBEAT_MD } from "./config/defaults.js";
 import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { createTranscriber, type Transcriber } from "./audio/index.js";
-import { AuditLogger } from "../../audit/src/index.js";
-import { SecurityModeManager } from "../../policy/src/index.js";
+import { AuditLogger } from "@aria/audit";
+import { SecurityModeManager } from "@aria/policy";
 import { configureSandbox } from "./tools/exec.js";
 import { SessionArchiveManager } from "./session-archive.js";
 import { CheckpointManager } from "./checkpoints.js";
 
 import { MCPManager } from "./mcp.js";
-import { OperationalStore } from "../../store/src/index.js";
-import { PromptEngine } from "../../prompt/src/index.js";
+import { OperationalStore } from "@aria/store";
+import { PromptEngine } from "@aria/prompt";
 import { CLI_NAME, getRuntimeHome } from "@aria/server/brand";
 
 /** Engine runtime — holds all bootstrapped subsystems */

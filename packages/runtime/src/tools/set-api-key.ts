@@ -1,1 +1,1 @@
-export * from "../../../tools/src/set-api-key.js";
+export * from "@aria/tools/set-api-key";

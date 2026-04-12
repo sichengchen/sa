@@ -1,1 +1,1 @@
-export * from "../../../tools/src/notify.js";
+export * from "@aria/tools/notify";

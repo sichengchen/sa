@@ -1,1 +1,1 @@
-export * from "../../policy/src/security-mode.js";
+export * from "@aria/policy/security-mode";

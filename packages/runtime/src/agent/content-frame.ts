@@ -1,1 +1,1 @@
-export * from "../../../agent-aria/src/content-frame.js";
+export * from "@aria/agent-aria/content-frame";

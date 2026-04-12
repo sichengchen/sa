@@ -1,1 +1,1 @@
-export * from "../../automation/src/automation-schedule.js";
+export * from "@aria/automation/automation-schedule";

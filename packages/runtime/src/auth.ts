@@ -1,1 +1,1 @@
-export * from "../../gateway/src/auth.js";
+export * from "@aria/gateway/auth";

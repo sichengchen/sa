@@ -1,6 +1,6 @@
 import { Type } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../../runtime/src/agent/types.js";
-import type { MemoryManager } from "../../runtime/src/memory/index.js";
+import type { ToolImpl } from "@aria/runtime/agent";
+import type { MemoryManager } from "@aria/memory";
 
 export function createMemoryDeleteTool(memory: MemoryManager): ToolImpl {
   return {

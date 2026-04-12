@@ -1,1 +1,1 @@
-export * from "../../policy/src/capability-policy.js";
+export * from "@aria/policy/capability-policy";

@@ -1,1 +1,1 @@
-export * from "../../policy/src/path-boundary.js";
+export * from "@aria/policy/path-boundary";

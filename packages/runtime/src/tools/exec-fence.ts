@@ -1,1 +1,1 @@
-export * from "../../../policy/src/exec-fence.js";
+export * from "@aria/policy/exec-fence";

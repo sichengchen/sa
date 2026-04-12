@@ -1,1 +1,1 @@
-export * from "../../../tools/src/read.js";
+export * from "@aria/tools/read";

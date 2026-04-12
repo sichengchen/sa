@@ -1,1 +1,1 @@
-export * from "../../../tools/src/web-fetch.js";
+export * from "@aria/tools/web-fetch";

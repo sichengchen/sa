@@ -1,1 +1,1 @@
-export * from "../../../tools/src/memory-delete.js";
+export * from "@aria/tools/memory-delete";

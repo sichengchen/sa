@@ -1,1 +1,1 @@
-export * from "../../../gateway/src/router/task-types.js";
+export * from "@aria/gateway/router/task-types";

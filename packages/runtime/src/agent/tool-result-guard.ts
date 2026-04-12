@@ -1,1 +1,1 @@
-export * from "../../../agent-aria/src/tool-result-guard.js";
+export * from "@aria/agent-aria/tool-result-guard";

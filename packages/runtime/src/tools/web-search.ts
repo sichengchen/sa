@@ -1,1 +1,1 @@
-export * from "../../../tools/src/web-search.js";
+export * from "@aria/tools/web-search";

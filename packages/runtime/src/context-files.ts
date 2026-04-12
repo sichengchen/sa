@@ -1,1 +1,1 @@
-export * from "../../prompt/src/context-files.js";
+export * from "@aria/prompt/context-files";

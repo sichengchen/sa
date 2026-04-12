@@ -1,1 +1,1 @@
-export * from "../../../tools/src/memory-read.js";
+export * from "@aria/tools/memory-read";

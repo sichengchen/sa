@@ -1,1 +1,1 @@
-export * from "../../../tools/src/bash.js";
+export * from "@aria/tools/bash";

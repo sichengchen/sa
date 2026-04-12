@@ -1,1 +1,1 @@
-export * from "../../../gateway/src/router/index.js";
+export * from "@aria/gateway/router";

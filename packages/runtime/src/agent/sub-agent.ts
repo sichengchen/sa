@@ -1,1 +1,1 @@
-export * from "../../../agent-aria/src/sub-agent.js";
+export * from "@aria/agent-aria/sub-agent";

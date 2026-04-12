@@ -1,1 +1,1 @@
-export * from "../../jobs/src/dispatch-runner.js";
+export * from "@aria/jobs/dispatch-runner";

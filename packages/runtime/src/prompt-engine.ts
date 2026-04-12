@@ -1,1 +1,1 @@
-export * from "../../prompt/src/prompt-engine.js";
+export * from "@aria/prompt/prompt-engine";

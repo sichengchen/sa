@@ -37,25 +37,25 @@ function makeTool(name: string, dangerLevel: "safe" | "moderate" | "dangerous" =
 describe("phase-1 extraction package verification", () => {
   test("@aria/runtime composes moved package-owned services from target packages", async () => {
     const runtimeSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/runtime.ts", import.meta.url), "utf-8"));
-    expect(runtimeSource).toContain("../../tools/src/index.js");
-    expect(runtimeSource).toContain("../../prompt/src/index.js");
-    expect(runtimeSource).toContain("../../store/src/index.js");
-    expect(runtimeSource).toContain("../../audit/src/index.js");
-    expect(runtimeSource).toContain("../../memory/src/index.js");
-    expect(runtimeSource).toContain("../../policy/src/index.js");
-    expect(runtimeSource).toContain("../../automation/src/index.js");
-    expect(runtimeSource).toContain("../../gateway/src/auth.js");
+    expect(runtimeSource).toContain("@aria/tools");
+    expect(runtimeSource).toContain("@aria/prompt");
+    expect(runtimeSource).toContain("@aria/store");
+    expect(runtimeSource).toContain("@aria/audit");
+    expect(runtimeSource).toContain("@aria/memory");
+    expect(runtimeSource).toContain("@aria/policy");
+    expect(runtimeSource).toContain("@aria/automation");
+    expect(runtimeSource).toContain("@aria/gateway/auth");
     const backendRegistrySource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/backend-registry.ts", import.meta.url), "utf-8"));
-    expect(backendRegistrySource).toContain("../../jobs/src/backend-registry.js");
+    expect(backendRegistrySource).toContain("@aria/jobs/backend-registry");
     const runtimeEngineSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/engine.ts", import.meta.url), "utf-8"));
-    expect(runtimeEngineSource).toContain("../../server/src/engine.js");
+    expect(runtimeEngineSource).toContain("@aria/server/engine");
     const proceduresSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/procedures.ts", import.meta.url), "utf-8"));
-    expect(proceduresSource).toContain("../../gateway/src/procedures.js");
+    expect(proceduresSource).toContain("@aria/gateway/procedures");
     const gatewayProceduresSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/gateway/src/procedures.ts", import.meta.url), "utf-8"));
     expect(gatewayProceduresSource).toContain("./trpc.js");
-    expect(gatewayProceduresSource).toContain("../../tools/src/session-tool-environment.js");
-    expect(gatewayProceduresSource).toContain("../../audit/src/index.js");
-    expect(gatewayProceduresSource).toContain("../../policy/src/policy.js");
+    expect(gatewayProceduresSource).toContain("@aria/tools/session-tool-environment");
+    expect(gatewayProceduresSource).toContain("@aria/audit");
+    expect(gatewayProceduresSource).toContain("@aria/policy/policy");
   });
 
   test("@aria/audit writes and queries entries through the package barrel", async () => {

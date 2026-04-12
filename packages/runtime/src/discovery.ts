@@ -1,4 +1,4 @@
 export {
   getRuntimeDiscoveryPaths,
   type RuntimeDiscoveryPaths,
-} from "../../server/src/discovery.js";
+} from "@aria/server/discovery";

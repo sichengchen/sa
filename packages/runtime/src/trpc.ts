@@ -1,1 +1,1 @@
-export * from "../../gateway/src/trpc.js";
+export * from "@aria/gateway/trpc";

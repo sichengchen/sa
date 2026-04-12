@@ -1,1 +1,1 @@
-export * from "../../../agent-aria/src/tool-loop-detection.js";
+export * from "@aria/agent-aria/tool-loop-detection";

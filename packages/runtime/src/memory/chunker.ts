@@ -1,1 +1,1 @@
-export * from "../../../memory/src/chunker.js";
+export * from "@aria/memory/chunker";

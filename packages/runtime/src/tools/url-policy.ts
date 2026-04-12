@@ -1,1 +1,1 @@
-export * from "../../../policy/src/url-policy.js";
+export * from "@aria/policy/url-policy";

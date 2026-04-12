@@ -1,1 +1,1 @@
-export * from "../../../tools/src/write.js";
+export * from "@aria/tools/write";

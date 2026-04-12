@@ -1,1 +1,1 @@
-export * from "../../store/src/operational-store.js";
+export * from "@aria/store/operational-store";

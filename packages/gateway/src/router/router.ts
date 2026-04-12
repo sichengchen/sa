@@ -3,7 +3,7 @@ import type { Model, Api } from "@mariozechner/pi-ai";
 import type { ModelConfig, ProviderConfig } from "./types.js";
 import type { ModelTier, TaskType } from "./task-types.js";
 import { DEFAULT_TASK_TIER } from "./task-types.js";
-import type { SecretsFile, RuntimeConfig } from "../../../runtime/src/config/types.js";
+import type { SecretsFile, RuntimeConfig } from "@aria/runtime/config";
 
 export interface ModelRouterData {
   providers: ProviderConfig[];

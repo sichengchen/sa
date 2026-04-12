@@ -5,10 +5,10 @@ import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { WebSocketServer } from "ws";
 import { createAppRouter, flushProcedureState, type AppRouter } from "./procedures.js";
 import { createContext } from "./context.js";
-import type { EngineRuntime } from "../../runtime/src/runtime.js";
-import { heartbeatState } from "../../automation/src/scheduler.js";
-import { frameAsData } from "../../agent-aria/src/content-frame.js";
-import { logAutomationResult, runAutomationAgent, upsertWebhookTaskRecord } from "../../automation/src/automation.js";
+import type { EngineRuntime } from "@aria/runtime/runtime";
+import { heartbeatState } from "@aria/automation/scheduler";
+import { frameAsData } from "@aria/agent-aria/content-frame";
+import { logAutomationResult, runAutomationAgent, upsertWebhookTaskRecord } from "@aria/automation/automation";
 import { RUNTIME_NAME, getRuntimeHome } from "@aria/server/brand";
 
 const DEFAULT_PORT = 7420;

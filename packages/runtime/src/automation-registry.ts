@@ -1,1 +1,1 @@
-export * from "../../automation/src/automation-registry.js";
+export * from "@aria/automation/automation-registry";

@@ -1,1 +1,1 @@
-export * from "../../../policy/src/exec-classifier.js";
+export * from "@aria/policy/exec-classifier";

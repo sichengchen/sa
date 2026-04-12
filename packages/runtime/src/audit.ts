@@ -1,1 +1,1 @@
-export * from "../../audit/src/audit.js";
+export * from "@aria/audit/audit";

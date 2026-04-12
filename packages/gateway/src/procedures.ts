@@ -3,31 +3,31 @@ import { TRPCError } from "@trpc/server";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { router, publicProcedure, middleware } from "./trpc.js";
-import type { EngineRuntime } from "../../runtime/src/runtime.js";
-import { getRuntimeSessionCoordinator } from "../../runtime/src/session-coordinator.js";
-import { Agent } from "../../runtime/src/agent/index.js";
-import type { AgentEvent } from "../../runtime/src/agent/index.js";
-import type { DangerLevel } from "../../runtime/src/agent/types.js";
-import { classifyExecCommand } from "../../policy/src/exec-classifier.js";
-import { ToolPolicyManager, type ToolEventContext } from "../../policy/src/policy.js";
+import type { EngineRuntime } from "@aria/runtime/runtime";
+import { getRuntimeSessionCoordinator } from "@aria/runtime/session-coordinator";
+import { Agent } from "@aria/runtime/agent";
+import type { AgentEvent } from "@aria/runtime/agent";
+import type { DangerLevel } from "@aria/runtime/agent";
+import { classifyExecCommand } from "@aria/policy/exec-classifier";
+import { ToolPolicyManager, type ToolEventContext } from "@aria/policy/policy";
 import { ConnectorTypeSchema } from "@aria/protocol";
 import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode, EscalationChoice } from "@aria/protocol";
 import type { ModelConfig, ProviderConfig } from "./router/types.js";
-import { buildDelegationOptions, deleteWebhookTaskRecord, registerCronTask, persistCronTask, removeCronTaskFromConfig, upsertHeartbeatTaskRecord } from "../../automation/src/automation.js";
-import { computeNextRunAt, parseScheduleInput } from "../../automation/src/automation-schedule.js";
-import { heartbeatState, createHeartbeatTask } from "../../automation/src/index.js";
-import { buildToolCapabilityCatalog, describeModeEffects, resolveCapabilityPolicyDecision } from "../../policy/src/index.js";
-import { createSessionToolEnvironment } from "../../tools/src/session-tool-environment.js";
-import { preprocessContextReferences } from "../../prompt/src/context-references.js";
-import type { CronTask } from "../../runtime/src/config/types.js";
+import { buildDelegationOptions, deleteWebhookTaskRecord, registerCronTask, persistCronTask, removeCronTaskFromConfig, upsertHeartbeatTaskRecord } from "@aria/automation/automation";
+import { computeNextRunAt, parseScheduleInput } from "@aria/automation/automation-schedule";
+import { heartbeatState, createHeartbeatTask } from "@aria/automation";
+import { buildToolCapabilityCatalog, describeModeEffects, resolveCapabilityPolicyDecision } from "@aria/policy";
+import { createSessionToolEnvironment } from "@aria/tools/session-tool-environment";
+import { preprocessContextReferences } from "@aria/prompt/context-references";
+import type { CronTask } from "@aria/runtime/config";
 
-import { listToolsets } from "../../tools/src/toolsets.js";
+import { listToolsets } from "@aria/tools/toolsets";
 
 import {
   upsertWebhookTaskRecord,
   updateCronTaskState,
-} from "../../automation/src/automation.js";
-import { queryAuditEntries } from "../../audit/src/index.js";
+} from "@aria/automation/automation";
+import { queryAuditEntries } from "@aria/audit";
 
 /** Format tool args as a compact summary for IM display */
 function formatArgsForIM(toolName: string, args: Record<string, unknown>): string {
@@ -53,7 +53,7 @@ function formatArgsForIM(toolName: string, args: Record<string, unknown>): strin
 }
 
 /** Shorthand for audit logging */
-function auditLog(runtime: EngineRuntime, input: import("../../audit/src/audit.js").AuditInput): void {
+function auditLog(runtime: EngineRuntime, input: import("@aria/audit/audit").AuditInput): void {
   try { runtime.audit.log(input); } catch { /* audit failure is non-fatal */ }
 }
 

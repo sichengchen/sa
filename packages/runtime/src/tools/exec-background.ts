@@ -1,1 +1,1 @@
-export * from "../../../tools/src/exec-background.js";
+export * from "@aria/tools/exec-background";

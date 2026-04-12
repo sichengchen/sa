@@ -1,6 +1,6 @@
 import { Type } from "@mariozechner/pi-ai";
-import type { ToolImpl } from "../../runtime/src/agent/types.js";
-import type { SecretsFile } from "../../runtime/src/config/types.js";
+import type { ToolImpl } from "@aria/runtime/agent";
+import type { SecretsFile } from "@aria/runtime/config";
 
 /** Create the notify tool — pushes messages to Telegram/Discord via HTTP */
 export function createNotifyTool(secrets: SecretsFile | null): ToolImpl {

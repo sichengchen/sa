@@ -1,9 +1,9 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { Type } from "@sinclair/typebox";
-import type { ToolImpl } from "../../runtime/src/agent/types.js";
-import type { SkillRegistry } from "../../runtime/src/skills/index.js";
-import { isPathInside } from "../../policy/src/path-boundary.js";
+import type { ToolImpl } from "@aria/runtime/agent";
+import type { SkillRegistry } from "@aria/runtime/skills";
+import { isPathInside } from "@aria/policy/path-boundary";
 
 const MAX_SKILL_CONTENT_CHARS = 100_000;
 const ALLOWED_SUBDIRS = new Set(["references", "templates", "scripts", "assets"]);

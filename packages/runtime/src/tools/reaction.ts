@@ -1,1 +1,1 @@
-export * from "../../../tools/src/reaction.js";
+export * from "@aria/tools/reaction";

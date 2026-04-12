@@ -1,1 +1,1 @@
-export * from "../../../agent-aria/src/orchestrator.js";
+export * from "@aria/agent-aria/orchestrator";

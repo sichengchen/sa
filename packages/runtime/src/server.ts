@@ -1,1 +1,1 @@
-export * from "../../gateway/src/server.js";
+export * from "@aria/gateway/server";

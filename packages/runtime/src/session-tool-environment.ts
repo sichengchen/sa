@@ -1,1 +1,1 @@
-export * from "../../tools/src/session-tool-environment.js";
+export * from "@aria/tools/session-tool-environment";

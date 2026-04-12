@@ -1,1 +1,1 @@
-export * from "../../server/src/engine.js";
+export * from "@aria/server/engine";
