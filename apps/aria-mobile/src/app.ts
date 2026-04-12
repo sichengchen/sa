@@ -6,7 +6,10 @@ import {
   createAriaMobileShell,
   type AriaMobileShell,
   type CreateAriaMobileShellOptions,
+  type AriaMobileBootstrap,
+  type AriaMobileShellInitialThread,
 } from "@aria/mobile";
+import type { AccessClientTarget } from "@aria/access-client";
 
 export interface AriaMobileNavigationSpaceScreen {
   id: string;
@@ -99,3 +102,80 @@ export const ariaMobileAppModel = {
   app: ariaMobileApp,
   navigation: ariaMobileNavigation,
 } as const;
+
+export const ariaMobileLaunchModes = [
+  {
+    id: "server-connected",
+    label: "Server-connected",
+    description:
+      "Open Aria chat, inbox, automations, and project threads against a live Aria Server.",
+  },
+  {
+    id: "relay-attached",
+    label: "Relay-attached",
+    description:
+      "Stay connected through Aria Relay for approvals, remote review, and reconnect-safe thread handoff.",
+  },
+] as const;
+
+export const ariaMobileAppFrame = {
+  kind: "stacked-mobile-shell",
+  tabs: ariaMobileTabs,
+  ariaSpace: {
+    defaultScreenId: "chat",
+    feedScreens: ["inbox", "automations", "connectors"],
+  },
+  projectsSpace: {
+    defaultScreenId: "thread-list",
+    threadListMode: "project-first",
+    activeThreadScreenId: "thread",
+  },
+  detail: {
+    presentations: ariaMobileDetailPresentations,
+  },
+  actionRail: {
+    sections: ariaMobileActionSections,
+  },
+} as const;
+
+export const ariaMobileApplication = {
+  id: "aria-mobile",
+  packageName: "aria-mobile",
+  displayName: "Aria Mobile",
+  surface: "mobile",
+  shellPackage: "@aria/mobile",
+  shell: ariaMobileApp,
+  sharedPackages: ariaMobileApp.sharedPackages,
+  capabilities: ariaMobileApp.capabilities,
+  navigation: ariaMobileNavigation,
+  launchModes: ariaMobileLaunchModes,
+  frame: ariaMobileAppFrame,
+  startup: {
+    defaultTabId: "aria",
+    defaultScreenId: "chat",
+    landingDescription:
+      "Aria Mobile stays remote-first: approvals, automation, reconnect, and project-thread review over server access.",
+  },
+} as const;
+
+export interface AriaMobileApplicationBootstrap {
+  application: typeof ariaMobileApplication;
+  shell: typeof ariaMobileApp;
+  bootstrap: AriaMobileBootstrap;
+}
+
+export function createAriaMobileApplicationBootstrap(
+  target: AccessClientTarget,
+  initialThread?: AriaMobileShellInitialThread,
+): AriaMobileApplicationBootstrap {
+  const bootstrap = createAriaMobileAppShell({
+    target,
+    initialThread,
+  });
+
+  return {
+    application: ariaMobileApplication,
+    shell: ariaMobileApp,
+    bootstrap,
+  };
+}

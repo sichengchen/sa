@@ -8,20 +8,50 @@ import {
 } from "@aria/mobile";
 import type { AccessClientTarget } from "@aria/access-client";
 import {
+  ariaMobileApplication,
+  ariaMobileAppFrame,
   ariaMobileAppModel,
+  ariaMobileLaunchModes,
   ariaMobileNavigation,
+  createAriaMobileApplicationBootstrap,
   createAriaMobileAppShell,
   type AriaMobileAppShell,
+  type AriaMobileApplicationBootstrap,
   type AriaMobileNavigation,
   type AriaMobileNavigationSpace,
   type AriaMobileNavigationSpaceScreen,
 } from "./app.js";
+import {
+  AriaMobileApplicationRoot,
+  createAriaMobileApplicationRoot,
+  type AriaMobileApplicationRootProps,
+} from "./root.js";
+import {
+  AriaMobileApplicationShell,
+  createAriaMobileApplicationShell,
+  createAriaMobileApplicationShellBootstrap,
+  type AriaMobileApplicationShellBootstrap,
+  type AriaMobileApplicationShellProps,
+} from "./shell.js";
 
 export {
+  ariaMobileApplication,
+  ariaMobileAppFrame,
   ariaMobileAppModel,
+  ariaMobileLaunchModes,
   ariaMobileNavigation,
+  createAriaMobileApplicationBootstrap,
+  createAriaMobileApplicationShell,
+  createAriaMobileApplicationShellBootstrap,
   createAriaMobileAppShell,
+  AriaMobileApplicationRoot,
+  createAriaMobileApplicationRoot,
+  AriaMobileApplicationShell,
   type AriaMobileAppShell,
+  type AriaMobileApplicationBootstrap,
+  type AriaMobileApplicationShellBootstrap,
+  type AriaMobileApplicationShellProps,
+  type AriaMobileApplicationRootProps,
   type AriaMobileNavigation,
   type AriaMobileNavigationSpace,
   type AriaMobileNavigationSpaceScreen,

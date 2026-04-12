@@ -1,9 +1,16 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  AriaMobileApplicationRoot,
+  AriaMobileApplicationShell,
+  ariaMobileApplication,
+  ariaMobileAppFrame,
   ariaMobileAppModel,
   ariaMobileHost,
   ariaMobileNavigation,
+  createAriaMobileApplicationBootstrap,
+  createAriaMobileApplicationShell,
+  createAriaMobileApplicationRoot,
   createAriaMobileAppShell,
   createAriaMobileHostBootstrap,
 } from "../apps/aria-mobile/src/index.js";
@@ -124,5 +131,74 @@ describe("Aria mobile app surface", () => {
     expect(createAriaMobileHostBootstrap({ serverId: "mobile", baseUrl: "https://aria.example.test/" }).appShell.navigation).toBe(
       ariaMobileNavigation,
     );
+  });
+
+  test("declares a thin remote-first React application root over the app shell", () => {
+    const target = { serverId: "mobile", baseUrl: "https://aria.example.test/" };
+    const applicationBootstrap = createAriaMobileApplicationBootstrap(target, {
+      project: { name: "Aria" },
+      thread: {
+        threadId: "thread-9",
+        title: "Reconnect review",
+        status: "idle",
+        threadType: "remote_project",
+        agentId: "codex",
+      },
+    });
+
+    expect(ariaMobileApplication.frame).toBe(ariaMobileAppFrame);
+    expect(ariaMobileApplication.startup).toMatchObject({
+      defaultTabId: "aria",
+      defaultScreenId: "chat",
+    });
+    expect(applicationBootstrap.application).toBe(ariaMobileApplication);
+    const shellElement = createAriaMobileApplicationShell({
+      target,
+      initialThread: {
+        project: { name: "Aria" },
+        thread: {
+          threadId: "thread-9",
+          title: "Reconnect review",
+          status: "idle",
+          threadType: "remote_project",
+          agentId: "codex",
+        },
+      },
+      activeThreadContext: {
+        thread: {
+          threadId: "thread-9",
+          threadType: "remote_project",
+          reconnectLabel: "Reconnect after sleep",
+        },
+        remoteStatusLabel: "Connected to Home Server",
+      },
+    });
+    const shellProps = shellElement.props as Record<string, unknown>;
+    expect(shellElement.type).toBe(AriaMobileApplicationShell);
+    expect(shellProps.navigation).toBeUndefined();
+
+    const root = createAriaMobileApplicationRoot({
+      target,
+      activeThreadContext: {
+        thread: {
+          threadId: "thread-9",
+          threadType: "remote_project",
+          reconnectLabel: "Reconnect after sleep",
+        },
+        remoteStatusLabel: "Connected to Home Server",
+      },
+    });
+    expect(root.type).toBe(AriaMobileApplicationShell);
+    const rootProps = root.props as { shell: ReturnType<typeof createAriaMobileAppShell> };
+    expect(rootProps.shell.layout.threadListScreen.mode).toBe("project-first");
+    expect(rootProps.shell.app.capabilities).toContain("reconnect");
+
+    const rendered = AriaMobileApplicationShell({ shell: rootProps.shell });
+    const renderedProps = rendered.props as Record<string, unknown>;
+    expect(rendered.type).toBe("div");
+    expect(renderedProps["data-remote-first"]).toBe("true");
+    expect(renderedProps["data-active-tab-id"]).toBe("projects");
+    expect(Array.isArray(renderedProps.children)).toBe(true);
+    expect((renderedProps.children as unknown[]).length).toBe(4);
   });
 });

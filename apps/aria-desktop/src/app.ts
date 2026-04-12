@@ -8,6 +8,9 @@ import {
 } from "@aria/desktop";
 import type { AccessClientTarget } from "@aria/access-client";
 import { ariaDesktopHost, createAriaDesktopHostBootstrap } from "./host.js";
+import { ariaDesktopAppFrame } from "./frame.js";
+
+export { ariaDesktopAppFrame } from "./frame.js";
 
 export const ariaDesktopLaunchModes = [
   {
@@ -23,33 +26,6 @@ export const ariaDesktopLaunchModes = [
       "Attach the active thread to a local worktree and use the desktop bridge for execution.",
   },
 ] as const;
-
-export const ariaDesktopAppFrame = {
-  kind: "three-pane-workbench",
-  sidebar: {
-    label: "Projects",
-    mode: "unified-project-thread-tree",
-    navigation: ariaDesktopNavigation,
-  },
-  center: {
-    defaultSpaceId: "projects",
-    defaultScreenId: "thread-list",
-    activeScreenId: "thread",
-    threadListMode: "unified-project-thread-list",
-  },
-  rightRail: {
-    defaultContextPanelId: "review",
-    panels: ariaDesktopContextPanels,
-  },
-  composer: {
-    placement: "bottom-docked",
-    scope: "active-thread",
-  },
-  statusStrip: {
-    threadEnvironmentPlacement: "thread-header",
-    connectionPlacement: "top-chrome",
-  },
-} as const;
 
 export const ariaDesktopApplication = {
   id: "aria-desktop",
