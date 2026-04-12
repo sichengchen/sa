@@ -52,6 +52,17 @@ Use the [runtime extraction ledger](./runtime-extraction-ledger.md) as the sourc
 - extraction order and compatibility constraints
 - verification expectations before and after each move
 
+## Phase 4 Server Package Seams
+
+Phase 4 keeps the current tracked-work and runtime behavior stable while seeding the target-state server package seams for `@aria/projects`, `@aria/workspaces`, `@aria/jobs`, and `@aria/agents-coding`.
+
+Use the [phase 4 server package seams ledger](./phase-4-server-package-seams-ledger.md) as the source of truth for:
+
+- the current `projects-engine`, runtime, and provider-owned entrypoints behind each seam
+- the compatibility surfaces that must stay stable while the new package names appear
+- extraction order and review hotspots for the server-oriented package wave
+- focused verification expectations for project/workspace and dispatch/backend paths
+
 ## Cutover Criteria
 
 Before legacy repos are archived:

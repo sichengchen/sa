@@ -1,0 +1,20 @@
+{
+  "name": "@aria/projects",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aria project coordination, tracked-work planning, and durable project-state compatibility entrypoints",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./external-refs": "./src/external-refs.ts",
+    "./planning": "./src/planning.ts",
+    "./publish": "./src/publish.ts",
+    "./repository": "./src/repository.ts",
+    "./reviews": "./src/reviews.ts",
+    "./schema": "./src/schema.ts",
+    "./store": "./src/store.ts",
+    "./types": "./src/types.ts"
+  }
+}

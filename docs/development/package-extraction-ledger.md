@@ -42,8 +42,42 @@ During phase 1, the current `packages/runtime` and `packages/shared-types` entry
 - `@aria/connectors-im`, `@aria/console`, and `@aria/gateway` currently preserve behavior by exposing package-owned entrypoints that re-export the proven connector/runtime implementations while broader consumer rewrites are deferred.
 - The new tsconfig path aliases make the phase-2 package names available for incremental follow-up import rewrites.
 
+## Phase 4 Extracted Ownership
+
+| Target package | Current source owner | New compatibility owner | Compatibility surface kept at |
+| --- | --- | --- | --- |
+| `@aria/projects` | `packages/projects-engine/src/{blockers,bridge,dispatch,external-refs,planning,publish,repository,reviews,schema,store,types}` | `packages/projects/src/index.ts` | `@aria/projects-engine` |
+| `@aria/workspaces` | `packages/projects-engine/src/{repos,worktrees,types}` | `packages/workspaces/src/index.ts` | `@aria/projects-engine` |
+| `@aria/jobs` | `packages/projects-engine/src/{bridge,dispatch,types}` | `packages/jobs/src/index.ts` | `@aria/projects-engine` |
+| `@aria/agents-coding` | `packages/providers-aria/src/{contracts,subprocess}` plus `packages/providers-{codex,claude-code,opencode}/src/*` | `packages/agents-coding/src/index.ts` | `@aria/providers-aria`, `@aria/providers-codex`, `@aria/providers-claude-code`, `@aria/providers-opencode` |
+
+## Phase 4 Notes
+
+- This phase seeds the next target-state server package names without moving implementation ownership away from `projects-engine` or the provider packages yet.
+- The new package barrels intentionally preserve existing class and type names such as `ProjectsEngineRepository` so follow-up import rewrites stay behaviorally safe.
+- `@aria/projects` stays focused on tracked-work coordination while `@aria/workspaces` and `@aria/jobs` expose only the repo/worktree and dispatch/job subsets needed for incremental migration.
+- `@aria/agents-coding` provides one shared import surface for backend contracts plus Codex, Claude Code, and OpenCode adapters while the existing provider package entrypoints remain stable compatibility paths.
+
 ## Next Safe Follow-Ups
 
 1. Add explicit tsconfig/package alias entries for the new package names once the broader team is ready to update shared build config.
 2. Rewrite internal consumers from compatibility shims to the new package entrypoints.
 3. Continue extracting the remaining tool, prompt, and runtime-adjacent modules behind the new package boundaries.
+
+## Phase 4 Server Package Seam Seeding
+
+This phase seeds the remaining target-state server package names needed for project orchestration without forcing an immediate ownership cutover. The goal is to expose the new import surfaces while keeping the proven implementations and operator behavior stable.
+
+| Target package | Current source owner | Seeded package entrypoints | Compatibility surface kept at |
+| --- | --- | --- | --- |
+| `@aria/projects` | `packages/projects-engine/src/{repository,store,planning,reviews,publish,external-refs,schema,types}.ts` | `packages/projects/src/*` | `@aria/projects-engine` |
+| `@aria/workspaces` | `packages/projects-engine/src/{repos,worktrees,types}.ts` | `packages/workspaces/src/*` | `@aria/projects-engine` |
+| `@aria/jobs` | `packages/projects-engine/src/{bridge,dispatch,types}.ts` plus `packages/runtime/src/dispatch-runner.ts` | `packages/jobs/src/*` | `@aria/projects-engine`, `packages/runtime/src/dispatch-runner.ts` |
+| `@aria/agents-coding` | `packages/providers-aria`, `packages/providers-codex`, `packages/providers-claude-code`, `packages/providers-opencode` | `packages/agents-coding/src/*` | provider packages remain valid |
+
+### Phase 4 Notes
+
+- The new package names are compatibility surfaces first; they intentionally forward to the current proven implementations while import sites migrate incrementally.
+- `packages/runtime/src/backend-registry.ts` now consumes `@aria/agents-coding` so the server-side adapter seam is exercised by runtime code immediately.
+- `packages/runtime/src/dispatch-runner.ts` is now a shim over `@aria/jobs`, which lets the remote-job execution seam move without changing the current runtime API.
+- Focused tests should cover the new package names directly so the migration slice stays protected during later ownership moves.

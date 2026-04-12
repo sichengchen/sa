@@ -10,9 +10,7 @@ import {
   type RuntimeBackendExecutionRequest,
   type RuntimeBackendExecutionResult,
 } from "@aria/providers-aria";
-import { createCodexRuntimeBackendAdapter } from "@aria/providers-codex";
-import { createClaudeCodeRuntimeBackendAdapter } from "@aria/providers-claude-code";
-import { createOpenCodeRuntimeBackendAdapter } from "@aria/providers-opencode";
+import { createCodingAgentBackendRegistry } from "@aria/agents-coding";
 
 export interface RuntimeBackendSummary {
   backend: string;
@@ -125,9 +123,7 @@ export function createRuntimeBackendRegistry(runtime: EngineRuntime): Map<string
         },
       }),
     ],
-    ["codex", createCodexRuntimeBackendAdapter()],
-    ["claude-code", createClaudeCodeRuntimeBackendAdapter()],
-    ["opencode", createOpenCodeRuntimeBackendAdapter()],
+    ...createCodingAgentBackendRegistry().entries(),
   ]);
 }
 

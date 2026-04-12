@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { HandoffStore } from "@aria/handoff";
-import { ProjectsEngineRepository, ProjectsEngineStore } from "@aria/projects-engine";
+import { ProjectsEngineRepository, ProjectsEngineStore } from "@aria/projects";
 import { projectsCommand } from "../packages/cli/src/projects.js";
 
 let runtimeHome = "";

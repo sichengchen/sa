@@ -1,0 +1,16 @@
+{
+  "name": "@aria/jobs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aria remote job orchestration and dispatch lifecycle compatibility entrypoints",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./bridge": "./src/bridge.ts",
+    "./dispatch": "./src/dispatch.ts",
+    "./dispatch-runner": "./src/dispatch-runner.ts",
+    "./types": "./src/types.ts"
+  }
+}

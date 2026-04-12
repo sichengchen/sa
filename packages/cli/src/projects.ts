@@ -1,19 +1,18 @@
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { CLI_NAME, getRuntimeHome } from "@aria/shared/brand.js";
+import { ProjectsDispatchService, runDispatchExecution } from "@aria/jobs";
 import {
-  ProjectsDispatchService,
   ProjectsEngineRepository,
   ProjectsEngineStore,
   ProjectsPlanningService,
   ProjectsPublishService,
   ProjectsReviewService,
-  ProjectsWorktreeService,
-} from "@aria/projects-engine";
+} from "@aria/projects";
+import { ProjectsWorktreeService } from "@aria/workspaces";
 import { HandoffService, HandoffStore } from "@aria/handoff";
 import { createRuntime } from "../../runtime/src/runtime.js";
 import { listRuntimeBackends } from "../../runtime/src/backend-registry.js";
-import { runDispatchExecution } from "../../runtime/src/dispatch-runner.js";
 
 function printHelp(): void {
   console.log(`Usage: ${CLI_NAME} projects <subcommand>\n`);

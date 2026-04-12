@@ -90,7 +90,7 @@ For the concrete app-shell decisions and Bun-runtime clarification, see [tech-de
 
 ## Package Ownership
 
-> Current repo note: these are target-state package boundaries. During Phase 1, the runtime-owned implementation map for `protocol`, `store`, `audit`, `prompt`, `tools`, and `policy` is tracked in [../development/runtime-extraction-ledger.md](../development/runtime-extraction-ledger.md). The next extraction wave for `agent-aria`, `memory`, `automation`, `gateway`, `connectors-im`, and `console` is tracked in [../development/phase-2-extraction-ledger.md](../development/phase-2-extraction-ledger.md) so package moves can happen without breaking current CLI/runtime behavior.
+> Current repo note: these are target-state package boundaries. During Phase 1, the runtime-owned implementation map for `protocol`, `store`, `audit`, `prompt`, `tools`, and `policy` is tracked in [../development/runtime-extraction-ledger.md](../development/runtime-extraction-ledger.md). The next extraction wave for `agent-aria`, `memory`, `automation`, `gateway`, `connectors-im`, and `console` is tracked in [../development/phase-2-extraction-ledger.md](../development/phase-2-extraction-ledger.md). The current server-package seam wave for `@aria/projects`, `@aria/workspaces`, `@aria/jobs`, and `@aria/agents-coding` is tracked in [../development/phase-4-server-package-seams-ledger.md](../development/phase-4-server-package-seams-ledger.md) so package names can advance without breaking the current `projects-engine`, runtime, and provider compatibility surfaces.
 
 | Package | Responsibility |
 | --- | --- |

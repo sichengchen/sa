@@ -1,0 +1,17 @@
+{
+  "name": "@aria/agents-coding",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aria coding-agent adapters and shared backend contracts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./claude-code": "./src/claude-code.ts",
+    "./codex": "./src/codex.ts",
+    "./contracts": "./src/contracts.ts",
+    "./opencode": "./src/opencode.ts",
+    "./registry": "./src/registry.ts"
+  }
+}
