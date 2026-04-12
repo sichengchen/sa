@@ -16,6 +16,8 @@ function isGrantActive(grant: RelayAccessGrantRecord, now = Date.now()): boolean
   return !grant.revokedAt && grant.expiresAt > now;
 }
 
+type RelayState = Awaited<ReturnType<RelayStore["load"]>>;
+
 export class RelayService {
   constructor(private readonly store: RelayStore) {}
 
