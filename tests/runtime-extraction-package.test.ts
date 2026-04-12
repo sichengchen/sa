@@ -8,7 +8,7 @@ import { SecurityModeManager, ToolPolicyManager, buildToolCapabilityCatalog, des
 import { buildContextFilesPrompt, parseContextReferences, preprocessContextReferences, PromptEngine } from "../packages/prompt/src/index.js";
 import { ConnectorTypeSchema } from "../packages/protocol/src/index.js";
 import { OperationalStore } from "../packages/store/src/index.js";
-import { buildDynamicToolsets, createSessionToolEnvironment, formatToolsSection, getBuiltinTools, mergeAllowedTools, reactionTool } from "../packages/tools/src/index.js";
+import { buildDynamicToolsets, createSessionToolEnvironment, editTool, formatToolsSection, getBuiltinTools, mergeAllowedTools, reactionTool, readTool, writeTool } from "../packages/tools/src/index.js";
 
 const tempDirs: string[] = [];
 
@@ -261,6 +261,16 @@ describe("phase-1 extraction package verification", () => {
     expect(store.getPromptCache("base-cache")?.metadata).toEqual({ phase: 1 });
 
     store.close();
+  });
+
+  test("@aria/tools exposes package-owned read/write/edit builtins", async () => {
+    const workingDir = await makeTempDir("aria-tools-builtins-");
+    const filePath = join(workingDir, "note.txt");
+
+    await expect(writeTool.execute({ file_path: filePath, content: "hello" } as any)).resolves.toMatchObject({ content: `File written: ${filePath}` });
+    await expect(readTool.execute({ file_path: filePath } as any)).resolves.toMatchObject({ content: "hello" });
+    await expect(editTool.execute({ file_path: filePath, old_string: "hello", new_string: "hi" } as any)).resolves.toMatchObject({ content: `File edited: ${filePath}` });
+    await expect(readTool.execute({ file_path: filePath } as any)).resolves.toMatchObject({ content: "hi" });
   });
 
   test("@aria/tools exposes a package-owned session tool environment", async () => {

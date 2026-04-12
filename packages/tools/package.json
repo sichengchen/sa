@@ -8,6 +8,9 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./edit": "./src/edit.ts",
+    "./write": "./src/write.ts",
+    "./read": "./src/read.ts",
     "./reaction": "./src/reaction.ts",
     "./session-tool-environment": "./src/session-tool-environment.ts",
     "./toolsets": "./src/toolsets.ts"

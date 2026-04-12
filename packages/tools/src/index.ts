@@ -1,16 +1,16 @@
 import type { ToolImpl } from "../../runtime/src/agent/types.js";
-import { readTool } from "../../runtime/src/tools/read.js";
-import { writeTool } from "../../runtime/src/tools/write.js";
-import { editTool } from "../../runtime/src/tools/edit.js";
+import { readTool } from "./read.js";
+import { writeTool } from "./write.js";
+import { editTool } from "./edit.js";
 import { execTool } from "../../runtime/src/tools/exec.js";
 import { execStatusTool, execKillTool } from "../../runtime/src/tools/exec-background.js";
 import { webFetchTool, createWebFetchTool } from "../../runtime/src/tools/web-fetch.js";
 import { webSearchTool } from "../../runtime/src/tools/web-search.js";
 import { reactionTool } from "./reaction.js";
 
-export { readTool } from "../../runtime/src/tools/read.js";
-export { writeTool } from "../../runtime/src/tools/write.js";
-export { editTool } from "../../runtime/src/tools/edit.js";
+export { readTool } from "./read.js";
+export { writeTool } from "./write.js";
+export { editTool } from "./edit.js";
 export { execTool } from "../../runtime/src/tools/exec.js";
 export { execStatusTool, execKillTool } from "../../runtime/src/tools/exec-background.js";
 /** @deprecated Use execTool instead */
