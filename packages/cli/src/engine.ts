@@ -1,13 +1,10 @@
 import { readFile, writeFile, unlink } from "node:fs/promises";
 import { existsSync, openSync } from "node:fs";
-import { join } from "node:path";
 import { spawn } from "node:child_process";
-import { CLI_NAME, HOME_ENV_VAR, RUNTIME_NAME, getRuntimeHome } from "@aria/shared/brand.js";
+import { CLI_NAME, HOME_ENV_VAR, RUNTIME_NAME } from "@aria/shared/brand.js";
+import { getRuntimeDiscoveryPaths } from "../../runtime/src/discovery.js";
 
-const runtimeHome = getRuntimeHome();
-const PID_FILE = join(runtimeHome, "engine.pid");
-const URL_FILE = join(runtimeHome, "engine.url");
-const LOG_FILE = join(runtimeHome, "engine.log");
+const { runtimeHome, pidFile: PID_FILE, urlFile: URL_FILE, logFile: LOG_FILE } = getRuntimeDiscoveryPaths();
 
 function isProcessAlive(pid: number): boolean {
   try {
