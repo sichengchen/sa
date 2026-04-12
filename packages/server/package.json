@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./app": "./src/app.ts",
+    "./daemon": "./src/daemon.ts",
     "./engine": "./src/engine.ts"
   }
 }
