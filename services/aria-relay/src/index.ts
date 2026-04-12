@@ -9,9 +9,10 @@ export const ariaRelayService = {
   capabilities: [
     "transport",
     "access-broker",
+    "server-registration",
+    "scoped-access-grants",
     "attachment-resume",
     "direct-or-relayed-routing",
-    "server-scoped-access-grants",
   ],
 } as const;
 

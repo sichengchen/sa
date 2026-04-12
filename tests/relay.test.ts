@@ -11,7 +11,7 @@ async function createRelayService(): Promise<RelayService> {
 }
 
 describe("RelayService", () => {
-  test("persists devices, attachments, and queued events", async () => {
+  test("persists servers, grants, devices, attachments, and queued events", async () => {
     const relay = await createRelayService();
 
     const device = await relay.registerDevice({
@@ -22,18 +22,42 @@ describe("RelayService", () => {
     });
     expect(device.pairingToken).toBeString();
 
+    const server = await relay.registerServer({
+      serverId: "server-1",
+      label: "Home Server",
+      registeredAt: Date.now(),
+      revokedAt: null,
+    });
+    expect(server.enrollmentToken).toBeString();
+
+    const grant = await relay.issueAccessGrant({
+      serverId: "server-1",
+      deviceId: "device-1",
+      workspaceId: "workspace-1",
+      threadId: "thread-1",
+      attachmentKind: "aria_thread",
+      transportMode: "relay_tunnel",
+      issuedAt: Date.now(),
+      expiresAt: Date.now() + 60_000,
+    });
+    expect(grant.grantToken).toBeString();
+
     const attachment = await relay.attachSession({
       deviceId: "device-1",
       sessionId: "session-1",
       serverId: "server-1",
+      workspaceId: "workspace-1",
       threadId: "thread-1",
+      accessGrantToken: grant.grantToken,
       attachmentKind: "aria_thread",
       transportMode: "relay_tunnel",
     });
     expect(attachment.sessionId).toBe("session-1");
     expect(attachment).toMatchObject({
       serverId: "server-1",
+      workspaceId: "workspace-1",
       threadId: "thread-1",
+      accessGrantId: grant.grantId,
       attachmentKind: "aria_thread",
       transportMode: "relay_tunnel",
       resumable: true,
@@ -45,6 +69,7 @@ describe("RelayService", () => {
       message: "Continue the work.",
       serverId: "server-1",
       threadId: "thread-1",
+      accessGrantToken: grant.grantToken,
     });
     const approval = await relay.queueApprovalResponse({
       deviceId: "device-1",
@@ -53,13 +78,17 @@ describe("RelayService", () => {
       approved: true,
       serverId: "server-1",
       threadId: "thread-1",
+      accessGrantToken: grant.grantToken,
     });
 
     expect(followUp.type).toBe("follow_up");
     expect(approval.type).toBe("approval_response");
     expect(followUp.serverId).toBe("server-1");
     expect(approval.threadId).toBe("thread-1");
+    expect(followUp.accessGrantId).toBe(grant.grantId);
     expect((await relay.listEvents("device-1", false))).toHaveLength(2);
+    expect((await relay.listAccessGrants({ serverId: "server-1" }))).toHaveLength(1);
+    expect((await relay.listServers())).toHaveLength(1);
 
     await relay.markDelivered(followUp.eventId);
     expect((await relay.listEvents("device-1", false))).toHaveLength(1);
@@ -71,6 +100,59 @@ describe("RelayService", () => {
       toolCallId: "tool-1",
       approved: true,
     })).toBe(false);
+  });
+
+  test("rejects mismatched or expired access grants", async () => {
+    const relay = await createRelayService();
+
+    await relay.registerDevice({
+      deviceId: "device-2",
+      label: "Tablet",
+      pairedAt: Date.now(),
+      revokedAt: null,
+    });
+    await relay.registerServer({
+      serverId: "server-2",
+      label: "Office",
+      registeredAt: Date.now(),
+      revokedAt: null,
+    });
+
+    const grant = await relay.issueAccessGrant({
+      serverId: "server-2",
+      deviceId: "device-2",
+      threadId: "thread-2",
+      issuedAt: Date.now() - 10_000,
+      expiresAt: Date.now() - 1,
+    });
+
+    await expect(
+      relay.attachSession({
+        deviceId: "device-2",
+        sessionId: "session-2",
+        serverId: "server-2",
+        threadId: "thread-2",
+        accessGrantToken: grant.grantToken,
+      }),
+    ).rejects.toThrow("Access grant is invalid or expired for device device-2");
+
+    const freshGrant = await relay.issueAccessGrant({
+      serverId: "server-2",
+      deviceId: "device-2",
+      threadId: "thread-2",
+      issuedAt: Date.now(),
+      expiresAt: Date.now() + 60_000,
+    });
+
+    await expect(
+      relay.attachSession({
+        deviceId: "device-2",
+        sessionId: "session-2",
+        serverId: "server-2",
+        threadId: "thread-3",
+        accessGrantToken: freshGrant.grantToken,
+      }),
+    ).rejects.toThrow("Access grant is invalid or expired for device device-2");
   });
 
   test("rejects missing devices, revoked devices, and unknown events", async () => {

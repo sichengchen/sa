@@ -8,8 +8,49 @@ export interface RelayDeviceRecord {
   revokedAt?: number | null;
 }
 
+export interface RelayServerRecord {
+  serverId: string;
+  label: string;
+  registeredAt: number;
+  enrollmentToken?: string | null;
+  lastSeenAt?: number | null;
+  metadataJson?: string | null;
+  revokedAt?: number | null;
+}
+
 export type RelayAttachmentKind = "aria_thread" | "remote_project_thread" | "remote_job_stream";
 export type RelayTransportMode = "direct" | "relay_assisted" | "relay_tunnel";
+
+export interface RelayAccessGrantRecord {
+  grantId: string;
+  grantToken: string;
+  serverId: string;
+  deviceId: string;
+  workspaceId?: string | null;
+  threadId?: string | null;
+  attachmentKind?: RelayAttachmentKind | null;
+  transportMode?: RelayTransportMode | null;
+  canSendMessages: boolean;
+  canRespondToApprovals: boolean;
+  issuedAt: number;
+  expiresAt: number;
+  revokedAt?: number | null;
+  metadataJson?: string | null;
+}
+
+export interface RelayAccessGrantRequest {
+  serverId: string;
+  deviceId: string;
+  workspaceId?: string | null;
+  threadId?: string | null;
+  attachmentKind?: RelayAttachmentKind | null;
+  transportMode?: RelayTransportMode | null;
+  canSendMessages?: boolean;
+  canRespondToApprovals?: boolean;
+  issuedAt?: number;
+  expiresAt?: number;
+  metadataJson?: string | null;
+}
 
 export interface RelaySessionAttachmentRecord {
   attachmentId: string;
@@ -20,6 +61,7 @@ export interface RelaySessionAttachmentRecord {
   projectId?: string | null;
   threadId?: string | null;
   jobId?: string | null;
+  accessGrantId?: string | null;
   attachmentKind?: RelayAttachmentKind | null;
   transportMode?: RelayTransportMode | null;
   resumable?: boolean;
@@ -38,6 +80,7 @@ export interface RelayQueuedEventRecord {
   serverId?: string | null;
   threadId?: string | null;
   jobId?: string | null;
+  accessGrantId?: string | null;
   type: RelayQueuedEventType;
   payloadJson: string;
   createdAt: number;
@@ -52,6 +95,7 @@ export interface RelayAttachmentRequest {
   projectId?: string | null;
   threadId?: string | null;
   jobId?: string | null;
+  accessGrantToken?: string | null;
   attachmentKind?: RelayAttachmentKind | null;
   transportMode?: RelayTransportMode | null;
   connectorType?: string | null;
@@ -65,6 +109,7 @@ export interface RelayApprovalResponse {
   serverId?: string | null;
   threadId?: string | null;
   jobId?: string | null;
+  accessGrantToken?: string | null;
 }
 
 export interface RelayFollowUpMessage {
@@ -74,4 +119,5 @@ export interface RelayFollowUpMessage {
   serverId?: string | null;
   threadId?: string | null;
   jobId?: string | null;
+  accessGrantToken?: string | null;
 }
