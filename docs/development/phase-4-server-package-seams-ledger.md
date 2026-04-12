@@ -25,7 +25,7 @@ During this phase:
 | `@aria/projects` | `packages/projects/src/*` plus tracked-work materialization in `packages/handoff/src/service.ts` | Project registry, task/thread/dispatch/review/publish coordination, project-thread orchestration APIs | `@aria/projects-engine`, `@aria/handoff`, and current `aria projects` command names |
 | `@aria/workspaces` | `packages/workspaces/src/*` over the target-owned `@aria/projects` persistence APIs | Workspace, repo, worktree, sandbox, and environment models that should stay below project orchestration | `@aria/projects-engine` compatibility wrappers and `aria projects worktree-*` flows |
 | `@aria/jobs` | `packages/jobs/src/{backend-registry,dispatch-runner}.ts`, dispatch state types referenced through `packages/projects-engine/src/types.ts`, and CLI dispatch execution wiring in `packages/cli/src/projects.ts` | Remote job launch, backend selection, execution lifecycle, approval-wait transitions, and resumable job orchestration | `@aria/runtime/{dispatch-runner,backend-registry}`, queued dispatch records in `@aria/projects-engine`, and `aria projects run-dispatch` / `backends` |
-| `@aria/agents-coding` | `packages/agents-coding/src/*` with provider packages now acting as compatibility wrappers | Shared coding-agent contracts, adapter composition, capability metadata, and a target-state package for Codex / Claude Code / OpenCode orchestration | `@aria/providers-aria`, `@aria/providers-codex`, `@aria/providers-claude-code`, `@aria/providers-opencode`, and current backend IDs |
+| `@aria/agents-coding` | `packages/agents-coding/src/*` | Shared coding-agent contracts, adapter composition, capability metadata, and a target-state package for Codex / Claude Code / OpenCode orchestration | direct target package imports and the current backend IDs |
 
 ## Review Notes And Hotspots
 
@@ -75,4 +75,4 @@ Every Phase 4 seam-seeding step should still pass:
 
 ## Exit Condition
 
-Phase 4 is complete when the repo has explicit compatibility surfaces for `@aria/projects`, `@aria/workspaces`, `@aria/jobs`, and `@aria/agents-coding`, the current `projects-engine` / runtime / provider entrypoints still work as shims, and the package names used in implementation, docs, and CLI guidance match the target-state server architecture.
+Phase 4 is complete when the repo has explicit target-owned surfaces for `@aria/projects`, `@aria/workspaces`, `@aria/jobs`, and `@aria/agents-coding`, the remaining `projects-engine` / runtime compatibility entrypoints still work where needed, and the package names used in implementation, docs, and CLI guidance match the target-state server architecture.

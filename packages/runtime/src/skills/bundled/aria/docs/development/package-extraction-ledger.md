@@ -49,14 +49,14 @@ During phase 1, the current `packages/runtime` and `packages/shared-types` entry
 | `@aria/projects` | `packages/projects-engine/src/{blockers,bridge,dispatch,external-refs,planning,publish,repository,reviews,schema,store,types}` | `packages/projects/src/index.ts` | `@aria/projects-engine` |
 | `@aria/workspaces` | `packages/projects-engine/src/{repos,worktrees,types}` | `packages/workspaces/src/index.ts` | `@aria/projects-engine` |
 | `@aria/jobs` | `packages/projects-engine/src/{bridge,dispatch,types}` | `packages/jobs/src/index.ts` | `@aria/projects-engine` |
-| `@aria/agents-coding` | `packages/providers-aria/src/{contracts,subprocess}` plus `packages/providers-{codex,claude-code,opencode}/src/*` | `packages/agents-coding/src/index.ts` | `@aria/providers-aria`, `@aria/providers-codex`, `@aria/providers-claude-code`, `@aria/providers-opencode` |
+| `@aria/agents-coding` | `packages/agents-coding/src/index.ts` | `packages/agents-coding/src/index.ts` | target package imports |
 
 ## Phase 4 Notes
 
 - This phase seeds the next target-state server package names without moving implementation ownership away from `projects-engine` or the provider packages yet.
 - The new package barrels intentionally preserve existing class and type names such as `ProjectsEngineRepository` so follow-up import rewrites stay behaviorally safe.
 - `@aria/projects` stays focused on tracked-work coordination while `@aria/workspaces` and `@aria/jobs` expose only the repo/worktree and dispatch/job subsets needed for incremental migration.
-- `@aria/agents-coding` provides one shared import surface for backend contracts plus Codex, Claude Code, and OpenCode adapters while the existing provider package entrypoints remain stable compatibility paths.
+- `@aria/agents-coding` provides one shared import surface for backend contracts plus Codex, Claude Code, and OpenCode adapters.
 
 ## Next Safe Follow-Ups
 
@@ -73,7 +73,7 @@ This phase seeds the remaining target-state server package names needed for proj
 | `@aria/projects` | `packages/projects/src/*` | `packages/projects/src/*` | `@aria/projects-engine` |
 | `@aria/workspaces` | `packages/workspaces/src/*` | `packages/workspaces/src/*` | `@aria/projects-engine` |
 | `@aria/jobs` | `packages/jobs/src/{backend-registry,dispatch-runner}.ts` plus durable dispatch records referenced through `packages/projects-engine/src/types.ts` | `packages/jobs/src/*` | `@aria/projects-engine`, `packages/runtime/src/{dispatch-runner,backend-registry}.ts` |
-| `@aria/agents-coding` | `packages/agents-coding/src/*` | `packages/agents-coding/src/*` | provider packages remain valid |
+| `@aria/agents-coding` | `packages/agents-coding/src/*` | `packages/agents-coding/src/*` | direct target package imports |
 
 ### Phase 4 Notes
 

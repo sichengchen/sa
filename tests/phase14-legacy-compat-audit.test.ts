@@ -7,7 +7,6 @@ const SOURCE_DIRS = ["apps", "packages", "services", "scripts"] as const;
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs", ".cjs"]);
 const LEGACY_IMPORT_PATTERNS = [
   /@aria\/projects-engine(?:\/|["'])/,
-  /@aria\/providers-(?:aria|codex|claude-code|opencode)(?:\/|["'])/,
   /@aria\/shared-types(?:\/|["'])/,
   /@aria\/shared\//,
   /@aria\/connectors\//,
@@ -15,10 +14,6 @@ const LEGACY_IMPORT_PATTERNS = [
 
 const EXCLUDED_PREFIXES = [
   "packages/projects-engine/",
-  "packages/providers-aria/",
-  "packages/providers-codex/",
-  "packages/providers-claude-code/",
-  "packages/providers-opencode/",
   "packages/connectors/",
   "packages/runtime/src/skills/",
   "scripts/migrate-legacy-esperta-code.ts",
