@@ -9,8 +9,7 @@ import {
   type RuntimeBackendExecutionObserver,
   type RuntimeBackendExecutionRequest,
   type RuntimeBackendExecutionResult,
-} from "@aria/providers-aria";
-import { createCodingAgentBackendRegistry } from "@aria/agents-coding";
+} from "@aria/agents-coding";
 
 export interface RuntimeBackendSummary {
   backend: string;
