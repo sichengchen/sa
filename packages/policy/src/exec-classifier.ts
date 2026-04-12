@@ -1,4 +1,4 @@
-import type { DangerLevel } from "../../runtime/src/agent/types.js";
+import type { DangerLevel } from "@aria/agent-aria";
 
 /**
  * Patterns that are always dangerous regardless of what the agent claims.
