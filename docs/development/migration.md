@@ -74,16 +74,16 @@ Use the [phase 5 server app seam ledger](./phase-5-server-app-seam-ledger.md) as
 - the extraction order and review hotspots for the server composition-root wave
 - focused verification expectations for docs, embedded-skill docs, and server-entry compatibility
 
-## Phase 6 Client Seams
+## Phase 6 Client App Seams
 
-Phase 6 keeps the current protocol and project behavior stable while seeding the target-state client seams for `@aria/access-client`, `@aria/ui`, `apps/aria-desktop`, and `apps/aria-mobile`.
+Phase 6 keeps the current CLI, server, console, and project-control behavior stable while seeding the target-state client package/app seams for `@aria/access-client`, `@aria/ui`, `apps/aria-desktop`, and `apps/aria-mobile`.
 
-Use the [phase 6 client seams ledger](./phase-6-client-seams-ledger.md) as the source of truth for:
+Use the [phase 6 client app seams ledger](./phase-6-client-app-seams-ledger.md) as the source of truth for:
 
-- the current protocol/shared-client/project owners behind each seam
-- the compatibility surfaces that must stay stable while the new client package and app names appear
-- the extraction order and review hotspots for the desktop/mobile seam wave
-- focused verification expectations for shared client transport, UI view-model helpers, and thin app wrappers
+- the current shared transport/UI entrypoints behind the client seams
+- the compatibility surfaces that must stay stable while the new package and app names appear
+- the extraction order and review hotspots for the shared-client and thin-app wave
+- focused verification expectations for docs, bundled docs, and embedded-skill refreshes
 
 ## Cutover Criteria
 
