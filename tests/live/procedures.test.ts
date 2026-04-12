@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { createAppRouter } from "@aria/engine/procedures.js";
 import { createContext } from "@aria/engine/context.js";
 import { SessionManager } from "@aria/engine/sessions.js";
-import { AuthManager } from "@aria/engine/auth.js";
+import { AuthManager } from "@aria/gateway/auth";
 import { ConfigManager } from "@aria/engine/config/index.js";
 import { Agent } from "@aria/engine/agent/index.js";
 import { SkillRegistry } from "@aria/engine/skills/index.js";
