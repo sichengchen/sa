@@ -4,7 +4,7 @@ import {
   type RuntimeBackendCapabilities,
   type RuntimeBackendExecutionRequest,
   type RuntimeBackendExecutionResult,
-} from "@aria/providers-aria";
+} from "@aria/agents-coding/subprocess";
 
 export class CodexRuntimeBackendAdapter extends SubprocessRuntimeBackendAdapter {
   readonly backend = "codex";

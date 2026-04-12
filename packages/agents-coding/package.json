@@ -13,6 +13,7 @@
     "./codex": "./src/codex.ts",
     "./contracts": "./src/contracts.ts",
     "./opencode": "./src/opencode.ts",
-    "./registry": "./src/registry.ts"
+    "./registry": "./src/registry.ts",
+    "./subprocess": "./src/subprocess.ts"
   }
 }

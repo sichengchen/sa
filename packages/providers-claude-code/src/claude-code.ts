@@ -5,7 +5,7 @@ import {
   type RuntimeBackendExecutionRequest,
   type RuntimeBackendExecutionResult,
   type RuntimeBackendTokenUsage,
-} from "@aria/providers-aria";
+} from "@aria/agents-coding/subprocess";
 
 interface ClaudeJsonResult {
   result?: string;
