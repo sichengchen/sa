@@ -3,7 +3,7 @@ import { Box, Text, useInput } from "ink";
 import type { AriaConfigFile } from "@aria/engine/config/index.js";
 import { loadSecrets, saveSecrets } from "@aria/engine/config/secrets.js";
 import type { SecretsFile } from "@aria/engine/config/types.js";
-import type { ToolApprovalMode, ConnectorType } from "@aria/shared/types.js";
+import type { ToolApprovalMode, ConnectorType } from "@aria/protocol";
 
 type Substep = "menu" | "edit-telegram-token" | "edit-discord-token" | "edit-discord-guild"
   | "edit-slack-token" | "edit-slack-secret"

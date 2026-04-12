@@ -2,7 +2,7 @@ import type { Agent } from "./agent/index.js";
 import type { SessionSecurityOverrides } from "./agent/security-types.js";
 import { createEmptyOverrides } from "./agent/security-types.js";
 import type { SessionToolEnvironment } from "./session-tool-environment.js";
-import type { EscalationChoice } from "@aria/shared/types.js";
+import type { EscalationChoice } from "@aria/protocol";
 import type { EngineRuntime } from "./runtime.js";
 
 export class RuntimeSessionCoordinator {

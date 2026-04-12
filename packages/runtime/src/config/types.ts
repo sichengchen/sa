@@ -1,6 +1,6 @@
 import type { ProviderConfig, ModelConfig } from "../router/types.js";
 import type { ModelTier, TaskType } from "../router/task-types.js";
-import type { ToolApprovalMode, ConnectorType } from "@aria/shared/types.js";
+import type { ToolApprovalMode, ConnectorType } from "@aria/protocol";
 
 export interface Identity {
   name: string;

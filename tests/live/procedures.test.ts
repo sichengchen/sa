@@ -11,7 +11,7 @@ import { Agent } from "@aria/engine/agent/index.js";
 import { SkillRegistry } from "@aria/engine/skills/index.js";
 import { Scheduler, createHeartbeatTask } from "@aria/engine/scheduler.js";
 import type { EngineRuntime } from "@aria/engine/runtime.js";
-import type { EngineEvent } from "@aria/shared/types.js";
+import type { EngineEvent } from "@aria/protocol";
 import { makeLiveRouter, describeLive } from "../helpers/live-model.js";
 import { echoTool } from "../helpers/test-tools.js";
 import { SessionArchiveManager } from "@aria/engine/session-archive.js";

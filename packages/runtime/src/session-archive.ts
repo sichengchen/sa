@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { Database } from "bun:sqlite";
 import type { Message } from "@mariozechner/pi-ai";
-import type { Session } from "@aria/shared/types.js";
+import type { Session } from "@aria/protocol";
 
 const MAX_PREVIEW_CHARS = 220;
 const MAX_SUMMARY_CHARS = 800;

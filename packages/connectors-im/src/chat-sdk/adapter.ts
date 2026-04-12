@@ -10,7 +10,7 @@
 import type { Chat, Thread, SentMessage, Adapter, Message as ChatMessage } from "chat";
 import { createStreamHandler, type StreamOps } from "../shared/stream-handler.js";
 import { formatToolResult, splitMessage, getMaxLength, formatSenderAttribution } from "./formatter.js";
-import type { ConnectorType } from "@aria/shared/types.js";
+import type { ConnectorType } from "@aria/protocol";
 import { createChatSDKClient } from "./client.js";
 
 type EngineClient = ReturnType<typeof createChatSDKClient>;
