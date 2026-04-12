@@ -35,6 +35,16 @@ function makeTool(name: string, dangerLevel: "safe" | "moderate" | "dangerous" =
 }
 
 describe("phase-1 extraction package verification", () => {
+  test("@aria/runtime composes moved package-owned services from target packages", async () => {
+    const runtimeSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/runtime.ts", import.meta.url), "utf-8"));
+    expect(runtimeSource).toContain("../../tools/src/index.js");
+    expect(runtimeSource).toContain("../../prompt/src/index.js");
+    expect(runtimeSource).toContain("../../store/src/index.js");
+    expect(runtimeSource).toContain("../../audit/src/index.js");
+    expect(runtimeSource).toContain("../../memory/src/index.js");
+    expect(runtimeSource).toContain("../../policy/src/index.js");
+  });
+
   test("@aria/audit writes and queries entries through the package barrel", async () => {
     const logDir = await makeTempDir("aria-audit-package-");
     const logger = new AuditLogger(logDir);
