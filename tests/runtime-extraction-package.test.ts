@@ -45,6 +45,11 @@ describe("phase-1 extraction package verification", () => {
     expect(runtimeSource).toContain("../../policy/src/index.js");
     expect(runtimeSource).toContain("../../automation/src/index.js");
     expect(runtimeSource).toContain("../../gateway/src/auth.js");
+    const backendRegistrySource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/backend-registry.ts", import.meta.url), "utf-8"));
+    expect(backendRegistrySource).toContain("../../gateway/src/procedures.js");
+    expect(backendRegistrySource).toContain("../../gateway/src/context.js");
+    const runtimeEngineSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/engine.ts", import.meta.url), "utf-8"));
+    expect(runtimeEngineSource).toContain("../../gateway/src/server.js");
     const proceduresSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/procedures.ts", import.meta.url), "utf-8"));
     expect(proceduresSource).toContain("../../gateway/src/trpc.js");
     expect(proceduresSource).toContain("../../tools/src/session-tool-environment.js");

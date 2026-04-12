@@ -3,7 +3,7 @@
 import { writeFileSync, unlinkSync, existsSync, openSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { createRuntime } from "./runtime.js";
-import { startServer } from "./server.js";
+import { startServer } from "../../gateway/src/server.js";
 import { getRuntimeDiscoveryPaths } from "./discovery.js";
 import { ENGINE_PORT_ENV_VAR, HOME_ENV_VAR, RUNTIME_NAME } from "@aria/shared/brand.js";
 

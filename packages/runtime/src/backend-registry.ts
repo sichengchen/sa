@@ -1,5 +1,5 @@
-import { createAppRouter } from "./procedures.js";
-import { createContext } from "./context.js";
+import { createAppRouter } from "../../gateway/src/procedures.js";
+import { createContext } from "../../gateway/src/context.js";
 import type { EngineRuntime } from "./runtime.js";
 import {
   createAriaRuntimeBackendAdapter,
