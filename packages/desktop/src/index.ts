@@ -48,6 +48,37 @@ export interface AriaDesktopBootstrap {
   initialThread?: ProjectThreadListItem;
 }
 
+export interface AriaDesktopShellProjectInput {
+  project: Pick<ProjectRecord, "name">;
+  threads: Array<Pick<ThreadRecord, "threadId" | "title" | "status">>;
+}
+
+export interface AriaDesktopShellInitialThread {
+  project: Pick<ProjectRecord, "name">;
+  thread: Pick<ThreadRecord, "threadId" | "title" | "status">;
+}
+
+export interface CreateAriaDesktopShellOptions {
+  target: AccessClientTarget;
+  projects?: AriaDesktopShellProjectInput[];
+  environments?: Array<{
+    hostLabel: string;
+    environmentLabel: string;
+    mode: "local" | "remote";
+    target: AccessClientTarget;
+  }>;
+  initialThread?: AriaDesktopShellInitialThread;
+}
+
+export interface AriaDesktopShell {
+  app: typeof ariaDesktopApp;
+  spaces: typeof ariaDesktopSpaces;
+  access: ReturnType<typeof buildAccessClientConfig>;
+  environments: AriaDesktopEnvironmentOption[];
+  sidebarProjects: AriaDesktopSidebarProject[];
+  initialThread?: ProjectThreadListItem;
+}
+
 export function createAriaDesktopSidebarProjects(
   projects: Array<{
     project: Pick<ProjectRecord, "name">;
@@ -87,5 +118,22 @@ export function createAriaDesktopBootstrap(
     initialThread: initialThread
       ? createProjectThreadListItem(initialThread.project, initialThread.thread)
       : undefined,
+  };
+}
+
+export function createAriaDesktopShell(
+  options: CreateAriaDesktopShellOptions,
+): AriaDesktopShell {
+  const bootstrap = createAriaDesktopBootstrap(options.target, options.initialThread);
+
+  return {
+    app: bootstrap.app,
+    spaces: ariaDesktopSpaces,
+    access: bootstrap.access,
+    environments: (options.environments ?? []).map((environment) =>
+      createAriaDesktopEnvironmentOption(environment),
+    ),
+    sidebarProjects: createAriaDesktopSidebarProjects(options.projects ?? []),
+    initialThread: bootstrap.initialThread,
   };
 }

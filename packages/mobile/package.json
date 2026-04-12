@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Aria Mobile thin client shell seam over shared client, UI, and project surfaces",
+  "description": "Aria Mobile shell composition and remote review surfaces over shared client seams",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

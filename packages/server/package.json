@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Aria Server app bootstrap, composition root, and runtime compatibility seam",
+  "description": "Aria Server composition root, daemon lifecycle shell, and runtime bootstrap surface",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {

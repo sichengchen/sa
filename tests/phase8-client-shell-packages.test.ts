@@ -23,8 +23,10 @@ function readRepoFile(relativePath: string): string {
   return readFileSync(join(import.meta.dir, "..", relativePath), "utf-8");
 }
 
+const PHASE9_LEDGER_PATH = "docs/development/phase-9-architecture-truth-table.md";
+
 describe("Phase 8 client shell packages", () => {
-  test("@aria/desktop stays a thin shell over shared client, UI, and project seams", () => {
+  test("@aria/desktop stays the target desktop shell over shared client, UI, and project seams", () => {
     const bootstrap = createAriaDesktopBootstrap(
       { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
       {
@@ -102,7 +104,7 @@ describe("Phase 8 client shell packages", () => {
     });
   });
 
-  test("@aria/mobile stays a remote thin shell over shared client, UI, and project seams", () => {
+  test("@aria/mobile stays the remote-first target shell over shared client, UI, and project seams", () => {
     const bootstrap = createAriaMobileBootstrap(
       { serverId: "mobile", baseUrl: "https://aria.example.test/" },
       {
@@ -156,20 +158,29 @@ describe("Phase 8 client shell packages", () => {
     ]);
   });
 
-  test("desktop and mobile apps remain thin wrappers over the new package shells", () => {
+  test("desktop and mobile app entrypoints stay aligned with the current target shell contracts", () => {
     expect(desktopAppModule).toMatchObject({
       ariaDesktopApp,
       createAriaDesktopBootstrap,
+      createAriaDesktopEnvironmentOption,
+      createAriaDesktopSidebarProjects,
     });
     expect(mobileAppModule).toMatchObject({
       ariaMobileApp,
       createAriaMobileBootstrap,
+      createAriaMobileProjectThreads,
     });
 
-    const desktopAppSource = readRepoFile("apps/aria-desktop/src/index.ts").trim();
-    const mobileAppSource = readRepoFile("apps/aria-mobile/src/index.ts").trim();
+    const desktopMobileDoc = readRepoFile("docs/new-architecture/desktop-and-mobile.md");
+    const truthTableDoc = readRepoFile(PHASE9_LEDGER_PATH);
 
-    expect(desktopAppSource).toBe('export * from "@aria/desktop";');
-    expect(mobileAppSource).toBe('export * from "@aria/mobile";');
+    expect(desktopMobileDoc).toContain("hybrid target shells");
+    expect(desktopMobileDoc).not.toContain("real thin shells");
+    expect(truthTableDoc).toContain(
+      "| `apps/aria-desktop` | `hybrid target shell` | `apps/aria-desktop/*` |",
+    );
+    expect(truthTableDoc).toContain(
+      "| `apps/aria-mobile` | `hybrid target shell` | `apps/aria-mobile/*` |",
+    );
   });
 });

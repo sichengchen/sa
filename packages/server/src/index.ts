@@ -1,4 +1,8 @@
-export { startAriaServer } from "./app.js";
+export {
+  ariaServerApp,
+  createAriaServerBootstrap,
+  startAriaServer,
+} from "./app.js";
 export * from "./brand.js";
 export {
   getRuntimeDiscoveryPaths,
@@ -16,5 +20,7 @@ export {
 export type {
   AriaServerApp,
   AriaServerFactories,
+  AriaServerBootstrap,
+  CreateAriaServerBootstrapOptions,
   StartAriaServerOptions,
 } from "./app.js";

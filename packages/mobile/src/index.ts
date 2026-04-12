@@ -46,6 +46,31 @@ export interface AriaMobileBootstrap {
   initialThread?: ProjectThreadListItem;
 }
 
+export interface AriaMobileShellProjectInput {
+  project: Pick<ProjectRecord, "name">;
+  threads: Array<Pick<ThreadRecord, "threadId" | "title" | "status">>;
+}
+
+export interface AriaMobileShellInitialThread {
+  project: Pick<ProjectRecord, "name">;
+  thread: Pick<ThreadRecord, "threadId" | "title" | "status">;
+}
+
+export interface CreateAriaMobileShellOptions {
+  target: AccessClientTarget;
+  projects?: AriaMobileShellProjectInput[];
+  initialThread?: AriaMobileShellInitialThread;
+}
+
+export interface AriaMobileShell {
+  app: typeof ariaMobileApp;
+  tabs: typeof ariaMobileTabs;
+  detailPresentations: typeof ariaMobileDetailPresentations;
+  access: ReturnType<typeof buildAccessClientConfig>;
+  projectThreads: AriaMobileProjectThreads[];
+  initialThread?: ProjectThreadListItem;
+}
+
 export function createAriaMobileProjectThreads(
   projects: Array<{
     project: Pick<ProjectRecord, "name">;
@@ -71,5 +96,20 @@ export function createAriaMobileBootstrap(
     initialThread: initialThread
       ? createProjectThreadListItem(initialThread.project, initialThread.thread)
       : undefined,
+  };
+}
+
+export function createAriaMobileShell(
+  options: CreateAriaMobileShellOptions,
+): AriaMobileShell {
+  const bootstrap = createAriaMobileBootstrap(options.target, options.initialThread);
+
+  return {
+    app: bootstrap.app,
+    tabs: ariaMobileTabs,
+    detailPresentations: ariaMobileDetailPresentations,
+    access: bootstrap.access,
+    projectThreads: createAriaMobileProjectThreads(options.projects ?? []),
+    initialThread: bootstrap.initialThread,
   };
 }

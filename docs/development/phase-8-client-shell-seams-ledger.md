@@ -2,7 +2,9 @@
 
 This ledger tracks the next migration wave for seeding the target-state client shell packages described in [../new-architecture/packages.md](../new-architecture/packages.md) and [../new-architecture/desktop-and-mobile.md](../new-architecture/desktop-and-mobile.md).
 
-Phase 8 is about making the following client shell boundaries explicit without breaking the current app wrappers, shared client seams, or CLI/server/runtime behavior:
+Current repo note: this ledger records the Phase 8 seam-seeding step. For current ownership truth after the Phase 9 follow-on pass, use [phase-9-architecture-truth-table.md](./phase-9-architecture-truth-table.md); `@aria/desktop`, `@aria/mobile`, `apps/aria-desktop`, and `apps/aria-mobile` are now treated as hybrid target shells rather than temporary wrappers.
+
+Phase 8 is about making the following client shell boundaries explicit without breaking the current app entrypoints, shared client seams, or CLI/server/runtime behavior:
 
 - `@aria/desktop`
 - `@aria/mobile`
@@ -11,7 +13,7 @@ Phase 8 is about making the following client shell boundaries explicit without b
 
 During this phase:
 
-1. Keep `apps/aria-desktop` and `apps/aria-mobile` working as thin compatibility wrappers while the new package names appear.
+1. Keep `apps/aria-desktop` and `apps/aria-mobile` working as compatibility-preserving app entrypoints while the new package names appear.
 2. Keep `@aria/access-client`, `@aria/ui`, and `@aria/projects` as the shared transport, presentation, and project-thread seams underneath the new shell packages; do not duplicate that ownership inside `@aria/desktop` or `@aria/mobile`.
 3. Keep desktop-local bridge, git, and coding-agent ownership in `@aria/desktop-bridge`, `@aria/desktop-git`, and `@aria/agents-coding` rather than collapsing those responsibilities into `@aria/desktop`.
 4. Keep `@aria/mobile` a remote/server-connected shell with no local coding-agent execution, repo/worktree management, or Aria-memory ownership.
@@ -42,7 +44,7 @@ During this phase:
 
 1. `@aria/desktop`
 2. `@aria/mobile`
-3. rewrite `apps/aria-desktop` and `apps/aria-mobile` to depend on the new package seams as thin wrappers
+3. rewrite `apps/aria-desktop` and `apps/aria-mobile` to depend on the new package seams as compatibility-preserving entrypoints
 
 This order exposes the new shell package names first and only then rewrites the existing app wrappers onto them, which keeps the current app entrypoints stable during the migration.
 
@@ -61,4 +63,4 @@ Every Phase 8 seam-seeding step should still pass:
 
 ## Exit Condition
 
-Phase 8 is complete when the repo has explicit `@aria/desktop` and `@aria/mobile` package surfaces, `apps/aria-desktop` and `apps/aria-mobile` remain thin wrappers over those shells, and the current CLI/server/runtime plus shared client compatibility behavior remains intact.
+Phase 8 is complete when the repo has explicit `@aria/desktop` and `@aria/mobile` package surfaces, `apps/aria-desktop` and `apps/aria-mobile` preserve compatibility with those shells, and the current CLI/server/runtime plus shared client compatibility behavior remains intact. Use the Phase 9 truth table for the current edit-first ownership model after this seam-seeding step.
