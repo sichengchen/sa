@@ -43,6 +43,7 @@ describe("phase-1 extraction package verification", () => {
     expect(runtimeSource).toContain("../../audit/src/index.js");
     expect(runtimeSource).toContain("../../memory/src/index.js");
     expect(runtimeSource).toContain("../../policy/src/index.js");
+    expect(runtimeSource).toContain("../../automation/src/index.js");
   });
 
   test("@aria/audit writes and queries entries through the package barrel", async () => {

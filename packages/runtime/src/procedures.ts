@@ -13,7 +13,7 @@ import { ToolPolicyManager, type ToolEventContext } from "./tools/policy.js";
 import { ConnectorTypeSchema } from "@aria/shared/types.js";
 import type { EngineEvent, SkillInfo, ConnectorType, ToolApprovalMode, EscalationChoice } from "@aria/shared/types.js";
 import type { ModelConfig, ProviderConfig } from "./router/types.js";
-import { heartbeatState, createHeartbeatTask } from "./scheduler.js";
+import { heartbeatState, createHeartbeatTask } from "../../automation/src/index.js";
 import { describeModeEffects } from "./security-mode.js";
 import { createSessionToolEnvironment } from "./session-tool-environment.js";
 import { preprocessContextReferences } from "../../prompt/src/context-references.js";

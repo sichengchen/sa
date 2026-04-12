@@ -16,7 +16,7 @@ import { SessionManager } from "./sessions.js";
 import { AuthManager } from "./auth.js";
 import { SkillRegistry } from "./skills/index.js";
 
-import { Scheduler, createHeartbeatTask } from "./scheduler.js";
+import { AutomationRegistry, Scheduler, createHeartbeatTask } from "../../automation/src/index.js";
 import { DEFAULT_HEARTBEAT_MD } from "./config/defaults.js";
 import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
@@ -28,7 +28,6 @@ import { SessionArchiveManager } from "./session-archive.js";
 import { CheckpointManager } from "./checkpoints.js";
 
 import { MCPManager } from "./mcp.js";
-import { AutomationRegistry } from "./automation-registry.js";
 import { OperationalStore } from "../../store/src/index.js";
 import { PromptEngine } from "../../prompt/src/index.js";
 import { CLI_NAME, getRuntimeHome } from "@aria/shared/brand.js";
