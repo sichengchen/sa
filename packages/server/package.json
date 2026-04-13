@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./app": "./src/app.ts",
+    "./audio": "./src/audio.ts",
     "./checkpoints": "./src/checkpoints.ts",
     "./config": "./src/config.ts",
     "./config/defaults": "./src/config/defaults.ts",
@@ -17,10 +18,12 @@
     "./config/types": "./src/config/types.ts",
     "./brand": "./src/brand.ts",
     "./runtime": "./src/runtime.ts",
+    "./session-archive": "./src/session-archive.ts",
     "./session-coordinator": "./src/session-coordinator.ts",
     "./daemon": "./src/daemon.ts",
     "./discovery": "./src/discovery.ts",
-    "./engine": "./src/engine.ts"
+    "./engine": "./src/engine.ts",
+    "./sessions": "./src/sessions.ts"
   },
   "scripts": {
     "dev": "bun ./src/engine.ts"

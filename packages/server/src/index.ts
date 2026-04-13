@@ -1,8 +1,11 @@
 export { ariaServerApp, createAriaServerBootstrap, startAriaServer } from "./app.js";
+export * from "./audio.js";
 export * from "./checkpoints.js";
 export * from "./config.js";
 export * from "./brand.js";
 export * from "./runtime.js";
+export * from "./session-archive.js";
+export * from "./sessions.js";
 export * from "./session-coordinator.js";
 export { getRuntimeDiscoveryPaths, type RuntimeDiscoveryPaths } from "./discovery.js";
 export {

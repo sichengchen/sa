@@ -36,13 +36,13 @@ import {
   getBuiltinTools,
 } from "@aria/tools";
 import { configureSandbox } from "@aria/tools/exec";
-import { createTranscriber, type Transcriber } from "@aria/runtime/audio";
 import { MCPManager } from "@aria/runtime/mcp";
-import { SessionArchiveManager } from "@aria/runtime/session-archive";
-import { SessionManager } from "@aria/runtime/sessions";
+import { createTranscriber, type Transcriber } from "./audio.js";
 import { CLI_NAME, getRuntimeHome } from "./brand.js";
 import { CheckpointManager } from "./checkpoints.js";
 import { ConfigManager, DEFAULT_HEARTBEAT_MD } from "./config.js";
+import { SessionArchiveManager } from "./session-archive.js";
+import { SessionManager } from "./sessions.js";
 
 export interface EngineRuntime {
   config: ConfigManager;
