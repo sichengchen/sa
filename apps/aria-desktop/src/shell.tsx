@@ -239,6 +239,16 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
                 Aria chat messages: {model.ariaThread.state.messages.length} | Streaming:{" "}
                 {model.ariaThread.state.isStreaming ? "yes" : "no"}
               </p>
+              <p>
+                Latest Aria message:{" "}
+                {model.ariaThread.state.messages.at(-1)?.content ?? "No transcript yet"}
+              </p>
+              {model.ariaThread.state.streamingText ? (
+                <p>Streaming text: {model.ariaThread.state.streamingText}</p>
+              ) : null}
+              {model.ariaThread.state.lastError ? (
+                <p>Error: {model.ariaThread.state.lastError}</p>
+              ) : null}
             </div>,
           )}
         </section>
@@ -314,5 +324,20 @@ export async function createConnectedAriaDesktopAppShell(
   return {
     model,
     element: <AriaDesktopAppShell model={model} />,
+  };
+}
+
+export async function sendAriaDesktopAppShellMessage(
+  model: AriaDesktopAppShellModel,
+  message: string,
+): Promise<AriaDesktopAppShellModel> {
+  await model.ariaThread.controller.sendMessage(message);
+
+  return {
+    ...model,
+    ariaThread: {
+      ...model.ariaThread,
+      state: model.ariaThread.controller.getState(),
+    },
   };
 }

@@ -118,6 +118,16 @@ export function AriaMobileApplicationShell(props: AriaMobileApplicationShellProp
             Transcript items: {props.shell.ariaThread.state.messages.length} | Streaming:{" "}
             {props.shell.ariaThread.state.isStreaming ? "yes" : "no"}
           </p>
+          <p>
+            Latest Aria message:{" "}
+            {props.shell.ariaThread.state.messages.at(-1)?.content ?? "No transcript yet"}
+          </p>
+          {props.shell.ariaThread.state.streamingText ? (
+            <p>Streaming text: {props.shell.ariaThread.state.streamingText}</p>
+          ) : null}
+          {props.shell.ariaThread.state.lastError ? (
+            <p>Error: {props.shell.ariaThread.state.lastError}</p>
+          ) : null}
           <ul>
             {navigation.spaces
               .find((space) => space.id === "aria")

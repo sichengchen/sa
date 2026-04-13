@@ -15,6 +15,7 @@ import {
   createConnectedAriaMobileAppShell,
   createAriaMobileAppShell,
   createAriaMobileHostBootstrap,
+  sendAriaMobileAppShellMessage,
 } from "../apps/aria-mobile/src/index.js";
 
 describe("Aria mobile app surface", () => {
@@ -334,5 +335,41 @@ describe("Aria mobile app surface", () => {
       }),
     );
     expect(connectedShell.ariaThread.state.connected).toBe(true);
+  });
+
+  test("can send an aria thread message through the mobile app shell", async () => {
+    const sentState = {
+      connected: true,
+      sessionId: "mobile:session-1",
+      modelName: "sonnet",
+      agentName: "Esperta Aria",
+      messages: [
+        { role: "user" as const, content: "hi" },
+        { role: "assistant" as const, content: "hello world" },
+      ],
+      streamingText: "",
+      isStreaming: false,
+      lastError: null,
+    };
+    const controller = {
+      getState: () => sentState,
+      connect: async () => sentState,
+      sendMessage: async () => sentState,
+    };
+
+    const shell = createAriaMobileAppShell({
+      target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+      ariaThreadController: controller as any,
+    });
+    const updated = await sendAriaMobileAppShellMessage(shell, "hi");
+    expect(updated.ariaThread.state.messages.at(-1)).toEqual({
+      role: "assistant",
+      content: "hello world",
+    });
+
+    const rendered = AriaMobileApplicationShell({ shell: updated });
+    const serialized = JSON.stringify(rendered.props).replace(/\s+/g, " ");
+    expect(serialized).toContain("Latest Aria message:");
+    expect(serialized).toContain("hello world");
   });
 });

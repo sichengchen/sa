@@ -12,6 +12,7 @@ import {
   createAriaDesktopAppShellModel,
   createAriaDesktopApplicationRoot,
   createAriaDesktopApplicationBootstrap,
+  sendAriaDesktopAppShellMessage,
   type AriaDesktopAppShellModel,
 } from "../apps/aria-desktop/src/index.js";
 
@@ -344,5 +345,41 @@ describe("aria-desktop app assembly", () => {
     });
     expect(built.element.type).toBe(AriaDesktopAppShell);
     expect(built.model.ariaThread.state.connected).toBe(true);
+  });
+
+  test("can send an aria thread message through the desktop app shell model", async () => {
+    const sentState = {
+      connected: true,
+      sessionId: "desktop:session-1",
+      modelName: "sonnet",
+      agentName: "Esperta Aria",
+      messages: [
+        { role: "user" as const, content: "hi" },
+        { role: "assistant" as const, content: "hello world" },
+      ],
+      streamingText: "",
+      isStreaming: false,
+      lastError: null,
+    };
+    const controller = {
+      getState: () => sentState,
+      connect: async () => sentState,
+      sendMessage: async () => sentState,
+    };
+
+    const model = createAriaDesktopAppShellModel({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      ariaThreadController: controller as any,
+    });
+
+    const updated = await sendAriaDesktopAppShellMessage(model, "hi");
+    expect(updated.ariaThread.state.messages.at(-1)).toEqual({
+      role: "assistant",
+      content: "hello world",
+    });
+
+    const rendered = AriaDesktopAppShell({ model: updated });
+    const text = collectTextContent(rendered).join(" ").replace(/\s+/g, " ");
+    expect(text).toContain("Latest Aria message: hello world");
   });
 });

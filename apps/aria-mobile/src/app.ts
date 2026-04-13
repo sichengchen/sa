@@ -162,6 +162,21 @@ export async function createConnectedAriaMobileAppShell(
   return connectAriaMobileAppShell(createAriaMobileAppShell(options));
 }
 
+export async function sendAriaMobileAppShellMessage(
+  shell: AriaMobileAppShell,
+  message: string,
+): Promise<AriaMobileAppShell> {
+  await shell.ariaThread.controller.sendMessage(message);
+
+  return {
+    ...shell,
+    ariaThread: {
+      ...shell.ariaThread,
+      state: shell.ariaThread.controller.getState(),
+    },
+  };
+}
+
 export const ariaMobileAppModel = {
   app: ariaMobileApp,
   navigation: ariaMobileNavigation,
