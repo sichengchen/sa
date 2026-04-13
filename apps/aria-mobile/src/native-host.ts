@@ -7,6 +7,9 @@ import {
 import { createAriaMobileNativeHostModel, type AriaMobileNativeHostModel } from "./native-model.js";
 import {
   createAriaMobileAppShell,
+  openAriaMobileAppShellSession,
+  sendAriaMobileAppShellMessage,
+  stopAriaMobileAppShell,
   switchAriaMobileAppShellServer,
   startAriaMobileNativeHostShell,
   type AriaMobileAppShell,
@@ -26,6 +29,16 @@ export interface AriaMobileNativeHostBootstrap {
   target: AccessClientTarget;
   shell: AriaMobileAppShell;
   model: AriaMobileNativeHostModel;
+}
+
+export interface AriaMobileNativeHostController {
+  getBootstrap(): AriaMobileNativeHostBootstrap;
+  subscribe(listener: (bootstrap: AriaMobileNativeHostBootstrap) => void): () => void;
+  start(): Promise<AriaMobileNativeHostBootstrap>;
+  switchServer(serverId: string): Promise<AriaMobileNativeHostBootstrap>;
+  openSession(sessionId: string): Promise<AriaMobileNativeHostBootstrap>;
+  sendMessage(message: string): Promise<AriaMobileNativeHostBootstrap>;
+  stop(): Promise<AriaMobileNativeHostBootstrap>;
 }
 
 export interface AriaMobileNativeHostBootstrapOptions extends Partial<AccessClientTarget> {
@@ -93,5 +106,56 @@ export async function switchAriaMobileNativeHostBootstrapServer(
     target: shell.sourceOptions.target,
     shell,
     model: createAriaMobileNativeHostModel(shell),
+  };
+}
+
+export function createAriaMobileNativeHostController(
+  config?: AriaMobileNativeHostBootstrapOptions,
+): AriaMobileNativeHostController {
+  let bootstrap = createAriaMobileNativeHostBootstrap(config);
+  const listeners = new Set<(bootstrap: AriaMobileNativeHostBootstrap) => void>();
+
+  const publish = () => {
+    for (const listener of listeners) {
+      listener(bootstrap);
+    }
+    return bootstrap;
+  };
+
+  const update = async (next: Promise<AriaMobileNativeHostBootstrap>) => {
+    bootstrap = await next;
+    return publish();
+  };
+
+  const mapShell = (shell: AriaMobileAppShell): AriaMobileNativeHostBootstrap => ({
+    ...bootstrap,
+    target: shell.sourceOptions.target,
+    shell,
+    model: createAriaMobileNativeHostModel(shell),
+  });
+
+  return {
+    getBootstrap() {
+      return bootstrap;
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    start() {
+      return update(startAriaMobileNativeHostBootstrap(config));
+    },
+    switchServer(serverId: string) {
+      return update(switchAriaMobileNativeHostBootstrapServer(bootstrap, serverId));
+    },
+    openSession(sessionId: string) {
+      return update(openAriaMobileAppShellSession(bootstrap.shell, sessionId).then(mapShell));
+    },
+    sendMessage(message: string) {
+      return update(sendAriaMobileAppShellMessage(bootstrap.shell, message).then(mapShell));
+    },
+    stop() {
+      return update(stopAriaMobileAppShell(bootstrap.shell).then(mapShell));
+    },
   };
 }
