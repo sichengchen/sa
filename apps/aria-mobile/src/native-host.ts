@@ -11,6 +11,7 @@ import {
   approveAriaMobileAppShellToolCall,
   createAriaMobileAppShell,
   openAriaMobileAppShellSession,
+  searchAriaMobileAppShellSessions,
   sendAriaMobileAppShellMessage,
   stopAriaMobileAppShell,
   switchAriaMobileAppShellServer,
@@ -39,6 +40,7 @@ export interface AriaMobileNativeHostController {
   subscribe(listener: (bootstrap: AriaMobileNativeHostBootstrap) => void): () => void;
   start(): Promise<AriaMobileNativeHostBootstrap>;
   switchServer(serverId: string): Promise<AriaMobileNativeHostBootstrap>;
+  searchSessions(query: string): Promise<AriaMobileNativeHostBootstrap>;
   openSession(sessionId: string): Promise<AriaMobileNativeHostBootstrap>;
   sendMessage(message: string): Promise<AriaMobileNativeHostBootstrap>;
   stop(): Promise<AriaMobileNativeHostBootstrap>;
@@ -153,6 +155,9 @@ export function createAriaMobileNativeHostController(
     },
     switchServer(serverId: string) {
       return update(switchAriaMobileNativeHostBootstrapServer(bootstrap, serverId));
+    },
+    searchSessions(query: string) {
+      return update(searchAriaMobileAppShellSessions(bootstrap.shell, query).then(mapShell));
     },
     openSession(sessionId: string) {
       return update(openAriaMobileAppShellSession(bootstrap.shell, sessionId).then(mapShell));

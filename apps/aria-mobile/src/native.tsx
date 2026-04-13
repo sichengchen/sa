@@ -15,6 +15,7 @@ export function AriaMobileNativeHost() {
   const [controller] = useState(() => createAriaMobileNativeHostController(target));
   const [shell, setShell] = useState<AriaMobileAppShell>(() => controller.getBootstrap().shell);
   const [draft, setDraft] = useState("Message Aria");
+  const [sessionSearch, setSessionSearch] = useState("recent session");
 
   useEffect(() => {
     let cancelled = false;
@@ -142,6 +143,15 @@ export function AriaMobileNativeHost() {
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Sessions</Text>
+        <TextInput style={styles.input} value={sessionSearch} onChangeText={setSessionSearch} />
+        <Pressable
+          onPress={() => {
+            void controller.searchSessions(sessionSearch);
+          }}
+          style={styles.button}
+        >
+          <Text>Search Sessions</Text>
+        </Pressable>
         {model.recentSessions.length === 0 ? (
           <Text>None yet</Text>
         ) : (

@@ -321,7 +321,16 @@ describe("aria-mobile native host scaffold", () => {
         },
         listSessions: async () => [],
         listArchivedSessions: async () => [],
-        searchSessions: async () => [],
+        searchSessions: async () => [
+          {
+            sessionId: "mobile:search-1",
+            connectorType: "tui",
+            connectorId: "mobile",
+            archived: true,
+            preview: "Search preview",
+            summary: "Search summary",
+          },
+        ],
       } as any,
     });
 
@@ -337,6 +346,11 @@ describe("aria-mobile native host scaffold", () => {
 
     const approved = await controller.approveToolCall("tool-1", true);
     expect(approved.model.pendingApproval).toBe("none");
+
+    const searched = await controller.searchSessions("archived");
+    expect(searched.model.recentSessions).toEqual([
+      { sessionId: "mobile:search-1", kind: "archived" },
+    ]);
 
     const answered = await controller.answerQuestion("question-1", "Yes");
     expect(answered.model.pendingQuestion).toBe("none");
