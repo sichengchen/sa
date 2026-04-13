@@ -1,7 +1,7 @@
 import type { RelayService } from "@aria/relay";
 import type { RelayAttachmentKind, RelayTransportMode } from "@aria/relay/types";
 import { CLI_NAME, getRuntimeHome } from "@aria/server/brand";
-import { runAriaRelayServiceHost } from "../../../services/aria-relay/src/index.js";
+import { runAriaRelayServiceHost } from "aria-relay";
 
 function printHelp(): void {
   console.log(`Usage: ${CLI_NAME} relay <subcommand>`);
