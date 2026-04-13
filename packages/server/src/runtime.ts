@@ -36,7 +36,7 @@ import {
   getBuiltinTools,
 } from "@aria/tools";
 import { configureSandbox } from "@aria/tools/exec";
-import { MCPManager } from "@aria/runtime/mcp";
+import { MCPManager } from "./mcp.js";
 import { createTranscriber, type Transcriber } from "./audio.js";
 import { CLI_NAME, getRuntimeHome } from "./brand.js";
 import { CheckpointManager } from "./checkpoints.js";

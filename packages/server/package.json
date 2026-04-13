@@ -17,6 +17,7 @@
     "./config/secrets": "./src/config/secrets.ts",
     "./config/types": "./src/config/types.ts",
     "./brand": "./src/brand.ts",
+    "./mcp": "./src/mcp.ts",
     "./runtime": "./src/runtime.ts",
     "./session-archive": "./src/session-archive.ts",
     "./session-coordinator": "./src/session-coordinator.ts",

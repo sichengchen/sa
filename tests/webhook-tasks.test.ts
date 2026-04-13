@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import type { AutomationConfig, WebhookTask } from "@aria/server/config";
+import type { AutomationConfig, WebhookTask } from "@aria/automation";
 
 describe("Webhook task types", () => {
   test("WebhookTask has required fields", () => {

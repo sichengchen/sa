@@ -13,7 +13,7 @@ import { ConfigManager } from "@aria/server/config";
 import { CheckpointManager } from "@aria/server/checkpoints";
 import type { EngineRuntime } from "@aria/server/runtime";
 import { OperationalStore } from "@aria/store/operational-store";
-import { MCPManager } from "@aria/runtime/mcp";
+import { MCPManager } from "@aria/server/mcp";
 import { SessionArchiveManager } from "@aria/runtime/session-archive";
 import { SessionManager } from "@aria/runtime/sessions";
 import { AuthManager } from "@aria/gateway/auth";

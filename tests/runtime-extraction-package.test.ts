@@ -98,6 +98,10 @@ describe("phase-1 extraction package verification", () => {
       fs.readFile(new URL("../packages/runtime/src/engine.ts", import.meta.url), "utf-8"),
     );
     expect(runtimeEngineSource).toContain("@aria/server/engine");
+    const runtimeMcpSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/runtime/src/mcp.ts", import.meta.url), "utf-8"),
+    );
+    expect(runtimeMcpSource).toContain("@aria/server/mcp");
     const proceduresSource = await import("node:fs/promises").then((fs) =>
       fs.readFile(new URL("../packages/runtime/src/procedures.ts", import.meta.url), "utf-8"),
     );
@@ -109,7 +113,6 @@ describe("phase-1 extraction package verification", () => {
     expect(gatewayProceduresSource).toContain("@aria/tools/session-tool-environment");
     expect(gatewayProceduresSource).toContain("@aria/audit");
     expect(gatewayProceduresSource).toContain("@aria/policy/policy");
-    expect(gatewayProceduresSource).toContain("@aria/server/config");
     expect(gatewayProceduresSource).toContain("@aria/server/runtime");
     expect(gatewayProceduresSource).toContain("@aria/server/session-coordinator");
 
@@ -176,6 +179,7 @@ describe("phase-1 extraction package verification", () => {
       ),
     ) as { exports: Record<string, string> };
     expect(serverPackageJson.exports["./config"]).toBe("./src/config.ts");
+    expect(serverPackageJson.exports["./mcp"]).toBe("./src/mcp.ts");
     expect(serverPackageJson.exports["./runtime"]).toBe("./src/runtime.ts");
     expect(serverPackageJson.exports["./session-coordinator"]).toBe("./src/session-coordinator.ts");
     expect(serverPackageJson.exports["./checkpoints"]).toBe("./src/checkpoints.ts");

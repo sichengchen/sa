@@ -30,6 +30,7 @@ import {
   removeCronTaskFromConfig,
   upsertHeartbeatTaskRecord,
 } from "@aria/automation/automation";
+import type { CronTask } from "@aria/automation";
 import { computeNextRunAt, parseScheduleInput } from "@aria/automation/automation-schedule";
 import { heartbeatState, createHeartbeatTask } from "@aria/automation";
 import {
@@ -39,7 +40,6 @@ import {
 } from "@aria/policy";
 import { createSessionToolEnvironment } from "@aria/tools/session-tool-environment";
 import { preprocessContextReferences } from "@aria/prompt/context-references";
-import type { CronTask } from "@aria/server/config";
 
 import { listToolsets } from "@aria/tools/toolsets";
 

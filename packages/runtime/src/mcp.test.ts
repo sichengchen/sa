@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Type } from "@sinclair/typebox";
 import type { ToolImpl } from "./agent/types.js";
-import { MCPManager } from "./mcp.js";
+import { MCPManager } from "@aria/server/mcp";
 import { OperationalStore } from "./operational-store.js";
 
 let testDir: string;

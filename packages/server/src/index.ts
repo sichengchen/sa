@@ -3,6 +3,7 @@ export * from "./audio.js";
 export * from "./checkpoints.js";
 export * from "./config.js";
 export * from "./brand.js";
+export * from "./mcp.js";
 export * from "./runtime.js";
 export * from "./session-archive.js";
 export * from "./sessions.js";

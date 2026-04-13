@@ -1,6 +1,15 @@
 import type { ToolApprovalMode, ConnectorType } from "@aria/protocol";
 import type { ModelTier, TaskType } from "@aria/gateway/router/task-types";
 import type { ProviderConfig, ModelConfig } from "@aria/gateway/router/types";
+export type {
+  AutomationConfig,
+  CronTask,
+  DeliveryTarget,
+  HeartbeatConfig,
+  RetryPolicy,
+  WebhookTask,
+} from "@aria/automation";
+import type { AutomationConfig, HeartbeatConfig } from "@aria/automation";
 
 export interface Identity {
   name: string;
@@ -20,13 +29,6 @@ export interface ToolOverride {
 export interface ToolPolicyConfig {
   verbosity?: Partial<Record<ConnectorType, ToolVerbosity>>;
   overrides?: Record<string, ToolOverride>;
-}
-
-export interface HeartbeatConfig {
-  enabled: boolean;
-  intervalMinutes: number;
-  checklistPath?: string;
-  suppressToken: string;
 }
 
 export interface ContextFilesConfig {
@@ -59,62 +61,6 @@ export interface MCPServerConfig {
   trust?: "trusted" | "prompt" | "blocked";
   sessionAvailability?: "all" | "session_opt_in" | "admin_only";
   tools?: MCPServerToolFilterConfig;
-}
-
-export interface DeliveryTarget {
-  connector?: string;
-}
-
-export interface RetryPolicy {
-  maxAttempts?: number;
-  delaySeconds?: number;
-}
-
-export interface CronTask {
-  id?: string;
-  name: string;
-  schedule: string;
-  prompt: string;
-  enabled: boolean;
-  paused?: boolean;
-  oneShot?: boolean;
-  model?: string;
-  runAt?: string;
-  allowedTools?: string[];
-  allowedToolsets?: string[];
-  skills?: string[];
-  retryPolicy?: RetryPolicy;
-  delivery?: DeliveryTarget;
-  scheduleKind?: "cron" | "interval" | "once";
-  intervalMinutes?: number;
-  lastRunAt?: string;
-  nextRunAt?: string | null;
-  lastStatus?: "success" | "error";
-  lastSummary?: string;
-  createdBySessionId?: string;
-}
-
-export interface WebhookTask {
-  id?: string;
-  name: string;
-  slug: string;
-  prompt: string;
-  enabled: boolean;
-  model?: string;
-  allowedTools?: string[];
-  allowedToolsets?: string[];
-  skills?: string[];
-  retryPolicy?: RetryPolicy;
-  delivery?: DeliveryTarget;
-  lastRunAt?: string;
-  lastStatus?: "success" | "error";
-  lastSummary?: string;
-  createdBySessionId?: string;
-}
-
-export interface AutomationConfig {
-  cronTasks: CronTask[];
-  webhookTasks?: WebhookTask[];
 }
 
 export interface RuntimeConfig {
