@@ -1,11 +1,19 @@
 import { test, expect } from "bun:test";
 import { Agent } from "@aria/engine/agent/index.js";
 import type { AgentEvent } from "@aria/engine/agent/types.js";
-import { makeLiveRouter, describeLive } from "../helpers/live-model.js";
+import {
+  describeLive,
+  getLiveTestLabel,
+  makeLiveRouter,
+  resolveLiveProviderSelection,
+} from "../helpers/live-model.js";
 import { echoTool } from "../helpers/test-tools.js";
 
 /** Collect all events from an agent chat turn */
-async function collectEvents(agent: Agent, message: string): Promise<AgentEvent[]> {
+async function collectEvents(
+  agent: Agent,
+  message: string,
+): Promise<AgentEvent[]> {
   const events: AgentEvent[] = [];
   for await (const event of agent.chat(message)) {
     events.push(event);
@@ -14,6 +22,8 @@ async function collectEvents(agent: Agent, message: string): Promise<AgentEvent[
 }
 
 describeLive("Agent chat — live LLM tests", () => {
+  const liveSelection = resolveLiveProviderSelection();
+
   test("single-turn text response", async () => {
     const agent = new Agent({
       router: makeLiveRouter(),
@@ -28,28 +38,42 @@ describeLive("Agent chat — live LLM tests", () => {
     expect(types.at(-1)).toBe("done");
     expect(types).not.toContain("error");
 
-    const doneEvent = events.find((e) => e.type === "done") as Extract<AgentEvent, { type: "done" }>;
+    const doneEvent = events.find((e) => e.type === "done") as Extract<
+      AgentEvent,
+      { type: "done" }
+    >;
     expect(doneEvent.stopReason).toBeTruthy();
+    expect(getLiveTestLabel(liveSelection)).not.toBe("no-live-provider");
   }, 15_000);
 
   test("tool use round-trip", async () => {
     const agent = new Agent({
       router: makeLiveRouter(),
       tools: [echoTool],
-      systemPrompt: "When asked to echo, use the echo tool. Do not explain — just call the tool.",
+      systemPrompt:
+        "When asked to echo, use the echo tool. Do not explain — just call the tool.",
     });
 
-    const events = await collectEvents(agent, 'Use the echo tool with message "test123"');
+    const events = await collectEvents(
+      agent,
+      'Use the echo tool with message "test123"',
+    );
     const types = events.map((e) => e.type);
 
     expect(types).toContain("tool_start");
     expect(types).toContain("tool_end");
     expect(types.at(-1)).toBe("done");
 
-    const toolStart = events.find((e) => e.type === "tool_start") as Extract<AgentEvent, { type: "tool_start" }>;
+    const toolStart = events.find((e) => e.type === "tool_start") as Extract<
+      AgentEvent,
+      { type: "tool_start" }
+    >;
     expect(toolStart.name).toBe("echo");
 
-    const toolEnd = events.find((e) => e.type === "tool_end") as Extract<AgentEvent, { type: "tool_end" }>;
+    const toolEnd = events.find((e) => e.type === "tool_end") as Extract<
+      AgentEvent,
+      { type: "tool_end" }
+    >;
     expect(toolEnd.name).toBe("echo");
     expect(toolEnd.result.content).toBeTruthy();
   }, 30_000);

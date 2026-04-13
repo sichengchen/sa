@@ -12,7 +12,12 @@ import { SkillRegistry } from "@aria/engine/skills/index.js";
 import { Scheduler, createHeartbeatTask } from "@aria/engine/scheduler.js";
 import type { EngineRuntime } from "@aria/engine/runtime.js";
 import type { EngineEvent } from "@aria/protocol";
-import { makeLiveRouter, describeLive } from "../helpers/live-model.js";
+import {
+  describeLive,
+  getLiveTestLabel,
+  makeLiveRouter,
+  resolveLiveProviderSelection,
+} from "../helpers/live-model.js";
 import { echoTool } from "../helpers/test-tools.js";
 import { SessionArchiveManager } from "@aria/engine/session-archive.js";
 import { AuditLogger } from "@aria/engine/audit.js";
@@ -24,8 +29,11 @@ import { OperationalStore } from "@aria/engine/operational-store.js";
 let testDir: string;
 let runtime: EngineRuntime;
 let masterToken: string;
+const liveSelection = resolveLiveProviderSelection();
 
-async function createLiveTestRuntime(runtimeHome: string): Promise<EngineRuntime> {
+async function createLiveTestRuntime(
+  runtimeHome: string,
+): Promise<EngineRuntime> {
   await mkdir(join(runtimeHome, "memory"), { recursive: true });
   await writeFile(
     join(runtimeHome, "IDENTITY.md"),
@@ -41,10 +49,20 @@ async function createLiveTestRuntime(runtimeHome: string): Promise<EngineRuntime
         memory: { enabled: true, directory: "memory" },
       },
       providers: [
-        { id: "anthropic", type: "anthropic", apiKeyEnvVar: "ANTHROPIC_API_KEY" },
+        {
+          id: "anthropic",
+          type: "anthropic",
+          apiKeyEnvVar: "ANTHROPIC_API_KEY",
+        },
       ],
       models: [
-        { name: "haiku", provider: "anthropic", model: "claude-3-5-haiku-20241022", temperature: 0, maxTokens: 128 },
+        {
+          name: "haiku",
+          provider: "anthropic",
+          model: "claude-3-5-haiku-20241022",
+          temperature: 0,
+          maxTokens: 128,
+        },
       ],
       defaultModel: "haiku",
     }),
@@ -61,7 +79,10 @@ async function createLiveTestRuntime(runtimeHome: string): Promise<EngineRuntime
   await auth.init();
   const archive = new SessionArchiveManager(runtimeHome);
   await archive.init();
-  const checkpoints = new CheckpointManager(runtimeHome, { enabled: true, maxSnapshots: 10 });
+  const checkpoints = new CheckpointManager(runtimeHome, {
+    enabled: true,
+    maxSnapshots: 10,
+  });
   const mcp = new MCPManager(undefined, runtimeHome);
   await mcp.init();
 
@@ -75,17 +96,24 @@ async function createLiveTestRuntime(runtimeHome: string): Promise<EngineRuntime
   return {
     config,
     router,
-    memory: { init: async () => {}, loadContext: async () => "", persist: async () => {} } as any,
+    memory: {
+      init: async () => {},
+      loadContext: async () => "",
+      persist: async () => {},
+    } as any,
     store,
     archive,
     checkpoints,
     mcp,
     tools,
     promptEngine: {
-      buildBasePrompt: async () => "Reply briefly. When asked to use a tool, use it without explanation.",
-      buildSessionPrompt: async () => "Reply briefly. When asked to use a tool, use it without explanation.",
+      buildBasePrompt: async () =>
+        "Reply briefly. When asked to use a tool, use it without explanation.",
+      buildSessionPrompt: async () =>
+        "Reply briefly. When asked to use a tool, use it without explanation.",
     } as any,
-    systemPrompt: "Reply briefly. When asked to use a tool, use it without explanation.",
+    systemPrompt:
+      "Reply briefly. When asked to use a tool, use it without explanation.",
     sessions,
     auth,
     skills,
@@ -134,10 +162,16 @@ describeLive("tRPC procedures — live LLM tests", () => {
 
   test("chat.stream returns text_delta and done events", async () => {
     const caller = createCaller();
-    const { session } = await caller.session.create({ connectorType: "tui", prefix: "tui" });
+    const { session } = await caller.session.create({
+      connectorType: "tui",
+      prefix: "tui",
+    });
 
     const events: EngineEvent[] = [];
-    const gen = await caller.chat.stream({ sessionId: session.id, message: "Say hello" });
+    const gen = await caller.chat.stream({
+      sessionId: session.id,
+      message: "Say hello",
+    });
     for await (const event of gen) {
       events.push(event);
     }
@@ -146,11 +180,15 @@ describeLive("tRPC procedures — live LLM tests", () => {
     expect(types).toContain("text_delta");
     expect(types.at(-1)).toBe("done");
     expect(types).not.toContain("error");
+    expect(getLiveTestLabel(liveSelection)).not.toBe("no-live-provider");
   }, 15_000);
 
   test("chat.stream with tool use emits tool events for TUI", async () => {
     const caller = createCaller();
-    const { session } = await caller.session.create({ connectorType: "tui", prefix: "tui" });
+    const { session } = await caller.session.create({
+      connectorType: "tui",
+      prefix: "tui",
+    });
 
     const events: EngineEvent[] = [];
     const gen = await caller.chat.stream({
