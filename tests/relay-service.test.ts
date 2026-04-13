@@ -3,7 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "bun:test";
 
-import { createAriaRelayServiceBootstrap } from "../services/aria-relay/src/index.js";
+import {
+  createAriaRelayServiceBootstrap,
+  resolveAriaRelayStatePath,
+  runAriaRelayServiceHost,
+} from "../services/aria-relay/src/index.js";
 
 describe("relay service surface", () => {
   test("exposes a thin relay wrapper over @aria/relay", async () => {
@@ -18,6 +22,7 @@ describe("relay service surface", () => {
         planes: ["control", "data", "push"],
       });
       expect(bootstrap.service.capabilities).toContain("direct-or-relayed-routing");
+      expect(bootstrap.statePath).toBe(join(dir, "relay-state.json"));
 
       const device = await bootstrap.relay.registerDevice({
         deviceId: "device-1",
@@ -56,6 +61,25 @@ describe("relay service surface", () => {
         attachmentKind: "remote_project_thread",
         transportMode: "relay_tunnel",
         resumable: true,
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("resolves relay state paths and runs the thin relay host", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "aria-relay-host-"));
+    try {
+      expect(resolveAriaRelayStatePath(dir)).toBe(join(dir, "relay-state.json"));
+
+      const host = await runAriaRelayServiceHost({ runtimeHome: dir });
+      expect(host.statePath).toBe(join(dir, "relay-state.json"));
+      expect(await host.store.load()).toEqual({
+        servers: [],
+        devices: [],
+        accessGrants: [],
+        attachments: [],
+        events: [],
       });
     } finally {
       await rm(dir, { recursive: true, force: true });
