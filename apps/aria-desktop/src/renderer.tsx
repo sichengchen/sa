@@ -6,6 +6,9 @@ import {
   connectAriaDesktopAppShellModel,
   createAriaDesktopAppShellModel,
   loadAriaDesktopAppShellRecentSessions,
+  openAriaDesktopAppShellSession,
+  sendAriaDesktopAppShellMessage,
+  stopAriaDesktopAppShell,
   switchAriaDesktopAppShellServer,
   type AriaDesktopAppShellModel,
   type CreateAriaDesktopAppShellModelOptions,
@@ -19,6 +22,17 @@ export interface AriaDesktopRendererTarget {
 export interface AriaDesktopRendererMount {
   root: Root;
   model: Awaited<ReturnType<typeof startAriaDesktopRendererModel>>;
+  controller: AriaDesktopRendererController;
+}
+
+export interface AriaDesktopRendererController {
+  getModel(): AriaDesktopAppShellModel;
+  subscribe(listener: (model: AriaDesktopAppShellModel) => void): () => void;
+  start(): Promise<AriaDesktopAppShellModel>;
+  switchServer(serverId: string): Promise<AriaDesktopAppShellModel>;
+  openSession(sessionId: string): Promise<AriaDesktopAppShellModel>;
+  sendMessage(message: string): Promise<AriaDesktopAppShellModel>;
+  stop(): Promise<AriaDesktopAppShellModel>;
 }
 
 export async function startAriaDesktopRendererModel(
@@ -35,6 +49,50 @@ export async function switchAriaDesktopRendererModel(
   return switchAriaDesktopAppShellServer(model, serverId);
 }
 
+export function createAriaDesktopRendererController(
+  options: CreateAriaDesktopAppShellModelOptions,
+): AriaDesktopRendererController {
+  let model = createAriaDesktopAppShellModel(options);
+  const listeners = new Set<(model: AriaDesktopAppShellModel) => void>();
+
+  const publish = () => {
+    for (const listener of listeners) {
+      listener(model);
+    }
+    return model;
+  };
+
+  const update = async (next: Promise<AriaDesktopAppShellModel>) => {
+    model = await next;
+    return publish();
+  };
+
+  return {
+    getModel() {
+      return model;
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    start() {
+      return update(startAriaDesktopRendererModel(model.sourceOptions));
+    },
+    switchServer(serverId: string) {
+      return update(switchAriaDesktopRendererModel(model, serverId));
+    },
+    openSession(sessionId: string) {
+      return update(openAriaDesktopAppShellSession(model, sessionId));
+    },
+    sendMessage(message: string) {
+      return update(sendAriaDesktopAppShellMessage(model, message));
+    },
+    stop() {
+      return update(stopAriaDesktopAppShell(model));
+    },
+  };
+}
+
 export function resolveAriaDesktopRendererTarget(
   config: Partial<AriaDesktopRendererTarget> | undefined,
 ): AriaDesktopRendererTarget {
@@ -48,12 +106,16 @@ export async function mountAriaDesktopRenderer(
   container: Element,
   config?: Partial<AriaDesktopRendererTarget>,
 ): Promise<AriaDesktopRendererMount> {
-  const model = await startAriaDesktopRendererModel({
+  const controller = createAriaDesktopRendererController({
     target: resolveAriaDesktopRendererTarget(config),
   });
   const root = createRoot(container);
-  root.render(createElement(AriaDesktopApplicationRoot, { model }));
-  return { root, model };
+  const render = (nextModel: AriaDesktopAppShellModel) =>
+    root.render(createElement(AriaDesktopApplicationRoot, { model: nextModel }));
+  render(controller.getModel());
+  controller.subscribe(render);
+  const model = await controller.start();
+  return { root, model, controller };
 }
 
 const rootElement = typeof document !== "undefined" ? document.getElementById("root") : null;

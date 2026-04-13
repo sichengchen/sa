@@ -4,6 +4,7 @@ import {
   startAriaMobileNativeHostShell,
 } from "../apps/aria-mobile/src/app.js";
 import {
+  createAriaMobileNativeHostController,
   createAriaMobileNativeHostBootstrap,
   resolveAriaMobileNativeHostTarget,
   startAriaMobileNativeHostBootstrap,
@@ -239,5 +240,45 @@ describe("aria-mobile native host scaffold", () => {
     expect(switched.target.serverId).toBe("relay");
     expect(switched.shell.activeServerId).toBe("relay");
     expect(switched.model.sessionId).toBe("relay:session-1");
+  });
+
+  test("exposes a pure mobile native host controller", async () => {
+    const state = {
+      connected: true,
+      sessionId: "mobile:session-1",
+      sessionStatus: "resumed" as const,
+      approvalMode: "ask" as const,
+      securityMode: "trusted" as const,
+      securityModeRemainingTTL: 600,
+      modelName: "sonnet",
+      agentName: "Esperta Aria",
+      messages: [{ role: "assistant" as const, content: "hello" }],
+      streamingText: "",
+      isStreaming: false,
+      pendingApproval: null,
+      pendingQuestion: null,
+      lastError: null,
+    };
+    const controller = createAriaMobileNativeHostController({
+      serverId: "mobile",
+      baseUrl: "https://aria.example.test/",
+      ariaThreadController: {
+        getState: () => state,
+        connect: async () => state,
+        sendMessage: async () => state,
+        stop: async () => state,
+        openSession: async () => state,
+        approveToolCall: async () => state,
+        acceptToolCallForSession: async () => state,
+        answerQuestion: async () => state,
+        listSessions: async () => [],
+        listArchivedSessions: async () => [],
+        searchSessions: async () => [],
+      } as any,
+    });
+
+    const started = await controller.start();
+    expect(started.model.sessionId).toBe("mobile:session-1");
+    expect(controller.getBootstrap().model.latestMessage).toBe("hello");
   });
 });

@@ -5,6 +5,7 @@ import {
   runAriaDesktopElectronHost,
 } from "../apps/aria-desktop/src/electron-host.js";
 import {
+  createAriaDesktopRendererController,
   resolveAriaDesktopRendererTarget,
   startAriaDesktopRendererModel,
   switchAriaDesktopRendererModel,
@@ -267,5 +268,44 @@ describe("aria-desktop host scaffold", () => {
     expect(switched.activeServerLabel).toBe("Relay Mirror");
     expect(switched.ariaThread.state.sessionId).toBe("relay:session-1");
     expect(switched.ariaRecentSessions.map((session) => session.sessionId)).toEqual(["relay:live"]);
+  });
+
+  test("exposes a pure desktop renderer controller", async () => {
+    const state = {
+      connected: true,
+      sessionId: "desktop:session-1",
+      sessionStatus: "resumed" as const,
+      approvalMode: "ask" as const,
+      securityMode: "default" as const,
+      securityModeRemainingTTL: null,
+      modelName: "sonnet",
+      agentName: "Esperta Aria",
+      messages: [{ role: "assistant" as const, content: "hello" }],
+      streamingText: "",
+      isStreaming: false,
+      pendingApproval: null,
+      pendingQuestion: null,
+      lastError: null,
+    };
+    const controller = createAriaDesktopRendererController({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      createAriaThreadController: (() => ({
+        getState: () => state,
+        connect: async () => state,
+        sendMessage: async () => state,
+        stop: async () => state,
+        openSession: async () => state,
+        approveToolCall: async () => state,
+        acceptToolCallForSession: async () => state,
+        answerQuestion: async () => state,
+        listSessions: async () => [],
+        listArchivedSessions: async () => [],
+        searchSessions: async () => [],
+      })) as any,
+    });
+
+    const started = await controller.start();
+    expect(started.ariaThread.state.sessionId).toBe("desktop:session-1");
+    expect(controller.getModel().ariaThread.state.messages.at(-1)?.content).toBe("hello");
   });
 });

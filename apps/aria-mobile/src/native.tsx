@@ -2,9 +2,8 @@ import { startTransition, useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { type AriaMobileAppShell } from "./app.js";
 import {
-  createAriaMobileNativeHostBootstrap,
+  createAriaMobileNativeHostController,
   resolveAriaMobileNativeHostTarget,
-  startAriaMobileNativeHostBootstrap,
 } from "./native-host.js";
 import { createAriaMobileNativeHostModel } from "./native-model.js";
 
@@ -13,14 +12,12 @@ export function AriaMobileNativeHost() {
     serverId: process.env.EXPO_PUBLIC_ARIA_SERVER_ID,
     baseUrl: process.env.EXPO_PUBLIC_ARIA_SERVER_URL,
   });
-  const [shell, setShell] = useState<AriaMobileAppShell>(
-    () => createAriaMobileNativeHostBootstrap(target).shell,
-  );
+  const [controller] = useState(() => createAriaMobileNativeHostController(target));
+  const [shell, setShell] = useState<AriaMobileAppShell>(() => controller.getBootstrap().shell);
 
   useEffect(() => {
     let cancelled = false;
-
-    void startAriaMobileNativeHostBootstrap(target).then((bootstrap) => {
+    const unsubscribe = controller.subscribe((bootstrap) => {
       if (!cancelled) {
         startTransition(() => {
           setShell(bootstrap.shell);
@@ -28,10 +25,13 @@ export function AriaMobileNativeHost() {
       }
     });
 
+    void controller.start();
+
     return () => {
       cancelled = true;
+      unsubscribe();
     };
-  }, [target.baseUrl, target.serverId]);
+  }, [controller, target.baseUrl, target.serverId]);
 
   const model = createAriaMobileNativeHostModel(shell);
 
