@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Aria Mobile",
+    "slug": "aria-mobile",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "platforms": ["ios", "android"],
+    "assetBundlePatterns": ["**/*"]
+  }
+}

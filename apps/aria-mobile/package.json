@@ -3,5 +3,15 @@
   "private": true,
   "description": "Aria Mobile app surface over the @aria/mobile client shell seam",
   "type": "module",
-  "main": "./src/index.ts"
+  "main": "expo/AppEntry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "^6.1.2",
+    "expo": "^54.0.13",
+    "react-native": "^0.81.4"
+  }
 }
