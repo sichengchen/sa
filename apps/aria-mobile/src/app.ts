@@ -139,6 +139,29 @@ export function createAriaMobileAppShell(
   };
 }
 
+export async function connectAriaMobileAppShell(
+  shell: AriaMobileAppShell,
+): Promise<AriaMobileAppShell> {
+  await shell.ariaThread.controller.connect();
+
+  return {
+    ...shell,
+    ariaThread: {
+      ...shell.ariaThread,
+      state: shell.ariaThread.controller.getState(),
+    },
+  };
+}
+
+export async function createConnectedAriaMobileAppShell(
+  options: CreateAriaMobileShellOptions & {
+    ariaThreadController?: AriaChatController;
+    ariaThreadState?: AriaChatState;
+  },
+): Promise<AriaMobileAppShell> {
+  return connectAriaMobileAppShell(createAriaMobileAppShell(options));
+}
+
 export const ariaMobileAppModel = {
   app: ariaMobileApp,
   navigation: ariaMobileNavigation,

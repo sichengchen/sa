@@ -8,9 +8,11 @@ import {
   ariaMobileAppModel,
   ariaMobileHost,
   ariaMobileNavigation,
+  connectAriaMobileAppShell,
   createAriaMobileApplicationBootstrap,
   createAriaMobileApplicationShell,
   createAriaMobileApplicationRoot,
+  createConnectedAriaMobileAppShell,
   createAriaMobileAppShell,
   createAriaMobileHostBootstrap,
 } from "../apps/aria-mobile/src/index.js";
@@ -296,5 +298,41 @@ describe("Aria mobile app surface", () => {
     expect(Array.isArray(renderedProps.children)).toBe(true);
     expect((renderedProps.children as unknown[]).length).toBe(4);
     expect(rootProps.shell.ariaThread.state.connected).toBe(false);
+  });
+
+  test("can create a connected mobile app shell asynchronously", async () => {
+    const connectedState = {
+      connected: true,
+      sessionId: "mobile:session-1",
+      modelName: "sonnet",
+      agentName: "Esperta Aria",
+      messages: [{ role: "assistant" as const, content: "hello" }],
+      streamingText: "",
+      isStreaming: false,
+      lastError: null,
+    };
+    const controller = {
+      getState: () => connectedState,
+      connect: async () => connectedState,
+      sendMessage: async () => connectedState,
+    };
+
+    const shell = await createConnectedAriaMobileAppShell({
+      target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+      ariaThreadController: controller as any,
+    });
+    expect(shell.ariaThread.state).toMatchObject({
+      connected: true,
+      sessionId: "mobile:session-1",
+      modelName: "sonnet",
+    });
+
+    const connectedShell = await connectAriaMobileAppShell(
+      createAriaMobileAppShell({
+        target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+        ariaThreadController: controller as any,
+      }),
+    );
+    expect(connectedShell.ariaThread.state.connected).toBe(true);
   });
 });

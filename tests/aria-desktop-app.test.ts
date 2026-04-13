@@ -6,6 +6,8 @@ import {
   AriaDesktopApplicationRoot,
   ariaDesktopApplication,
   ariaDesktopHost,
+  createConnectedAriaDesktopAppShell,
+  createConnectedAriaDesktopAppShellModel,
   createAriaDesktopAppShell,
   createAriaDesktopAppShellModel,
   createAriaDesktopApplicationRoot,
@@ -307,5 +309,40 @@ describe("aria-desktop app assembly", () => {
     const rendered = AriaDesktopAppShell({ model });
     const renderedProps = asElementWithProps(rendered);
     expect(renderedProps.props["data-app-shell"]).toBe("aria-desktop");
+  });
+
+  test("can create a connected desktop app shell asynchronously", async () => {
+    const connectedState = {
+      connected: true,
+      sessionId: "desktop:session-1",
+      modelName: "sonnet",
+      agentName: "Esperta Aria",
+      messages: [{ role: "assistant" as const, content: "hello" }],
+      streamingText: "",
+      isStreaming: false,
+      lastError: null,
+    };
+    const controller = {
+      getState: () => connectedState,
+      connect: async () => connectedState,
+      sendMessage: async () => connectedState,
+    };
+
+    const model = await createConnectedAriaDesktopAppShellModel({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      ariaThreadController: controller as any,
+    });
+    expect(model.ariaThread.state).toMatchObject({
+      connected: true,
+      sessionId: "desktop:session-1",
+      modelName: "sonnet",
+    });
+
+    const built = await createConnectedAriaDesktopAppShell({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      ariaThreadController: controller as any,
+    });
+    expect(built.element.type).toBe(AriaDesktopAppShell);
+    expect(built.model.ariaThread.state.connected).toBe(true);
   });
 });

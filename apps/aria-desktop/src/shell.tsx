@@ -269,6 +269,26 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
 
 export interface CreateAriaDesktopAppShellOptions extends CreateAriaDesktopAppShellModelOptions {}
 
+export async function connectAriaDesktopAppShellModel(
+  model: AriaDesktopAppShellModel,
+): Promise<AriaDesktopAppShellModel> {
+  await model.ariaThread.controller.connect();
+
+  return {
+    ...model,
+    ariaThread: {
+      ...model.ariaThread,
+      state: model.ariaThread.controller.getState(),
+    },
+  };
+}
+
+export async function createConnectedAriaDesktopAppShellModel(
+  options: CreateAriaDesktopAppShellModelOptions,
+): Promise<AriaDesktopAppShellModel> {
+  return connectAriaDesktopAppShellModel(createAriaDesktopAppShellModel(options));
+}
+
 export function createAriaDesktopApplicationShell(
   options: CreateAriaDesktopAppShellModelOptions,
 ): AriaDesktopAppShellModel {
@@ -280,6 +300,17 @@ export function createAriaDesktopAppShell(options: CreateAriaDesktopAppShellOpti
   element: ReactElement;
 } {
   const model = createAriaDesktopAppShellModel(options);
+  return {
+    model,
+    element: <AriaDesktopAppShell model={model} />,
+  };
+}
+
+export async function createConnectedAriaDesktopAppShell(
+  options: CreateAriaDesktopAppShellOptions,
+): Promise<{ model: AriaDesktopAppShellModel; element: ReactElement }> {
+  const model = await createConnectedAriaDesktopAppShellModel(options);
+
   return {
     model,
     element: <AriaDesktopAppShell model={model} />,
