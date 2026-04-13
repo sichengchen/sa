@@ -105,7 +105,7 @@ describe("cli and runtime stability", () => {
     const appIndex = readRepoFile("apps/aria-server/src/index.ts");
     const appMain = readRepoFile("apps/aria-server/src/main.ts");
 
-    expect(cliIndex).toContain('await import("../../../apps/aria-server/src/index.js");');
+    expect(cliIndex).toContain('await import("aria-server");');
     expect(cliIndex).toContain("__server_host");
     expect(cliIndex).toContain("__engine");
     expect(cliIndex).not.toContain('await import("@aria/server/engine");');

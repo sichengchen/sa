@@ -1,7 +1,7 @@
 import { readFile, writeFile, unlink } from "node:fs/promises";
 import { existsSync, openSync } from "node:fs";
 import { spawn } from "node:child_process";
-import { ARIA_SERVER_DAEMON_COMMAND } from "../../../apps/aria-server/src/index.js";
+import { ARIA_SERVER_DAEMON_COMMAND } from "aria-server";
 import { CLI_NAME, HOME_ENV_VAR, RUNTIME_NAME } from "@aria/server/brand";
 import { getRuntimeDiscoveryPaths } from "./discovery.js";
 
