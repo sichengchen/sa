@@ -17,9 +17,9 @@ During this phase:
 
 ## Current-To-Target Ownership Map
 
-| Target surface | Current source owner | Seeded seam should own | Compatibility surface kept at |
-| --- | --- | --- | --- |
-| `services/aria-relay` | `packages/relay/src/{service,store,types}.ts` | Thin deployable/service wrapper for relay transport and access composition | `@aria/relay` |
+| Target surface        | Current source owner                          | Seeded seam should own                                                     | Compatibility surface kept at |
+| --------------------- | --------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------- |
+| `services/aria-relay` | `packages/relay/src/{service,store,types}.ts` | Thin deployable/service wrapper for relay transport and access composition | `@aria/relay`                 |
 
 ## Review Notes
 

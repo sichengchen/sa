@@ -51,9 +51,18 @@ function KVListEditor({
 
     // --- LIST ---
     if (mode === "list") {
-      if (key.escape) { onBack(); return; }
-      if (key.upArrow) { setSelected((s) => Math.max(0, s - 1)); return; }
-      if (key.downArrow) { setSelected((s) => Math.min(itemCount - 1, s + 1)); return; }
+      if (key.escape) {
+        onBack();
+        return;
+      }
+      if (key.upArrow) {
+        setSelected((s) => Math.max(0, s - 1));
+        return;
+      }
+      if (key.downArrow) {
+        setSelected((s) => Math.min(itemCount - 1, s + 1));
+        return;
+      }
       if (key.return) {
         if (isAddRow) {
           setAddName("");
@@ -89,7 +98,10 @@ function KVListEditor({
 
     // --- EDIT VALUE ---
     if (mode === "edit-value") {
-      if (key.escape) { setMode("list"); return; }
+      if (key.escape) {
+        setMode("list");
+        return;
+      }
       if (key.return) {
         setSaving(true);
         onSave(entries[selected]!.key, editValue).then(() => {
@@ -98,28 +110,44 @@ function KVListEditor({
         });
         return;
       }
-      if (key.backspace || key.delete) { setEditValue((v) => v.slice(0, -1)); return; }
-      if (input && !key.ctrl && !key.meta) { setEditValue((v) => v + input); }
+      if (key.backspace || key.delete) {
+        setEditValue((v) => v.slice(0, -1));
+        return;
+      }
+      if (input && !key.ctrl && !key.meta) {
+        setEditValue((v) => v + input);
+      }
       return;
     }
 
     // --- ADD NAME ---
     if (mode === "add-name") {
-      if (key.escape) { setMode("list"); return; }
+      if (key.escape) {
+        setMode("list");
+        return;
+      }
       if (key.return) {
         if (!addName.trim()) return;
         setEditValue("");
         setMode("add-value");
         return;
       }
-      if (key.backspace || key.delete) { setAddName((v) => v.slice(0, -1)); return; }
-      if (input && !key.ctrl && !key.meta) { setAddName((v) => v + input); }
+      if (key.backspace || key.delete) {
+        setAddName((v) => v.slice(0, -1));
+        return;
+      }
+      if (input && !key.ctrl && !key.meta) {
+        setAddName((v) => v + input);
+      }
       return;
     }
 
     // --- ADD VALUE ---
     if (mode === "add-value") {
-      if (key.escape) { setMode("add-name"); return; }
+      if (key.escape) {
+        setMode("add-name");
+        return;
+      }
       if (key.return) {
         setSaving(true);
         onAdd(addName.trim(), editValue).then(() => {
@@ -129,15 +157,22 @@ function KVListEditor({
         });
         return;
       }
-      if (key.backspace || key.delete) { setEditValue((v) => v.slice(0, -1)); return; }
-      if (input && !key.ctrl && !key.meta) { setEditValue((v) => v + input); }
+      if (key.backspace || key.delete) {
+        setEditValue((v) => v.slice(0, -1));
+        return;
+      }
+      if (input && !key.ctrl && !key.meta) {
+        setEditValue((v) => v + input);
+      }
       return;
     }
   });
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">{title}</Text>
+      <Text bold color="cyan">
+        {title}
+      </Text>
       <Text />
 
       {mode === "list" && (
@@ -163,7 +198,13 @@ function KVListEditor({
 
       {mode === "confirm-delete" && (
         <>
-          <Text>Delete <Text bold color="red">{entries[selected]?.key}</Text>? <Text dimColor>y/N</Text></Text>
+          <Text>
+            Delete{" "}
+            <Text bold color="red">
+              {entries[selected]?.key}
+            </Text>
+            ? <Text dimColor>y/N</Text>
+          </Text>
         </>
       )}
 
@@ -172,7 +213,9 @@ function KVListEditor({
           <Text bold>{entries[selected]?.key}</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Value: </Text>
+            <Text color="blue" bold>
+              Value:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -186,7 +229,9 @@ function KVListEditor({
           <Text bold>New entry</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Name: </Text>
+            <Text color="blue" bold>
+              Name:{" "}
+            </Text>
             <Text>{addName}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -200,7 +245,9 @@ function KVListEditor({
           <Text bold>{addName.trim()}</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Value: </Text>
+            <Text color="blue" bold>
+              Value:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -223,7 +270,10 @@ export function EnvironmentSettings({ config, homeDir, onSave, onBack }: Environ
     loadSecrets(homeDir).then((s) => setSecrets(s ?? { apiKeys: {} }));
   }, [homeDir]);
 
-  const envEntries: KVEntry[] = Object.entries(config.runtime.env ?? {}).map(([key, value]) => ({ key, value }));
+  const envEntries: KVEntry[] = Object.entries(config.runtime.env ?? {}).map(([key, value]) => ({
+    key,
+    value,
+  }));
   const secretEntries: KVEntry[] = secrets
     ? Object.entries(secrets.apiKeys).map(([key, value]) => ({ key, value }))
     : [];
@@ -235,9 +285,18 @@ export function EnvironmentSettings({ config, homeDir, onSave, onBack }: Environ
 
   useInput((_input, key) => {
     if (screen !== "menu") return;
-    if (key.escape) { onBack(); return; }
-    if (key.upArrow) { setSelected((s) => Math.max(0, s - 1)); return; }
-    if (key.downArrow) { setSelected((s) => Math.min(menuItems.length - 1, s + 1)); return; }
+    if (key.escape) {
+      onBack();
+      return;
+    }
+    if (key.upArrow) {
+      setSelected((s) => Math.max(0, s - 1));
+      return;
+    }
+    if (key.downArrow) {
+      setSelected((s) => Math.min(menuItems.length - 1, s + 1));
+      return;
+    }
     if (key.return) {
       setScreen(menuItems[selected]!.key as Screen);
     }
@@ -303,7 +362,9 @@ export function EnvironmentSettings({ config, homeDir, onSave, onBack }: Environ
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">Environment</Text>
+      <Text bold color="cyan">
+        Environment
+      </Text>
       <Text />
       {menuItems.map((item, i) => (
         <Text key={item.key}>

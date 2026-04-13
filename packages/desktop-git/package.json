@@ -2,8 +2,8 @@
   "name": "@aria/desktop-git",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "description": "Aria desktop-local git and worktree seam over the shared workspace services",
+  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

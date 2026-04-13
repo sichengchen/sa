@@ -9,14 +9,12 @@ interface ModelPickerProps {
   onCancel: () => void;
 }
 
-export function ModelPicker({
-  models,
-  activeModel,
-  onSelect,
-  onCancel,
-}: ModelPickerProps) {
+export function ModelPicker({ models, activeModel, onSelect, onCancel }: ModelPickerProps) {
   const [selectedIndex, setSelectedIndex] = useState(
-    Math.max(0, models.findIndex((m) => m.name === activeModel))
+    Math.max(
+      0,
+      models.findIndex((m) => m.name === activeModel),
+    ),
   );
 
   useInput((_input, key) => {
@@ -37,12 +35,7 @@ export function ModelPicker({
   });
 
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="single"
-      borderColor="cyan"
-      paddingX={1}
-    >
+    <Box flexDirection="column" borderStyle="single" borderColor="cyan" paddingX={1}>
       <Text bold color="cyan">
         Switch Model (↑↓ to navigate, Enter to select, Esc to cancel)
       </Text>
@@ -53,8 +46,7 @@ export function ModelPicker({
         <Box key={m.name}>
           <Text color={i === selectedIndex ? "cyan" : undefined}>
             {i === selectedIndex ? "● " : "○ "}
-            {m.name} ({m.provider} → {m.model})
-            {m.name === activeModel ? " (active)" : ""}
+            {m.name} ({m.provider} → {m.model}){m.name === activeModel ? " (active)" : ""}
           </Text>
         </Box>
       ))}

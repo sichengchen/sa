@@ -22,7 +22,7 @@ const FIELD_ORDER: Field[] = ["userName", "timezone", "communicationStyle", "abo
 
 export function UserProfile({ onNext, onBack, currentValues }: UserProfileProps) {
   const [phase, setPhase] = useState<"keep-or-change" | "edit">(
-    currentValues ? "keep-or-change" : "edit"
+    currentValues ? "keep-or-change" : "edit",
   );
   const [field, setField] = useState<Field>("userName");
   const [userName, setUserName] = useState(currentValues?.userName ?? "");
@@ -37,7 +37,10 @@ export function UserProfile({ onNext, onBack, currentValues }: UserProfileProps)
 
   useInput((input, key) => {
     if (phase === "keep-or-change") {
-      if (key.escape) { onBack(); return; }
+      if (key.escape) {
+        onBack();
+        return;
+      }
       if (input?.toLowerCase() === "k" && currentValues) {
         onNext(currentValues);
         return;
@@ -50,7 +53,10 @@ export function UserProfile({ onNext, onBack, currentValues }: UserProfileProps)
     }
 
     if (key.escape) {
-      if (currentValues) { setPhase("keep-or-change"); return; }
+      if (currentValues) {
+        setPhase("keep-or-change");
+        return;
+      }
       onBack();
       return;
     }
@@ -123,14 +129,20 @@ export function UserProfile({ onNext, onBack, currentValues }: UserProfileProps)
         </Text>
         <Text />
         <Text>Current configuration:</Text>
-        <Text>  Name: {currentValues.userName}</Text>
-        <Text>  Timezone: {currentValues.timezone || "(not set)"}</Text>
-        <Text>  Style: {currentValues.communicationStyle || "(not set)"}</Text>
-        {currentValues.aboutMe && <Text>  About: {currentValues.aboutMe}</Text>}
+        <Text> Name: {currentValues.userName}</Text>
+        <Text> Timezone: {currentValues.timezone || "(not set)"}</Text>
+        <Text> Style: {currentValues.communicationStyle || "(not set)"}</Text>
+        {currentValues.aboutMe && <Text> About: {currentValues.aboutMe}</Text>}
         <Text />
         <Text>
-          <Text color="yellow" bold>[K]</Text> Keep current{"  "}
-          <Text color="yellow" bold>[C]</Text> Change{"    "}
+          <Text color="yellow" bold>
+            [K]
+          </Text>{" "}
+          Keep current{"  "}
+          <Text color="yellow" bold>
+            [C]
+          </Text>{" "}
+          Change{"    "}
           <Text dimColor>Esc to go back</Text>
         </Text>
       </Box>
@@ -153,18 +165,14 @@ export function UserProfile({ onNext, onBack, currentValues }: UserProfileProps)
         <Text>{userName}</Text>
         {isActive("userName") && <Text color="blue">{"▊"}</Text>}
       </Box>
-      {showNameError && (
-        <Text color="red">  Name is required</Text>
-      )}
+      {showNameError && <Text color="red"> Name is required</Text>}
       <Box>
         <Text color={isActive("timezone") ? "blue" : "white"} bold={isActive("timezone")}>
           Timezone:{" "}
         </Text>
         <Text>{timezone || (isActive("timezone") ? "" : "")}</Text>
         {isActive("timezone") && <Text color="blue">{"▊"}</Text>}
-        {isActive("timezone") && !timezone && (
-          <Text dimColor> e.g. America/New_York</Text>
-        )}
+        {isActive("timezone") && !timezone && <Text dimColor> e.g. America/New_York</Text>}
       </Box>
       <Box>
         <Text
@@ -185,9 +193,7 @@ export function UserProfile({ onNext, onBack, currentValues }: UserProfileProps)
             </Text>
           </Text>
         ))}
-        {isActive("communicationStyle") && (
-          <Text dimColor>  ←/→ to pick, Enter to confirm</Text>
-        )}
+        {isActive("communicationStyle") && <Text dimColor> ←/→ to pick, Enter to confirm</Text>}
       </Box>
       <Box>
         <Text color={isActive("aboutMe") ? "blue" : "white"} bold={isActive("aboutMe")}>

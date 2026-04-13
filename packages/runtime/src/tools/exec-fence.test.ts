@@ -64,7 +64,9 @@ describe("validateExecPaths", () => {
     });
 
     it("allows commands with paths inside fence", () => {
-      expect(validateExecPaths(`cat ${HOME}/projects/app/README.md`, undefined, config)).toEqual({ ok: true });
+      expect(validateExecPaths(`cat ${HOME}/projects/app/README.md`, undefined, config)).toEqual({
+        ok: true,
+      });
     });
 
     it("allows commands with /tmp paths", () => {
@@ -83,22 +85,31 @@ describe("validateExecPaths", () => {
     });
 
     it("handles fence with ~ prefix", () => {
-      expect(validateExecPaths(`ls ${HOME}/projects`, undefined, {
-        fence: ["~/projects"],
-        alwaysDeny: [],
-      })).toEqual({ ok: true });
+      expect(
+        validateExecPaths(`ls ${HOME}/projects`, undefined, {
+          fence: ["~/projects"],
+          alwaysDeny: [],
+        }),
+      ).toEqual({ ok: true });
     });
   });
 
   describe("session overrides", () => {
     it("allows previously blocked path with override", () => {
       const overrides = new Set(["/etc"]);
-      expect(validateExecPaths("cat /etc/hosts", undefined, config, overrides)).toEqual({ ok: true });
+      expect(validateExecPaths("cat /etc/hosts", undefined, config, overrides)).toEqual({
+        ok: true,
+      });
     });
 
     it("cannot override ~/.aria (always denied)", () => {
       const overrides = new Set([`${HOME}/.aria`]);
-      const result = validateExecPaths(`cat ${HOME}/.aria/config.json`, undefined, config, overrides);
+      const result = validateExecPaths(
+        `cat ${HOME}/.aria/config.json`,
+        undefined,
+        config,
+        overrides,
+      );
       expect("ok" in result).toBe(false);
     });
   });

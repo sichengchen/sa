@@ -89,7 +89,9 @@ describe("secrets", () => {
 
     const originalWarn = console.warn;
     let warnMessage = "";
-    console.warn = (msg: string) => { warnMessage = msg; };
+    console.warn = (msg: string) => {
+      warnMessage = msg;
+    };
 
     const result = await loadSecrets(dir);
 
@@ -145,10 +147,7 @@ describe("unsupported legacy secrets", () => {
     const iv = randomBytes(16);
     const cipher = createCipheriv("aes-256-gcm", key, iv);
     const plaintext = JSON.stringify(secrets);
-    const encrypted = Buffer.concat([
-      cipher.update(plaintext, "utf-8"),
-      cipher.final(),
-    ]);
+    const encrypted = Buffer.concat([cipher.update(plaintext, "utf-8"), cipher.final()]);
     const authTag = cipher.getAuthTag();
 
     const encData = JSON.stringify({
@@ -169,7 +168,9 @@ describe("unsupported legacy secrets", () => {
 
     const originalWarn = console.warn;
     let warnMessage = "";
-    console.warn = (msg: string) => { warnMessage = msg; };
+    console.warn = (msg: string) => {
+      warnMessage = msg;
+    };
 
     const loaded = await loadSecrets(dir);
 
@@ -180,15 +181,20 @@ describe("unsupported legacy secrets", () => {
 
   it("returns null with specific warning for unrecoverable corruption", async () => {
     await writeFile(join(dir, ".salt"), randomBytes(32).toString("hex") + "\n");
-    await writeFile(join(dir, "secrets.enc"), JSON.stringify({
-      iv: randomBytes(16).toString("hex"),
-      authTag: randomBytes(16).toString("hex"),
-      data: randomBytes(64).toString("hex"),
-    }));
+    await writeFile(
+      join(dir, "secrets.enc"),
+      JSON.stringify({
+        iv: randomBytes(16).toString("hex"),
+        authTag: randomBytes(16).toString("hex"),
+        data: randomBytes(64).toString("hex"),
+      }),
+    );
 
     const originalWarn = console.warn;
     let warnMessage = "";
-    console.warn = (msg: string) => { warnMessage = msg; };
+    console.warn = (msg: string) => {
+      warnMessage = msg;
+    };
 
     const result = await loadSecrets(dir);
 

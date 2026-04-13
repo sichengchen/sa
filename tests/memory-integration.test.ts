@@ -72,7 +72,11 @@ describe("getMemoryContext", () => {
     await mgr.init();
 
     await mgr.saveLayer("profile", "tone", "Operator prefers direct language in trusted sessions.");
-    await mgr.saveLayer("operational", "session-mode", "Current session is running in trusted mode.");
+    await mgr.saveLayer(
+      "operational",
+      "session-mode",
+      "Current session is running in trusted mode.",
+    );
 
     const context = await mgr.getMemoryContext("trusted");
     expect(context).toContain("Profile memory");

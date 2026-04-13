@@ -2,8 +2,8 @@
   "name": "@aria/connectors-im",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "description": "Aria IM-style chat connectors and shared Chat SDK bridge",
+  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

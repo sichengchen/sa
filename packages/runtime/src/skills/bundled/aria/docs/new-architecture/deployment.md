@@ -113,19 +113,19 @@ This mode is intentionally narrower than server mode.
 
 ## Placement Matrix
 
-| Capability | Desktop local | Aria Server | Mobile | Relay |
-| --- | --- | --- | --- | --- |
-| `Aria Agent` | no | yes | no | no |
-| Aria-managed memory/context | no | yes | no | no |
-| IM connectors | no | yes | no | no |
-| heartbeat / cron / webhook | no | yes | no | no |
-| project control for Aria-managed workflows | no | yes | no | no |
-| remote coding jobs | no | yes | no | no |
-| local coding jobs | yes | no | no | no |
-| local repo/worktree access | yes | no | no | no |
-| Aria chat UI | yes, as client | yes, via console | yes, as client | no |
-| remote project UI | yes | not primary | yes | no |
-| access brokering | no | no | no | yes |
+| Capability                                 | Desktop local  | Aria Server      | Mobile         | Relay |
+| ------------------------------------------ | -------------- | ---------------- | -------------- | ----- |
+| `Aria Agent`                               | no             | yes              | no             | no    |
+| Aria-managed memory/context                | no             | yes              | no             | no    |
+| IM connectors                              | no             | yes              | no             | no    |
+| heartbeat / cron / webhook                 | no             | yes              | no             | no    |
+| project control for Aria-managed workflows | no             | yes              | no             | no    |
+| remote coding jobs                         | no             | yes              | no             | no    |
+| local coding jobs                          | yes            | no               | no             | no    |
+| local repo/worktree access                 | yes            | no               | no             | no    |
+| Aria chat UI                               | yes, as client | yes, via console | yes, as client | no    |
+| remote project UI                          | yes            | not primary      | yes            | no    |
+| access brokering                           | no             | no               | no             | yes   |
 
 ## Connectivity Modes
 

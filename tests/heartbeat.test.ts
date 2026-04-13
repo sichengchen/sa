@@ -102,13 +102,17 @@ describe("Heartbeat task", () => {
       },
     } as any;
 
-    const task = createHeartbeatTask({
-      runtimeHome: testDir,
-      mainAgent: fakeAgent,
-      notify: async (message: string) => {
-        notified = message;
+    const task = createHeartbeatTask(
+      {
+        runtimeHome: testDir,
+        mainAgent: fakeAgent,
+        notify: async (message: string) => {
+          notified = message;
+        },
       },
-    }, null, DEFAULT_HEARTBEAT);
+      null,
+      DEFAULT_HEARTBEAT,
+    );
 
     await task.handler();
 
@@ -126,13 +130,17 @@ describe("Heartbeat task", () => {
       },
     } as any;
 
-    const task = createHeartbeatTask({
-      runtimeHome: testDir,
-      mainAgent: fakeAgent,
-      notify: async () => {
-        notifyCount++;
+    const task = createHeartbeatTask(
+      {
+        runtimeHome: testDir,
+        mainAgent: fakeAgent,
+        notify: async () => {
+          notifyCount++;
+        },
       },
-    }, null, DEFAULT_HEARTBEAT);
+      null,
+      DEFAULT_HEARTBEAT,
+    );
 
     await task.handler();
 

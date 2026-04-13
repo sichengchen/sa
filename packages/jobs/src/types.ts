@@ -8,7 +8,14 @@ export interface JobRecord {
   createdAt: number;
 }
 
-export type DispatchStatus = "queued" | "accepted" | "running" | "waiting_approval" | "completed" | "failed" | "cancelled";
+export type DispatchStatus =
+  | "queued"
+  | "accepted"
+  | "running"
+  | "waiting_approval"
+  | "completed"
+  | "failed"
+  | "cancelled";
 
 export interface DispatchRecord {
   dispatchId: string;

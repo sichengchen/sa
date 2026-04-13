@@ -31,9 +31,7 @@ let runtime: EngineRuntime;
 let masterToken: string;
 const liveSelection = resolveLiveProviderSelection();
 
-async function createLiveTestRuntime(
-  runtimeHome: string,
-): Promise<EngineRuntime> {
+async function createLiveTestRuntime(runtimeHome: string): Promise<EngineRuntime> {
   await mkdir(join(runtimeHome, "memory"), { recursive: true });
   await writeFile(
     join(runtimeHome, "IDENTITY.md"),
@@ -112,8 +110,7 @@ async function createLiveTestRuntime(
       buildSessionPrompt: async () =>
         "Reply briefly. When asked to use a tool, use it without explanation.",
     } as any,
-    systemPrompt:
-      "Reply briefly. When asked to use a tool, use it without explanation.",
+    systemPrompt: "Reply briefly. When asked to use a tool, use it without explanation.",
     sessions,
     auth,
     skills,

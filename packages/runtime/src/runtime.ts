@@ -4,13 +4,25 @@ import { ModelRouter } from "./router/index.js";
 import { Agent } from "./agent/index.js";
 import type { ToolImpl, ToolApprovalCallback, AskUserCallback } from "./agent/index.js";
 import { MemoryManager } from "@aria/memory";
-import { askUserTool, createClaudeCodeTool, createCodexTool, createDelegateStatusTool, createDelegateTool, createMemoryDeleteTool, createMemoryReadTool, createMemorySearchTool, createMemoryWriteTool, createNotifyTool, createReadSkillTool, createSetEnvSecretTool, createSetEnvVariableTool, createSkillManageTool, createWebFetchTool, getBuiltinTools } from "@aria/tools";
+import {
+  askUserTool,
+  createClaudeCodeTool,
+  createCodexTool,
+  createDelegateStatusTool,
+  createDelegateTool,
+  createMemoryDeleteTool,
+  createMemoryReadTool,
+  createMemorySearchTool,
+  createMemoryWriteTool,
+  createNotifyTool,
+  createReadSkillTool,
+  createSetEnvSecretTool,
+  createSetEnvVariableTool,
+  createSkillManageTool,
+  createWebFetchTool,
+  getBuiltinTools,
+} from "@aria/tools";
 import { Orchestrator } from "./agent/orchestrator.js";
-
-
-
-
-
 
 import { SessionManager } from "./sessions.js";
 import { AuthManager } from "@aria/gateway/auth";
@@ -55,7 +67,12 @@ export interface EngineRuntime {
   /** The main session ID (engine-level, not tied to any connector) */
   mainSessionId: string;
   /** Create a new Agent instance for a session (each session gets its own Agent) */
-  createAgent(onToolApproval?: ToolApprovalCallback, modelOverride?: string, allowedTools?: string[], onAskUser?: AskUserCallback): Agent;
+  createAgent(
+    onToolApproval?: ToolApprovalCallback,
+    modelOverride?: string,
+    allowedTools?: string[],
+    onAskUser?: AskUserCallback,
+  ): Agent;
   /** Rebuild the runtime system prompt from current config, memory, and skills. */
   refreshSystemPrompt(): Promise<string>;
   /** Close long-lived runtime resources. Safe to call multiple times. */
@@ -80,7 +97,11 @@ export async function createRuntime(): Promise<EngineRuntime> {
   await store.init();
 
   const checkpoints = new CheckpointManager(config.homeDir, ariaConfig.runtime.checkpoints);
-  const mcp = new MCPManager(ariaConfig.runtime.mcp?.servers, process.env.TERMINAL_CWD ?? process.cwd(), store);
+  const mcp = new MCPManager(
+    ariaConfig.runtime.mcp?.servers,
+    process.env.TERMINAL_CWD ?? process.cwd(),
+    store,
+  );
   await mcp.init();
 
   // Apply search weights from config
@@ -115,15 +136,11 @@ export async function createRuntime(): Promise<EngineRuntime> {
   for (const provider of ariaConfig.providers) {
     const envVar = provider.apiKeyEnvVar;
     if (!process.env[envVar] && !secrets?.apiKeys[envVar]) {
-      console.warn(
-        `[aria] Warning: API key "${envVar}" not found for provider "${provider.id}".`
-      );
-      console.warn(
-        `[aria]   Store it with: ${CLI_NAME} onboard (or set_env_secret tool)`
-      );
+      console.warn(`[aria] Warning: API key "${envVar}" not found for provider "${provider.id}".`);
+      console.warn(`[aria]   Store it with: ${CLI_NAME} onboard (or set_env_secret tool)`);
       if (process.platform === "darwin") {
         console.warn(
-          "[aria]   Note: launchd services do not inherit shell env vars — keys must be in secrets.enc"
+          "[aria]   Note: launchd services do not inherit shell env vars — keys must be in secrets.enc",
         );
       }
     }
@@ -131,7 +148,11 @@ export async function createRuntime(): Promise<EngineRuntime> {
 
   const baseConfigFile = config.getConfigFile();
   const router = ModelRouter.fromConfig(
-    { providers: ariaConfig.providers, models: ariaConfig.models, defaultModel: ariaConfig.defaultModel },
+    {
+      providers: ariaConfig.providers,
+      models: ariaConfig.models,
+      defaultModel: ariaConfig.defaultModel,
+    },
     secrets,
     async (state) => {
       await config.saveConfig({
@@ -160,7 +181,10 @@ export async function createRuntime(): Promise<EngineRuntime> {
         model: embCfg.model,
       });
     } catch (err) {
-      console.warn("[aria] Failed to initialize embeddings:", err instanceof Error ? err.message : String(err));
+      console.warn(
+        "[aria] Failed to initialize embeddings:",
+        err instanceof Error ? err.message : String(err),
+      );
     }
   }
 
@@ -218,12 +242,16 @@ export async function createRuntime(): Promise<EngineRuntime> {
   tools.push(delegateStatusTool);
 
   // Add native coding agent tools
-  tools.push(createClaudeCodeTool({
-    getSecret: (envVar) => secrets?.apiKeys[envVar],
-  }));
-  tools.push(createCodexTool({
-    getSecret: (envVar) => secrets?.apiKeys[envVar],
-  }));
+  tools.push(
+    createClaudeCodeTool({
+      getSecret: (envVar) => secrets?.apiKeys[envVar],
+    }),
+  );
+  tools.push(
+    createCodexTool({
+      getSecret: (envVar) => secrets?.apiKeys[envVar],
+    }),
+  );
 
   const promptEngine = new PromptEngine({
     config,
@@ -268,25 +296,34 @@ export async function createRuntime(): Promise<EngineRuntime> {
   const notifyTool = tools.find((t) => t.name === "notify");
 
   // Ensure HEARTBEAT.md exists
-  const heartbeatMdPath = join(runtimeHome, ariaConfig.runtime.heartbeat?.checklistPath ?? "HEARTBEAT.md");
+  const heartbeatMdPath = join(
+    runtimeHome,
+    ariaConfig.runtime.heartbeat?.checklistPath ?? "HEARTBEAT.md",
+  );
   if (!existsSync(heartbeatMdPath)) {
     await writeFile(heartbeatMdPath, DEFAULT_HEARTBEAT_MD);
   }
 
   // Initialize scheduler with agent-based heartbeat
   const scheduler = new Scheduler();
-  scheduler.register(createHeartbeatTask({
-    runtimeHome,
-    mainAgent,
-    notify: notifyTool
-      ? async (message: string) => {
-        const result = await notifyTool.execute({ message });
-        if (result.isError) {
-          console.warn("[heartbeat] Notify failed:", result.content);
-        }
-      }
-      : undefined,
-  }, null, ariaConfig.runtime.heartbeat));
+  scheduler.register(
+    createHeartbeatTask(
+      {
+        runtimeHome,
+        mainAgent,
+        notify: notifyTool
+          ? async (message: string) => {
+              const result = await notifyTool.execute({ message });
+              if (result.isError) {
+                console.warn("[heartbeat] Notify failed:", result.content);
+              }
+            }
+          : undefined,
+      },
+      null,
+      ariaConfig.runtime.heartbeat,
+    ),
+  );
 
   // Restore persisted cron tasks from config
   const cronTasks = ariaConfig.runtime.automation?.cronTasks ?? [];
@@ -324,10 +361,13 @@ export async function createRuntime(): Promise<EngineRuntime> {
       memory.close();
       await auth.cleanup();
     },
-    createAgent(onToolApproval?: ToolApprovalCallback, modelOverride?: string, allowedTools?: string[], onAskUser?: AskUserCallback): Agent {
-      const agentTools = allowedTools
-        ? tools.filter((t) => allowedTools.includes(t.name))
-        : tools;
+    createAgent(
+      onToolApproval?: ToolApprovalCallback,
+      modelOverride?: string,
+      allowedTools?: string[],
+      onAskUser?: AskUserCallback,
+    ): Agent {
+      const agentTools = allowedTools ? tools.filter((t) => allowedTools.includes(t.name)) : tools;
       return new Agent({
         router,
         tools: agentTools,

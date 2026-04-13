@@ -1,4 +1,1 @@
-export {
-  getRuntimeDiscoveryPaths,
-  type RuntimeDiscoveryPaths,
-} from "@aria/server/discovery";
+export { getRuntimeDiscoveryPaths, type RuntimeDiscoveryPaths } from "@aria/server/discovery";

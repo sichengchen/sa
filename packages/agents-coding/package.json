@@ -2,8 +2,8 @@
   "name": "@aria/agents-coding",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "description": "Aria coding-agent adapters and shared backend contracts",
+  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

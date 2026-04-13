@@ -19,24 +19,24 @@ Use `@aria/*`.
 
 ### Reserved terms
 
-| Term | Use it for | Do not use it for |
-| --- | --- | --- |
-| `agent` | LLM-based assistants or coding-agent adapters | generic services or daemons |
-| `runtime` | the shared runtime kernel | the deployed server product |
-| `server` | the deployable server app | the runtime kernel |
-| `relay` | secure access and hosted-runtime layer | direct assistant behavior |
-| `connector` | IM/chat integrations | generic client integrations |
-| `bridge` | desktop-local execution integration | server-side services |
-| `workspace` | execution boundary | a casual synonym for repo or folder |
+| Term        | Use it for                                    | Do not use it for                   |
+| ----------- | --------------------------------------------- | ----------------------------------- |
+| `agent`     | LLM-based assistants or coding-agent adapters | generic services or daemons         |
+| `runtime`   | the shared runtime kernel                     | the deployed server product         |
+| `server`    | the deployable server app                     | the runtime kernel                  |
+| `relay`     | secure access and hosted-runtime layer        | direct assistant behavior           |
+| `connector` | IM/chat integrations                          | generic client integrations         |
+| `bridge`    | desktop-local execution integration           | server-side services                |
+| `workspace` | execution boundary                            | a casual synonym for repo or folder |
 
 ### Renames from older language
 
-| Older term | New term |
-| --- | --- |
-| `engine` | `runtime` |
-| `TUI connector` | `Aria Console` |
-| generic `connectors` | `IM connectors` when referring to Slack/Telegram/etc. |
-| top-level `session` UX | `thread` |
+| Older term             | New term                                              |
+| ---------------------- | ----------------------------------------------------- |
+| `engine`               | `runtime`                                             |
+| `TUI connector`        | `Aria Console`                                        |
+| generic `connectors`   | `IM connectors` when referring to Slack/Telegram/etc. |
+| top-level `session` UX | `thread`                                              |
 
 ## Proposed Repo Layout
 
@@ -92,33 +92,33 @@ For the concrete app-shell decisions and Bun-runtime clarification, see [tech-de
 
 > Current repo note: most target package names on this page are now real ownership boundaries on `new-aria`. The migration history for the runtime-core wave is tracked in [../development/runtime-extraction-ledger.md](../development/runtime-extraction-ledger.md), the Aria-owned package wave in [../development/phase-2-extraction-ledger.md](../development/phase-2-extraction-ledger.md), the server package wave in [../development/phase-4-server-package-seams-ledger.md](../development/phase-4-server-package-seams-ledger.md), the server product seam in [../development/phase-5-server-app-seam-ledger.md](../development/phase-5-server-app-seam-ledger.md), the client seam waves for `@aria/access-client`, `@aria/ui`, `apps/aria-desktop`, and `apps/aria-mobile` in [../development/phase-6-client-app-seams-ledger.md](../development/phase-6-client-app-seams-ledger.md) and [../development/phase-8-client-shell-seams-ledger.md](../development/phase-8-client-shell-seams-ledger.md), the cross-phase owner classification in [../development/phase-9-architecture-truth-table.md](../development/phase-9-architecture-truth-table.md), and the relay service wrapper in [../development/phase-13-relay-service-seam-ledger.md](../development/phase-13-relay-service-seam-ledger.md). The main remaining legacy surfaces are compatibility packages such as `@aria/runtime` and `packages/connectors`.
 
-| Package | Responsibility |
-| --- | --- |
-| `@aria/server` | Server app bootstrap, composition root, deployment runtime for `Aria Server` |
-| `@aria/desktop` | Desktop app shell, navigation, thread views, project surfaces |
-| `@aria/mobile` | Mobile app shell and mobile-specific UI |
-| `@aria/runtime` | Shared runtime kernel for threads, runs, policy, and orchestration |
-| `@aria/protocol` | Shared request, event, identity, and streaming contracts |
-| `@aria/gateway` | Authenticated API surface and realtime transport handling |
-| `@aria/projects` | Project registry, project-thread coordination, environment switching, and Aria-to-worker orchestration control |
-| `@aria/prompt` | Prompt assembly pipeline and context overlays |
-| `@aria/tools` | Tool runtime, built-in tool definitions, execution adapters |
-| `@aria/policy` | Capability policy, approvals, execution restrictions, trust rules |
-| `@aria/memory` | Aria memory layers, skills, context retrieval, assistant knowledge |
-| `@aria/automation` | Heartbeat, cron, webhook, automation scheduling and execution |
-| `@aria/store` | Durable database access, repositories, migrations, persistence services |
-| `@aria/audit` | Audit event models, sinks, queries, policy logging hooks |
-| `@aria/workspaces` | Workspace, project, environment, repo, worktree, sandbox models |
-| `@aria/jobs` | Remote job orchestration and lifecycle management |
-| `@aria/agent-aria` | The server-hosted Aria assistant agent implementation |
-| `@aria/agents-coding` | Codex, Claude Code, OpenCode adapters and shared coding-agent contracts |
-| `@aria/connectors-im` | Slack/Telegram/Discord/Teams style connector integrations |
-| `@aria/console` | Server-local terminal UI for chatting with `Aria Agent` |
-| `@aria/access-client` | Shared client transport for desktop and mobile |
-| `@aria/desktop-bridge` | Local desktop execution bridge for local project mode |
-| `@aria/desktop-git` | Local git and worktree integration helpers |
-| `@aria/ui` | Shared UI primitives and cross-app presentation components |
-| `@aria/relay` | Secure access broker and optional hosted runtime service |
+| Package                | Responsibility                                                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `@aria/server`         | Server app bootstrap, composition root, deployment runtime for `Aria Server`                                   |
+| `@aria/desktop`        | Desktop app shell, navigation, thread views, project surfaces                                                  |
+| `@aria/mobile`         | Mobile app shell and mobile-specific UI                                                                        |
+| `@aria/runtime`        | Shared runtime kernel for threads, runs, policy, and orchestration                                             |
+| `@aria/protocol`       | Shared request, event, identity, and streaming contracts                                                       |
+| `@aria/gateway`        | Authenticated API surface and realtime transport handling                                                      |
+| `@aria/projects`       | Project registry, project-thread coordination, environment switching, and Aria-to-worker orchestration control |
+| `@aria/prompt`         | Prompt assembly pipeline and context overlays                                                                  |
+| `@aria/tools`          | Tool runtime, built-in tool definitions, execution adapters                                                    |
+| `@aria/policy`         | Capability policy, approvals, execution restrictions, trust rules                                              |
+| `@aria/memory`         | Aria memory layers, skills, context retrieval, assistant knowledge                                             |
+| `@aria/automation`     | Heartbeat, cron, webhook, automation scheduling and execution                                                  |
+| `@aria/store`          | Durable database access, repositories, migrations, persistence services                                        |
+| `@aria/audit`          | Audit event models, sinks, queries, policy logging hooks                                                       |
+| `@aria/workspaces`     | Workspace, project, environment, repo, worktree, sandbox models                                                |
+| `@aria/jobs`           | Remote job orchestration and lifecycle management                                                              |
+| `@aria/agent-aria`     | The server-hosted Aria assistant agent implementation                                                          |
+| `@aria/agents-coding`  | Codex, Claude Code, OpenCode adapters and shared coding-agent contracts                                        |
+| `@aria/connectors-im`  | Slack/Telegram/Discord/Teams style connector integrations                                                      |
+| `@aria/console`        | Server-local terminal UI for chatting with `Aria Agent`                                                        |
+| `@aria/access-client`  | Shared client transport for desktop and mobile                                                                 |
+| `@aria/desktop-bridge` | Local desktop execution bridge for local project mode                                                          |
+| `@aria/desktop-git`    | Local git and worktree integration helpers                                                                     |
+| `@aria/ui`             | Shared UI primitives and cross-app presentation components                                                     |
+| `@aria/relay`          | Secure access broker and optional hosted runtime service                                                       |
 
 ## Tooling Ownership Notes
 
@@ -215,13 +215,13 @@ This package should be desktop-only. It should not be reused for server-hosted r
 
 ## Recommended App Packaging
 
-| App / service | Depends on |
-| --- | --- |
-| `aria-server` | runtime, gateway, projects, agent-aria, memory, automation, connectors-im, jobs, workspaces, store, audit, prompt, tools, policy |
-| `aria-desktop` | access-client, projects, desktop-bridge, agents-coding, ui, protocol |
-| `aria-mobile` | access-client, ui, protocol |
-| `aria-relay` | protocol, gateway-compatible contracts, relay-specific transport/auth logic |
-| `aria` console | console, access-client or a server-local transport shim, protocol |
+| App / service  | Depends on                                                                                                                       |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `aria-server`  | runtime, gateway, projects, agent-aria, memory, automation, connectors-im, jobs, workspaces, store, audit, prompt, tools, policy |
+| `aria-desktop` | access-client, projects, desktop-bridge, agents-coding, ui, protocol                                                             |
+| `aria-mobile`  | access-client, ui, protocol                                                                                                      |
+| `aria-relay`   | protocol, gateway-compatible contracts, relay-specific transport/auth logic                                                      |
+| `aria` console | console, access-client or a server-local transport shim, protocol                                                                |
 
 ## Official References
 

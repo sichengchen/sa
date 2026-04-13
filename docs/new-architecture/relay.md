@@ -172,9 +172,9 @@ That implies:
 
 ## Recommended Package
 
-| Responsibility | Package |
-| --- | --- |
-| Relay service | `@aria/relay` |
+| Responsibility | Package       |
+| -------------- | ------------- |
+| Relay service  | `@aria/relay` |
 
 Recommended internal slices:
 
@@ -187,7 +187,6 @@ Recommended internal slices:
 The short definition is:
 
 `Aria Relay makes Aria Server reachable and reconnectable without taking over what Aria Server actually does.`
-
 
 ## Current Repo Migration Note
 

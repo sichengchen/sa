@@ -329,16 +329,18 @@ describe("OperationalStore", () => {
     });
     expect(store.destroySession("tui:durable-session")).toBe(true);
     expect(store.getSession("tui:durable-session")).toBeUndefined();
-    expect(store.listSessions().some((session) => session.id === "tui:durable-session")).toBe(false);
+    expect(store.listSessions().some((session) => session.id === "tui:durable-session")).toBe(
+      false,
+    );
     store.close();
 
     const db = new Database(join(testDir, "aria.db"), { readonly: true });
     const sessionRow = db
       .prepare("SELECT destroyed_at FROM sessions WHERE session_id = ?")
       .get("tui:durable-session") as { destroyed_at: number };
-    const runRow = db
-      .prepare("SELECT status FROM runs WHERE run_id = ?")
-      .get("run-durable") as { status: string };
+    const runRow = db.prepare("SELECT status FROM runs WHERE run_id = ?").get("run-durable") as {
+      status: string;
+    };
     db.close(false);
 
     expect(sessionRow.destroyed_at).toBeGreaterThan(0);

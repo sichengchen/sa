@@ -156,20 +156,20 @@ describe("validateUrl", () => {
 describe("validateHeaders", () => {
   it("strips forbidden headers", () => {
     const result = validateHeaders({
-      "Authorization": "Bearer secret",
-      "Cookie": "session=abc",
-      "Accept": "text/html",
+      Authorization: "Bearer secret",
+      Cookie: "session=abc",
+      Accept: "text/html",
       "X-Custom": "value",
     });
     expect(result).toEqual({
-      "Accept": "text/html",
+      Accept: "text/html",
       "X-Custom": "value",
     });
   });
 
   it("strips Host and X-Forwarded-For", () => {
     const result = validateHeaders({
-      "Host": "evil.com",
+      Host: "evil.com",
       "X-Forwarded-For": "1.2.3.4",
       "Content-Type": "application/json",
     });
@@ -180,8 +180,8 @@ describe("validateHeaders", () => {
 
   it("is case-insensitive for forbidden headers", () => {
     const result = validateHeaders({
-      "authorization": "token",
-      "COOKIE": "val",
+      authorization: "token",
+      COOKIE: "val",
       "X-Safe": "ok",
     });
     expect(result).toEqual({
@@ -190,7 +190,7 @@ describe("validateHeaders", () => {
   });
 
   it("passes through all headers when none are forbidden", () => {
-    const headers = { "Accept": "text/html", "X-Custom": "value" };
+    const headers = { Accept: "text/html", "X-Custom": "value" };
     expect(validateHeaders(headers)).toEqual(headers);
   });
 });

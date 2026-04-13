@@ -35,9 +35,9 @@ function childElements(element: { props: { children?: ReactNode } }) {
   }>;
 }
 
-function asElementWithProps(
-  element: unknown,
-): { props: { children?: ReactNode; [key: string]: unknown } } {
+function asElementWithProps(element: unknown): {
+  props: { children?: ReactNode; [key: string]: unknown };
+} {
   return element as unknown as { props: { children?: ReactNode; [key: string]: unknown } };
 }
 

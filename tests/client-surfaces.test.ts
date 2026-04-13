@@ -67,9 +67,7 @@ describe("client surfaces", () => {
       threadTypeLabel: "Aria",
     });
     expect(createStatusBadgeLabel("in_progress")).toBe("In Progress");
-    expect(describeUiEngineEvent({ type: "tool_approval_request" })).toBe(
-      "Approval requested",
-    );
+    expect(describeUiEngineEvent({ type: "tool_approval_request" })).toBe("Approval requested");
 
     const roster = buildAccessClientTargetRoster(
       [

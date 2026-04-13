@@ -33,7 +33,12 @@ export function createExternalRefRecord(input: {
   updatedAt: number;
 }): ExternalRefRecord {
   return {
-    externalRefId: buildExternalRefId(input.ownerType, input.ownerId, input.system, input.externalId),
+    externalRefId: buildExternalRefId(
+      input.ownerType,
+      input.ownerId,
+      input.system,
+      input.externalId,
+    ),
     ownerType: input.ownerType,
     ownerId: input.ownerId,
     system: input.system,
@@ -46,7 +51,9 @@ export function createExternalRefRecord(input: {
   };
 }
 
-export function createLegacyLinearThreadExternalRefs(input: LegacyLinearThreadRefInput): ExternalRefRecord[] {
+export function createLegacyLinearThreadExternalRefs(
+  input: LegacyLinearThreadRefInput,
+): ExternalRefRecord[] {
   const refs: ExternalRefRecord[] = [
     createExternalRefRecord({
       ownerType: "thread",

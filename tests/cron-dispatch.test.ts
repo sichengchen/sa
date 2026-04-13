@@ -49,7 +49,9 @@ describe("Cron dispatch", () => {
     scheduler.register({
       name: "recurring",
       schedule: "* * * * *",
-      handler: () => { runCount++; },
+      handler: () => {
+        runCount++;
+      },
     });
 
     await scheduler.tick();
@@ -126,12 +128,12 @@ describe("Cron persistence roundtrip", () => {
     await writeFile(path, JSON.stringify(config, null, 2));
     const loaded = JSON.parse(await readFile(path, "utf-8"));
 
-      expect(loaded.runtime.automation.cronTasks).toHaveLength(2);
-      expect(loaded.runtime.automation.cronTasks[0].name).toBe("daily");
-      expect(loaded.runtime.automation.cronTasks[1].oneShot).toBe(true);
-      expect(loaded.runtime.automation.cronTasks[1].retryPolicy.maxAttempts).toBe(2);
-    });
+    expect(loaded.runtime.automation.cronTasks).toHaveLength(2);
+    expect(loaded.runtime.automation.cronTasks[0].name).toBe("daily");
+    expect(loaded.runtime.automation.cronTasks[1].oneShot).toBe(true);
+    expect(loaded.runtime.automation.cronTasks[1].retryPolicy.maxAttempts).toBe(2);
   });
+});
 
 describe("Result logging", () => {
   test("automation directory and log files can be created", async () => {

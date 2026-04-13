@@ -25,7 +25,12 @@ const PROVIDER_TYPES: {
   { id: "anthropic", type: "anthropic", label: "Anthropic", defaultEnvVar: "ANTHROPIC_API_KEY" },
   { id: "openai", type: "openai", label: "OpenAI", defaultEnvVar: "OPENAI_API_KEY" },
   { id: "google", type: "google", label: "Google", defaultEnvVar: "GOOGLE_AI_API_KEY" },
-  { id: "openrouter", type: "openrouter", label: "OpenRouter", defaultEnvVar: "OPENROUTER_API_KEY" },
+  {
+    id: "openrouter",
+    type: "openrouter",
+    label: "OpenRouter",
+    defaultEnvVar: "OPENROUTER_API_KEY",
+  },
   { id: "nvidia", type: "nvidia", label: "Nvidia NIM", defaultEnvVar: "NVIDIA_API_KEY" },
   {
     id: MINIMAX_PROVIDER_ID,
@@ -76,9 +81,18 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
   useInput((input, key) => {
     // --- LIST ---
     if (substep === "list") {
-      if (key.escape) { onBack(); return; }
-      if (key.upArrow) { setSelected((s) => Math.max(0, s - 1)); return; }
-      if (key.downArrow) { setSelected((s) => Math.min(listItems.length - 1, s + 1)); return; }
+      if (key.escape) {
+        onBack();
+        return;
+      }
+      if (key.upArrow) {
+        setSelected((s) => Math.max(0, s - 1));
+        return;
+      }
+      if (key.downArrow) {
+        setSelected((s) => Math.min(listItems.length - 1, s + 1));
+        return;
+      }
 
       if (key.return) {
         if (selected === providers.length) {
@@ -101,9 +115,18 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
 
     // --- ADD TYPE ---
     if (substep === "add-type") {
-      if (key.escape) { setSubstep("list"); return; }
-      if (key.upArrow) { setTypeIdx((i) => Math.max(0, i - 1)); return; }
-      if (key.downArrow) { setTypeIdx((i) => Math.min(PROVIDER_TYPES.length - 1, i + 1)); return; }
+      if (key.escape) {
+        setSubstep("list");
+        return;
+      }
+      if (key.upArrow) {
+        setTypeIdx((i) => Math.max(0, i - 1));
+        return;
+      }
+      if (key.downArrow) {
+        setTypeIdx((i) => Math.min(PROVIDER_TYPES.length - 1, i + 1));
+        return;
+      }
       if (key.return) {
         const pt = PROVIDER_TYPES[typeIdx];
         if (!pt.compatMode) {
@@ -123,7 +146,10 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
 
     // --- ADD API KEY (known types) ---
     if (substep === "add-apikey") {
-      if (key.escape) { setSubstep("add-type"); return; }
+      if (key.escape) {
+        setSubstep("add-type");
+        return;
+      }
       if (key.return) {
         const pt = PROVIDER_TYPES[typeIdx];
         const newProvider: ProviderConfig = {
@@ -137,7 +163,10 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
         // Save provider config + secret
         const saveAll = async () => {
           if (apiKeyValue.trim() && secrets) {
-            const updatedSecrets = { ...secrets, apiKeys: { ...secrets.apiKeys, [pt.defaultEnvVar]: apiKeyValue.trim() } };
+            const updatedSecrets = {
+              ...secrets,
+              apiKeys: { ...secrets.apiKeys, [pt.defaultEnvVar]: apiKeyValue.trim() },
+            };
             await saveSecrets(homeDir, updatedSecrets);
             setSecrets(updatedSecrets);
           }
@@ -149,17 +178,31 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
         });
         return;
       }
-      if (key.backspace || key.delete) { setApiKeyValue((v) => v.slice(0, -1)); return; }
-      if (input && !key.ctrl && !key.meta) { setApiKeyValue((v) => v + input); }
+      if (key.backspace || key.delete) {
+        setApiKeyValue((v) => v.slice(0, -1));
+        return;
+      }
+      if (input && !key.ctrl && !key.meta) {
+        setApiKeyValue((v) => v + input);
+      }
       return;
     }
 
     // --- ADD FIELDS (openai-compat) ---
     if (substep === "add-fields") {
       if (key.escape) {
-        if (compatField === "id") { setSubstep("add-type"); return; }
-        if (compatField === "baseUrl") { setCompatField("id"); return; }
-        if (compatField === "apiKey") { setCompatField("baseUrl"); return; }
+        if (compatField === "id") {
+          setSubstep("add-type");
+          return;
+        }
+        if (compatField === "baseUrl") {
+          setCompatField("id");
+          return;
+        }
+        if (compatField === "apiKey") {
+          setCompatField("baseUrl");
+          return;
+        }
         return;
       }
 
@@ -189,7 +232,10 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
 
         const saveAll = async () => {
           if (newApiKey.trim() && secrets) {
-            const updatedSecrets = { ...secrets, apiKeys: { ...secrets.apiKeys, [envVar]: newApiKey.trim() } };
+            const updatedSecrets = {
+              ...secrets,
+              apiKeys: { ...secrets.apiKeys, [envVar]: newApiKey.trim() },
+            };
             await saveSecrets(homeDir, updatedSecrets);
             setSecrets(updatedSecrets);
           }
@@ -219,7 +265,10 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
 
     // --- CONFIRM REMOVE ---
     if (substep === "confirm-remove") {
-      if (key.escape || input === "n") { setSubstep("list"); return; }
+      if (key.escape || input === "n") {
+        setSubstep("list");
+        return;
+      }
       if (input === "y") {
         const updated = {
           ...config,
@@ -237,7 +286,9 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">Providers</Text>
+      <Text bold color="cyan">
+        Providers
+      </Text>
       <Text />
 
       {substep === "list" && (
@@ -273,8 +324,12 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
           <Text dimColor>Leave empty to skip. You can set it later in Environment → Secrets.</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>API Key: </Text>
-            <Text>{apiKeyValue.length > 0 ? "●".repeat(Math.min(apiKeyValue.length, 20)) : ""}</Text>
+            <Text color="blue" bold>
+              API Key:{" "}
+            </Text>
+            <Text>
+              {apiKeyValue.length > 0 ? "●".repeat(Math.min(apiKeyValue.length, 20)) : ""}
+            </Text>
             <Text color="blue">▊</Text>
           </Box>
           <Text />
@@ -287,17 +342,29 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
           <Text bold>New OpenAI-compatible provider</Text>
           <Text />
           <Box>
-            <Text color={compatField === "id" ? "blue" : "white"} bold={compatField === "id"}>ID: </Text>
+            <Text color={compatField === "id" ? "blue" : "white"} bold={compatField === "id"}>
+              ID:{" "}
+            </Text>
             <Text>{newId}</Text>
             {compatField === "id" && <Text color="blue">▊</Text>}
           </Box>
           <Box>
-            <Text color={compatField === "baseUrl" ? "blue" : "white"} bold={compatField === "baseUrl"}>Base URL: </Text>
+            <Text
+              color={compatField === "baseUrl" ? "blue" : "white"}
+              bold={compatField === "baseUrl"}
+            >
+              Base URL:{" "}
+            </Text>
             <Text>{newBaseUrl}</Text>
             {compatField === "baseUrl" && <Text color="blue">▊</Text>}
           </Box>
           <Box>
-            <Text color={compatField === "apiKey" ? "blue" : "white"} bold={compatField === "apiKey"}>API Key: </Text>
+            <Text
+              color={compatField === "apiKey" ? "blue" : "white"}
+              bold={compatField === "apiKey"}
+            >
+              API Key:{" "}
+            </Text>
             <Text>{newApiKey.length > 0 ? "●".repeat(Math.min(newApiKey.length, 20)) : ""}</Text>
             {compatField === "apiKey" && <Text color="blue">▊</Text>}
           </Box>

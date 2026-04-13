@@ -79,7 +79,10 @@ export function createStreamHandler<TMsg>(ops: StreamOps<TMsg>) {
             await ops.edit(state.sentMsg, chunks[0]!);
           }
         } catch (err) {
-          console.warn("[stream-handler] final edit failed:", err instanceof Error ? err.message : err);
+          console.warn(
+            "[stream-handler] final edit failed:",
+            err instanceof Error ? err.message : err,
+          );
         }
         for (let i = 1; i < chunks.length; i++) {
           await ops.sendExtra(chunks[i]!);

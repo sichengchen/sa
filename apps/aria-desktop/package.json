@@ -1,7 +1,7 @@
 {
   "name": "aria-desktop",
   "private": true,
-  "type": "module",
   "description": "Aria Desktop app assembly and host wrapper over the @aria/desktop shell seam",
+  "type": "module",
   "main": "./src/index.ts"
 }

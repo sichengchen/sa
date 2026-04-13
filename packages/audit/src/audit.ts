@@ -5,7 +5,16 @@
  * unrestricted session modes.
  */
 
-import { appendFileSync, statSync, renameSync, existsSync, openSync, closeSync, chmodSync, readFileSync } from "node:fs";
+import {
+  appendFileSync,
+  statSync,
+  renameSync,
+  existsSync,
+  openSync,
+  closeSync,
+  chmodSync,
+  readFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import type { DangerLevel } from "@aria/agent-aria";
 
@@ -121,9 +130,9 @@ export function queryAuditEntries(logPath: string, options: AuditQueryOptions = 
   }
   if (options.session) {
     const sessionFilter = options.session;
-    entries = entries.filter((entry) => (
-      entry.session.startsWith(sessionFilter) || sessionFilter.startsWith(entry.session)
-    ));
+    entries = entries.filter(
+      (entry) => entry.session.startsWith(sessionFilter) || sessionFilter.startsWith(entry.session),
+    );
   }
   if (options.run) {
     entries = entries.filter((entry) => entry.run === options.run);

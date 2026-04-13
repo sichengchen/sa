@@ -46,7 +46,9 @@ export class RelayService {
       throw new Error(`Server not found: ${serverId}`);
     }
     const updated = { ...existing, revokedAt };
-    state.servers = state.servers.map((server) => server.serverId === serverId ? updated : server);
+    state.servers = state.servers.map((server) =>
+      server.serverId === serverId ? updated : server,
+    );
     await this.store.save(state);
     return updated;
   }
@@ -81,7 +83,9 @@ export class RelayService {
       throw new Error(`Device not found: ${deviceId}`);
     }
     const updated = { ...existing, revokedAt };
-    state.devices = state.devices.map((device) => device.deviceId === deviceId ? updated : device);
+    state.devices = state.devices.map((device) =>
+      device.deviceId === deviceId ? updated : device,
+    );
     await this.store.save(state);
     return updated;
   }
@@ -125,31 +129,38 @@ export class RelayService {
     return grant;
   }
 
-  async revokeAccessGrant(grantId: string, revokedAt = Date.now()): Promise<RelayAccessGrantRecord> {
+  async revokeAccessGrant(
+    grantId: string,
+    revokedAt = Date.now(),
+  ): Promise<RelayAccessGrantRecord> {
     const state = await this.store.load();
     const existing = state.accessGrants.find((grant) => grant.grantId === grantId);
     if (!existing) {
       throw new Error(`Access grant not found: ${grantId}`);
     }
     const updated = { ...existing, revokedAt };
-    state.accessGrants = state.accessGrants.map((grant) => grant.grantId === grantId ? updated : grant);
+    state.accessGrants = state.accessGrants.map((grant) =>
+      grant.grantId === grantId ? updated : grant,
+    );
     await this.store.save(state);
     return updated;
   }
 
-  async listAccessGrants(filters: {
-    serverId?: string;
-    deviceId?: string;
-    includeExpired?: boolean;
-    includeRevoked?: boolean;
-  } = {}): Promise<RelayAccessGrantRecord[]> {
+  async listAccessGrants(
+    filters: {
+      serverId?: string;
+      deviceId?: string;
+      includeExpired?: boolean;
+      includeRevoked?: boolean;
+    } = {},
+  ): Promise<RelayAccessGrantRecord[]> {
     const state = await this.store.load();
     const now = Date.now();
     return state.accessGrants
       .filter((grant) => !filters.serverId || grant.serverId === filters.serverId)
       .filter((grant) => !filters.deviceId || grant.deviceId === filters.deviceId)
-      .filter((grant) => filters.includeRevoked ? true : !grant.revokedAt)
-      .filter((grant) => filters.includeExpired ? true : grant.expiresAt > now)
+      .filter((grant) => (filters.includeRevoked ? true : !grant.revokedAt))
+      .filter((grant) => (filters.includeExpired ? true : grant.expiresAt > now))
       .sort((a, b) => b.issuedAt - a.issuedAt);
   }
 
@@ -206,57 +217,78 @@ export class RelayService {
       throw new Error(`Access grant is invalid or expired for device ${request.deviceId}`);
     }
 
-    const existing = state.attachments.find((attachment) =>
-      attachment.deviceId === request.deviceId &&
-      attachment.sessionId === request.sessionId &&
-      !attachment.detachedAt,
+    const existing = state.attachments.find(
+      (attachment) =>
+        attachment.deviceId === request.deviceId &&
+        attachment.sessionId === request.sessionId &&
+        !attachment.detachedAt,
     );
 
-    const attachment: RelaySessionAttachmentRecord = existing ? {
-      ...existing,
-      serverId: request.serverId ?? accessGrant?.serverId ?? existing.serverId ?? null,
-      workspaceId: request.workspaceId ?? accessGrant?.workspaceId ?? existing.workspaceId ?? null,
-      projectId: request.projectId ?? existing.projectId ?? null,
-      threadId: request.threadId ?? accessGrant?.threadId ?? existing.threadId ?? null,
-      jobId: request.jobId ?? existing.jobId ?? null,
-      accessGrantId: accessGrant?.grantId ?? existing.accessGrantId ?? null,
-      attachmentKind: request.attachmentKind ?? accessGrant?.attachmentKind ?? existing.attachmentKind ?? null,
-      transportMode: request.transportMode ?? accessGrant?.transportMode ?? existing.transportMode ?? null,
-      resumable: existing.resumable ?? true,
-      canSendMessages: accessGrant?.canSendMessages ?? options.canSendMessages ?? existing.canSendMessages,
-      canRespondToApprovals: accessGrant?.canRespondToApprovals ?? options.canRespondToApprovals ?? existing.canRespondToApprovals,
-    } : {
-      attachmentId: randomUUID(),
-      deviceId: request.deviceId,
-      sessionId: request.sessionId,
-      serverId: request.serverId ?? accessGrant?.serverId ?? null,
-      workspaceId: request.workspaceId ?? accessGrant?.workspaceId ?? null,
-      projectId: request.projectId ?? null,
-      threadId: request.threadId ?? accessGrant?.threadId ?? null,
-      jobId: request.jobId ?? null,
-      accessGrantId: accessGrant?.grantId ?? null,
-      attachmentKind: request.attachmentKind ?? accessGrant?.attachmentKind ?? null,
-      transportMode: request.transportMode ?? accessGrant?.transportMode ?? null,
-      resumable: true,
-      attachedAt,
-      detachedAt: null,
-      canSendMessages: accessGrant?.canSendMessages ?? options.canSendMessages ?? true,
-      canRespondToApprovals: accessGrant?.canRespondToApprovals ?? options.canRespondToApprovals ?? true,
-    };
+    const attachment: RelaySessionAttachmentRecord = existing
+      ? {
+          ...existing,
+          serverId: request.serverId ?? accessGrant?.serverId ?? existing.serverId ?? null,
+          workspaceId:
+            request.workspaceId ?? accessGrant?.workspaceId ?? existing.workspaceId ?? null,
+          projectId: request.projectId ?? existing.projectId ?? null,
+          threadId: request.threadId ?? accessGrant?.threadId ?? existing.threadId ?? null,
+          jobId: request.jobId ?? existing.jobId ?? null,
+          accessGrantId: accessGrant?.grantId ?? existing.accessGrantId ?? null,
+          attachmentKind:
+            request.attachmentKind ??
+            accessGrant?.attachmentKind ??
+            existing.attachmentKind ??
+            null,
+          transportMode:
+            request.transportMode ?? accessGrant?.transportMode ?? existing.transportMode ?? null,
+          resumable: existing.resumable ?? true,
+          canSendMessages:
+            accessGrant?.canSendMessages ?? options.canSendMessages ?? existing.canSendMessages,
+          canRespondToApprovals:
+            accessGrant?.canRespondToApprovals ??
+            options.canRespondToApprovals ??
+            existing.canRespondToApprovals,
+        }
+      : {
+          attachmentId: randomUUID(),
+          deviceId: request.deviceId,
+          sessionId: request.sessionId,
+          serverId: request.serverId ?? accessGrant?.serverId ?? null,
+          workspaceId: request.workspaceId ?? accessGrant?.workspaceId ?? null,
+          projectId: request.projectId ?? null,
+          threadId: request.threadId ?? accessGrant?.threadId ?? null,
+          jobId: request.jobId ?? null,
+          accessGrantId: accessGrant?.grantId ?? null,
+          attachmentKind: request.attachmentKind ?? accessGrant?.attachmentKind ?? null,
+          transportMode: request.transportMode ?? accessGrant?.transportMode ?? null,
+          resumable: true,
+          attachedAt,
+          detachedAt: null,
+          canSendMessages: accessGrant?.canSendMessages ?? options.canSendMessages ?? true,
+          canRespondToApprovals:
+            accessGrant?.canRespondToApprovals ?? options.canRespondToApprovals ?? true,
+        };
 
     state.attachments = existing
-      ? state.attachments.map((entry) => entry.attachmentId === attachment.attachmentId ? attachment : entry)
+      ? state.attachments.map((entry) =>
+          entry.attachmentId === attachment.attachmentId ? attachment : entry,
+        )
       : [...state.attachments, attachment];
     await this.store.save(state);
     return attachment;
   }
 
-  async detachSession(deviceId: string, sessionId: string, detachedAt = Date.now()): Promise<RelaySessionAttachmentRecord | null> {
+  async detachSession(
+    deviceId: string,
+    sessionId: string,
+    detachedAt = Date.now(),
+  ): Promise<RelaySessionAttachmentRecord | null> {
     const state = await this.store.load();
-    const existing = state.attachments.find((attachment) =>
-      attachment.deviceId === deviceId &&
-      attachment.sessionId === sessionId &&
-      !attachment.detachedAt,
+    const existing = state.attachments.find(
+      (attachment) =>
+        attachment.deviceId === deviceId &&
+        attachment.sessionId === sessionId &&
+        !attachment.detachedAt,
     );
     if (!existing) {
       return null;
@@ -277,22 +309,28 @@ export class RelayService {
       .sort((a, b) => b.attachedAt - a.attachedAt);
   }
 
-  async queueFollowUp(message: RelayFollowUpMessage, createdAt = Date.now()): Promise<RelayQueuedEventRecord> {
-    if (!(await this.canAttach({
-      deviceId: message.deviceId,
-      sessionId: message.sessionId,
-      accessGrantToken: message.accessGrantToken ?? null,
-      serverId: message.serverId ?? null,
-      threadId: message.threadId ?? null,
-    }))) {
+  async queueFollowUp(
+    message: RelayFollowUpMessage,
+    createdAt = Date.now(),
+  ): Promise<RelayQueuedEventRecord> {
+    if (
+      !(await this.canAttach({
+        deviceId: message.deviceId,
+        sessionId: message.sessionId,
+        accessGrantToken: message.accessGrantToken ?? null,
+        serverId: message.serverId ?? null,
+        threadId: message.threadId ?? null,
+      }))
+    ) {
       throw new Error(`Device ${message.deviceId} is not attached to session ${message.sessionId}`);
     }
 
     const state = await this.store.load();
-    const attachment = state.attachments.find((entry) =>
-      entry.deviceId === message.deviceId &&
-      entry.sessionId === message.sessionId &&
-      !entry.detachedAt,
+    const attachment = state.attachments.find(
+      (entry) =>
+        entry.deviceId === message.deviceId &&
+        entry.sessionId === message.sessionId &&
+        !entry.detachedAt,
     );
     const grant = await this.resolveQueuedGrant(state, attachment, message.accessGrantToken, {
       deviceId: message.deviceId,
@@ -300,7 +338,9 @@ export class RelayService {
       threadId: message.threadId ?? null,
     });
     if (attachment?.accessGrantId && grant?.grantId !== attachment.accessGrantId) {
-      throw new Error(`Access grant ${grant?.grantId ?? "missing"} does not match attachment grant ${attachment.accessGrantId}`);
+      throw new Error(
+        `Access grant ${grant?.grantId ?? "missing"} does not match attachment grant ${attachment.accessGrantId}`,
+      );
     }
     const event: RelayQueuedEventRecord = {
       eventId: randomUUID(),
@@ -320,16 +360,22 @@ export class RelayService {
     return event;
   }
 
-  async queueApprovalResponse(response: RelayApprovalResponse, createdAt = Date.now()): Promise<RelayQueuedEventRecord> {
+  async queueApprovalResponse(
+    response: RelayApprovalResponse,
+    createdAt = Date.now(),
+  ): Promise<RelayQueuedEventRecord> {
     if (!(await this.canRespondToApproval(response))) {
-      throw new Error(`Device ${response.deviceId} cannot respond to approvals for session ${response.sessionId}`);
+      throw new Error(
+        `Device ${response.deviceId} cannot respond to approvals for session ${response.sessionId}`,
+      );
     }
 
     const state = await this.store.load();
-    const attachment = state.attachments.find((entry) =>
-      entry.deviceId === response.deviceId &&
-      entry.sessionId === response.sessionId &&
-      !entry.detachedAt,
+    const attachment = state.attachments.find(
+      (entry) =>
+        entry.deviceId === response.deviceId &&
+        entry.sessionId === response.sessionId &&
+        !entry.detachedAt,
     );
     const grant = await this.resolveQueuedGrant(state, attachment, response.accessGrantToken, {
       deviceId: response.deviceId,
@@ -337,7 +383,9 @@ export class RelayService {
       threadId: response.threadId ?? null,
     });
     if (attachment?.accessGrantId && grant?.grantId !== attachment.accessGrantId) {
-      throw new Error(`Access grant ${grant?.grantId ?? "missing"} does not match attachment grant ${attachment.accessGrantId}`);
+      throw new Error(
+        `Access grant ${grant?.grantId ?? "missing"} does not match attachment grant ${attachment.accessGrantId}`,
+      );
     }
     const event: RelayQueuedEventRecord = {
       eventId: randomUUID(),
@@ -375,7 +423,7 @@ export class RelayService {
       throw new Error(`Relay event not found: ${eventId}`);
     }
     const updated = { ...existing, deliveredAt };
-    state.events = state.events.map((event) => event.eventId === eventId ? updated : event);
+    state.events = state.events.map((event) => (event.eventId === eventId ? updated : event));
     await this.store.save(state);
     return updated;
   }
@@ -389,12 +437,14 @@ export class RelayService {
     if (!request.accessGrantToken) {
       return true;
     }
-    return Boolean(await this.resolveAccessGrantToken(request.accessGrantToken, {
-      deviceId: request.deviceId,
-      serverId: request.serverId ?? null,
-      workspaceId: request.workspaceId ?? null,
-      threadId: request.threadId ?? null,
-    }));
+    return Boolean(
+      await this.resolveAccessGrantToken(request.accessGrantToken, {
+        deviceId: request.deviceId,
+        serverId: request.serverId ?? null,
+        workspaceId: request.workspaceId ?? null,
+        threadId: request.threadId ?? null,
+      }),
+    );
   }
 
   async canRespondToApproval(response: RelayApprovalResponse): Promise<boolean> {
@@ -404,11 +454,12 @@ export class RelayService {
       return false;
     }
 
-    const attachment = state.attachments.find((entry) =>
-      entry.deviceId === response.deviceId &&
-      entry.sessionId === response.sessionId &&
-      !entry.detachedAt &&
-      entry.canRespondToApprovals,
+    const attachment = state.attachments.find(
+      (entry) =>
+        entry.deviceId === response.deviceId &&
+        entry.sessionId === response.sessionId &&
+        !entry.detachedAt &&
+        entry.canRespondToApprovals,
     );
     if (!attachment) {
       return false;
@@ -423,8 +474,12 @@ export class RelayService {
       return false;
     }
     if (attachment.accessGrantId) {
-      const attachmentGrant = state.accessGrants.find((entry) => entry.grantId === attachment.accessGrantId);
-      return Boolean(attachmentGrant && isGrantActive(attachmentGrant) && attachmentGrant.canRespondToApprovals);
+      const attachmentGrant = state.accessGrants.find(
+        (entry) => entry.grantId === attachment.accessGrantId,
+      );
+      return Boolean(
+        attachmentGrant && isGrantActive(attachmentGrant) && attachmentGrant.canRespondToApprovals,
+      );
     }
     return Boolean(grant ? grant.canRespondToApprovals : true);
   }

@@ -19,7 +19,7 @@ describe("@aria/automation package entrypoints", () => {
   });
 
   test("re-exports scheduler primitives", () => {
-    expect(matchesCron("0 8 * * *", new Date("2026-04-11T08:00:00Z"))).toBe(true);
+    expect(matchesCron("0 8 * * *", new Date(2026, 3, 11, 8, 0, 0))).toBe(true);
     expect(new Scheduler()).toBeInstanceOf(Scheduler);
   });
 

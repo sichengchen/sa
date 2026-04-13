@@ -4,19 +4,19 @@ Aria is implemented as a package-oriented monorepo.
 
 ## Packages
 
-| Package | Owns |
-| --- | --- |
-| `packages/runtime` | compatibility-facing runtime shell and shared execution kernel |
-| `packages/server` | server composition root, daemon lifecycle, discovery/brand helpers |
-| `packages/projects` | tracked-work coordination and persistence APIs |
-| `packages/workspaces` | repo and worktree services |
-| `packages/jobs` | remote-job orchestration and backend selection |
-| `packages/agents-coding` | coding-agent adapter contracts and concrete backend adapters |
-| `packages/handoff` | idempotent submission into Projects |
-| `packages/relay` | paired-device trust and queued remote control envelopes |
-| `packages/console` | server-local console surface |
-| `packages/connectors-im` | IM connector surfaces |
-| `packages/cli` | operator CLI surface |
+| Package                  | Owns                                                               |
+| ------------------------ | ------------------------------------------------------------------ |
+| `packages/runtime`       | compatibility-facing runtime shell and shared execution kernel     |
+| `packages/server`        | server composition root, daemon lifecycle, discovery/brand helpers |
+| `packages/projects`      | tracked-work coordination and persistence APIs                     |
+| `packages/workspaces`    | repo and worktree services                                         |
+| `packages/jobs`          | remote-job orchestration and backend selection                     |
+| `packages/agents-coding` | coding-agent adapter contracts and concrete backend adapters       |
+| `packages/handoff`       | idempotent submission into Projects                                |
+| `packages/relay`         | paired-device trust and queued remote control envelopes            |
+| `packages/console`       | server-local console surface                                       |
+| `packages/connectors-im` | IM connector surfaces                                              |
+| `packages/cli`           | operator CLI surface                                               |
 
 ## System Model
 

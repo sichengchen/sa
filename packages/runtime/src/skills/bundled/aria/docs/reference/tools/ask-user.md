@@ -6,10 +6,10 @@ continues with the answer as the tool result.
 
 ## Parameters
 
-| Parameter | Type       | Required | Description                                    |
-|-----------|------------|----------|------------------------------------------------|
-| question  | string     | yes      | The question to ask the user                   |
-| options   | string[]   | no       | Optional choices for multiple-choice questions  |
+| Parameter | Type     | Required | Description                                    |
+| --------- | -------- | -------- | ---------------------------------------------- |
+| question  | string   | yes      | The question to ask the user                   |
+| options   | string[] | no       | Optional choices for multiple-choice questions |
 
 When `options` is provided and non-empty, connectors render a multiple-choice
 picker. When omitted or empty, connectors render a free-text input.

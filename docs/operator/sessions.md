@@ -25,12 +25,12 @@ Examples:
 
 ## Session Classes
 
-| Class | Example prefix | Purpose |
-| --- | --- | --- |
-| Main | `main` | runtime-owned engine-level work |
-| Connector | `tui`, `telegram:<chatId>`, `discord:<channelId>`, etc. | user-facing conversations |
-| Automation | `cron:<taskName>`, `webhook:<slug>` | isolated automation work |
-| Projects-driven execution | `dispatch:<dispatchId>` | runtime execution correlated back to a tracked dispatch |
+| Class                     | Example prefix                                          | Purpose                                                 |
+| ------------------------- | ------------------------------------------------------- | ------------------------------------------------------- |
+| Main                      | `main`                                                  | runtime-owned engine-level work                         |
+| Connector                 | `tui`, `telegram:<chatId>`, `discord:<channelId>`, etc. | user-facing conversations                               |
+| Automation                | `cron:<taskName>`, `webhook:<slug>`                     | isolated automation work                                |
+| Projects-driven execution | `dispatch:<dispatchId>`                                 | runtime execution correlated back to a tracked dispatch |
 
 ## Session Lifecycle
 

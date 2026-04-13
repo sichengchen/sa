@@ -16,11 +16,9 @@ export function createNotifyTool(secrets: SecretsFile | null): ToolImpl {
     parameters: Type.Object({
       message: Type.String({ description: "The notification text (supports Markdown)" }),
       connector: Type.Optional(
-        Type.Union([
-          Type.Literal("telegram"),
-          Type.Literal("discord"),
-          Type.Literal("all"),
-        ], { description: 'Target connector: "telegram", "discord", or "all" (default: "all")' }),
+        Type.Union([Type.Literal("telegram"), Type.Literal("discord"), Type.Literal("all")], {
+          description: 'Target connector: "telegram", "discord", or "all" (default: "all")',
+        }),
       ),
     }),
     async execute(args) {
@@ -61,7 +59,8 @@ export function createNotifyTool(secrets: SecretsFile | null): ToolImpl {
           }
         } else if (target === "telegram") {
           return {
-            content: "Telegram not configured. Set bot token and paired chat ID via `aria onboard` or `set_env_secret`.",
+            content:
+              "Telegram not configured. Set bot token and paired chat ID via `aria onboard` or `set_env_secret`.",
             isError: true,
           };
         }
@@ -72,17 +71,14 @@ export function createNotifyTool(secrets: SecretsFile | null): ToolImpl {
         const channelId = process.env.ARIA_DISCORD_NOTIFY_CHANNEL;
         if (secrets?.discordToken && channelId) {
           try {
-            const resp = await fetch(
-              `https://discord.com/api/v10/channels/${channelId}/messages`,
-              {
-                method: "POST",
-                headers: {
-                  "content-type": "application/json",
-                  authorization: `Bot ${secrets.discordToken}`,
-                },
-                body: JSON.stringify({ content: message }),
+            const resp = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                authorization: `Bot ${secrets.discordToken}`,
               },
-            );
+              body: JSON.stringify({ content: message }),
+            });
             if (resp.ok) {
               results.push("discord");
             } else {
@@ -101,7 +97,10 @@ export function createNotifyTool(secrets: SecretsFile | null): ToolImpl {
       }
 
       if (results.length === 0 && errors.length === 0) {
-        return { content: "No connectors configured for notifications. Set up Telegram or Discord via `aria onboard`." };
+        return {
+          content:
+            "No connectors configured for notifications. Set up Telegram or Discord via `aria onboard`.",
+        };
       }
 
       const parts: string[] = [];

@@ -4,14 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Development Commands
 
-| Command | Purpose |
-|---------|---------|
-| `bun run dev` | Run the CLI directly (`packages/cli/src/index.ts`) |
-| `bun run build` | Bundle CLI to `dist/` (Bun target) |
-| `bun test` | Run all tests (Bun's built-in runner) |
-| `bun test packages/runtime/src/config/secrets.test.ts` | Run a single test file |
-| `bun run lint` | ESLint across `packages/` |
-| `bun run typecheck` | TypeScript `tsc --noEmit` |
+| Command                                | Purpose                                            |
+| -------------------------------------- | -------------------------------------------------- |
+| `bun run dev`                          | Run the CLI directly (`packages/cli/src/index.ts`) |
+| `bun run build`                        | Run the cached repo build task via `vp run`        |
+| `bun run test`                         | Run the cached repo test task via `vp run`         |
+| `bun run test -- tests/skills.test.ts` | Run a single test file                             |
+| `bun run check`                        | Run the cached repo check task via `vp run`        |
+| `bun run verify`                       | Run repo check, test, and build in order           |
+| `bun run typecheck`                    | TypeScript `tsc --noEmit`                          |
 
 Runtime: **Bun** (not Node). Package manager: **Bun**. Module system: **ES modules**.
 
@@ -67,12 +68,13 @@ engine.heartbeat
 `getModel()` from pi-ai requires literal type parameters. When calling with dynamic strings, use the type assertion pattern:
 
 ```ts
-(getModel as (p: string, m: string) => Model<Api>)(providerId, modelId)
+(getModel as (p: string, m: string) => Model<Api>)(providerId, modelId);
 ```
 
 ## Testing
 
-Tests use Bun's built-in test runner (Jest-compatible API — `describe`, `it`, `expect`). Test files:
+Tests run through `Vitest` using the shared `vite.config.ts` configuration, but execute under Bun because the repo imports `bun` and `bun:sqlite`. The suite keeps a `bun:test` compatibility shim so existing Jest-style test imports continue to work while the repo uses the Vitest runtime. Test files:
+
 - Unit tests co-located: `packages/**/*.test.ts`
 - Integration/E2E tests: `tests/`
 
@@ -82,6 +84,10 @@ Tests use Bun's built-in test runner (Jest-compatible API — `describe`, `it`, 
 - Start with `docs/README.md`, then use the new reader-oriented sections under `docs/product/`, `docs/architecture/`, `docs/operator/`, `docs/security/`, `docs/reference/`, and `docs/development/`.
 - `scripts/copy-docs.ts` copies the docs tree into the bundled `aria` skill before `scripts/embed-skills.ts` runs.
 
-## ESLint
+## Checks
 
-Uses ESLint 10+ flat config (`eslint.config.js`) with `@typescript-eslint/parser`. It targets the package-owned source tree.
+Static checks run through `Vite+` in `vite.config.ts`:
+
+- `vp fmt` / `bun run fmt` for formatting via `Oxfmt`
+- `vp lint` / `bun run lint` for linting via `Oxlint`
+- `vp run repo:check` / `bun run check` for the repo-level cached format, lint, and TypeScript check flow

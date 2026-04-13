@@ -31,12 +31,7 @@ const BLOCKED_HOST_PATTERNS: RegExp[] = [
 
 const BLOCKED_SCHEMES = new Set(["file", "ftp", "gopher", "ldap", "dict", "data"]);
 const BLOCKED_PORTS = new Set([7420, 7421]); // Aria Runtime ports
-const FORBIDDEN_HEADERS = new Set([
-  "authorization",
-  "cookie",
-  "host",
-  "x-forwarded-for",
-]);
+const FORBIDDEN_HEADERS = new Set(["authorization", "cookie", "host", "x-forwarded-for"]);
 
 export const MAX_REDIRECTS = 5;
 
@@ -53,9 +48,7 @@ export interface UrlPolicyConfig {
 // Public API
 // ---------------------------------------------------------------------------
 
-export type ValidateResult =
-  | { ok: true }
-  | { ok: false; reason: string };
+export type ValidateResult = { ok: true } | { ok: false; reason: string };
 
 function normalizedPort(parsed: URL): string {
   if (parsed.port) return parsed.port;
@@ -95,10 +88,7 @@ function matchesAllowedException(target: URL, exception: string): boolean {
  * Check whether a URL is allowed by the URL policy.
  * Returns `{ ok: true }` when safe, or `{ ok: false, reason }` when blocked.
  */
-export function validateUrl(
-  raw: string,
-  config?: UrlPolicyConfig,
-): ValidateResult {
+export function validateUrl(raw: string, config?: UrlPolicyConfig): ValidateResult {
   let parsed: URL;
   try {
     parsed = new URL(raw);
@@ -153,9 +143,7 @@ export function validateUrl(
  * Strip forbidden headers from a user-supplied headers object.
  * Returns a new object with only allowed headers.
  */
-export function validateHeaders(
-  headers: Record<string, string>,
-): Record<string, string> {
+export function validateHeaders(headers: Record<string, string>): Record<string, string> {
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(headers)) {
     if (!FORBIDDEN_HEADERS.has(key.toLowerCase())) {

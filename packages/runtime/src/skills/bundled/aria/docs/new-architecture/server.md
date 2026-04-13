@@ -65,20 +65,20 @@ flowchart LR
 
 ## Component Responsibilities
 
-| Component | Responsibility |
-| --- | --- |
-| `Gateway API + Realtime` | Authenticates clients, exposes request APIs, streams live thread/run events |
-| `Aria Runtime` | Shared runtime kernel for routing, persistence, policy, execution, and orchestration |
-| `Aria Agent` | Personal assistant agent and sole owner of Aria-managed memory, connectors, and automation |
-| `Projects Control` | Project registry, project-thread coordination, environment switching, and Aria-to-coding-agent orchestration |
-| `Aria Memory` | Memory layers, context assembly inputs, skills, and durable assistant knowledge |
-| `Aria Automation` | Heartbeat, cron, and webhook automation owned by Aria |
-| `IM Connector Runtime` | Slack/Telegram/Discord/Teams style connector processes and adapter logic |
-| `Inbox + Approvals` | Pending approvals, notifications, operator action items, and result surfacing |
-| `Remote Job Orchestrator` | Launches, tracks, and resumes remote project jobs |
-| `Workspace Manager` | Remote repos, worktrees, sandbox lifecycle, and environment selection |
-| `Remote Coding Agent Adapters` | Codex, Claude Code, OpenCode adapters for remote project execution |
-| `Operational Store` | Durable threads, runs, approvals, automation state, audit, checkpoints, summaries |
+| Component                      | Responsibility                                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `Gateway API + Realtime`       | Authenticates clients, exposes request APIs, streams live thread/run events                                  |
+| `Aria Runtime`                 | Shared runtime kernel for routing, persistence, policy, execution, and orchestration                         |
+| `Aria Agent`                   | Personal assistant agent and sole owner of Aria-managed memory, connectors, and automation                   |
+| `Projects Control`             | Project registry, project-thread coordination, environment switching, and Aria-to-coding-agent orchestration |
+| `Aria Memory`                  | Memory layers, context assembly inputs, skills, and durable assistant knowledge                              |
+| `Aria Automation`              | Heartbeat, cron, and webhook automation owned by Aria                                                        |
+| `IM Connector Runtime`         | Slack/Telegram/Discord/Teams style connector processes and adapter logic                                     |
+| `Inbox + Approvals`            | Pending approvals, notifications, operator action items, and result surfacing                                |
+| `Remote Job Orchestrator`      | Launches, tracks, and resumes remote project jobs                                                            |
+| `Workspace Manager`            | Remote repos, worktrees, sandbox lifecycle, and environment selection                                        |
+| `Remote Coding Agent Adapters` | Codex, Claude Code, OpenCode adapters for remote project execution                                           |
+| `Operational Store`            | Durable threads, runs, approvals, automation state, audit, checkpoints, summaries                            |
 
 ## Ownership Rules
 
@@ -197,25 +197,25 @@ Most server-oriented package names on this page are now real ownership boundarie
 
 ## Recommended Internal Packages
 
-| Responsibility | Package |
-| --- | --- |
-| Server app entrypoint | `@aria/server` |
-| Runtime kernel | `@aria/runtime` |
-| Gateway API and realtime | `@aria/gateway` |
-| Aria assistant agent | `@aria/agent-aria` |
-| Project control | `@aria/projects` |
-| Memory and skills | `@aria/memory` |
-| Automation | `@aria/automation` |
-| IM connectors | `@aria/connectors-im` |
-| Remote jobs | `@aria/jobs` |
-| Workspace manager | `@aria/workspaces` |
-| Coding agent adapters | `@aria/agents-coding` |
-| Durable persistence | `@aria/store` |
-| Audit services | `@aria/audit` |
-| Prompt assembly | `@aria/prompt` |
-| Tool runtime | `@aria/tools` |
-| Policy and approvals | `@aria/policy` |
-| Server-local console | `@aria/console` |
+| Responsibility           | Package               |
+| ------------------------ | --------------------- |
+| Server app entrypoint    | `@aria/server`        |
+| Runtime kernel           | `@aria/runtime`       |
+| Gateway API and realtime | `@aria/gateway`       |
+| Aria assistant agent     | `@aria/agent-aria`    |
+| Project control          | `@aria/projects`      |
+| Memory and skills        | `@aria/memory`        |
+| Automation               | `@aria/automation`    |
+| IM connectors            | `@aria/connectors-im` |
+| Remote jobs              | `@aria/jobs`          |
+| Workspace manager        | `@aria/workspaces`    |
+| Coding agent adapters    | `@aria/agents-coding` |
+| Durable persistence      | `@aria/store`         |
+| Audit services           | `@aria/audit`         |
+| Prompt assembly          | `@aria/prompt`        |
+| Tool runtime             | `@aria/tools`         |
+| Policy and approvals     | `@aria/policy`        |
+| Server-local console     | `@aria/console`       |
 
 ## What Must Not Happen
 

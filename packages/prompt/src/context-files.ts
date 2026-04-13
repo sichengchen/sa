@@ -12,8 +12,16 @@ const CONTEXT_THREAT_PATTERNS: Array<[RegExp, string]> = [
 ];
 
 const CONTEXT_INVISIBLE_CHARS = [
-  "\u200b", "\u200c", "\u200d", "\u2060", "\ufeff",
-  "\u202a", "\u202b", "\u202c", "\u202d", "\u202e",
+  "\u200b",
+  "\u200c",
+  "\u200d",
+  "\u2060",
+  "\ufeff",
+  "\u202a",
+  "\u202b",
+  "\u202c",
+  "\u202d",
+  "\u202e",
 ];
 
 const CONTEXT_PRIORITY = [
@@ -113,7 +121,10 @@ export function scanContextContent(content: string, filename: string): string {
   return `[BLOCKED: ${filename} contained potential prompt injection (${findings.join(", ")}). Content not loaded.]`;
 }
 
-async function loadContextFile(filePath: string, maxChars: number): Promise<ContextFileReference | null> {
+async function loadContextFile(
+  filePath: string,
+  maxChars: number,
+): Promise<ContextFileReference | null> {
   try {
     const raw = (await readFile(filePath, "utf-8")).trim();
     if (!raw) {
@@ -145,7 +156,10 @@ export async function buildContextFilesPrompt(
     return "";
   }
 
-  const reference = await loadContextFile(contextFile, options.maxFileChars ?? MAX_CONTEXT_FILE_CHARS);
+  const reference = await loadContextFile(
+    contextFile,
+    options.maxFileChars ?? MAX_CONTEXT_FILE_CHARS,
+  );
   if (!reference) {
     return "";
   }
@@ -192,7 +206,12 @@ function addCandidateDirectories(
   }
 }
 
-function extractDirectoriesFromExec(command: string, workingDir: string, loaded: Set<string>, candidates: Set<string>): void {
+function extractDirectoriesFromExec(
+  command: string,
+  workingDir: string,
+  loaded: Set<string>,
+  candidates: Set<string>,
+): void {
   const tokens = command.split(/\s+/).filter(Boolean);
   for (const token of tokens) {
     if (token.startsWith("-")) continue;

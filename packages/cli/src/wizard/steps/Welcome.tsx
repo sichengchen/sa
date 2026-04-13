@@ -16,13 +16,11 @@ export function Welcome({ onNext }: WelcomeProps) {
         Welcome to Esperta Aria
       </Text>
       <Text />
-      <Text>
-        Esperta Aria is your local-first agent runtime.
-      </Text>
+      <Text>Esperta Aria is your local-first agent runtime.</Text>
       <Text />
       <Text>
-        Aria Runtime runs in the background with thin connectors for TUI,
-        Telegram, and Discord. This wizard will help you set up:
+        Aria Runtime runs in the background with thin connectors for TUI, Telegram, and Discord.
+        This wizard will help you set up:
       </Text>
       <Text> 1. Agent identity and personality</Text>
       <Text> 2. Your profile (name, preferences)</Text>

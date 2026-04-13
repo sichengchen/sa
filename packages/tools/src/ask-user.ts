@@ -10,14 +10,17 @@ import type { ToolImpl, ToolResult } from "@aria/agent-aria";
  */
 export const askUserTool: ToolImpl = {
   name: "ask_user",
-  description: "Ask the user a clarifying question. The agent pauses until the user responds. Use when you need input before proceeding.",
-  summary: "ask_user [safe]: Ask the user a clarifying question. Supports free-text or multiple-choice options.",
+  description:
+    "Ask the user a clarifying question. The agent pauses until the user responds. Use when you need input before proceeding.",
+  summary:
+    "ask_user [safe]: Ask the user a clarifying question. Supports free-text or multiple-choice options.",
   dangerLevel: "safe",
   parameters: Type.Object({
     question: Type.String({ description: "The question to ask the user" }),
     options: Type.Optional(
       Type.Array(Type.String(), {
-        description: "Optional list of choices. If provided, the user picks one; otherwise free-text input.",
+        description:
+          "Optional list of choices. If provided, the user picks one; otherwise free-text input.",
       }),
     ),
   }),

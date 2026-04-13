@@ -3,12 +3,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { writeFile } from "node:fs/promises";
 import { withTempDir } from "./temp-dir.js";
-import {
-  LIVE,
-  describeLive,
-  makeLiveRouter,
-  resolveLiveProviderSelection,
-} from "./live-model.js";
+import { LIVE, describeLive, makeLiveRouter, resolveLiveProviderSelection } from "./live-model.js";
 import { echoTool, failTool, slowTool } from "./test-tools.js";
 
 // --- temp-dir helper ---
@@ -46,9 +41,7 @@ describe("echoTool", () => {
 
 describe("failTool", () => {
   test("throws with default message", async () => {
-    await expect(failTool.execute({})).rejects.toThrow(
-      "intentional test failure",
-    );
+    await expect(failTool.execute({})).rejects.toThrow("intentional test failure");
   });
 
   test("throws with custom reason", async () => {
@@ -88,9 +81,7 @@ describe("live-model", () => {
       delete process.env.GOOGLE_AI_API_KEY;
       delete process.env.MINIMAX_API_KEY;
       delete process.env.ARIA_LIVE_PROVIDER;
-      expect(() => makeLiveRouter()).toThrow(
-        "requires one of ANTHROPIC_API_KEY",
-      );
+      expect(() => makeLiveRouter()).toThrow("requires one of ANTHROPIC_API_KEY");
     } finally {
       for (const [key, value] of Object.entries(saved)) {
         if (value) {

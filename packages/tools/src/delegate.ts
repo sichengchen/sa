@@ -20,25 +20,40 @@ export interface DelegateToolDeps {
 export function createDelegateTool(deps: DelegateToolDeps): ToolImpl {
   return {
     name: "delegate",
-    description: "Delegate a task to a sub-agent. By default runs synchronously (blocks until done). Set background=true to spawn in the background and poll with delegate_status. Sub-agents have limited tools (no delegate — no recursion).",
+    description:
+      "Delegate a task to a sub-agent. By default runs synchronously (blocks until done). Set background=true to spawn in the background and poll with delegate_status. Sub-agents have limited tools (no delegate — no recursion).",
     dangerLevel: "moderate",
     parameters: Type.Object({
-      task: Type.Optional(Type.String({ description: "The task instruction for a single sub-agent" })),
-      tasks: Type.Optional(Type.Array(
-        Type.Object({
-          task: Type.String({ description: "Task instruction" }),
-          model: Type.Optional(Type.String({ description: "Model override" })),
-          tools: Type.Optional(Type.Array(Type.String(), { description: "Tool allowlist" })),
-        }),
-        { description: "Spawn multiple sub-agents (always background)" },
-      )),
+      task: Type.Optional(
+        Type.String({ description: "The task instruction for a single sub-agent" }),
+      ),
+      tasks: Type.Optional(
+        Type.Array(
+          Type.Object({
+            task: Type.String({ description: "Task instruction" }),
+            model: Type.Optional(Type.String({ description: "Model override" })),
+            tools: Type.Optional(Type.Array(Type.String(), { description: "Tool allowlist" })),
+          }),
+          { description: "Spawn multiple sub-agents (always background)" },
+        ),
+      ),
       model: Type.Optional(Type.String({ description: "Model override (default: eco tier)" })),
-      tools: Type.Optional(Type.Array(Type.String(), { description: "Tool name allowlist (default: all non-delegate tools)" })),
-      background: Type.Optional(Type.Boolean({ description: "If true, return handle immediately (use delegate_status to poll)" })),
+      tools: Type.Optional(
+        Type.Array(Type.String(), {
+          description: "Tool name allowlist (default: all non-delegate tools)",
+        }),
+      ),
+      background: Type.Optional(
+        Type.Boolean({
+          description: "If true, return handle immediately (use delegate_status to poll)",
+        }),
+      ),
     }),
     async execute(args: Record<string, unknown>) {
       const singleTask = args.task as string | undefined;
-      const multiTasks = args.tasks as Array<{ task: string; model?: string; tools?: string[] }> | undefined;
+      const multiTasks = args.tasks as
+        | Array<{ task: string; model?: string; tools?: string[] }>
+        | undefined;
       const model = args.model as string | undefined;
       const toolsFilter = args.tools as string[] | undefined;
       const background = args.background as boolean | undefined;
@@ -105,19 +120,19 @@ export function createDelegateTool(deps: DelegateToolDeps): ToolImpl {
 
       const subAgent = deps.createSubAgent
         ? deps.createSubAgent({
-          id: subAgentId,
-          task: singleTask,
-          modelOverride: model,
-          tools: toolsFilter,
-          timeoutMs: deps.defaultTimeoutMs,
-        })
+            id: subAgentId,
+            task: singleTask,
+            modelOverride: model,
+            tools: toolsFilter,
+            timeoutMs: deps.defaultTimeoutMs,
+          })
         : new SubAgent(deps.router, deps.tools, {
-          id: subAgentId,
-          task: singleTask,
-          modelOverride: model,
-          tools: toolsFilter,
-          timeoutMs: deps.defaultTimeoutMs,
-        });
+            id: subAgentId,
+            task: singleTask,
+            modelOverride: model,
+            tools: toolsFilter,
+            timeoutMs: deps.defaultTimeoutMs,
+          });
 
       const result = await subAgent.run(singleTask);
       const lines: string[] = [];

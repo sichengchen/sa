@@ -17,8 +17,7 @@ export const ariaDesktopLaunchModes = [
   {
     id: "server-connected",
     label: "Server-connected",
-    description:
-      "Open Aria, inbox, automations, and project threads against a live Aria Server.",
+    description: "Open Aria, inbox, automations, and project threads against a live Aria Server.",
   },
   {
     id: "local-project",
@@ -62,14 +61,12 @@ export interface AriaDesktopApplicationBootstrap {
   bootstrap: AriaDesktopBootstrap;
 }
 
-export function createAriaDesktopApplicationBootstrap(
-  options: {
-    target: AccessClientTarget;
-    initialThread?: Parameters<typeof createAriaDesktopBootstrap>[1];
-    servers?: AriaDesktopServerInput[];
-    activeServerId?: string;
-  },
-): AriaDesktopApplicationBootstrap {
+export function createAriaDesktopApplicationBootstrap(options: {
+  target: AccessClientTarget;
+  initialThread?: Parameters<typeof createAriaDesktopBootstrap>[1];
+  servers?: AriaDesktopServerInput[];
+  activeServerId?: string;
+}): AriaDesktopApplicationBootstrap {
   const hostBootstrap = createAriaDesktopHostBootstrap(options);
 
   return {

@@ -56,9 +56,7 @@ function normalizeEnvValue(value: string | undefined): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
-export function listAvailableLiveProviders(
-  env: EnvMap = process.env,
-): LiveProviderSelection[] {
+export function listAvailableLiveProviders(env: EnvMap = process.env): LiveProviderSelection[] {
   return LIVE_PROVIDER_ORDER.filter((provider) =>
     Boolean(normalizeEnvValue(env[provider.apiKeyEnvVar])),
   ).map((provider) => ({
@@ -70,17 +68,11 @@ export function listAvailableLiveProviders(
 export function resolveLiveProviderSelection(
   env: EnvMap = process.env,
 ): LiveProviderSelection | null {
-  const requestedProvider = normalizeEnvValue(env.ARIA_LIVE_PROVIDER) as
-    | LiveProviderId
-    | undefined;
+  const requestedProvider = normalizeEnvValue(env.ARIA_LIVE_PROVIDER) as LiveProviderId | undefined;
   const availableProviders = listAvailableLiveProviders(env);
 
   if (requestedProvider) {
-    return (
-      availableProviders.find(
-        (provider) => provider.providerId === requestedProvider,
-      ) ?? null
-    );
+    return availableProviders.find((provider) => provider.providerId === requestedProvider) ?? null;
   }
 
   return availableProviders[0] ?? null;
@@ -124,12 +116,8 @@ export function makeLiveRouter(
 export function getLiveTestLabel(
   selection: LiveProviderSelection | null = resolveLiveProviderSelection(),
 ): string {
-  return selection
-    ? `${selection.providerId}:${selection.modelId}`
-    : "no-live-provider";
+  return selection ? `${selection.providerId}:${selection.modelId}` : "no-live-provider";
 }
 
 /** Wrapper around describe.if(LIVE) for live LLM tests. */
-export const describeLive: typeof describe = describe.if(
-  LIVE,
-) as typeof describe;
+export const describeLive: typeof describe = describe.if(LIVE) as typeof describe;

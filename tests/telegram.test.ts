@@ -1,8 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import {
-  hasTelegramCredentials,
-  getMissingCredentials,
-} from "@aria/connectors-im/telegram";
+import { hasTelegramCredentials, getMissingCredentials } from "@aria/connectors-im/telegram";
 import {
   formatToolResult,
   splitMessage,

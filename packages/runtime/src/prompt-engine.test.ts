@@ -29,10 +29,7 @@ beforeEach(async () => {
     join(testDir, "USER.md"),
     "Operator profile: prefers direct technical summaries.\n",
   );
-  await writeFile(
-    join(testDir, ".aria.md"),
-    "# Workspace Notes\nUse the local prompt engine.\n",
-  );
+  await writeFile(join(testDir, ".aria.md"), "# Workspace Notes\nUse the local prompt engine.\n");
   await writeFile(
     join(testDir, "config.json"),
     JSON.stringify({
@@ -42,11 +39,15 @@ beforeEach(async () => {
         memory: { enabled: true, directory: "memory" },
         contextFiles: { enabled: true, maxFileChars: 20_000, maxHintChars: 8_000 },
       },
-      providers: [
-        { id: "anthropic", type: "anthropic", apiKeyEnvVar: "TEST_API_KEY" },
-      ],
+      providers: [{ id: "anthropic", type: "anthropic", apiKeyEnvVar: "TEST_API_KEY" }],
       models: [
-        { name: "test-model", provider: "anthropic", model: "claude-sonnet-4-5-20250514", temperature: 0.2, maxTokens: 1024 },
+        {
+          name: "test-model",
+          provider: "anthropic",
+          model: "claude-sonnet-4-5-20250514",
+          temperature: 0.2,
+          maxTokens: 1024,
+        },
       ],
       defaultModel: "test-model",
     }),
@@ -69,8 +70,17 @@ async function createPromptEngine() {
 
   const router = ModelRouter.fromConfig(
     {
-      providers: [{ id: "anthropic", type: "anthropic" as KnownProvider, apiKeyEnvVar: "TEST_API_KEY" }],
-      models: [{ name: "test-model", provider: "anthropic", model: "claude-sonnet-4-5-20250514", temperature: 0.2 }],
+      providers: [
+        { id: "anthropic", type: "anthropic" as KnownProvider, apiKeyEnvVar: "TEST_API_KEY" },
+      ],
+      models: [
+        {
+          name: "test-model",
+          provider: "anthropic",
+          model: "claude-sonnet-4-5-20250514",
+          temperature: 0.2,
+        },
+      ],
       defaultModel: "test-model",
     },
     null,
@@ -139,9 +149,7 @@ describe("PromptEngine", () => {
     await promptEngine.buildBasePrompt();
 
     const db = new Database(join(testDir, "aria.db"), { readonly: true });
-    const row = db
-      .prepare("SELECT COUNT(*) AS count FROM prompt_cache")
-      .get() as { count: number };
+    const row = db.prepare("SELECT COUNT(*) AS count FROM prompt_cache").get() as { count: number };
     db.close(false);
 
     expect(row.count).toBe(1);
@@ -158,13 +166,14 @@ describe("PromptEngine", () => {
       createdAt: 100,
       lastActiveAt: 200,
     });
-    store.syncSessionMessages("tui:prompt-session", Array.from({ length: 20 }, (_, index) => ({
-      role: index % 2 === 0 ? "user" : "assistant",
-      content: index < 8
-        ? `older-message-${index}`
-        : `recent-message-${index}`,
-      timestamp: 100 + index,
-    })) as any);
+    store.syncSessionMessages(
+      "tui:prompt-session",
+      Array.from({ length: 20 }, (_, index) => ({
+        role: index % 2 === 0 ? "user" : "assistant",
+        content: index < 8 ? `older-message-${index}` : `recent-message-${index}`,
+        timestamp: 100 + index,
+      })) as any,
+    );
 
     const prompt = await promptEngine.buildSessionPrompt({
       sessionId: "tui:prompt-session",

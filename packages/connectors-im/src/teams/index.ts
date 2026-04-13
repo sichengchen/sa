@@ -17,7 +17,7 @@ export function createTeamsConnector(options: TeamsConnectorOptions = {}) {
     const missing = getMissingCredentials();
     throw new Error(
       `Teams connector requires: ${missing.join(", ")}. ` +
-      "Store them via `aria config` or use the set_env_secret tool.",
+        "Store them via `aria config` or use the set_env_secret tool.",
     );
   }
 

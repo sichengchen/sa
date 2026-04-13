@@ -10,7 +10,7 @@ import type {
 export interface AriaRuntimeExecutionDriver {
   execute(
     request: RuntimeBackendExecutionRequest,
-    observer?: RuntimeBackendExecutionObserver
+    observer?: RuntimeBackendExecutionObserver,
   ): Promise<RuntimeBackendExecutionResult>;
   cancel(executionId: string): Promise<void>;
 }
@@ -46,7 +46,7 @@ export class AriaRuntimeBackendAdapter implements RuntimeBackendAdapter {
 
   async execute(
     request: RuntimeBackendExecutionRequest,
-    observer?: RuntimeBackendExecutionObserver
+    observer?: RuntimeBackendExecutionObserver,
   ): Promise<RuntimeBackendExecutionResult> {
     return this.options.driver.execute(request, observer);
   }
@@ -57,7 +57,7 @@ export class AriaRuntimeBackendAdapter implements RuntimeBackendAdapter {
 }
 
 export function createAriaRuntimeBackendAdapter(
-  options: AriaRuntimeBackendOptions
+  options: AriaRuntimeBackendOptions,
 ): AriaRuntimeBackendAdapter {
   return new AriaRuntimeBackendAdapter(options);
 }

@@ -32,21 +32,21 @@ Notes:
 
 - runtime, projects, workspaces, jobs, and handoff durable records currently share `aria.db`
 - relay persists paired-device state separately in `relay-state.json`
-- bundled skills are package-owned in the repo under `packages/runtime/src/skills/bundled/`
+- bundled skill assets currently live under `packages/runtime/src/skills/bundled/`, while the public skills API is owned by `@aria/memory`
 
 ## Environment Variables
 
 Common variables:
 
-| Variable | Purpose |
-| --- | --- |
-| `ARIA_HOME` | Override runtime home |
-| `ARIA_ENGINE_PORT` | Override runtime port |
-| `ANTHROPIC_API_KEY` | Anthropic provider auth |
-| `OPENAI_API_KEY` | OpenAI provider auth |
-| `GOOGLE_AI_API_KEY` | Google provider auth |
-| `OPENROUTER_API_KEY` | OpenRouter provider auth |
-| `MINIMAX_API_KEY` | MiniMax provider auth |
+| Variable                  | Purpose                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| `ARIA_HOME`               | Override runtime home                                                |
+| `ARIA_ENGINE_PORT`        | Override runtime port                                                |
+| `ANTHROPIC_API_KEY`       | Anthropic provider auth                                              |
+| `OPENAI_API_KEY`          | OpenAI provider auth                                                 |
+| `GOOGLE_AI_API_KEY`       | Google provider auth                                                 |
+| `OPENROUTER_API_KEY`      | OpenRouter provider auth                                             |
+| `MINIMAX_API_KEY`         | MiniMax provider auth                                                |
 | connector-specific tokens | Telegram, Discord, Slack, Teams, Google Chat, GitHub, Linear, WeChat |
 
 Resolution order remains:

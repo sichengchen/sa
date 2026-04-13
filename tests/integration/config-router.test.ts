@@ -43,7 +43,12 @@ describe("Config + Router integration", () => {
         { id: "openai", type: "openai", apiKeyEnvVar: "OPENAI_API_KEY" },
       ],
       models: [
-        { name: "fast", provider: "anthropic", model: "claude-sonnet-4-5-20250514", temperature: 0.5 },
+        {
+          name: "fast",
+          provider: "anthropic",
+          model: "claude-sonnet-4-5-20250514",
+          temperature: 0.5,
+        },
         { name: "smart", provider: "openai", model: "gpt-4o", temperature: 0.3 },
       ],
       defaultModel: "fast",
@@ -75,7 +80,7 @@ describe("Config + Router integration", () => {
     await mkdir(testHome, { recursive: true });
     await writeFile(
       join(testHome, "IDENTITY.md"),
-      "# TestBot\n\n## Personality\nTest personality.\n\n## System Prompt\nYou are TestBot.\n"
+      "# TestBot\n\n## Personality\nTest personality.\n\n## System Prompt\nYou are TestBot.\n",
     );
 
     const config = new ConfigManager(testHome);

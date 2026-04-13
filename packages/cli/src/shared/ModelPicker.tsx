@@ -43,7 +43,13 @@ interface ModelPickerProps {
 
 const VISIBLE_MODELS = 8;
 
-export function ModelPicker({ title, description, providers, onComplete, onBack }: ModelPickerProps) {
+export function ModelPicker({
+  title,
+  description,
+  providers,
+  onComplete,
+  onBack,
+}: ModelPickerProps) {
   const [substep, setSubstep] = useState<Substep>("provider");
   const [providerIdx, setProviderIdx] = useState(0);
 
@@ -71,7 +77,13 @@ export function ModelPicker({ title, description, providers, onComplete, onBack 
     const resolvedKey = hasApiKey ? provider.apiKey! : apiKey;
     const resolvedUrl = isCompat ? (provider?.baseUrl ?? baseUrl) : (provider?.baseUrl ?? "");
     fetchModelList(
-      provider.type as "anthropic" | "openai" | "google" | "openrouter" | "nvidia" | "openai-compat",
+      provider.type as
+        | "anthropic"
+        | "openai"
+        | "google"
+        | "openrouter"
+        | "nvidia"
+        | "openai-compat",
       resolvedKey,
       resolvedUrl,
       provider.id,
@@ -94,9 +106,10 @@ export function ModelPicker({ title, description, providers, onComplete, onBack 
 
   function completeSelection(chosenModel: string) {
     const finalProviderId = isCustomCompat && !hasApiKey ? customName : provider.id;
-    const finalEnvVar = isCustomCompat && !hasApiKey
-      ? `${customName.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_API_KEY`
-      : provider.apiKeyEnvVar;
+    const finalEnvVar =
+      isCustomCompat && !hasApiKey
+        ? `${customName.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_API_KEY`
+        : provider.apiKeyEnvVar;
     const meta = lookupModelMeta(provider.type, chosenModel, provider.id);
     onComplete({
       providerId: finalProviderId,
@@ -112,9 +125,18 @@ export function ModelPicker({ title, description, providers, onComplete, onBack 
   useInput((input, key) => {
     // -- PROVIDER --
     if (substep === "provider") {
-      if (key.escape) { onBack(); return; }
-      if (key.upArrow) { setProviderIdx((i) => Math.max(0, i - 1)); return; }
-      if (key.downArrow) { setProviderIdx((i) => Math.min(providers.length - 1, i + 1)); return; }
+      if (key.escape) {
+        onBack();
+        return;
+      }
+      if (key.upArrow) {
+        setProviderIdx((i) => Math.max(0, i - 1));
+        return;
+      }
+      if (key.downArrow) {
+        setProviderIdx((i) => Math.min(providers.length - 1, i + 1));
+        return;
+      }
       if (key.return) {
         const p = providers[providerIdx];
         if (p.apiKey) {
@@ -136,19 +158,36 @@ export function ModelPicker({ title, description, providers, onComplete, onBack 
 
     // -- CREDENTIALS --
     if (substep === "credentials") {
-      if (key.escape) { setSubstep("provider"); return; }
+      if (key.escape) {
+        setSubstep("provider");
+        return;
+      }
 
       if (!isCustomCompat) {
-        if (key.return) { setSubstep("fetching"); return; }
-        if (key.backspace || key.delete) { setApiKey((v) => v.slice(0, -1)); return; }
-        if (input && !key.ctrl && !key.meta) { setApiKey((v) => v + input); }
+        if (key.return) {
+          setSubstep("fetching");
+          return;
+        }
+        if (key.backspace || key.delete) {
+          setApiKey((v) => v.slice(0, -1));
+          return;
+        }
+        if (input && !key.ctrl && !key.meta) {
+          setApiKey((v) => v + input);
+        }
         return;
       }
 
       // OpenAI-compat: sequential fields
       if (key.return) {
-        if (compatField === "name") { setCompatField("baseUrl"); return; }
-        if (compatField === "baseUrl") { setCompatField("apiKey"); return; }
+        if (compatField === "name") {
+          setCompatField("baseUrl");
+          return;
+        }
+        if (compatField === "baseUrl") {
+          setCompatField("apiKey");
+          return;
+        }
         setSubstep("fetching");
         return;
       }
@@ -189,7 +228,7 @@ export function ModelPicker({ title, description, providers, onComplete, onBack 
           setSelectedModelIdx((i) => {
             const next = Math.min(fetchedModels.length - 1, i + 1);
             setScrollOffset((off) =>
-              next >= off + VISIBLE_MODELS ? next - VISIBLE_MODELS + 1 : off
+              next >= off + VISIBLE_MODELS ? next - VISIBLE_MODELS + 1 : off,
             );
             return next;
           });
@@ -205,15 +244,22 @@ export function ModelPicker({ title, description, providers, onComplete, onBack 
           if (manualModel.trim()) completeSelection(manualModel.trim());
           return;
         }
-        if (key.backspace || key.delete) { setManualModel((v) => v.slice(0, -1)); return; }
-        if (input && !key.ctrl && !key.meta) { setManualModel((v) => v + input); }
+        if (key.backspace || key.delete) {
+          setManualModel((v) => v.slice(0, -1));
+          return;
+        }
+        if (input && !key.ctrl && !key.meta) {
+          setManualModel((v) => v + input);
+        }
       }
     }
   });
 
   return (
     <Box flexDirection="column">
-      <Text bold color="cyan">{title}</Text>
+      <Text bold color="cyan">
+        {title}
+      </Text>
       {description && <Text dimColor>{description}</Text>}
       <Text />
 
@@ -240,21 +286,30 @@ export function ModelPicker({ title, description, providers, onComplete, onBack 
           {isCustomCompat ? (
             <>
               <Box>
-                <Text color={compatField === "name" ? "blue" : "white"} bold={compatField === "name"}>
+                <Text
+                  color={compatField === "name" ? "blue" : "white"}
+                  bold={compatField === "name"}
+                >
                   Name:{" "}
                 </Text>
                 <Text>{customName}</Text>
                 {compatField === "name" && <Text color="blue">▊</Text>}
               </Box>
               <Box>
-                <Text color={compatField === "baseUrl" ? "blue" : "white"} bold={compatField === "baseUrl"}>
+                <Text
+                  color={compatField === "baseUrl" ? "blue" : "white"}
+                  bold={compatField === "baseUrl"}
+                >
                   Base URL:{" "}
                 </Text>
                 <Text>{baseUrl}</Text>
                 {compatField === "baseUrl" && <Text color="blue">▊</Text>}
               </Box>
               <Box>
-                <Text color={compatField === "apiKey" ? "blue" : "white"} bold={compatField === "apiKey"}>
+                <Text
+                  color={compatField === "apiKey" ? "blue" : "white"}
+                  bold={compatField === "apiKey"}
+                >
                   API Key:{" "}
                 </Text>
                 <Text>{"•".repeat(Math.min(apiKey.length, 40))}</Text>
@@ -285,9 +340,7 @@ export function ModelPicker({ title, description, providers, onComplete, onBack 
         </>
       )}
 
-      {substep === "fetching" && (
-        <Text>Fetching available models from {provider.label}...</Text>
-      )}
+      {substep === "fetching" && <Text>Fetching available models from {provider.label}...</Text>}
 
       {substep === "model" && (
         <>
@@ -320,9 +373,7 @@ export function ModelPicker({ title, description, providers, onComplete, onBack 
             </>
           ) : (
             <>
-              {fetchError && (
-                <Text dimColor>Could not fetch models: {fetchError}</Text>
-              )}
+              {fetchError && <Text dimColor>Could not fetch models: {fetchError}</Text>}
               <Text>Enter model ID manually:</Text>
               <Box>
                 <Text color="blue">Model: </Text>
@@ -341,7 +392,12 @@ export function ModelPicker({ title, description, providers, onComplete, onBack 
 
 /** Default provider options for new setup (wizard) */
 export const PROVIDER_OPTIONS: ProviderOption[] = [
-  { id: "anthropic", type: "anthropic", label: "Anthropic (official)", apiKeyEnvVar: "ANTHROPIC_API_KEY" },
+  {
+    id: "anthropic",
+    type: "anthropic",
+    label: "Anthropic (official)",
+    apiKeyEnvVar: "ANTHROPIC_API_KEY",
+  },
   { id: "openai", type: "openai", label: "OpenAI (official)", apiKeyEnvVar: "OPENAI_API_KEY" },
   { id: "google", type: "google", label: "Google (official)", apiKeyEnvVar: "GOOGLE_AI_API_KEY" },
   { id: "openrouter", type: "openrouter", label: "OpenRouter", apiKeyEnvVar: "OPENROUTER_API_KEY" },

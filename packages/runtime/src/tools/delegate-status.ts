@@ -14,7 +14,8 @@ export interface DelegateStatusDeps {
 export function createDelegateStatusTool(deps: DelegateStatusDeps): ToolImpl {
   return {
     name: "delegate_status",
-    description: "Check status of background sub-agents or get their results. Omit id to list all sub-agents for this session.",
+    description:
+      "Check status of background sub-agents or get their results. Omit id to list all sub-agents for this session.",
     dangerLevel: "safe",
     parameters: Type.Object({
       id: Type.Optional(Type.String({ description: "Specific sub-agent ID (omit to list all)" })),
@@ -45,9 +46,12 @@ export function createDelegateStatusTool(deps: DelegateStatusDeps): ToolImpl {
         const elapsed = s.completedAt
           ? `${Math.round((s.completedAt - s.startedAt) / 1000)}s`
           : `${Math.round((Date.now() - s.startedAt) / 1000)}s`;
-        const summary = s.status === "done" && s.result
-          ? `: ${s.result.slice(0, 100)}`
-          : s.error ? `: ${s.error}` : "";
+        const summary =
+          s.status === "done" && s.result
+            ? `: ${s.result.slice(0, 100)}`
+            : s.error
+              ? `: ${s.error}`
+              : "";
         return `- [${s.status}] ${s.id} (${elapsed})${summary}`;
       });
 

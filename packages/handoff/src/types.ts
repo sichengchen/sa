@@ -1,5 +1,15 @@
-export type HandoffSourceKind = "local_session" | "connector_session" | "automation" | "external_webhook";
-export type HandoffStatus = "pending" | "accepted" | "dispatch_created" | "completed" | "failed" | "cancelled";
+export type HandoffSourceKind =
+  | "local_session"
+  | "connector_session"
+  | "automation"
+  | "external_webhook";
+export type HandoffStatus =
+  | "pending"
+  | "accepted"
+  | "dispatch_created"
+  | "completed"
+  | "failed"
+  | "cancelled";
 
 export interface HandoffRecord {
   handoffId: string;

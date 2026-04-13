@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { ModelPicker, PROVIDER_OPTIONS, type ModelPickerResult, type ProviderOption } from "../../shared/ModelPicker.js";
+import {
+  ModelPicker,
+  PROVIDER_OPTIONS,
+  type ModelPickerResult,
+  type ProviderOption,
+} from "../../shared/ModelPicker.js";
 
 type Phase = "keep-or-change" | "primary" | "ask-eco" | "eco" | "ask-embedding" | "embedding";
 
@@ -34,7 +39,11 @@ export function ModelSetup({ onNext, onBack, currentValues }: ModelSetupProps) {
   const [primaryResult, setPrimaryResult] = useState<ModelPickerResult | null>(null);
   const [ecoResult, setEcoResult] = useState<ModelPickerResult | null>(null);
 
-  function finish(primary: ModelPickerResult, eco?: ModelPickerResult | null, embedding?: ModelPickerResult | null) {
+  function finish(
+    primary: ModelPickerResult,
+    eco?: ModelPickerResult | null,
+    embedding?: ModelPickerResult | null,
+  ) {
     onNext({
       providerId: primary.providerId,
       providerType: primary.providerType,
@@ -88,7 +97,10 @@ export function ModelSetup({ onNext, onBack, currentValues }: ModelSetupProps) {
             setPhase("ask-eco");
           }}
           onBack={() => {
-            if (currentValues) { setPhase("keep-or-change"); return; }
+            if (currentValues) {
+              setPhase("keep-or-change");
+              return;
+            }
             onBack();
           }}
         />
@@ -166,7 +178,14 @@ export function ModelSetup({ onNext, onBack, currentValues }: ModelSetupProps) {
 }
 
 // Simple Y/N question component
-function AskYesNo({ title, question, hint, onYes, onNo, onBack }: {
+function AskYesNo({
+  title,
+  question,
+  hint,
+  onYes,
+  onNo,
+  onBack,
+}: {
   title: string;
   question: string;
   hint?: string;
@@ -175,22 +194,39 @@ function AskYesNo({ title, question, hint, onYes, onNo, onBack }: {
   onBack: () => void;
 }) {
   useInput((input, key) => {
-    if (key.escape) { onBack(); return; }
+    if (key.escape) {
+      onBack();
+      return;
+    }
     const lower = input?.toLowerCase();
-    if (lower === "y" || key.return) { onYes(); return; }
-    if (lower === "n") { onNo(); return; }
+    if (lower === "y" || key.return) {
+      onYes();
+      return;
+    }
+    if (lower === "n") {
+      onNo();
+      return;
+    }
   });
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">{title}</Text>
+      <Text bold color="cyan">
+        {title}
+      </Text>
       <Text />
       <Text>{question}</Text>
       {hint && <Text dimColor>{hint}</Text>}
       <Text />
       <Text>
-        <Text color="yellow" bold>[Y]</Text> Yes{"  "}
-        <Text color="yellow" bold>[N]</Text> No{"   "}
+        <Text color="yellow" bold>
+          [Y]
+        </Text>{" "}
+        Yes{"  "}
+        <Text color="yellow" bold>
+          [N]
+        </Text>{" "}
+        No{"   "}
         <Text dimColor>Esc to go back</Text>
       </Text>
     </Box>
@@ -198,36 +234,70 @@ function AskYesNo({ title, question, hint, onYes, onNo, onBack }: {
 }
 
 // Keep-or-change component for re-setup
-function KeepOrChange({ currentValues, onKeep, onChange, onBack }: {
+function KeepOrChange({
+  currentValues,
+  onKeep,
+  onChange,
+  onBack,
+}: {
   currentValues: ModelSetupData;
   onKeep: () => void;
   onChange: () => void;
   onBack: () => void;
 }) {
   useInput((input, key) => {
-    if (key.escape) { onBack(); return; }
-    if (input?.toLowerCase() === "k") { onKeep(); return; }
-    if (input?.toLowerCase() === "c") { onChange(); return; }
+    if (key.escape) {
+      onBack();
+      return;
+    }
+    if (input?.toLowerCase() === "k") {
+      onKeep();
+      return;
+    }
+    if (input?.toLowerCase() === "c") {
+      onChange();
+      return;
+    }
   });
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">Model Setup</Text>
+      <Text bold color="cyan">
+        Model Setup
+      </Text>
       <Text />
       <Text>Current configuration:</Text>
-      <Text>  Primary: {currentValues.provider}/{currentValues.model}</Text>
-      <Text>  API Key: {currentValues.apiKey ? "••••••••" : "(not set)"} ({currentValues.apiKeyEnvVar})</Text>
-      {currentValues.baseUrl && <Text>  Base URL: {currentValues.baseUrl}</Text>}
+      <Text>
+        {" "}
+        Primary: {currentValues.provider}/{currentValues.model}
+      </Text>
+      <Text>
+        {" "}
+        API Key: {currentValues.apiKey ? "••••••••" : "(not set)"} ({currentValues.apiKeyEnvVar})
+      </Text>
+      {currentValues.baseUrl && <Text> Base URL: {currentValues.baseUrl}</Text>}
       {currentValues.ecoModel && (
-        <Text>  Eco: {currentValues.ecoModel.providerId}/{currentValues.ecoModel.model}</Text>
+        <Text>
+          {" "}
+          Eco: {currentValues.ecoModel.providerId}/{currentValues.ecoModel.model}
+        </Text>
       )}
       {currentValues.embeddingModel && (
-        <Text>  Embedding: {currentValues.embeddingModel.providerId}/{currentValues.embeddingModel.model}</Text>
+        <Text>
+          {" "}
+          Embedding: {currentValues.embeddingModel.providerId}/{currentValues.embeddingModel.model}
+        </Text>
       )}
       <Text />
       <Text>
-        <Text color="yellow" bold>[K]</Text> Keep current{"  "}
-        <Text color="yellow" bold>[C]</Text> Change{"    "}
+        <Text color="yellow" bold>
+          [K]
+        </Text>{" "}
+        Keep current{"  "}
+        <Text color="yellow" bold>
+          [C]
+        </Text>{" "}
+        Change{"    "}
         <Text dimColor>Esc to go back</Text>
       </Text>
     </Box>

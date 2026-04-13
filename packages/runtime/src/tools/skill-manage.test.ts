@@ -57,9 +57,15 @@ describe("skill_manage tool", () => {
     });
     expect(wroteFile.isError).toBeUndefined();
 
-    const skillText = await readFile(join(homeDir, "skills", "release-helper", "SKILL.md"), "utf-8");
+    const skillText = await readFile(
+      join(homeDir, "skills", "release-helper", "SKILL.md"),
+      "utf-8",
+    );
     expect(skillText).toContain("Step one updated.");
-    const refText = await readFile(join(homeDir, "skills", "release-helper", "references", "checklist.md"), "utf-8");
+    const refText = await readFile(
+      join(homeDir, "skills", "release-helper", "references", "checklist.md"),
+      "utf-8",
+    );
     expect(refText).toContain("# Checklist");
 
     const deleted = await tool.execute({

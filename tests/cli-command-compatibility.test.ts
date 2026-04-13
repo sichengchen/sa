@@ -1,15 +1,8 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  mock,
-  test,
-} from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { vi } from "vitest";
 
 type MemoryOverview = {
   curatedLength: number;
@@ -140,12 +133,10 @@ function resetState() {
 beforeAll(async () => {
   runtimeHome = await mkdtemp(join(tmpdir(), "aria-cli-compat-"));
   process.env.ARIA_HOME = runtimeHome;
-  mock.module("../packages/cli/src/engine.js", () => ({
-    ensureEngine: async () => {},
-  }));
-  mock.module("@aria/console/client.js", () => ({
-    createTuiClient: () => mockClient,
-  }));
+  const daemonModule = await import("@aria/server/daemon");
+  vi.spyOn(daemonModule, "ensureEngine").mockResolvedValue(undefined);
+  const consoleClientModule = await import("@aria/console/client.js");
+  vi.spyOn(consoleClientModule, "createTuiClient").mockImplementation(() => mockClient as never);
 
   ({ memoryCommand } = await import("../packages/cli/src/memory.js"));
   ({ automationCommand } = await import("../packages/cli/src/automation.js"));
@@ -155,6 +146,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   console.log = originalConsoleLog;
+  vi.restoreAllMocks();
   delete process.env.ARIA_HOME;
   await rm(runtimeHome, { recursive: true, force: true });
 });
@@ -193,8 +185,7 @@ describe("cli command compatibility", () => {
 
   test("memory read preserves routed layer/key queries", async () => {
     state.memoryRead = {
-      content:
-        "Package ownership moves without changing the operator-facing memory command.",
+      content: "Package ownership moves without changing the operator-facing memory command.",
     };
 
     await memoryCommand(["read", "project", "phase-2-ledger"]);
@@ -214,8 +205,7 @@ describe("cli command compatibility", () => {
         sourceType: "project",
         source: "phase-2-ledger",
         score: 0.8754,
-        content:
-          "Package boundaries stay stable while current CLI behavior remains intact.",
+        content: "Package boundaries stay stable while current CLI behavior remains intact.",
       },
     ];
 
@@ -263,9 +253,7 @@ describe("cli command compatibility", () => {
     expect(capturedLogs[0]).toBe("[heartbeat] heartbeat (active)");
     expect(capturedLogs[1]).toContain("id=cron:heartbeat");
     expect(capturedLogs[1]).toContain("last_status=success | Heartbeat OK");
-    expect(capturedLogs[2]).toBe(
-      "[webhook] Deploy Notify (disabled) slug=deploy-notify",
-    );
+    expect(capturedLogs[2]).toBe("[webhook] Deploy Notify (disabled) slug=deploy-notify");
     expect(capturedLogs[3]).toContain("id=webhook:deploy-notify");
     expect(capturedLogs[3]).toContain("next=n/a last=n/a last_status=n/a");
   });

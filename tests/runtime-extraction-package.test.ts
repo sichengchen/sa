@@ -4,11 +4,57 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { AuditLogger, queryAuditEntries, readAuditEntries } from "../packages/audit/src/index.js";
-import { MAX_REDIRECTS, SecurityModeManager, ToolPolicyManager, buildToolCapabilityCatalog, classifyExecCommand, describeModeEffects, isPathInside, resolveCapabilityPolicyDecision, toRelativeIfInside, validateExecPaths, validateHeaders, validateUrl } from "../packages/policy/src/index.js";
-import { buildContextFilesPrompt, parseContextReferences, preprocessContextReferences, PromptEngine } from "../packages/prompt/src/index.js";
+import {
+  MAX_REDIRECTS,
+  SecurityModeManager,
+  ToolPolicyManager,
+  buildToolCapabilityCatalog,
+  classifyExecCommand,
+  describeModeEffects,
+  isPathInside,
+  resolveCapabilityPolicyDecision,
+  toRelativeIfInside,
+  validateExecPaths,
+  validateHeaders,
+  validateUrl,
+} from "../packages/policy/src/index.js";
+import {
+  buildContextFilesPrompt,
+  parseContextReferences,
+  preprocessContextReferences,
+  PromptEngine,
+} from "../packages/prompt/src/index.js";
 import { ConnectorTypeSchema } from "../packages/protocol/src/index.js";
 import { OperationalStore } from "../packages/store/src/index.js";
-import { askUserTool, bashTool, buildDynamicToolsets, createMemoryDeleteTool, createMemoryReadTool, createMemorySearchTool, createMemoryWriteTool, createNotifyTool, createReadSkillTool, createSessionToolEnvironment, createSetEnvSecretTool, createSetEnvVariableTool, createSkillManageTool, createWebFetchTool, editTool, execKillTool, execStatusTool, formatToolsSection, generateHandle, getBuiltinTools, mergeAllowedTools, reactionTool, readTool, registerBackground, validateEnvVarName, webSearchTool, writeTool } from "../packages/tools/src/index.js";
+import {
+  askUserTool,
+  bashTool,
+  buildDynamicToolsets,
+  createMemoryDeleteTool,
+  createMemoryReadTool,
+  createMemorySearchTool,
+  createMemoryWriteTool,
+  createNotifyTool,
+  createReadSkillTool,
+  createSessionToolEnvironment,
+  createSetEnvSecretTool,
+  createSetEnvVariableTool,
+  createSkillManageTool,
+  createWebFetchTool,
+  editTool,
+  execKillTool,
+  execStatusTool,
+  formatToolsSection,
+  generateHandle,
+  getBuiltinTools,
+  mergeAllowedTools,
+  reactionTool,
+  readTool,
+  registerBackground,
+  validateEnvVarName,
+  webSearchTool,
+  writeTool,
+} from "../packages/tools/src/index.js";
 
 const tempDirs: string[] = [];
 
@@ -24,7 +70,11 @@ async function makeTempDir(prefix: string): Promise<string> {
   return dir;
 }
 
-function makeTool(name: string, dangerLevel: "safe" | "moderate" | "dangerous" = "safe", description = `${name} tool`) {
+function makeTool(
+  name: string,
+  dangerLevel: "safe" | "moderate" | "dangerous" = "safe",
+  description = `${name} tool`,
+) {
   return {
     name,
     description,
@@ -36,7 +86,9 @@ function makeTool(name: string, dangerLevel: "safe" | "moderate" | "dangerous" =
 
 describe("phase-1 extraction package verification", () => {
   test("@aria/runtime composes moved package-owned services from target packages", async () => {
-    const runtimeSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/runtime.ts", import.meta.url), "utf-8"));
+    const runtimeSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/runtime/src/runtime.ts", import.meta.url), "utf-8"),
+    );
     expect(runtimeSource).toContain("@aria/tools");
     expect(runtimeSource).toContain("@aria/prompt");
     expect(runtimeSource).toContain("@aria/store");
@@ -45,13 +97,21 @@ describe("phase-1 extraction package verification", () => {
     expect(runtimeSource).toContain("@aria/policy");
     expect(runtimeSource).toContain("@aria/automation");
     expect(runtimeSource).toContain("@aria/gateway/auth");
-    const backendRegistrySource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/backend-registry.ts", import.meta.url), "utf-8"));
+    const backendRegistrySource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/runtime/src/backend-registry.ts", import.meta.url), "utf-8"),
+    );
     expect(backendRegistrySource).toContain("@aria/jobs/backend-registry");
-    const runtimeEngineSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/engine.ts", import.meta.url), "utf-8"));
+    const runtimeEngineSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/runtime/src/engine.ts", import.meta.url), "utf-8"),
+    );
     expect(runtimeEngineSource).toContain("@aria/server/engine");
-    const proceduresSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/runtime/src/procedures.ts", import.meta.url), "utf-8"));
+    const proceduresSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/runtime/src/procedures.ts", import.meta.url), "utf-8"),
+    );
     expect(proceduresSource).toContain("@aria/gateway/procedures");
-    const gatewayProceduresSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/gateway/src/procedures.ts", import.meta.url), "utf-8"));
+    const gatewayProceduresSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/gateway/src/procedures.ts", import.meta.url), "utf-8"),
+    );
     expect(gatewayProceduresSource).toContain("./trpc.js");
     expect(gatewayProceduresSource).toContain("@aria/tools/session-tool-environment");
     expect(gatewayProceduresSource).toContain("@aria/audit");
@@ -60,7 +120,9 @@ describe("phase-1 extraction package verification", () => {
     expect(gatewayProceduresSource).toContain("@aria/server/runtime");
     expect(gatewayProceduresSource).toContain("@aria/server/session-coordinator");
 
-    const toolsIndexSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/index.ts", import.meta.url), "utf-8"));
+    const toolsIndexSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/tools/src/index.ts", import.meta.url), "utf-8"),
+    );
     expect(toolsIndexSource).not.toContain("@aria/runtime/tools/");
     expect(toolsIndexSource).toContain("@aria/agent-aria");
     expect(toolsIndexSource).toContain("./exec.js");
@@ -69,40 +131,64 @@ describe("phase-1 extraction package verification", () => {
     expect(toolsIndexSource).toContain("./claude-code.js");
     expect(toolsIndexSource).toContain("./codex.js");
 
-    const memoryIndexSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/memory/src/index.ts", import.meta.url), "utf-8"));
-    expect(memoryIndexSource).toContain("@aria/runtime/skills");
+    const memoryIndexSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/memory/src/index.ts", import.meta.url), "utf-8"),
+    );
+    expect(memoryIndexSource).toContain("./skills.js");
     expect(memoryIndexSource).toContain("formatSkillsDiscovery");
     expect(memoryIndexSource).toContain("formatActiveSkills");
 
-    const promptEngineSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/prompt/src/prompt-engine.ts", import.meta.url), "utf-8"));
+    const promptEngineSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/prompt/src/prompt-engine.ts", import.meta.url), "utf-8"),
+    );
     expect(promptEngineSource).not.toContain("@aria/runtime/skills");
     expect(promptEngineSource).toContain("@aria/memory");
     expect(promptEngineSource).toContain("formatSkillsDiscovery");
     expect(promptEngineSource).toContain("@aria/server/config");
 
-    const readSkillSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/read-skill.ts", import.meta.url), "utf-8"));
+    const readSkillSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/tools/src/read-skill.ts", import.meta.url), "utf-8"),
+    );
     expect(readSkillSource).not.toContain("@aria/runtime/skills");
     expect(readSkillSource).toContain("@aria/memory");
 
-    const serverConfigSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/server/src/config.ts", import.meta.url), "utf-8"));
-    expect(serverConfigSource).toContain("@aria/runtime/config");
+    const serverConfigSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/server/src/config.ts", import.meta.url), "utf-8"),
+    );
+    expect(serverConfigSource).toContain("./config/manager.js");
+    expect(serverConfigSource).toContain("./config/types.js");
     expect(serverConfigSource).toContain("ConfigManager");
-    const serverRuntimeSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/server/src/runtime.ts", import.meta.url), "utf-8"));
+    const serverRuntimeSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/server/src/runtime.ts", import.meta.url), "utf-8"),
+    );
     expect(serverRuntimeSource).toContain("@aria/runtime/runtime");
-    const serverSessionCoordinatorSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/server/src/session-coordinator.ts", import.meta.url), "utf-8"));
-    expect(serverSessionCoordinatorSource).toContain("@aria/runtime/session-coordinator");
-    const serverCheckpointsSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/server/src/checkpoints.ts", import.meta.url), "utf-8"));
-    expect(serverCheckpointsSource).toContain("@aria/runtime/checkpoints");
+    const serverSessionCoordinatorSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(
+        new URL("../packages/server/src/session-coordinator.ts", import.meta.url),
+        "utf-8",
+      ),
+    );
+    expect(serverSessionCoordinatorSource).toContain("RuntimeSessionCoordinator");
+    expect(serverSessionCoordinatorSource).toContain("getRuntimeSessionCoordinator");
+    const serverCheckpointsSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/server/src/checkpoints.ts", import.meta.url), "utf-8"),
+    );
+    expect(serverCheckpointsSource).toContain("CheckpointManager");
+    expect(serverCheckpointsSource).toContain("checkpointWorkdirForArgs");
 
     const serverPackageJson = JSON.parse(
-      await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/server/package.json", import.meta.url), "utf-8")),
+      await import("node:fs/promises").then((fs) =>
+        fs.readFile(new URL("../packages/server/package.json", import.meta.url), "utf-8"),
+      ),
     ) as { exports: Record<string, string> };
     expect(serverPackageJson.exports["./config"]).toBe("./src/config.ts");
     expect(serverPackageJson.exports["./runtime"]).toBe("./src/runtime.ts");
     expect(serverPackageJson.exports["./session-coordinator"]).toBe("./src/session-coordinator.ts");
     expect(serverPackageJson.exports["./checkpoints"]).toBe("./src/checkpoints.ts");
 
-    const skillManageSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/skill-manage.ts", import.meta.url), "utf-8"));
+    const skillManageSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/tools/src/skill-manage.ts", import.meta.url), "utf-8"),
+    );
     expect(skillManageSource).not.toContain("@aria/runtime/skills");
     expect(skillManageSource).toContain("@aria/memory");
 
@@ -114,18 +200,31 @@ describe("phase-1 extraction package verification", () => {
       "codex.ts",
     ];
     for (const file of localToolFiles) {
-      const source = await import("node:fs/promises").then(fs => fs.readFile(new URL(`../packages/tools/src/${file}`, import.meta.url), "utf-8"));
+      const source = await import("node:fs/promises").then((fs) =>
+        fs.readFile(new URL(`../packages/tools/src/${file}`, import.meta.url), "utf-8"),
+      );
       expect(source).not.toContain("@aria/runtime/tools/");
     }
-    const execSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/exec.ts", import.meta.url), "utf-8"));
+    const execSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/tools/src/exec.ts", import.meta.url), "utf-8"),
+    );
     expect(execSource).toContain("./sandbox.js");
     expect(execSource).toContain("@aria/agent-aria/content-frame");
-    const codexSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/codex.ts", import.meta.url), "utf-8"));
+    const codexSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/tools/src/codex.ts", import.meta.url), "utf-8"),
+    );
     expect(codexSource).toContain("./agent-subprocess.js");
-    const claudeSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/claude-code.ts", import.meta.url), "utf-8"));
+    const claudeSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/tools/src/claude-code.ts", import.meta.url), "utf-8"),
+    );
     expect(claudeSource).toContain("./agent-subprocess.js");
 
-    const sessionToolEnvironmentSource = await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/src/session-tool-environment.ts", import.meta.url), "utf-8"));
+    const sessionToolEnvironmentSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(
+        new URL("../packages/tools/src/session-tool-environment.ts", import.meta.url),
+        "utf-8",
+      ),
+    );
     expect(sessionToolEnvironmentSource).not.toContain("@aria/runtime/tools/");
     expect(sessionToolEnvironmentSource).toContain("@aria/agent-aria");
     expect(sessionToolEnvironmentSource).toContain("@aria/gateway/router");
@@ -134,7 +233,9 @@ describe("phase-1 extraction package verification", () => {
     expect(sessionToolEnvironmentSource).toContain("./delegate-status.js");
 
     const toolsPackageJson = JSON.parse(
-      await import("node:fs/promises").then(fs => fs.readFile(new URL("../packages/tools/package.json", import.meta.url), "utf-8")),
+      await import("node:fs/promises").then((fs) =>
+        fs.readFile(new URL("../packages/tools/package.json", import.meta.url), "utf-8"),
+      ),
     ) as { exports: Record<string, string> };
     expect(toolsPackageJson.exports["./exec"]).toBe("./src/exec.ts");
     expect(toolsPackageJson.exports["./delegate"]).toBe("./src/delegate.ts");
@@ -158,7 +259,9 @@ describe("phase-1 extraction package verification", () => {
     const logPath = logger.getLogPath();
     const entries = readAuditEntries(logPath);
     expect(entries).toHaveLength(1);
-    expect(entries[0]?.session).toBe("session-id-abcdefghijklmnopqrstuvwxyz-0123456789".slice(0, 36));
+    expect(entries[0]?.session).toBe(
+      "session-id-abcdefghijklmnopqrstuvwxyz-0123456789".slice(0, 36),
+    );
     expect(entries[0]?.summary?.endsWith("...")).toBe(true);
     expect(queryAuditEntries(logPath, { tool: "read" })).toHaveLength(1);
   });
@@ -173,11 +276,18 @@ describe("phase-1 extraction package verification", () => {
     expect(toRelativeIfInside("/tmp/project", "/tmp/project/src/file.ts")).toBe("src/file.ts");
     expect(validateUrl("https://example.com")).toEqual({ ok: true });
     expect(validateUrl("http://localhost:3000").ok).toBe(false);
-    expect(validateHeaders({ Authorization: "nope", Accept: "application/json" })).toEqual({ Accept: "application/json" });
+    expect(validateHeaders({ Authorization: "nope", Accept: "application/json" })).toEqual({
+      Accept: "application/json",
+    });
     expect(MAX_REDIRECTS).toBe(5);
     expect(classifyExecCommand("ls -la", "dangerous")).toBe("safe");
     expect(classifyExecCommand("rm -rf /tmp/foo", "safe")).toBe("dangerous");
-    expect(validateExecPaths("cat /tmp/test.txt", undefined, { fence: ["/tmp"], alwaysDeny: [] })).toEqual({ ok: true });
+    expect(
+      validateExecPaths("cat /tmp/test.txt", undefined, {
+        fence: ["/tmp"],
+        alwaysDeny: [],
+      }),
+    ).toEqual({ ok: true });
   });
 
   test("@aria/policy preserves capability catalog and approval decisions", () => {
@@ -208,8 +318,19 @@ describe("phase-1 extraction package verification", () => {
       new Map([["exec", "dangerous"]]),
     );
     expect(manager.getDangerLevel("exec")).toBe("moderate");
-    expect(manager.shouldEmitToolStart("tui", { toolName: "exec", dangerLevel: "moderate" })).toBe(true);
-    expect(manager.shouldEmitToolEnd("telegram", { toolName: "read", dangerLevel: "safe", isError: true })).toBe(true);
+    expect(
+      manager.shouldEmitToolStart("tui", {
+        toolName: "exec",
+        dangerLevel: "moderate",
+      }),
+    ).toBe(true);
+    expect(
+      manager.shouldEmitToolEnd("telegram", {
+        toolName: "read",
+        dangerLevel: "safe",
+        isError: true,
+      }),
+    ).toBe(true);
   });
 
   test("@aria/prompt exposes package-owned context file and reference helpers", async () => {
@@ -221,7 +342,10 @@ describe("phase-1 extraction package verification", () => {
     const refs = parseContextReferences("Please inspect @file:AGENTS.md and @staged");
     expect(refs.map((ref) => ref.kind)).toEqual(["file", "staged"]);
 
-    const preprocessed = await preprocessContextReferences("Review @file:AGENTS.md", { cwd: workingDir, allowedRoot: workingDir });
+    const preprocessed = await preprocessContextReferences("Review @file:AGENTS.md", {
+      cwd: workingDir,
+      allowedRoot: workingDir,
+    });
     expect(preprocessed.blocked).toBe(false);
     expect(preprocessed.message).toContain("📄 @file:AGENTS.md");
   });
@@ -249,7 +373,10 @@ describe("phase-1 extraction package verification", () => {
         getPromptCache: (cacheKey: string) => cache.get(cacheKey),
         putPromptCache: (input: any) => {
           cacheWrites += 1;
-          cache.set(input.cacheKey, { ...input, updatedAt: input.updatedAt ?? 0 });
+          cache.set(input.cacheKey, {
+            ...input,
+            updatedAt: input.updatedAt ?? 0,
+          });
         },
         getSessionMessages: () => [],
         getSessionSummary: () => undefined,
@@ -379,9 +506,15 @@ describe("phase-1 extraction package verification", () => {
   });
 
   test("@aria/tools exposes package-owned bash and background exec helpers", async () => {
-    await expect(bashTool.execute({ command: "echo hi" } as any)).resolves.toMatchObject({ content: "hi\n", isError: false });
+    await expect(bashTool.execute({ command: "echo hi" } as any)).resolves.toMatchObject({
+      content: "hi\n",
+      isError: false,
+    });
     const handle = generateHandle();
-    const proc = Bun.spawn(["sh", "-c", "sleep 5"], { stdout: "pipe", stderr: "pipe" });
+    const proc = Bun.spawn(["sh", "-c", "sleep 5"], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
     registerBackground(handle, "sleep 5", proc);
     const status = await execStatusTool.execute({ handle } as any);
     expect(status.content).toContain("status:");
@@ -393,16 +526,32 @@ describe("phase-1 extraction package verification", () => {
     const workingDir = await makeTempDir("aria-tools-builtins-");
     const filePath = join(workingDir, "note.txt");
 
-    await expect(writeTool.execute({ file_path: filePath, content: "hello" } as any)).resolves.toMatchObject({ content: `File written: ${filePath}` });
-    await expect(readTool.execute({ file_path: filePath } as any)).resolves.toMatchObject({ content: "hello" });
-    await expect(editTool.execute({ file_path: filePath, old_string: "hello", new_string: "hi" } as any)).resolves.toMatchObject({ content: `File edited: ${filePath}` });
-    await expect(readTool.execute({ file_path: filePath } as any)).resolves.toMatchObject({ content: "hi" });
+    await expect(
+      writeTool.execute({ file_path: filePath, content: "hello" } as any),
+    ).resolves.toMatchObject({ content: `File written: ${filePath}` });
+    await expect(readTool.execute({ file_path: filePath } as any)).resolves.toMatchObject({
+      content: "hello",
+    });
+    await expect(
+      editTool.execute({
+        file_path: filePath,
+        old_string: "hello",
+        new_string: "hi",
+      } as any),
+    ).resolves.toMatchObject({ content: `File edited: ${filePath}` });
+    await expect(readTool.execute({ file_path: filePath } as any)).resolves.toMatchObject({
+      content: "hi",
+    });
   });
 
   test("@aria/tools exposes package-owned web search and fetch helpers", async () => {
-    await expect(webSearchTool.execute({ query: "aria", backend: "auto" } as any)).resolves.toMatchObject({ isError: true });
+    await expect(
+      webSearchTool.execute({ query: "aria", backend: "auto" } as any),
+    ).resolves.toMatchObject({ isError: true });
     const webFetch = createWebFetchTool();
-    await expect(webFetch.execute({ url: "http://127.0.0.1:1234" } as any)).resolves.toMatchObject({ isError: true });
+    await expect(webFetch.execute({ url: "http://127.0.0.1:1234" } as any)).resolves.toMatchObject({
+      isError: true,
+    });
     expect(webFetch.name).toBe("web_fetch");
   });
 
@@ -414,10 +563,18 @@ describe("phase-1 extraction package verification", () => {
     const search = createMemorySearchTool(memory);
     const read = createMemoryReadTool(memory);
     const del = createMemoryDeleteTool(memory);
-    await expect(write.execute({ key: "pref", content: "likes concise output" } as any)).resolves.toMatchObject({ content: "Saved memory: pref" });
-    await expect(search.execute({ query: "concise" } as any)).resolves.toMatchObject({ content: expect.stringContaining("likes concise output") });
-    await expect(read.execute({ key: "pref" } as any)).resolves.toMatchObject({ content: "likes concise output" });
-    await expect(del.execute({ key: "pref" } as any)).resolves.toMatchObject({ content: "Deleted memory: pref" });
+    await expect(
+      write.execute({ key: "pref", content: "likes concise output" } as any),
+    ).resolves.toMatchObject({ content: "Saved memory: pref" });
+    await expect(search.execute({ query: "concise" } as any)).resolves.toMatchObject({
+      content: expect.stringContaining("likes concise output"),
+    });
+    await expect(read.execute({ key: "pref" } as any)).resolves.toMatchObject({
+      content: "likes concise output",
+    });
+    await expect(del.execute({ key: "pref" } as any)).resolves.toMatchObject({
+      content: "Deleted memory: pref",
+    });
   });
 
   test("@aria/tools exposes package-owned env-setting helpers", async () => {
@@ -429,31 +586,52 @@ describe("phase-1 extraction package verification", () => {
       getConfigFile: () => ({ runtime: { env: {} } }),
       saveConfig: async () => {},
     } as any;
-    await expect(createSetEnvSecretTool(config).execute({ name: "TEST_KEY", value: "secret" } as any)).resolves.toMatchObject({ isError: false });
-    await expect(createSetEnvVariableTool(config).execute({ name: "ARIA_LOG_LEVEL", value: "debug" } as any)).resolves.toMatchObject({ isError: false });
+    await expect(
+      createSetEnvSecretTool(config).execute({
+        name: "TEST_KEY",
+        value: "secret",
+      } as any),
+    ).resolves.toMatchObject({ isError: false });
+    await expect(
+      createSetEnvVariableTool(config).execute({
+        name: "ARIA_LOG_LEVEL",
+        value: "debug",
+      } as any),
+    ).resolves.toMatchObject({ isError: false });
   });
 
   test("@aria/tools exposes package-owned skill helpers", async () => {
     const registry = {
-      getContent: async (name: string) => name === "phase-9" ? "skill body" : null,
+      getContent: async (name: string) => (name === "phase-9" ? "skill body" : null),
       activate: async () => {},
       listFiles: async () => ["SKILL.md"],
-      getSubFile: async (_name: string, sub: string) => sub === "docs/overview.md" ? "overview" : null,
+      getSubFile: async (_name: string, sub: string) =>
+        sub === "docs/overview.md" ? "overview" : null,
       get: () => null,
       loadAll: async () => {},
     } as any;
-    await expect(createReadSkillTool(registry).execute({ name: "phase-9" } as any)).resolves.toMatchObject({ content: "skill body" });
+    await expect(
+      createReadSkillTool(registry).execute({ name: "phase-9" } as any),
+    ).resolves.toMatchObject({ content: "skill body" });
     const homeDir = await makeTempDir("aria-tools-skill-");
     const skillTool = createSkillManageTool({ homeDir, registry } as any);
-    const createResult = await skillTool.execute({ action: "create", name: "phase-9", content: `---\nname: phase-9\ndescription: test\n---\nBody` } as any);
+    const createResult = await skillTool.execute({
+      action: "create",
+      name: "phase-9",
+      content: `---\nname: phase-9\ndescription: test\n---\nBody`,
+    } as any);
     expect(createResult.isError).toBeUndefined();
   });
 
   test("@aria/tools exposes package-owned notify and ask-user helpers", async () => {
     const notifyTool = createNotifyTool({ apiKeys: {} } as any);
-    await expect(notifyTool.execute({ message: "hello" } as any)).resolves.toMatchObject({ content: expect.stringContaining("No connectors configured") });
+    await expect(notifyTool.execute({ message: "hello" } as any)).resolves.toMatchObject({
+      content: expect.stringContaining("No connectors configured"),
+    });
     expect(askUserTool.name).toBe("ask_user");
-    await expect(askUserTool.execute({ question: "Continue?" } as any)).resolves.toMatchObject({ isError: true });
+    await expect(askUserTool.execute({ question: "Continue?" } as any)).resolves.toMatchObject({
+      isError: true,
+    });
   });
 
   test("@aria/tools exposes a package-owned session tool environment", async () => {
@@ -491,12 +669,14 @@ describe("phase-1 extraction package verification", () => {
     const merged = mergeAllowedTools(availableTools as any, ["read", "missing"], ["MCP:Docs"]);
     expect((merged ?? []).sort()).toEqual(["mcp_docs_fetch", "mcp_docs_search", "read"]);
 
-    expect(reactionTool.name).toBe("reaction");
-    expect(reactionTool.execute({ emoji: "👍" } as any)).resolves.toMatchObject({ content: "__reaction__:👍" });
-
     const toolsSection = formatToolsSection([makeTool("read"), makeTool("exec", "dangerous")]);
     expect(toolsSection).toContain("- read [safe]: read tool");
     expect(toolsSection).toContain("- exec [dangerous]: exec tool");
+
+    expect(reactionTool.name).toBe("reaction");
+    return expect(reactionTool.execute({ emoji: "👍" } as any)).resolves.toMatchObject({
+      content: "__reaction__:👍",
+    });
   });
 
   test("@aria/memory exposes the package-owned skill surface", async () => {

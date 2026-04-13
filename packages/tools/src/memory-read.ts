@@ -16,14 +16,18 @@ export function createMemoryReadTool(memory: MemoryManager): ToolImpl {
           'Project memory key (e.g. "user-preferences") or journal date (e.g. "2026-02-22")',
       }),
       layer: Type.Optional(
-        Type.Union([
-          Type.Literal("profile"),
-          Type.Literal("project"),
-          Type.Literal("operational"),
-          Type.Literal("journal"),
-        ], {
-          description: 'Optional memory layer. Defaults to "project" unless key is a journal date.',
-        }),
+        Type.Union(
+          [
+            Type.Literal("profile"),
+            Type.Literal("project"),
+            Type.Literal("operational"),
+            Type.Literal("journal"),
+          ],
+          {
+            description:
+              'Optional memory layer. Defaults to "project" unless key is a journal date.',
+          },
+        ),
       ),
     }),
     async execute(args) {
@@ -44,9 +48,10 @@ export function createMemoryReadTool(memory: MemoryManager): ToolImpl {
         const content = await memory.getLayer(resolvedLayer, key);
         if (content === null) {
           return {
-            content: resolvedLayer === "project"
-              ? `No memory found for key: ${key}`
-              : `No ${resolvedLayer} memory found for key: ${key}`,
+            content:
+              resolvedLayer === "project"
+                ? `No memory found for key: ${key}`
+                : `No ${resolvedLayer} memory found for key: ${key}`,
           };
         }
         return { content };

@@ -16,10 +16,7 @@ export const MIN_KEEP_CHARS = 2_000;
  * @param maxChars - Override for the max chars limit (default: HARD_MAX_TOOL_RESULT_CHARS)
  * @returns The original result if under the limit, or a truncated copy
  */
-export function capToolResultSize(
-  result: ToolResult,
-  maxChars?: number,
-): ToolResult {
+export function capToolResultSize(result: ToolResult, maxChars?: number): ToolResult {
   const limit = maxChars ?? HARD_MAX_TOOL_RESULT_CHARS;
   const originalLength = result.content.length;
 
@@ -35,9 +32,7 @@ export function capToolResultSize(
   const searchRegion = result.content.slice(searchStart, keepChars);
   const lastNewline = searchRegion.lastIndexOf("\n");
 
-  const breakPoint = lastNewline >= 0
-    ? searchStart + lastNewline
-    : keepChars;
+  const breakPoint = lastNewline >= 0 ? searchStart + lastNewline : keepChars;
 
   const truncated = result.content.slice(0, breakPoint);
   const note = `\n...[truncated from ${originalLength} to ${truncated.length} chars]`;

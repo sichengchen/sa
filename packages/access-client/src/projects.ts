@@ -45,7 +45,10 @@ export interface ClientExecutionHierarchySummary {
 
 export function buildClientProjectThreadSummary(
   project: Pick<ProjectRecord, "projectId" | "name">,
-  thread: Pick<ThreadRecord, "threadId" | "title" | "status" | "threadType" | "workspaceId" | "environmentId" | "agentId">,
+  thread: Pick<
+    ThreadRecord,
+    "threadId" | "title" | "status" | "threadType" | "workspaceId" | "environmentId" | "agentId"
+  >,
 ): ClientProjectThreadSummary {
   const threadType = resolveThreadType(thread);
   return {

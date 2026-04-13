@@ -29,11 +29,7 @@ export type ToolApprovalCallback = (
 ) => Promise<boolean>;
 
 /** Callback for ask_user — blocks the agent until the user responds */
-export type AskUserCallback = (
-  id: string,
-  question: string,
-  options?: string[],
-) => Promise<string>;
+export type AskUserCallback = (id: string, question: string, options?: string[]) => Promise<string>;
 
 /** Configuration for tool loop detection thresholds */
 export interface ToolLoopConfig {

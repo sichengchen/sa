@@ -8,12 +8,8 @@ export interface AriaMobileApplicationRootProps {
   navigation?: AriaMobileNavigation;
 }
 
-export function AriaMobileApplicationRoot(
-  props: AriaMobileApplicationRootProps,
-): ReactElement {
-  return (
-    <AriaMobileApplicationShell shell={props.shell} navigation={props.navigation} />
-  );
+export function AriaMobileApplicationRoot(props: AriaMobileApplicationRootProps): ReactElement {
+  return <AriaMobileApplicationShell shell={props.shell} navigation={props.navigation} />;
 }
 
 export function createAriaMobileApplicationRoot(

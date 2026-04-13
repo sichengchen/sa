@@ -21,17 +21,17 @@ export function frameAsData(content: string, source: string): string {
 
 /** Patterns that look like API keys or tokens */
 const SECRET_PATTERNS: RegExp[] = [
-  /\bsk-[a-zA-Z0-9]{20,}\b/g,           // OpenAI / generic
-  /\bsk-ant-[a-zA-Z0-9-]{20,}\b/g,      // Anthropic
-  /\bghp_[a-zA-Z0-9]{36,}\b/g,          // GitHub PAT
-  /\bghs_[a-zA-Z0-9]{36,}\b/g,          // GitHub App token
-  /\bgho_[a-zA-Z0-9]{36,}\b/g,          // GitHub OAuth
-  /\bxoxb-[a-zA-Z0-9-]+\b/g,            // Slack bot
-  /\bxoxp-[a-zA-Z0-9-]+\b/g,            // Slack user
-  /\bAIza[a-zA-Z0-9_-]{35,}\b/g,        // Google AI
-  /\bgsk_[a-zA-Z0-9]{20,}\b/g,          // Groq
-  /\bnpm_[a-zA-Z0-9]{36}\b/g,           // npm
-  /\bglpat-[a-zA-Z0-9_-]{20,}\b/g,      // GitLab PAT
+  /\bsk-[a-zA-Z0-9]{20,}\b/g, // OpenAI / generic
+  /\bsk-ant-[a-zA-Z0-9-]{20,}\b/g, // Anthropic
+  /\bghp_[a-zA-Z0-9]{36,}\b/g, // GitHub PAT
+  /\bghs_[a-zA-Z0-9]{36,}\b/g, // GitHub App token
+  /\bgho_[a-zA-Z0-9]{36,}\b/g, // GitHub OAuth
+  /\bxoxb-[a-zA-Z0-9-]+\b/g, // Slack bot
+  /\bxoxp-[a-zA-Z0-9-]+\b/g, // Slack user
+  /\bAIza[a-zA-Z0-9_-]{35,}\b/g, // Google AI
+  /\bgsk_[a-zA-Z0-9]{20,}\b/g, // Groq
+  /\bnpm_[a-zA-Z0-9]{36}\b/g, // npm
+  /\bglpat-[a-zA-Z0-9_-]{20,}\b/g, // GitLab PAT
 ];
 
 /**
@@ -83,14 +83,13 @@ export function maskPaths(text: string): string {
  */
 export function truncateStackTraces(text: string, maxFrames = 3): string {
   // Match blocks of stack frames (lines starting with "    at " or "  at ")
-  return text.replace(
-    /((?:^[ \t]+at .+\n?){1,})/gm,
-    (block) => {
-      const lines = block.split("\n").filter(Boolean);
-      if (lines.length <= maxFrames) return block;
-      return lines.slice(0, maxFrames).join("\n") + `\n    ... (${lines.length - maxFrames} more frames)\n`;
-    },
-  );
+  return text.replace(/((?:^[ \t]+at .+\n?){1,})/gm, (block) => {
+    const lines = block.split("\n").filter(Boolean);
+    if (lines.length <= maxFrames) return block;
+    return (
+      lines.slice(0, maxFrames).join("\n") + `\n    ... (${lines.length - maxFrames} more frames)\n`
+    );
+  });
 }
 
 // ---------------------------------------------------------------------------

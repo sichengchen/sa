@@ -59,11 +59,13 @@ export interface MCPResourceReference {
 }
 
 function sanitizeSegment(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "") || "unnamed";
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "") || "unnamed"
+  );
 }
 
 function dangerLevelForMcpTool(tool: any): DangerLevel {
@@ -416,7 +418,10 @@ export class MCPManager {
     }));
   }
 
-  listTools(serverName?: string, sessionId?: string): Array<{
+  listTools(
+    serverName?: string,
+    sessionId?: string,
+  ): Array<{
     server: string;
     name: string;
     toolName: string;
@@ -424,17 +429,23 @@ export class MCPManager {
     dangerLevel: DangerLevel;
     sessionEnabled: boolean;
   }> {
-    const connections = serverName ? [this.getConnection(serverName)] : Array.from(this.connections.values());
+    const connections = serverName
+      ? [this.getConnection(serverName)]
+      : Array.from(this.connections.values());
     return connections
-      .flatMap((connection) => connection.tools.map((tool) => ({
-        server: connection.name,
-        name: tool.originalName,
-        toolName: tool.toolName,
-        description: tool.description,
-        dangerLevel: tool.dangerLevel,
-        sessionEnabled: sessionId ? this.isServerEnabledForSession(connection.name, sessionId) : true,
-      })))
-      .filter((tool) => sessionId ? tool.sessionEnabled : true)
+      .flatMap((connection) =>
+        connection.tools.map((tool) => ({
+          server: connection.name,
+          name: tool.originalName,
+          toolName: tool.toolName,
+          description: tool.description,
+          dangerLevel: tool.dangerLevel,
+          sessionEnabled: sessionId
+            ? this.isServerEnabledForSession(connection.name, sessionId)
+            : true,
+        })),
+      )
+      .filter((tool) => (sessionId ? tool.sessionEnabled : true))
       .sort((a, b) => a.toolName.localeCompare(b.toolName));
   }
 
@@ -487,15 +498,19 @@ export class MCPManager {
       description: prompt.description,
       arguments: Array.isArray(prompt.arguments)
         ? prompt.arguments.map((arg: any) => ({
-          name: arg.name,
-          description: arg.description,
-          required: arg.required,
-        }))
+            name: arg.name,
+            description: arg.description,
+            required: arg.required,
+          }))
         : undefined,
     }));
   }
 
-  async getPrompt(serverName: string, name: string, args?: Record<string, string>): Promise<string> {
+  async getPrompt(
+    serverName: string,
+    name: string,
+    args?: Record<string, string>,
+  ): Promise<string> {
     const connection = this.getConnection(serverName);
     if (connection.config.tools?.prompts === false) {
       throw new Error(`MCP prompts are disabled for server "${serverName}".`);

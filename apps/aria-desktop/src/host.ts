@@ -30,20 +30,18 @@ export interface AriaDesktopHostBootstrap {
   bootstrap: AriaDesktopBootstrap;
 }
 
-export function createAriaDesktopHostBootstrap(
-  options: {
-    target: AccessClientTarget;
-    initialThread?: {
-      project: Pick<ProjectRecord, "name">;
-      thread: Pick<
-        ThreadRecord,
-        "threadId" | "title" | "status" | "threadType" | "environmentId" | "agentId"
-      >;
-    };
-    servers?: AriaDesktopServerInput[];
-    activeServerId?: string;
-  },
-): AriaDesktopHostBootstrap {
+export function createAriaDesktopHostBootstrap(options: {
+  target: AccessClientTarget;
+  initialThread?: {
+    project: Pick<ProjectRecord, "name">;
+    thread: Pick<
+      ThreadRecord,
+      "threadId" | "title" | "status" | "threadType" | "environmentId" | "agentId"
+    >;
+  };
+  servers?: AriaDesktopServerInput[];
+  activeServerId?: string;
+}): AriaDesktopHostBootstrap {
   return {
     host: ariaDesktopHost,
     shell: ariaDesktopApp,

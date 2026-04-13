@@ -105,7 +105,12 @@ async function getJson<T>(url: string, token?: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function postJson<T>(baseUrl: string, path: string, body: unknown, token?: string): Promise<T> {
+async function postJson<T>(
+  baseUrl: string,
+  path: string,
+  body: unknown,
+  token?: string,
+): Promise<T> {
   const response = await fetch(new URL(path, normalizeBaseUrl(baseUrl)), {
     method: "POST",
     headers: buildHeaders(token),
@@ -204,7 +209,10 @@ class WeChatAccountRunner {
   private readonly cursorPath: string;
   private readonly contextPath: string;
 
-  constructor(private readonly account: WeChatAccountSecret, private readonly homeDir: string) {
+  constructor(
+    private readonly account: WeChatAccountSecret,
+    private readonly homeDir: string,
+  ) {
     this.client = createChatSDKClient();
     this.baseUrl = normalizeBaseUrl(account.apiBaseUrl);
     this.stateDir = join(this.homeDir, WECHAT_STATE_DIR);
@@ -332,7 +340,10 @@ class WeChatAccountRunner {
 
     const text = extractTextFromItems(message.item_list);
     if (!text) {
-      await this.sendText(peerId, "I can only read text and transcribed voice messages in WeChat right now.");
+      await this.sendText(
+        peerId,
+        "I can only read text and transcribed voice messages in WeChat right now.",
+      );
       return;
     }
 
@@ -347,7 +358,11 @@ class WeChatAccountRunner {
     await this.streamReply(peerId, sessionId, text);
   }
 
-  private async handleCommand(peerId: string, prefix: string, command: WeChatCommand): Promise<void> {
+  private async handleCommand(
+    peerId: string,
+    prefix: string,
+    command: WeChatCommand,
+  ): Promise<void> {
     try {
       switch (command.kind) {
         case "help":
@@ -363,15 +378,24 @@ class WeChatAccountRunner {
           await this.sendText(peerId, `Approved ${command.toolCallId}.`);
           return;
         case "reject":
-          await this.client.tool.approve.mutate({ toolCallId: command.toolCallId, approved: false });
+          await this.client.tool.approve.mutate({
+            toolCallId: command.toolCallId,
+            approved: false,
+          });
           await this.sendText(peerId, `Rejected ${command.toolCallId}.`);
           return;
         case "always":
           await this.client.tool.acceptForSession.mutate({ toolCallId: command.toolCallId });
-          await this.sendText(peerId, `Allowed ${command.toolCallId} for the rest of this session.`);
+          await this.sendText(
+            peerId,
+            `Allowed ${command.toolCallId} for the rest of this session.`,
+          );
           return;
         case "answer":
-          await this.client.question.answer.mutate({ id: command.questionId, answer: command.answer });
+          await this.client.question.answer.mutate({
+            id: command.questionId,
+            answer: command.answer,
+          });
           await this.sendText(peerId, `Answered ${command.questionId}.`);
           return;
         case "model":
@@ -469,7 +493,10 @@ async function fetchLoginQRCode(baseUrl: string): Promise<{ qrcode: string; qrCo
 
   const qrCodeUrl = data.qrcode_url
     ? new URL(data.qrcode_url, normalizeBaseUrl(baseUrl)).toString()
-    : new URL(`ilink/bot/get_qrcode?qrcode=${encodeURIComponent(data.qrcode)}`, normalizeBaseUrl(baseUrl)).toString();
+    : new URL(
+        `ilink/bot/get_qrcode?qrcode=${encodeURIComponent(data.qrcode)}`,
+        normalizeBaseUrl(baseUrl),
+      ).toString();
 
   return {
     qrcode: data.qrcode,
@@ -477,17 +504,25 @@ async function fetchLoginQRCode(baseUrl: string): Promise<{ qrcode: string; qrCo
   };
 }
 
-async function pollLoginStatus(baseUrl: string, qrcode: string): Promise<WeChatLoginStatusResponse> {
+async function pollLoginStatus(
+  baseUrl: string,
+  qrcode: string,
+): Promise<WeChatLoginStatusResponse> {
   return getJson<WeChatLoginStatusResponse>(
-    new URL(`ilink/bot/get_qrcode_status?qrcode=${encodeURIComponent(qrcode)}`, normalizeBaseUrl(baseUrl)).toString(),
+    new URL(
+      `ilink/bot/get_qrcode_status?qrcode=${encodeURIComponent(qrcode)}`,
+      normalizeBaseUrl(baseUrl),
+    ).toString(),
   );
 }
 
-export async function startWeChatLogin(options: {
-  baseUrl?: string;
-  homeDir?: string;
-  timeoutMs?: number;
-} = {}): Promise<WeChatAccountSecret> {
+export async function startWeChatLogin(
+  options: {
+    baseUrl?: string;
+    homeDir?: string;
+    timeoutMs?: number;
+  } = {},
+): Promise<WeChatAccountSecret> {
   const baseUrl = normalizeBaseUrl(options.baseUrl);
   const homeDir = options.homeDir ?? getRuntimeHome();
   const timeoutMs = options.timeoutMs ?? WECHAT_LOGIN_TIMEOUT_MS;

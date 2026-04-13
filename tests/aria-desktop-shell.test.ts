@@ -131,9 +131,7 @@ describe("aria-desktop React shell", () => {
     expect(root.type).toBe(AriaDesktopAppShell);
     const rootProps = asElementWithProps(root);
     const model = rootProps.props.model as AriaDesktopAppShellModel;
-    expect(model.shell.projectThreadListScreen.title).toBe(
-      "Unified project threads",
-    );
+    expect(model.shell.projectThreadListScreen.title).toBe("Unified project threads");
 
     const rendered = AriaDesktopApplicationRoot({
       model,

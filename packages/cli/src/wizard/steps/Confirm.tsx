@@ -75,16 +75,25 @@ export function Confirm({ data, onConfirm, onBack }: ConfirmProps) {
       {data.aboutMe && <Text> About: {data.aboutMe}</Text>}
       <Text />
       <Text bold>Models:</Text>
-      <Text> Primary: {data.provider}/{data.model} <Text dimColor>[performance]</Text></Text>
-      <Text>  API Key: {data.apiKey ? "••••••••" : `(set ${data.apiKeyEnvVar} manually)`}</Text>
-      {data.baseUrl && <Text>  Base URL: {data.baseUrl}</Text>}
+      <Text>
+        {" "}
+        Primary: {data.provider}/{data.model} <Text dimColor>[performance]</Text>
+      </Text>
+      <Text> API Key: {data.apiKey ? "••••••••" : `(set ${data.apiKeyEnvVar} manually)`}</Text>
+      {data.baseUrl && <Text> Base URL: {data.baseUrl}</Text>}
       {data.ecoModel ? (
-        <Text> Eco: {data.ecoModel.providerId}/{data.ecoModel.model} <Text dimColor>[eco]</Text></Text>
+        <Text>
+          {" "}
+          Eco: {data.ecoModel.providerId}/{data.ecoModel.model} <Text dimColor>[eco]</Text>
+        </Text>
       ) : (
         <Text dimColor> Eco: (not configured — primary used for all tiers)</Text>
       )}
       {data.embeddingModel ? (
-        <Text> Embedding: {data.embeddingModel.providerId}/{data.embeddingModel.model}</Text>
+        <Text>
+          {" "}
+          Embedding: {data.embeddingModel.providerId}/{data.embeddingModel.model}
+        </Text>
       ) : (
         <Text dimColor> Embedding: (not configured — keyword search only)</Text>
       )}
@@ -112,9 +121,12 @@ export function Confirm({ data, onConfirm, onBack }: ConfirmProps) {
       <Text> {data.linearApiKey ? "Configured" : "Skipped"}</Text>
       <Text />
       <Text bold>Skills:</Text>
-      <Text> {data.selectedSkills && data.selectedSkills.length > 0
-        ? `${data.selectedSkills.length} selected: ${data.selectedSkills.join(", ")}`
-        : "None selected"}</Text>
+      <Text>
+        {" "}
+        {data.selectedSkills && data.selectedSkills.length > 0
+          ? `${data.selectedSkills.length} selected: ${data.selectedSkills.join(", ")}`
+          : "None selected"}
+      </Text>
       <Text />
       <Text dimColor>Enter to save | Esc to go back</Text>
     </Box>

@@ -86,20 +86,22 @@ describe("RelayService", () => {
     expect(followUp.serverId).toBe("server-1");
     expect(approval.threadId).toBe("thread-1");
     expect(followUp.accessGrantId).toBe(grant.grantId);
-    expect((await relay.listEvents("device-1", false))).toHaveLength(2);
-    expect((await relay.listAccessGrants({ serverId: "server-1" }))).toHaveLength(1);
-    expect((await relay.listServers())).toHaveLength(1);
+    expect(await relay.listEvents("device-1", false)).toHaveLength(2);
+    expect(await relay.listAccessGrants({ serverId: "server-1" })).toHaveLength(1);
+    expect(await relay.listServers()).toHaveLength(1);
 
     await relay.markDelivered(followUp.eventId);
-    expect((await relay.listEvents("device-1", false))).toHaveLength(1);
+    expect(await relay.listEvents("device-1", false)).toHaveLength(1);
 
     await relay.detachSession("device-1", "session-1");
-    expect(await relay.canRespondToApproval({
-      deviceId: "device-1",
-      sessionId: "session-1",
-      toolCallId: "tool-1",
-      approved: true,
-    })).toBe(false);
+    expect(
+      await relay.canRespondToApproval({
+        deviceId: "device-1",
+        sessionId: "session-1",
+        toolCallId: "tool-1",
+        approved: true,
+      }),
+    ).toBe(false);
   });
 
   test("rejects mismatched or expired access grants", async () => {

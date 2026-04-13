@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = join(import.meta.dir, "..");
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SOURCE_DIRS = ["apps", "packages", "services", "scripts"] as const;
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs", ".cjs"]);
 const LEGACY_IMPORT_PATTERNS = [
@@ -35,12 +36,8 @@ async function listFiles(relativeDir: string): Promise<string[]> {
 }
 
 async function collectSourceFiles(): Promise<string[]> {
-  const files = (
-    await Promise.all(SOURCE_DIRS.map((dir) => listFiles(dir)))
-  ).flat();
-  return files.filter(
-    (file) => !EXCLUDED_PREFIXES.some((prefix) => file.startsWith(prefix)),
-  );
+  const files = (await Promise.all(SOURCE_DIRS.map((dir) => listFiles(dir)))).flat();
+  return files.filter((file) => !EXCLUDED_PREFIXES.some((prefix) => file.startsWith(prefix)));
 }
 
 describe("legacy compatibility imports", () => {

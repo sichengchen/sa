@@ -17,7 +17,7 @@ export function createGChatConnector(options: GChatConnectorOptions = {}) {
     const missing = getMissingCredentials();
     throw new Error(
       `Google Chat connector requires: ${missing.join(", ")}. ` +
-      "Store them via `aria config` or use the set_env_secret tool.",
+        "Store them via `aria config` or use the set_env_secret tool.",
     );
   }
 
@@ -57,7 +57,9 @@ export async function startGChatConnector(port = 3422): Promise<void> {
     },
   });
 
-  console.log(`Google Chat connector listening on http://localhost:${server.port}/api/webhooks/gchat`);
+  console.log(
+    `Google Chat connector listening on http://localhost:${server.port}/api/webhooks/gchat`,
+  );
 
   const shutdown = async () => {
     console.log("\nShutting down Google Chat connector...");

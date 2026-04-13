@@ -117,8 +117,12 @@ export class AuthManager {
 
   /** Clean up token files on shutdown */
   async cleanup(): Promise<void> {
-    try { await unlink(this.tokenFilePath); } catch {}
-    try { await unlink(this.webhookTokenFilePath); } catch {}
+    try {
+      await unlink(this.tokenFilePath);
+    } catch {}
+    try {
+      await unlink(this.webhookTokenFilePath);
+    } catch {}
   }
 
   /** Get the master token (for local Connectors reading from file) */
@@ -167,7 +171,10 @@ export class AuthManager {
     const lockedUntil = this.pairingLockedUntil.get(connectorId) ?? 0;
     if (now < lockedUntil) {
       const remaining = Math.ceil((lockedUntil - now) / 1000);
-      return { success: false, error: `Too many failed pairing attempts. Try again in ${remaining}s.` };
+      return {
+        success: false,
+        error: `Too many failed pairing attempts. Try again in ${remaining}s.`,
+      };
     }
 
     // Master token (local connectors read from ~/.aria/engine.token)
@@ -297,7 +304,8 @@ export class AuthManager {
   /** Revoke a session token */
   revoke(token: string): boolean {
     const removedInMemory = this.pairedTokens.delete(token);
-    const removedPersisted = this.store?.deleteAuthSessionToken(this.hashCredential(token)) ?? false;
+    const removedPersisted =
+      this.store?.deleteAuthSessionToken(this.hashCredential(token)) ?? false;
     return removedInMemory || removedPersisted;
   }
 

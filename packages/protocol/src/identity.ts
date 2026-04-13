@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 
 export const EventCorrelationIdentitySchema = z.object({
   serverId: z.string().min(1).optional(),
@@ -14,9 +14,7 @@ export const EventCorrelationIdentitySchema = z.object({
   actorId: z.string().min(1).optional(),
 });
 
-export type EventCorrelationIdentity = z.infer<
-  typeof EventCorrelationIdentitySchema
->;
+export type EventCorrelationIdentity = z.infer<typeof EventCorrelationIdentitySchema>;
 
 type EventCorrelationIdentityInput = {
   [K in keyof EventCorrelationIdentity]: string | null | undefined;

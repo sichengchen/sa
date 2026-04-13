@@ -111,9 +111,19 @@ tests/               unit, integration, workflow, and live-gated tests
 Primary checks:
 
 ```bash
-bun run typecheck
-bun test
+vp run repo:check
+vp run repo:test
+vp run repo:build
+vp run repo:verify
+```
+
+Convenience wrappers are also available:
+
+```bash
+bun run check
+bun run test
 bun run build
+bun run verify
 ```
 
 ## Documentation

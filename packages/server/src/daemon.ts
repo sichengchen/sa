@@ -4,7 +4,12 @@ import { spawn } from "node:child_process";
 import { CLI_NAME, HOME_ENV_VAR, RUNTIME_NAME } from "@aria/server/brand";
 import { getRuntimeDiscoveryPaths } from "./discovery.js";
 
-const { runtimeHome, pidFile: PID_FILE, urlFile: URL_FILE, logFile: LOG_FILE } = getRuntimeDiscoveryPaths();
+const {
+  runtimeHome,
+  pidFile: PID_FILE,
+  urlFile: URL_FILE,
+  logFile: LOG_FILE,
+} = getRuntimeDiscoveryPaths();
 
 function isProcessAlive(pid: number): boolean {
   try {

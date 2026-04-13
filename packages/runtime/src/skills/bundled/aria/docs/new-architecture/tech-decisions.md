@@ -6,15 +6,15 @@ These are architecture decisions, not implementation notes.
 
 ## Decision Summary
 
-| Area | Decision |
-| --- | --- |
-| Desktop app shell | `Electron + React` |
-| Mobile app shell | `React Native + Expo` |
-| Repo package manager | `bun`, managed through `Vite+` |
-| Default runtime selection | `bun` where the host allows it |
+| Area                            | Decision                                 |
+| ------------------------------- | ---------------------------------------- |
+| Desktop app shell               | `Electron + React`                       |
+| Mobile app shell                | `React Native + Expo`                    |
+| Repo package manager            | `bun`, managed through `Vite+`           |
+| Default runtime selection       | `bun` where the host allows it           |
 | Client/shared-package toolchain | `Vite+ / Vite / Rolldown / Oxc / Vitest` |
-| Monorepo management | `Vite+` |
-| Monorepo task orchestration | `Vite+` via `vp run` |
+| Monorepo management             | `Vite+`                                  |
+| Monorepo task orchestration     | `Vite+` via `vp run`                     |
 
 ## 1. Desktop App Decision
 
@@ -215,10 +215,9 @@ Illustrative top-level commands:
 
 ```bash
 vp install
-vp run -r check
-vp run -r test
-vp run @aria/desktop#dev
-vp run @aria/mobile#dev
+vp run repo:check
+vp run repo:test
+vp run repo:build
 vp run @aria/server#dev
 ```
 

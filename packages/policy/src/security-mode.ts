@@ -95,7 +95,8 @@ export class SecurityModeManager {
 
   private getTTL(mode: SecurityMode): number {
     if (mode === "trusted") return this.config.modeTTL?.trusted ?? DEFAULT_TRUSTED_TTL;
-    if (mode === "unrestricted") return this.config.modeTTL?.unrestricted ?? DEFAULT_UNRESTRICTED_TTL;
+    if (mode === "unrestricted")
+      return this.config.modeTTL?.unrestricted ?? DEFAULT_UNRESTRICTED_TTL;
     return 0;
   }
 }

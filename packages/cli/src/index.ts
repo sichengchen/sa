@@ -28,7 +28,7 @@ async function runOnboarding(existingConfig?: unknown): Promise<void> {
           instance.unmount();
           resolve();
         },
-      })
+      }),
     );
   });
 }
@@ -40,9 +40,9 @@ async function loadExistingConfig(): Promise<unknown | undefined> {
     const ariaConfig = await config.load();
     const secrets = await config.loadSecrets();
     const defaultModel = ariaConfig.models?.[0];
-    const defaultProvider = ariaConfig.providers?.find(
-      (p: { id: string }) => p.id === defaultModel?.provider
-    ) ?? ariaConfig.providers?.[0];
+    const defaultProvider =
+      ariaConfig.providers?.find((p: { id: string }) => p.id === defaultModel?.provider) ??
+      ariaConfig.providers?.[0];
     const userProfile = await config.loadUserProfile();
     let userName = "";
     let timezone = "";
@@ -54,7 +54,8 @@ async function loadExistingConfig(): Promise<unknown | undefined> {
       const tzMatch = userProfile.match(/^Timezone:\s*(.+)/m);
       if (tzMatch && tzMatch[1].trim() !== "not set") timezone = tzMatch[1].trim();
       const styleMatch = userProfile.match(/^Communication style:\s*(.+)/m);
-      if (styleMatch && styleMatch[1].trim() !== "not set") communicationStyle = styleMatch[1].trim();
+      if (styleMatch && styleMatch[1].trim() !== "not set")
+        communicationStyle = styleMatch[1].trim();
       const aboutMatch = userProfile.match(/^Timezone:.*\n\n([\s\S]*?)\n\n## Preferences/m);
       if (aboutMatch && aboutMatch[1].trim()) aboutMe = aboutMatch[1].trim();
     }
@@ -169,8 +170,12 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     if (action === "--help" || action === "-h" || action === "help") {
       console.log(`Usage: ${CLI_NAME} wechat [start|login [baseUrl]]`);
       console.log("");
-      console.log("  start               Start the WeChat connector using saved or env credentials");
-      console.log("  login [baseUrl]     Link a WeChat account via QR scan and save it to secrets.enc");
+      console.log(
+        "  start               Start the WeChat connector using saved or env credentials",
+      );
+      console.log(
+        "  login [baseUrl]     Link a WeChat account via QR scan and save it to secrets.enc",
+      );
       return;
     }
 
@@ -179,45 +184,45 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     process.exit(1);
   },
   shutdown: async () => {
-      const { createTuiClient } = await import("@aria/console/client.js");
-      try {
-        const client = createTuiClient();
-        console.log(`Shutting down ${RUNTIME_NAME}...`);
-        await client.engine.shutdown.mutate();
-        console.log(`${RUNTIME_NAME} stopped.`);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error(`Failed to shut down: ${msg}`);
-        console.error(`Is the runtime running? Try '${CLI_NAME} engine status'.`);
-        process.exit(1);
-      }
+    const { createTuiClient } = await import("@aria/console/client.js");
+    try {
+      const client = createTuiClient();
+      console.log(`Shutting down ${RUNTIME_NAME}...`);
+      await client.engine.shutdown.mutate();
+      console.log(`${RUNTIME_NAME} stopped.`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`Failed to shut down: ${msg}`);
+      console.error(`Is the runtime running? Try '${CLI_NAME} engine status'.`);
+      process.exit(1);
+    }
   },
   restart: async () => {
-      const { createTuiClient } = await import("@aria/console/client.js");
-      try {
-        const client = createTuiClient();
-        console.log(`Restarting ${RUNTIME_NAME}...`);
-        await client.engine.restart.mutate();
+    const { createTuiClient } = await import("@aria/console/client.js");
+    try {
+      const client = createTuiClient();
+      console.log(`Restarting ${RUNTIME_NAME}...`);
+      await client.engine.restart.mutate();
       // Wait for engine to come back up
       let retries = 0;
-        while (retries < 30) {
+      while (retries < 30) {
         await new Promise((r) => setTimeout(r, 500));
-          try {
-            const freshClient = createTuiClient();
-            await freshClient.health.ping.query();
-            console.log(`${RUNTIME_NAME} restarted successfully.`);
-            return;
-          } catch {
-            retries++;
-          }
+        try {
+          const freshClient = createTuiClient();
+          await freshClient.health.ping.query();
+          console.log(`${RUNTIME_NAME} restarted successfully.`);
+          return;
+        } catch {
+          retries++;
         }
-        console.log(`${RUNTIME_NAME} restart initiated. It may still be starting up.`);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error(`Failed to restart: ${msg}`);
-        console.error(`Is the runtime running? Try '${CLI_NAME} engine restart'.`);
-        process.exit(1);
       }
+      console.log(`${RUNTIME_NAME} restart initiated. It may still be starting up.`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`Failed to restart: ${msg}`);
+      console.error(`Is the runtime running? Try '${CLI_NAME} engine restart'.`);
+      process.exit(1);
+    }
   },
   stop: async () => {
     const { createTuiClient } = await import("@aria/console/client.js");

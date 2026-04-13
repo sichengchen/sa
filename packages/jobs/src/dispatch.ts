@@ -13,10 +13,13 @@ export class ProjectsDispatchService {
 
     const thread = this.repository.getThread(dispatch.threadId);
     const activeBinding = this.repository.getActiveThreadEnvironmentBinding(dispatch.threadId);
-    const worktree = dispatch.worktreeId ? this.repository.getWorktree(dispatch.worktreeId) : undefined;
+    const worktree = dispatch.worktreeId
+      ? this.repository.getWorktree(dispatch.worktreeId)
+      : undefined;
     const resolvedWorkspaceId = activeBinding?.workspaceId ?? thread?.workspaceId ?? null;
     const resolvedEnvironmentId = activeBinding?.environmentId ?? thread?.environmentId ?? null;
-    const resolvedEnvironmentBindingId = activeBinding?.bindingId ?? thread?.environmentBindingId ?? null;
+    const resolvedEnvironmentBindingId =
+      activeBinding?.bindingId ?? thread?.environmentBindingId ?? null;
 
     return {
       dispatch,
@@ -54,17 +57,18 @@ export class ProjectsDispatchService {
       throw new Error(`Dispatch not found: ${event.dispatchId}`);
     }
 
-    const status = event.type === "execution.running"
-      ? "running"
-      : event.type === "execution.waiting_approval"
-        ? "waiting_approval"
-        : event.type === "execution.completed"
-          ? "completed"
-          : event.type === "execution.failed"
-            ? "failed"
-            : event.type === "execution.cancelled"
-              ? "cancelled"
-              : existing.status;
+    const status =
+      event.type === "execution.running"
+        ? "running"
+        : event.type === "execution.waiting_approval"
+          ? "waiting_approval"
+          : event.type === "execution.completed"
+            ? "completed"
+            : event.type === "execution.failed"
+              ? "failed"
+              : event.type === "execution.cancelled"
+                ? "cancelled"
+                : existing.status;
 
     this.repository.upsertDispatch({
       ...existing,
@@ -72,15 +76,22 @@ export class ProjectsDispatchService {
       executionSessionId: event.executionSessionId,
       summary: event.summary ?? existing.summary,
       error: event.error ?? existing.error,
-      completedAt: status === "completed" || status === "failed" || status === "cancelled"
-        ? event.occurredAt
-        : existing.completedAt,
+      completedAt:
+        status === "completed" || status === "failed" || status === "cancelled"
+          ? event.occurredAt
+          : existing.completedAt,
     });
   }
 
   buildLaunchRequest(dispatchId: string): DispatchLaunchRequest {
-    const { dispatch, thread, worktree, resolvedWorkspaceId, resolvedEnvironmentId, resolvedEnvironmentBindingId } =
-      this.resolveLaunchContext(dispatchId);
+    const {
+      dispatch,
+      thread,
+      worktree,
+      resolvedWorkspaceId,
+      resolvedEnvironmentId,
+      resolvedEnvironmentBindingId,
+    } = this.resolveLaunchContext(dispatchId);
 
     return {
       dispatchId: dispatch.dispatchId,

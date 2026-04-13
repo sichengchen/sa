@@ -69,11 +69,13 @@ async function searchPerplexity(query: string, count: number): Promise<SearchRes
   const citations = json.citations ?? [];
 
   // Return as a single synthesized result with citations
-  const results: SearchResult[] = [{
-    title: "Perplexity Search Results",
-    url: citations[0] ?? "https://perplexity.ai",
-    snippet: answer.slice(0, 2000),
-  }];
+  const results: SearchResult[] = [
+    {
+      title: "Perplexity Search Results",
+      url: citations[0] ?? "https://perplexity.ai",
+      snippet: answer.slice(0, 2000),
+    },
+  ];
 
   // Add citation URLs as additional results
   for (const cite of citations.slice(0, count - 1)) {
@@ -85,8 +87,7 @@ async function searchPerplexity(query: string, count: number): Promise<SearchRes
 
 export const webSearchTool: ToolImpl = {
   name: "web_search",
-  description:
-    "Search the web using Brave Search or Perplexity API and return structured results.",
+  description: "Search the web using Brave Search or Perplexity API and return structured results.",
   summary:
     "Search the web and return results (title, URL, snippet). Backends: Brave (BRAVE_API_KEY) or Perplexity (PERPLEXITY_API_KEY). Auto-selects available backend.",
   dangerLevel: "safe",

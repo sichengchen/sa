@@ -24,14 +24,14 @@ During Phase 2:
 
 ## Extracted Ownership
 
-| Target package | Current source owner | New implementation owner | Compatibility shim kept at |
-| --- | --- | --- | --- |
-| `@aria/agent-aria` | `packages/runtime/src/agent/*` and runtime composition in `packages/runtime/src/runtime.ts` | `packages/agent-aria/src/` | `packages/runtime/src/agent/*`, `packages/runtime/src/index.ts` |
-| `@aria/memory` | `packages/runtime/src/memory/*` with runtime wiring in `packages/runtime/src/runtime.ts` and `packages/runtime/src/procedures.ts` | `packages/memory/src/` | `packages/runtime/src/memory/*`, `packages/runtime/src/index.ts` |
-| `@aria/automation` | `packages/runtime/src/automation.ts`, `automation-registry.ts`, `automation-schedule.ts`, `scheduler.ts`, plus automation bridges in `runtime.ts`, `server.ts`, and `procedures.ts` | `packages/automation/src/` | `packages/runtime/src/automation.ts`, `automation-registry.ts`, `automation-schedule.ts`, `scheduler.ts`, `packages/runtime/src/index.ts` |
-| `@aria/gateway` | `packages/gateway/src/*` with `@aria/runtime/{server,procedures,trpc,context}` kept as compatibility shims | `packages/gateway/src/` | `packages/runtime/src/server.ts`, `trpc.ts`, `context.ts`, `procedures.ts`, `packages/runtime/src/index.ts` |
-| `@aria/connectors-im` | `packages/connectors-im/src/` | `packages/connectors-im/src/` | direct target package imports |
-| `@aria/console` | `packages/console/src/` | `packages/console/src/` | direct target package imports |
+| Target package        | Current source owner                                                                                                                                                                | New implementation owner      | Compatibility shim kept at                                                                                                                |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `@aria/agent-aria`    | `packages/runtime/src/agent/*` and runtime composition in `packages/runtime/src/runtime.ts`                                                                                         | `packages/agent-aria/src/`    | `packages/runtime/src/agent/*`, `packages/runtime/src/index.ts`                                                                           |
+| `@aria/memory`        | `packages/runtime/src/memory/*` with runtime wiring in `packages/runtime/src/runtime.ts` and `packages/runtime/src/procedures.ts`                                                   | `packages/memory/src/`        | `packages/runtime/src/memory/*`, `packages/runtime/src/index.ts`                                                                          |
+| `@aria/automation`    | `packages/runtime/src/automation.ts`, `automation-registry.ts`, `automation-schedule.ts`, `scheduler.ts`, plus automation bridges in `runtime.ts`, `server.ts`, and `procedures.ts` | `packages/automation/src/`    | `packages/runtime/src/automation.ts`, `automation-registry.ts`, `automation-schedule.ts`, `scheduler.ts`, `packages/runtime/src/index.ts` |
+| `@aria/gateway`       | `packages/gateway/src/*` with `@aria/runtime/{server,procedures,trpc,context}` kept as compatibility shims                                                                          | `packages/gateway/src/`       | `packages/runtime/src/server.ts`, `trpc.ts`, `context.ts`, `procedures.ts`, `packages/runtime/src/index.ts`                               |
+| `@aria/connectors-im` | `packages/connectors-im/src/`                                                                                                                                                       | `packages/connectors-im/src/` | direct target package imports                                                                                                             |
+| `@aria/console`       | `packages/console/src/`                                                                                                                                                             | `packages/console/src/`       | direct target package imports                                                                                                             |
 
 ## Review Notes And Hotspots
 

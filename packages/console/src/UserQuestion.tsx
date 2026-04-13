@@ -44,12 +44,7 @@ export function UserQuestion({ questionId, question, options, onAnswer }: UserQu
   });
 
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="single"
-      borderColor="cyan"
-      paddingX={1}
-    >
+    <Box flexDirection="column" borderStyle="single" borderColor="cyan" paddingX={1}>
       <Text bold color="cyan">
         Agent has a question
       </Text>
@@ -60,7 +55,9 @@ export function UserQuestion({ questionId, question, options, onAnswer }: UserQu
           {options.map((opt, i) => (
             <Text key={i}>
               {i === selected ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}
-              <Text>{i + 1}. {opt}</Text>
+              <Text>
+                {i + 1}. {opt}
+              </Text>
             </Text>
           ))}
           <Text />
@@ -69,7 +66,9 @@ export function UserQuestion({ questionId, question, options, onAnswer }: UserQu
       ) : (
         <>
           <Box>
-            <Text color="blue" bold>{"Answer: "}</Text>
+            <Text color="blue" bold>
+              {"Answer: "}
+            </Text>
             <Text>{freeText}</Text>
             <Text color="blue">{"▊"}</Text>
           </Box>

@@ -1,3 +1,9 @@
+import { ThreadStatusSchema, ThreadTypeSchema } from "@aria/protocol";
+import type {
+  ThreadStatus as ProtocolThreadStatus,
+  ThreadType as ProtocolThreadType,
+} from "@aria/protocol";
+
 export type ProjectsExternalSystem = "linear" | "github" | "git" | "unknown";
 
 export interface ProjectRecord {
@@ -57,9 +63,10 @@ export interface TaskRecord {
   updatedAt: number;
 }
 
-export type ThreadStatus = "idle" | "queued" | "running" | "dirty" | "blocked" | "done" | "failed" | "cancelled";
-export const THREAD_TYPES = ["aria", "connector", "automation", "remote_project", "local_project"] as const;
-export type ThreadType = (typeof THREAD_TYPES)[number];
+export const THREAD_STATUSES = ThreadStatusSchema.options;
+export type ThreadStatus = ProtocolThreadStatus;
+export const THREAD_TYPES = ThreadTypeSchema.options;
+export type ThreadType = ProtocolThreadType;
 export type AgentAdapterId = "aria-agent" | "codex" | "claude-code" | "opencode" | string;
 
 export interface ThreadRecord {
@@ -119,18 +126,9 @@ export interface RunRecord {
   completedAt?: number | null;
 }
 
-export type {
-  DispatchRecord,
-  DispatchStatus,
-  JobAuthor,
-  JobRecord,
-} from "@aria/jobs/types";
+export type { DispatchRecord, DispatchStatus, JobAuthor, JobRecord } from "@aria/jobs/types";
 
-export type {
-  RepoRecord,
-  WorktreeRecord,
-  WorktreeStatus,
-} from "@aria/workspaces/types";
+export type { RepoRecord, WorktreeRecord, WorktreeStatus } from "@aria/workspaces/types";
 
 export type ReviewStatus = "pending" | "changes_requested" | "approved" | "dismissed";
 
@@ -146,7 +144,13 @@ export interface ReviewRecord {
   resolvedAt?: number | null;
 }
 
-export type PublishRunStatus = "pending" | "pushed" | "pr_created" | "merged" | "failed" | "cancelled";
+export type PublishRunStatus =
+  | "pending"
+  | "pushed"
+  | "pr_created"
+  | "merged"
+  | "failed"
+  | "cancelled";
 
 export interface PublishRunRecord {
   publishRunId: string;
@@ -201,7 +205,14 @@ export interface MemoryRecord {
 
 export interface ConnectorAccountRecord {
   connectorAccountId: string;
-  connectorType: ProjectsExternalSystem | "slack" | "telegram" | "discord" | "teams" | "gchat" | "wechat";
+  connectorType:
+    | ProjectsExternalSystem
+    | "slack"
+    | "telegram"
+    | "discord"
+    | "teams"
+    | "gchat"
+    | "wechat";
   label: string;
   createdAt: number;
   updatedAt: number;

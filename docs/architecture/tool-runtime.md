@@ -35,12 +35,12 @@ Policy is resolved before execution. Approval is one part of capability policy, 
 
 Built-in and MCP tools are presented through one unified interface to the agent. They differ in governance:
 
-| Dimension | Built-In Tools | MCP Tools |
-| --- | --- | --- |
-| Implementation owner | Runtime | External server |
-| Trust source | Local code | Server registration and trust policy |
-| Availability | Runtime-managed | Session- and policy-scoped |
-| Audit | Native | Native plus server identity metadata |
+| Dimension            | Built-In Tools  | MCP Tools                            |
+| -------------------- | --------------- | ------------------------------------ |
+| Implementation owner | Runtime         | External server                      |
+| Trust source         | Local code      | Server registration and trust policy |
+| Availability         | Runtime-managed | Session- and policy-scoped           |
+| Audit                | Native          | Native plus server identity metadata |
 
 ## MCP as Native Extension Layer
 

@@ -26,7 +26,7 @@ function mockEmbedFn(dimensions = 3): EmbeddingConfig {
       const vectors = texts.map((text, i) => {
         // Generate deterministic vectors based on text content hash
         const hash = text.split("").reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
-        const vec = new Array(dimensions);
+        const vec = Array.from({ length: dimensions }, () => 0);
         for (let d = 0; d < dimensions; d++) {
           vec[d] = Math.sin(hash + d + i + callCount * 0.001);
         }

@@ -7,14 +7,14 @@ Stored in `~/.aria/secrets.enc` with a companion salt file `~/.aria/.salt`.
 
 ## Encryption Scheme
 
-| Property | Value |
-|----------|-------|
-| Algorithm | AES-256-GCM |
-| Key derivation | scrypt (N=16384, r=8, p=1) |
-| Key length | 32 bytes (256 bits) |
-| IV | 16 random bytes per encryption |
-| Auth tag | GCM authentication tag (integrity check) |
-| Salt | 32 random bytes, stored in `~/.aria/.salt` |
+| Property       | Value                                      |
+| -------------- | ------------------------------------------ |
+| Algorithm      | AES-256-GCM                                |
+| Key derivation | scrypt (N=16384, r=8, p=1)                 |
+| Key length     | 32 bytes (256 bits)                        |
+| IV             | 16 random bytes per encryption             |
+| Auth tag       | GCM authentication tag (integrity check)   |
+| Salt           | 32 random bytes, stored in `~/.aria/.salt` |
 
 ---
 
@@ -60,10 +60,10 @@ different ciphertext.
 
 ## File Permissions
 
-| File | Permission | Description |
-|------|------------|-------------|
-| `~/.aria/.salt` | `0o600` | Random salt, never overwritten once created |
-| `~/.aria/secrets.enc` | `0o600` | Encrypted secrets, rewritten on every save |
+| File                  | Permission | Description                                 |
+| --------------------- | ---------- | ------------------------------------------- |
+| `~/.aria/.salt`       | `0o600`    | Random salt, never overwritten once created |
+| `~/.aria/secrets.enc` | `0o600`    | Encrypted secrets, rewritten on every save  |
 
 ---
 
@@ -71,13 +71,14 @@ different ciphertext.
 
 ```ts
 interface SecretsFile {
-  apiKeys: Record<string, string>;   // e.g. { "ANTHROPIC_API_KEY": "sk-...", "MINIMAX_API_KEY": "sk-..." }
-  botToken?: string;                 // Telegram bot token
-  pairedChatId?: number;             // Telegram paired chat ID
-  pairingCode?: string;              // One-time pairing code
-  discordToken?: string;             // Discord bot token
-  discordGuildId?: string;           // Discord guild ID
-  wechatAccounts?: Array<{          // Linked WeChat connector accounts
+  apiKeys: Record<string, string>; // e.g. { "ANTHROPIC_API_KEY": "sk-...", "MINIMAX_API_KEY": "sk-..." }
+  botToken?: string; // Telegram bot token
+  pairedChatId?: number; // Telegram paired chat ID
+  pairingCode?: string; // One-time pairing code
+  discordToken?: string; // Discord bot token
+  discordGuildId?: string; // Discord guild ID
+  wechatAccounts?: Array<{
+    // Linked WeChat connector accounts
     accountId: string;
     botToken: string;
     apiBaseUrl?: string;

@@ -26,7 +26,7 @@ function semanticEmbedFn(biasWord: string, dimensions = 8): EmbeddingConfig {
     model: "semantic-test-v1",
     embed: async (texts: string[]) => {
       const vectors = texts.map((text) => {
-        const vec = new Array(dimensions).fill(0);
+        const vec = Array.from({ length: dimensions }, () => 0);
         // Base: hash-derived direction
         const hash = text.split("").reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
         for (let d = 0; d < dimensions; d++) {
@@ -193,7 +193,9 @@ describe("Temporal decay", () => {
     await mgr.appendJournal("Identical note about quantum computing", today);
 
     // 30 days ago = exactly half-life
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
     await mgr.appendJournal("Identical note about quantum computing", thirtyDaysAgo);
 
     const results = await mgr.searchIndex("quantum computing");

@@ -1,5 +1,9 @@
 import { describe, it, expect, mock } from "bun:test";
-import { validateEnvVarName, createSetEnvSecretTool, createSetEnvVariableTool } from "./set-api-key.js";
+import {
+  validateEnvVarName,
+  createSetEnvSecretTool,
+  createSetEnvVariableTool,
+} from "./set-api-key.js";
 import type { ConfigManager } from "../config/index.js";
 
 // ── validateEnvVarName ───────────────────────────────────────────────────────

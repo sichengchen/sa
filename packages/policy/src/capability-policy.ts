@@ -37,7 +37,9 @@ export interface CapabilityPolicyDecision extends ToolCapabilityDescriptor {
   policyDecision: "auto_approve" | "require_operator_approval";
 }
 
-function getMcpStatusMap(mcp: Pick<CapabilityMcpRegistry, "listServers">): Map<string, CapabilityMcpServerStatus> {
+function getMcpStatusMap(
+  mcp: Pick<CapabilityMcpRegistry, "listServers">,
+): Map<string, CapabilityMcpServerStatus> {
   return new Map(mcp.listServers().map((status) => [status.name, status]));
 }
 

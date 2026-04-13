@@ -26,9 +26,7 @@ export class OpenCodeRuntimeBackendAdapter extends SubprocessRuntimeBackendAdapt
       available: version.available,
       authState: "unknown",
       detectedVersion: version.detectedVersion,
-      reason: version.available
-        ? null
-        : "The opencode CLI is not installed or not on PATH.",
+      reason: version.available ? null : "The opencode CLI is not installed or not on PATH.",
     };
   }
 
@@ -45,10 +43,7 @@ export class OpenCodeRuntimeBackendAdapter extends SubprocessRuntimeBackendAdapt
   }
 
   protected buildEnv(request: RuntimeBackendExecutionRequest): Record<string, string> {
-    const permission =
-      request.approvalMode === "gated"
-        ? { edit: "deny", bash: "deny" }
-        : "allow";
+    const permission = request.approvalMode === "gated" ? { edit: "deny", bash: "deny" } : "allow";
 
     return {
       ...super.buildEnv(request),

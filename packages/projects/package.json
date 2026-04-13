@@ -2,8 +2,8 @@
   "name": "@aria/projects",
   "version": "0.0.0",
   "private": true,
+  "description": "Aria project coordination, tracked-work planning, and durable project-state surface",
   "type": "module",
-  "description": "Aria project coordination, tracked-work planning, and durable project-state compatibility entrypoints",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

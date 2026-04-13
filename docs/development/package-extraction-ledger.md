@@ -8,14 +8,14 @@ During phase 1, the current `packages/runtime` and `packages/shared-types` entry
 
 ## Extracted Ownership
 
-| Target package | Extracted source owner | New implementation owner | Compatibility shim kept at |
-| --- | --- | --- | --- |
-| `@aria/protocol` | `packages/shared-types/src/types.ts`, `packages/shared-types/src/connector.ts` | `packages/protocol/src/` | `packages/shared-types/src/types.ts`, `packages/shared-types/src/connector.ts` |
-| `@aria/store` | `packages/runtime/src/operational-store.ts` | `packages/store/src/operational-store.ts` | `packages/runtime/src/operational-store.ts` |
-| `@aria/audit` | `packages/runtime/src/audit.ts` | `packages/audit/src/audit.ts` | `packages/runtime/src/audit.ts` |
-| `@aria/prompt` | `packages/runtime/src/prompt-engine.ts` | `packages/prompt/src/prompt-engine.ts` | `packages/runtime/src/prompt-engine.ts` |
-| `@aria/tools` | `packages/runtime/src/toolsets.ts`, `packages/runtime/src/tools/index.ts` | `packages/tools/src/` | `packages/runtime/src/toolsets.ts`, `packages/runtime/src/tools/index.ts` |
-| `@aria/policy` | `packages/runtime/src/capability-policy.ts`, `packages/runtime/src/tools/policy.ts` | `packages/policy/src/` | `packages/runtime/src/capability-policy.ts`, `packages/runtime/src/tools/policy.ts` |
+| Target package   | Extracted source owner                                                              | New implementation owner                  | Compatibility shim kept at                                                          |
+| ---------------- | ----------------------------------------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------- |
+| `@aria/protocol` | `packages/shared-types/src/types.ts`, `packages/shared-types/src/connector.ts`      | `packages/protocol/src/`                  | `packages/shared-types/src/types.ts`, `packages/shared-types/src/connector.ts`      |
+| `@aria/store`    | `packages/runtime/src/operational-store.ts`                                         | `packages/store/src/operational-store.ts` | `packages/runtime/src/operational-store.ts`                                         |
+| `@aria/audit`    | `packages/runtime/src/audit.ts`                                                     | `packages/audit/src/audit.ts`             | `packages/runtime/src/audit.ts`                                                     |
+| `@aria/prompt`   | `packages/runtime/src/prompt-engine.ts`                                             | `packages/prompt/src/prompt-engine.ts`    | `packages/runtime/src/prompt-engine.ts`                                             |
+| `@aria/tools`    | `packages/runtime/src/toolsets.ts`, `packages/runtime/src/tools/index.ts`           | `packages/tools/src/`                     | `packages/runtime/src/toolsets.ts`, `packages/runtime/src/tools/index.ts`           |
+| `@aria/policy`   | `packages/runtime/src/capability-policy.ts`, `packages/runtime/src/tools/policy.ts` | `packages/policy/src/`                    | `packages/runtime/src/capability-policy.ts`, `packages/runtime/src/tools/policy.ts` |
 
 ## Phase 1 Notes
 
@@ -26,14 +26,14 @@ During phase 1, the current `packages/runtime` and `packages/shared-types` entry
 
 ## Phase 2 Extracted Ownership
 
-| Target package | Extracted source owner | New package entrypoints | Compatibility surface kept at |
-| --- | --- | --- | --- |
-| `@aria/memory` | `packages/runtime/src/memory/*` | `packages/memory/src/*` | `packages/runtime/src/memory/index.ts` |
-| `@aria/automation` | `packages/runtime/src/automation.ts`, `automation-registry.ts`, `automation-schedule.ts`, `scheduler.ts` | `packages/automation/src/*` | `packages/runtime/src/automation*.ts`, `packages/runtime/src/scheduler.ts` |
-| `@aria/agent-aria` | `packages/runtime/src/agent/*` | `packages/agent-aria/src/*` | `packages/runtime/src/agent/index.ts` |
-| `@aria/connectors-im` | `packages/connectors-im/src/*` | `packages/connectors-im/src/*` | direct target package imports |
-| `@aria/console` | `packages/console/src/*` | `packages/console/src/*` | direct target package imports |
-| `@aria/gateway` | `packages/runtime/src/context.ts`, `procedures.ts`, `server.ts`, `trpc.ts` | `packages/gateway/src/*` | `packages/runtime/src/{context,procedures,server,trpc}.ts` |
+| Target package        | Extracted source owner                                                                                   | New package entrypoints        | Compatibility surface kept at                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------- |
+| `@aria/memory`        | `packages/runtime/src/memory/*`                                                                          | `packages/memory/src/*`        | `packages/runtime/src/memory/index.ts`                                     |
+| `@aria/automation`    | `packages/runtime/src/automation.ts`, `automation-registry.ts`, `automation-schedule.ts`, `scheduler.ts` | `packages/automation/src/*`    | `packages/runtime/src/automation*.ts`, `packages/runtime/src/scheduler.ts` |
+| `@aria/agent-aria`    | `packages/runtime/src/agent/*`                                                                           | `packages/agent-aria/src/*`    | `packages/runtime/src/agent/index.ts`                                      |
+| `@aria/connectors-im` | `packages/connectors-im/src/*`                                                                           | `packages/connectors-im/src/*` | direct target package imports                                              |
+| `@aria/console`       | `packages/console/src/*`                                                                                 | `packages/console/src/*`       | direct target package imports                                              |
+| `@aria/gateway`       | `packages/runtime/src/context.ts`, `procedures.ts`, `server.ts`, `trpc.ts`                               | `packages/gateway/src/*`       | `packages/runtime/src/{context,procedures,server,trpc}.ts`                 |
 
 ## Phase 2 Notes
 
@@ -44,12 +44,12 @@ During phase 1, the current `packages/runtime` and `packages/shared-types` entry
 
 ## Phase 4 Extracted Ownership
 
-| Target package | Current source owner | New compatibility owner | Compatibility surface kept at |
-| --- | --- | --- | --- |
-| `@aria/projects` | `packages/projects-engine/src/{blockers,bridge,dispatch,external-refs,planning,publish,repository,reviews,schema,store,types}` | `packages/projects/src/index.ts` | historical compatibility path removed |
-| `@aria/workspaces` | `packages/projects-engine/src/{repos,worktrees,types}` | `packages/workspaces/src/index.ts` | historical compatibility path removed |
-| `@aria/jobs` | `packages/projects-engine/src/{bridge,dispatch,types}` | `packages/jobs/src/index.ts` | historical compatibility path removed |
-| `@aria/agents-coding` | `packages/agents-coding/src/index.ts` | `packages/agents-coding/src/index.ts` | target package imports |
+| Target package        | Current source owner                                                                                                           | New compatibility owner               | Compatibility surface kept at         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- | ------------------------------------- |
+| `@aria/projects`      | `packages/projects-engine/src/{blockers,bridge,dispatch,external-refs,planning,publish,repository,reviews,schema,store,types}` | `packages/projects/src/index.ts`      | historical compatibility path removed |
+| `@aria/workspaces`    | `packages/projects-engine/src/{repos,worktrees,types}`                                                                         | `packages/workspaces/src/index.ts`    | historical compatibility path removed |
+| `@aria/jobs`          | `packages/projects-engine/src/{bridge,dispatch,types}`                                                                         | `packages/jobs/src/index.ts`          | historical compatibility path removed |
+| `@aria/agents-coding` | `packages/agents-coding/src/index.ts`                                                                                          | `packages/agents-coding/src/index.ts` | target package imports                |
 
 ## Phase 4 Notes
 
@@ -68,12 +68,12 @@ During phase 1, the current `packages/runtime` and `packages/shared-types` entry
 
 This phase seeds the remaining target-state server package names needed for project orchestration without forcing an immediate ownership cutover. The goal is to expose the new import surfaces while keeping the proven implementations and operator behavior stable.
 
-| Target package | Current source owner | Seeded package entrypoints | Compatibility surface kept at |
-| --- | --- | --- | --- |
-| `@aria/projects` | `packages/projects/src/*` | `packages/projects/src/*` | direct target package imports |
-| `@aria/workspaces` | `packages/workspaces/src/*` | `packages/workspaces/src/*` | direct target package imports |
-| `@aria/jobs` | `packages/jobs/src/{backend-registry,dispatch-runner}.ts` plus durable dispatch records referenced through `packages/projects/src/types.ts` | `packages/jobs/src/*` | `packages/runtime/src/{dispatch-runner,backend-registry}.ts` |
-| `@aria/agents-coding` | `packages/agents-coding/src/*` | `packages/agents-coding/src/*` | direct target package imports |
+| Target package        | Current source owner                                                                                                                        | Seeded package entrypoints     | Compatibility surface kept at                                |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------ |
+| `@aria/projects`      | `packages/projects/src/*`                                                                                                                   | `packages/projects/src/*`      | direct target package imports                                |
+| `@aria/workspaces`    | `packages/workspaces/src/*`                                                                                                                 | `packages/workspaces/src/*`    | direct target package imports                                |
+| `@aria/jobs`          | `packages/jobs/src/{backend-registry,dispatch-runner}.ts` plus durable dispatch records referenced through `packages/projects/src/types.ts` | `packages/jobs/src/*`          | `packages/runtime/src/{dispatch-runner,backend-registry}.ts` |
+| `@aria/agents-coding` | `packages/agents-coding/src/*`                                                                                                              | `packages/agents-coding/src/*` | direct target package imports                                |
 
 ### Phase 4 Notes
 
@@ -84,10 +84,10 @@ This phase seeds the remaining target-state server package names needed for proj
 
 ## Phase 5 Extracted Ownership
 
-| Target surface | Current source owner | New compatibility owner | Compatibility surface kept at |
-| --- | --- | --- | --- |
-| `@aria/server` | `packages/server/src/{app,brand,daemon,discovery,engine}.ts`, `packages/gateway/src/server.ts`, and CLI bootstrap wiring in `packages/cli/src/{engine,index}.ts` | `packages/server/src/index.ts` | `@aria/runtime`, `@aria/gateway`, and the current `aria` CLI engine flow |
-| `apps/aria-server` | Root `package.json` scripts plus the current CLI/daemon boot path | `apps/aria-server/*` | Root repo scripts, `dist/index.js`, and the current `aria` binary |
+| Target surface     | Current source owner                                                                                                                                             | New compatibility owner        | Compatibility surface kept at                                            |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------ |
+| `@aria/server`     | `packages/server/src/{app,brand,daemon,discovery,engine}.ts`, `packages/gateway/src/server.ts`, and CLI bootstrap wiring in `packages/cli/src/{engine,index}.ts` | `packages/server/src/index.ts` | `@aria/runtime`, `@aria/gateway`, and the current `aria` CLI engine flow |
+| `apps/aria-server` | Root `package.json` scripts plus the current CLI/daemon boot path                                                                                                | `apps/aria-server/*`           | Root repo scripts, `dist/index.mjs`, and the current `aria` binary       |
 
 ## Phase 5 Notes
 
@@ -97,12 +97,12 @@ This phase seeds the remaining target-state server package names needed for proj
 
 ## Phase 6 Extracted Ownership
 
-| Target surface | Current source owner | New compatibility owner | Compatibility surface kept at |
-| --- | --- | --- | --- |
-| `@aria/access-client` | `packages/shared-types/src/client.ts` plus `@aria/protocol` / `@aria/projects` types | `packages/access-client/src/index.ts` | `@aria/shared-types`, `@aria/protocol`, and `@aria/projects` |
-| `@aria/ui` | Client-facing protocol and project types with no package seam yet | `packages/ui/src/index.ts` | `@aria/protocol` and `@aria/projects` |
-| `apps/aria-desktop` | Architecture/docs only | `apps/aria-desktop/*` | Future desktop-specific packages and existing protocol/project surfaces |
-| `apps/aria-mobile` | Architecture/docs only | `apps/aria-mobile/*` | Future mobile-specific packages and existing protocol/project surfaces |
+| Target surface        | Current source owner                                                                 | New compatibility owner               | Compatibility surface kept at                                           |
+| --------------------- | ------------------------------------------------------------------------------------ | ------------------------------------- | ----------------------------------------------------------------------- |
+| `@aria/access-client` | `packages/shared-types/src/client.ts` plus `@aria/protocol` / `@aria/projects` types | `packages/access-client/src/index.ts` | `@aria/shared-types`, `@aria/protocol`, and `@aria/projects`            |
+| `@aria/ui`            | Client-facing protocol and project types with no package seam yet                    | `packages/ui/src/index.ts`            | `@aria/protocol` and `@aria/projects`                                   |
+| `apps/aria-desktop`   | Architecture/docs only                                                               | `apps/aria-desktop/*`                 | Future desktop-specific packages and existing protocol/project surfaces |
+| `apps/aria-mobile`    | Architecture/docs only                                                               | `apps/aria-mobile/*`                  | Future mobile-specific packages and existing protocol/project surfaces  |
 
 ## Phase 6 Notes
 
@@ -112,10 +112,10 @@ This phase seeds the remaining target-state server package names needed for proj
 
 ## Phase 8 Extracted Ownership
 
-| Target surface | Current source owner | New compatibility owner | Compatibility surface kept at |
-| --- | --- | --- | --- |
+| Target surface  | Current source owner                                                                                                                 | New compatibility owner         | Compatibility surface kept at                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- | ---------------------------------------------------------------------------- |
 | `@aria/desktop` | `apps/aria-desktop/src/index.ts` plus shared client shell composition across `@aria/access-client`, `@aria/ui`, and `@aria/projects` | `packages/desktop/src/index.ts` | `apps/aria-desktop`, `@aria/access-client`, `@aria/ui`, and `@aria/projects` |
-| `@aria/mobile` | `apps/aria-mobile/src/index.ts` plus shared client shell composition across `@aria/access-client`, `@aria/ui`, and `@aria/projects` | `packages/mobile/src/index.ts` | `apps/aria-mobile`, `@aria/access-client`, `@aria/ui`, and `@aria/projects` |
+| `@aria/mobile`  | `apps/aria-mobile/src/index.ts` plus shared client shell composition across `@aria/access-client`, `@aria/ui`, and `@aria/projects`  | `packages/mobile/src/index.ts`  | `apps/aria-mobile`, `@aria/access-client`, `@aria/ui`, and `@aria/projects`  |
 
 ## Phase 8 Notes
 
@@ -127,21 +127,20 @@ This phase seeds the remaining target-state server package names needed for proj
 
 Phase 9 is the cross-phase owner-classification pass. It does not move code by itself; it says which package/app is already target-owned, which package/app is a hybrid target shell over compatibility seams, and which target seams are still legacy-owned today.
 
-| Classification | Meaning |
-| --- | --- |
-| `target-owned` | Edit the target package/app first; any older surface is just a compatibility shim. |
-| `hybrid target shell` | Edit the target shell/composition root first, but preserve the listed compatibility seams. |
-| `legacy-owned seam` | The target name exists, but the listed legacy owner still ships the behavior. |
+| Classification                      | Meaning                                                                                       |
+| ----------------------------------- | --------------------------------------------------------------------------------------------- |
+| `target-owned`                      | Edit the target package/app first; any older surface is just a compatibility shim.            |
+| `hybrid target shell`               | Edit the target shell/composition root first, but preserve the listed compatibility seams.    |
+| `legacy-owned seam`                 | The target name exists, but the listed legacy owner still ships the behavior.                 |
 | `legacy-only compatibility surface` | Only change this surface to preserve compatibility or to move behavior into its target owner. |
 
 The authoritative package/app-by-package/app truth table lives in [phase-9-architecture-truth-table.md](./phase-9-architecture-truth-table.md).
 
-
 ## Phase 13 Extracted Ownership
 
-| Target surface | Current source owner | New compatibility owner | Compatibility surface kept at |
-| --- | --- | --- | --- |
-| `services/aria-relay` | `packages/relay/src/{service,store,types}.ts` | `services/aria-relay/src/index.ts` | `@aria/relay` |
+| Target surface        | Current source owner                          | New compatibility owner            | Compatibility surface kept at |
+| --------------------- | --------------------------------------------- | ---------------------------------- | ----------------------------- |
+| `services/aria-relay` | `packages/relay/src/{service,store,types}.ts` | `services/aria-relay/src/index.ts` | `@aria/relay`                 |
 
 ## Phase 13 Notes
 

@@ -1,11 +1,5 @@
-import {
-  buildAccessClientConfig,
-  type AccessClientTarget,
-} from "@aria/access-client";
-import {
-  createProjectThreadListItem,
-  type ProjectThreadListItem,
-} from "@aria/ui";
+import { buildAccessClientConfig, type AccessClientTarget } from "@aria/access-client";
+import { createProjectThreadListItem, type ProjectThreadListItem } from "@aria/ui";
 import {
   describeThreadType,
   resolveThreadType,
@@ -18,12 +12,7 @@ export const ariaMobileApp = {
   id: "aria-mobile",
   displayName: "Aria Mobile",
   surface: "mobile",
-  sharedPackages: [
-    "@aria/access-client",
-    "@aria/ui",
-    "@aria/projects",
-    "@aria/protocol",
-  ],
+  sharedPackages: ["@aria/access-client", "@aria/ui", "@aria/projects", "@aria/protocol"],
   capabilities: [
     "server-access",
     "project-threads",
@@ -67,8 +56,7 @@ export const ariaMobileActionSections = [
 ] as const;
 
 export type AriaMobileTab = (typeof ariaMobileTabs)[number];
-export type AriaMobileDetailPresentation =
-  (typeof ariaMobileDetailPresentations)[number];
+export type AriaMobileDetailPresentation = (typeof ariaMobileDetailPresentations)[number];
 export type AriaMobileActionSection = (typeof ariaMobileActionSections)[number];
 
 export interface AriaMobileProjectThreads {
@@ -146,12 +134,7 @@ export interface AriaMobileProjectThreadInput
   extends
     Pick<
       ThreadRecord,
-      | "threadId"
-      | "title"
-      | "status"
-      | "threadType"
-      | "environmentId"
-      | "agentId"
+      "threadId" | "title" | "status" | "threadType" | "environmentId" | "agentId"
     >,
     AriaMobileThreadSignals {}
 
@@ -162,8 +145,7 @@ export interface CreateAriaMobileShellOptions {
   projects?: AriaMobileShellProjectInput[];
   initialThread?: AriaMobileShellInitialThread;
   activeThreadContext?: {
-    thread: Pick<ThreadRecord, "threadId" | "threadType"> &
-      AriaMobileThreadSignals;
+    thread: Pick<ThreadRecord, "threadId" | "threadType"> & AriaMobileThreadSignals;
     serverLabel?: string;
     remoteStatusLabel?: string;
   };
@@ -200,13 +182,10 @@ export function createAriaMobileServerSwitcher(options: {
   activeServerId?: string;
   access: ReturnType<typeof buildAccessClientConfig>;
 }): AriaMobileServerSwitcher {
-  const availableServers = options.servers.map((server) =>
-    createAriaMobileServerOption(server),
-  );
+  const availableServers = options.servers.map((server) => createAriaMobileServerOption(server));
   const activeServer =
     availableServers.find(
-      (server) =>
-        server.id === (options.activeServerId ?? options.access.serverId),
+      (server) => server.id === (options.activeServerId ?? options.access.serverId),
     ) ??
     availableServers[0] ??
     createAriaMobileServerOption({
@@ -232,15 +211,9 @@ export function createAriaMobileProjectThreadItem(
   return {
     ...threadItem,
     ...(thread.approvalLabel ? { approvalLabel: thread.approvalLabel } : {}),
-    ...(thread.automationLabel
-      ? { automationLabel: thread.automationLabel }
-      : {}),
-    ...(thread.remoteReviewLabel
-      ? { remoteReviewLabel: thread.remoteReviewLabel }
-      : {}),
-    ...(thread.connectionLabel
-      ? { connectionLabel: thread.connectionLabel }
-      : {}),
+    ...(thread.automationLabel ? { automationLabel: thread.automationLabel } : {}),
+    ...(thread.remoteReviewLabel ? { remoteReviewLabel: thread.remoteReviewLabel } : {}),
+    ...(thread.connectionLabel ? { connectionLabel: thread.connectionLabel } : {}),
     ...(thread.reconnectLabel ? { reconnectLabel: thread.reconnectLabel } : {}),
   };
 }
@@ -253,15 +226,12 @@ export function createAriaMobileProjectThreads(
 ): AriaMobileProjectThreads[] {
   return projects.map(({ project, threads }) => ({
     projectLabel: project.name,
-    threads: threads.map((thread) =>
-      createAriaMobileProjectThreadItem(project, thread),
-    ),
+    threads: threads.map((thread) => createAriaMobileProjectThreadItem(project, thread)),
   }));
 }
 
 export function createAriaMobileThreadContext(input: {
-  thread: Pick<ThreadRecord, "threadId" | "threadType"> &
-    AriaMobileThreadSignals;
+  thread: Pick<ThreadRecord, "threadId" | "threadType"> & AriaMobileThreadSignals;
   serverLabel?: string;
   remoteStatusLabel?: string;
 }): AriaMobileThreadContext {
@@ -272,21 +242,13 @@ export function createAriaMobileThreadContext(input: {
     threadTypeLabel: describeThreadType(threadType),
     serverLabel: input.serverLabel,
     remoteStatusLabel: input.remoteStatusLabel,
-    ...(input.thread.connectionLabel
-      ? { connectionLabel: input.thread.connectionLabel }
-      : {}),
-    ...(input.thread.approvalLabel
-      ? { approvalLabel: input.thread.approvalLabel }
-      : {}),
-    ...(input.thread.automationLabel
-      ? { automationLabel: input.thread.automationLabel }
-      : {}),
+    ...(input.thread.connectionLabel ? { connectionLabel: input.thread.connectionLabel } : {}),
+    ...(input.thread.approvalLabel ? { approvalLabel: input.thread.approvalLabel } : {}),
+    ...(input.thread.automationLabel ? { automationLabel: input.thread.automationLabel } : {}),
     ...(input.thread.remoteReviewLabel
       ? { remoteReviewLabel: input.thread.remoteReviewLabel }
       : {}),
-    ...(input.thread.reconnectLabel
-      ? { reconnectLabel: input.thread.reconnectLabel }
-      : {}),
+    ...(input.thread.reconnectLabel ? { reconnectLabel: input.thread.reconnectLabel } : {}),
     sections: ariaMobileActionSections,
   };
 }
@@ -314,17 +276,12 @@ export function createAriaMobileBootstrap(
     activeServerLabel: serverSwitcher.activeServerLabel,
     serverSwitcher,
     initialThread: initialThread
-      ? createAriaMobileProjectThreadItem(
-          initialThread.project,
-          initialThread.thread,
-        )
+      ? createAriaMobileProjectThreadItem(initialThread.project, initialThread.thread)
       : undefined,
   };
 }
 
-export function createAriaMobileShell(
-  options: CreateAriaMobileShellOptions,
-): AriaMobileShell {
+export function createAriaMobileShell(options: CreateAriaMobileShellOptions): AriaMobileShell {
   const bootstrap = createAriaMobileBootstrap(
     options.target,
     options.initialThread,
@@ -347,9 +304,7 @@ export function createAriaMobileShell(
     activeThreadContext: options.activeThreadContext
       ? createAriaMobileThreadContext({
           ...options.activeThreadContext,
-          serverLabel:
-            options.activeThreadContext.serverLabel ??
-            bootstrap.activeServerLabel,
+          serverLabel: options.activeThreadContext.serverLabel ?? bootstrap.activeServerLabel,
         })
       : options.initialThread
         ? createAriaMobileThreadContext({

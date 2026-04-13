@@ -16,7 +16,9 @@ function createMockDeps(overrides?: Partial<DelegateToolDeps>): DelegateToolDeps
     description: "Read a file",
     dangerLevel: "safe",
     parameters: {} as any,
-    async execute() { return { content: "file content" }; },
+    async execute() {
+      return { content: "file content" };
+    },
   };
 
   return {
@@ -54,12 +56,20 @@ describe("createDelegateTool", () => {
       description: "Delegate",
       dangerLevel: "moderate",
       parameters: {} as any,
-      async execute() { return { content: "delegated" }; },
+      async execute() {
+        return { content: "delegated" };
+      },
     };
 
     const deps = createMockDeps({
       tools: [
-        { name: "read", description: "Read", dangerLevel: "safe", parameters: {} as any, execute: async () => ({ content: "" }) },
+        {
+          name: "read",
+          description: "Read",
+          dangerLevel: "safe",
+          parameters: {} as any,
+          execute: async () => ({ content: "" }),
+        },
         delegateTool,
       ],
     });

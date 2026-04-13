@@ -7,10 +7,10 @@ access for commands run by the `exec` tool.
 
 ## Platform Support
 
-| Platform | Sandbox | Implementation |
-|----------|---------|----------------|
-| macOS | Seatbelt (`sandbox-exec`) | Profile-based file/network restrictions |
-| Other | Noop fallback | Commands run normally, warning logged once |
+| Platform | Sandbox                   | Implementation                             |
+| -------- | ------------------------- | ------------------------------------------ |
+| macOS    | Seatbelt (`sandbox-exec`) | Profile-based file/network restrictions    |
+| Other    | Noop fallback             | Commands run normally, warning logged once |
 
 ---
 
@@ -21,18 +21,18 @@ Seatbelt profile is generated dynamically based on the exec fence configuration.
 
 ### Profile Rules
 
-| Action | Policy |
-|--------|--------|
-| `deny default` | Start from deny-all baseline |
-| `process-exec`, `process-fork`, `signal` | Allowed (needed for command execution) |
-| `sysctl-read` | Allowed (basic process operation) |
-| `network*` | Allowed (URL policy handles network restrictions) |
-| `file-read*` system paths | Allowed: `/usr`, `/bin`, `/sbin`, `/Library`, `/System`, `/private/var`, `/private/etc`, `/etc`, `/var`, `/dev`, `/tmp` |
-| `file-write*` temp dirs | Allowed: `/tmp`, `/private/tmp`, `/dev` |
-| `file-read*` Homebrew | Allowed: `/opt/homebrew`, `/usr/local` |
-| `file-read*` home dir | Allowed: `$HOME` (broad read access) |
-| `file-read*` + `file-write*` fence dirs | Allowed: configured fence paths |
-| `file-read*` + `file-write*` deny dirs | Denied: configured alwaysDeny paths |
+| Action                                   | Policy                                                                                                                  |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `deny default`                           | Start from deny-all baseline                                                                                            |
+| `process-exec`, `process-fork`, `signal` | Allowed (needed for command execution)                                                                                  |
+| `sysctl-read`                            | Allowed (basic process operation)                                                                                       |
+| `network*`                               | Allowed (URL policy handles network restrictions)                                                                       |
+| `file-read*` system paths                | Allowed: `/usr`, `/bin`, `/sbin`, `/Library`, `/System`, `/private/var`, `/private/etc`, `/etc`, `/var`, `/dev`, `/tmp` |
+| `file-write*` temp dirs                  | Allowed: `/tmp`, `/private/tmp`, `/dev`                                                                                 |
+| `file-read*` Homebrew                    | Allowed: `/opt/homebrew`, `/usr/local`                                                                                  |
+| `file-read*` home dir                    | Allowed: `$HOME` (broad read access)                                                                                    |
+| `file-read*` + `file-write*` fence dirs  | Allowed: configured fence paths                                                                                         |
+| `file-read*` + `file-write*` deny dirs   | Denied: configured alwaysDeny paths                                                                                     |
 
 ### Key Properties
 
@@ -53,8 +53,8 @@ command unchanged. A warning is logged once:
 
 ## Configuration
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| Field                           | Type      | Default         | Description               |
+| ------------------------------- | --------- | --------------- | ------------------------- |
 | `runtime.security.exec.sandbox` | `boolean` | `true` on macOS | Enable/disable OS sandbox |
 
 ---

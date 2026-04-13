@@ -18,13 +18,10 @@ export const ARIA_DOMAIN_RELATIONS = [
   "checkpoint",
 ] as const;
 
-function getRelationType(
-  db: Database,
-  relationName: string,
-): "table" | "view" | undefined {
-  const row = db
-    .prepare(`SELECT type FROM sqlite_master WHERE name = ?`)
-    .get(relationName) as { type?: string } | undefined;
+function getRelationType(db: Database, relationName: string): "table" | "view" | undefined {
+  const row = db.prepare(`SELECT type FROM sqlite_master WHERE name = ?`).get(relationName) as
+    | { type?: string }
+    | undefined;
 
   return row?.type === "table" || row?.type === "view" ? row.type : undefined;
 }
@@ -50,11 +47,7 @@ function ensureView(
   db.exec(`CREATE VIEW IF NOT EXISTS "${relationName}" AS ${selectSql}`);
 }
 
-function ensureTable(
-  db: Database,
-  relationName: string,
-  columnsSql: string,
-): void {
+function ensureTable(db: Database, relationName: string, columnsSql: string): void {
   if (hasRelation(db, relationName)) {
     return;
   }
@@ -231,7 +224,5 @@ export function ensureAriaDomainModelSchema(db: Database): void {
 }
 
 export function listAriaDomainRelations(db: Database): string[] {
-  return [...ARIA_DOMAIN_RELATIONS].filter((relationName) =>
-    hasRelation(db, relationName),
-  );
+  return [...ARIA_DOMAIN_RELATIONS].filter((relationName) => hasRelation(db, relationName));
 }

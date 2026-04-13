@@ -42,13 +42,13 @@ protect credential and configuration directories from agent access.
 
 Default deny list:
 
-| Path | Rationale |
-|------|-----------|
-| `~/.aria` | Esperta Aria config, secrets, tokens |
-| `~/.ssh` | SSH keys |
-| `~/.gnupg` | GPG keys |
-| `~/.aws` | AWS credentials |
-| `~/.config/gcloud` | GCP credentials |
+| Path               | Rationale                            |
+| ------------------ | ------------------------------------ |
+| `~/.aria`          | Esperta Aria config, secrets, tokens |
+| `~/.ssh`           | SSH keys                             |
+| `~/.gnupg`         | GPG keys                             |
+| `~/.aws`           | AWS credentials                      |
+| `~/.config/gcloud` | GCP credentials                      |
 
 ---
 

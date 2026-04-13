@@ -1,7 +1,7 @@
 {
   "name": "aria-mobile",
   "private": true,
-  "type": "module",
   "description": "Aria Mobile app surface over the @aria/mobile client shell seam",
+  "type": "module",
   "main": "./src/index.ts"
 }

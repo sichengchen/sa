@@ -137,40 +137,37 @@ describe("store domain model cutover", () => {
     const db = new Database(dbPath, { readonly: true });
     try {
       expect(listAriaDomainRelations(db)).toEqual([...ARIA_DOMAIN_RELATIONS]);
-      expect(db.prepare(`SELECT server_id, label FROM "server"`).get()).toEqual(
-        { server_id: "server-1", label: "Home Server" },
-      );
-      expect(
-        db.prepare(`SELECT workspace_id, server_id FROM "workspace"`).get(),
-      ).toEqual({ workspace_id: "workspace-1", server_id: "server-1" });
-      expect(
-        db
-          .prepare(`SELECT thread_id, environment_binding_id FROM "thread"`)
-          .get(),
-      ).toEqual({
+      expect(db.prepare(`SELECT server_id, label FROM "server"`).get()).toEqual({
+        server_id: "server-1",
+        label: "Home Server",
+      });
+      expect(db.prepare(`SELECT workspace_id, server_id FROM "workspace"`).get()).toEqual({
+        workspace_id: "workspace-1",
+        server_id: "server-1",
+      });
+      expect(db.prepare(`SELECT thread_id, environment_binding_id FROM "thread"`).get()).toEqual({
         thread_id: "thread-1",
         environment_binding_id: "binding-1",
       });
       expect(
-        db
-          .prepare(
-            `SELECT binding_id, is_active FROM "thread_environment_binding"`,
-          )
-          .get(),
+        db.prepare(`SELECT binding_id, is_active FROM "thread_environment_binding"`).get(),
       ).toEqual({ binding_id: "binding-1", is_active: 1 });
-      expect(
-        db.prepare(`SELECT session_id, thread_id FROM "session"`).get(),
-      ).toEqual({ session_id: "session-1", thread_id: null });
+      expect(db.prepare(`SELECT session_id, thread_id FROM "session"`).get()).toEqual({
+        session_id: "session-1",
+        thread_id: null,
+      });
       expect(db.prepare(`SELECT run_id, session_id FROM "run"`).get()).toEqual({
         run_id: "run-1",
         session_id: "session-1",
       });
-      expect(
-        db.prepare(`SELECT approval_id, status FROM "approval"`).get(),
-      ).toEqual({ approval_id: "approval-1", status: "pending" });
-      expect(
-        db.prepare(`SELECT automation_id, name FROM "automation"`).get(),
-      ).toEqual({ automation_id: "automation-1", name: "Daily summary" });
+      expect(db.prepare(`SELECT approval_id, status FROM "approval"`).get()).toEqual({
+        approval_id: "approval-1",
+        status: "pending",
+      });
+      expect(db.prepare(`SELECT automation_id, name FROM "automation"`).get()).toEqual({
+        automation_id: "automation-1",
+        name: "Daily summary",
+      });
     } finally {
       db.close(false);
     }

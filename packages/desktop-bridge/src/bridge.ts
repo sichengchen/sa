@@ -1,12 +1,6 @@
-import {
-  createCodingAgentBackendRegistry,
-  type RuntimeBackendAdapter,
-} from "@aria/agents-coding";
+import { createCodingAgentBackendRegistry, type RuntimeBackendAdapter } from "@aria/agents-coding";
 import { createDesktopGitBridge, type DesktopGitBridge } from "@aria/desktop-git";
-import {
-  ProjectsPlanningService,
-  type ProjectsEngineRepository,
-} from "@aria/projects";
+import { ProjectsPlanningService, type ProjectsEngineRepository } from "@aria/projects";
 
 export interface DesktopBridgeOptions {
   readonly repository: ProjectsEngineRepository;
@@ -19,9 +13,7 @@ export interface DesktopBridge {
   readonly codingAgents: Map<string, RuntimeBackendAdapter>;
 }
 
-export function createDesktopBridge(
-  options: DesktopBridgeOptions,
-): DesktopBridge {
+export function createDesktopBridge(options: DesktopBridgeOptions): DesktopBridge {
   return {
     planning: new ProjectsPlanningService(options.repository),
     git: createDesktopGitBridge(options.repository),

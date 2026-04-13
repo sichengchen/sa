@@ -169,7 +169,7 @@ describe("runDispatchExecution", () => {
           executionId: request.executionId,
           timestamp: now + 2,
           metadata: {
-            ...(request.metadata ?? {}),
+            ...request.metadata,
             toolCallId: "tool-1",
           },
         });
@@ -199,12 +199,9 @@ describe("runDispatchExecution", () => {
       },
     });
 
-    const result = await runDispatchExecution(
-      {} as never,
-      repository,
-      "dispatch-1",
-      { backendRegistry: new Map([["fake", backend]]) },
-    );
+    const result = await runDispatchExecution({} as never, repository, "dispatch-1", {
+      backendRegistry: new Map([["fake", backend]]),
+    });
 
     expect(result.executionSessionId).toBe("fake:dispatch-1");
     expect(result.status).toBe("succeeded");
@@ -274,12 +271,9 @@ describe("runDispatchExecution", () => {
     });
 
     await expect(
-      runDispatchExecution(
-        {} as never,
-        repository,
-        "dispatch-2",
-        { backendRegistry: new Map([["fake", backend]]) },
-      ),
+      runDispatchExecution({} as never, repository, "dispatch-2", {
+        backendRegistry: new Map([["fake", backend]]),
+      }),
     ).rejects.toThrow("backend exploded");
 
     const dispatch = repository.getDispatch("dispatch-2");

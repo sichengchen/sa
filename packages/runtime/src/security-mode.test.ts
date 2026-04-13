@@ -38,7 +38,9 @@ describe("SecurityModeManager", () => {
 
     // Wait for expiry
     const start = Date.now();
-    while (Date.now() - start < 10) { /* spin */ }
+    while (Date.now() - start < 10) {
+      /* spin */
+    }
 
     expect(mgr.getMode("session-1")).toBe("default");
   });
@@ -116,7 +118,9 @@ describe("SecurityModeManager", () => {
     mgr.setMode("session-1", "trusted");
 
     const start = Date.now();
-    while (Date.now() - start < 10) { /* spin */ }
+    while (Date.now() - start < 10) {
+      /* spin */
+    }
 
     expect(mgr.getModeState("session-1")).toBeNull();
   });

@@ -61,11 +61,11 @@ mail-search recent 30 --csv > recent_emails.csv
 
 ## Why This Exists
 
-| Method | Time for 130k emails |
-|--------|---------------------|
-| AppleScript iteration | 8+ minutes |
-| Spotlight/mdfind | **Broken since Big Sur** |
-| SQLite (this tool) | ~50ms |
+| Method                | Time for 130k emails     |
+| --------------------- | ------------------------ |
+| AppleScript iteration | 8+ minutes               |
+| Spotlight/mdfind      | **Broken since Big Sur** |
+| SQLite (this tool)    | ~50ms                    |
 
 Apple removed the emlx Spotlight importer in macOS Big Sur. This tool queries the `Envelope Index` SQLite database directly.
 
@@ -74,6 +74,7 @@ Apple removed the emlx Spotlight importer in macOS Big Sur. This tool queries th
 **Database:** `~/Library/Mail/V{9,10,11}/MailData/Envelope Index`
 
 **Key tables:**
+
 - `messages` - Email metadata (dates, flags, FKs)
 - `subjects` - Subject lines
 - `addresses` - Email addresses and display names
@@ -81,6 +82,7 @@ Apple removed the emlx Spotlight importer in macOS Big Sur. This tool queries th
 - `attachments` - Attachment filenames
 
 **Limitations:**
+
 - Read-only (cannot compose/send)
 - Metadata only (bodies in .emlx files)
 - Mail.app only (not Outlook, etc.)

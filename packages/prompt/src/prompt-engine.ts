@@ -184,12 +184,7 @@ function buildToolRuntimeSection(tools: ToolImpl[]): string {
       .filter(Boolean)
       .join(" | ");
 
-    return [
-      `### ${toolset.name}`,
-      toolset.description,
-      metadata,
-      toolDescriptions,
-    ]
+    return [`### ${toolset.name}`, toolset.description, metadata, toolDescriptions]
       .filter(Boolean)
       .join("\n");
   });
@@ -218,19 +213,20 @@ export class PromptEngine {
     const activeModelName = this.getActiveModelName();
     const activeModel = this.config
       .getConfigFile()
-      .models
-      .find((model) => model.name === activeModelName);
+      .models.find((model) => model.name === activeModelName);
 
     const userProfile = await this.config.loadUserProfile();
     const memoryContext = await this.memory.loadLayeredContext();
-    const contextFilesPrompt = this.config.getConfigFile().runtime.contextFiles?.enabled === false
-      ? ""
-      : await buildContextFilesPrompt(process.env.TERMINAL_CWD ?? process.cwd(), {
-        maxFileChars: this.config.getConfigFile().runtime.contextFiles?.maxFileChars,
-      });
-    const skillsBlock = this.skills.size > 0
-      ? `${SKILLS_DIRECTIVE}\n\n${formatSkillsDiscovery(this.skills.getMetadataList())}`
-      : "";
+    const contextFilesPrompt =
+      this.config.getConfigFile().runtime.contextFiles?.enabled === false
+        ? ""
+        : await buildContextFilesPrompt(process.env.TERMINAL_CWD ?? process.cwd(), {
+            maxFileChars: this.config.getConfigFile().runtime.contextFiles?.maxFileChars,
+          });
+    const skillsBlock =
+      this.skills.size > 0
+        ? `${SKILLS_DIRECTIVE}\n\n${formatSkillsDiscovery(this.skills.getMetadataList())}`
+        : "";
 
     const basePromptBody = [
       this.config.getIdentity().systemPrompt,
@@ -250,16 +246,18 @@ export class PromptEngine {
       .join("\n\n");
 
     const cacheKey = createHash("sha256")
-      .update(JSON.stringify({
-        activeModel: activeModelName,
-        activeProvider: activeModel?.provider ?? "unknown",
-        identityPrompt: this.config.getIdentity().systemPrompt,
-        memoryContext,
-        userProfile,
-        contextFilesPrompt,
-        toolsets: listToolsets(this.tools),
-        skills: this.skills.getMetadataList(),
-      }))
+      .update(
+        JSON.stringify({
+          activeModel: activeModelName,
+          activeProvider: activeModel?.provider ?? "unknown",
+          identityPrompt: this.config.getIdentity().systemPrompt,
+          memoryContext,
+          userProfile,
+          contextFilesPrompt,
+          toolsets: listToolsets(this.tools),
+          skills: this.skills.getMetadataList(),
+        }),
+      )
       .digest("hex");
 
     let cached = !forceRefresh ? this.store.getPromptCache(cacheKey) : undefined;
@@ -278,10 +276,7 @@ export class PromptEngine {
       cached = this.store.getPromptCache(cacheKey);
     }
 
-    return [
-      cached?.content ?? basePromptBody,
-      buildHeartbeat(this.router),
-    ].join("\n\n");
+    return [cached?.content ?? basePromptBody, buildHeartbeat(this.router)].join("\n\n");
   }
 
   async buildSessionPrompt(input: SessionPromptInput): Promise<string> {
@@ -290,9 +285,8 @@ export class PromptEngine {
     const summary = await this.getRollingSummary(input.sessionId, messages);
     const recentTranscript = this.buildRecentTranscript(messages);
     const attachedSkills = await this.buildAttachedSkillsSection(input.attachedSkills);
-    const sessionToolRuntime = input.tools && input.tools.length > 0
-      ? buildToolRuntimeSection(input.tools)
-      : "";
+    const sessionToolRuntime =
+      input.tools && input.tools.length > 0 ? buildToolRuntimeSection(input.tools) : "";
 
     return [
       basePrompt,
@@ -335,7 +329,10 @@ export class PromptEngine {
     return sections.length > 0 ? `## Attached Skills\n${sections.join("\n\n")}` : "";
   }
 
-  private async getRollingSummary(sessionId: string, messages: readonly Message[]): Promise<string> {
+  private async getRollingSummary(
+    sessionId: string,
+    messages: readonly Message[],
+  ): Promise<string> {
     const olderMessages = messages.slice(0, -RECENT_MESSAGE_WINDOW);
     if (olderMessages.length < SUMMARY_MIN_MESSAGES) {
       return "";

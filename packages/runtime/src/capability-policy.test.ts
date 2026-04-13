@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { ToolImpl } from "./agent/types.js";
-import { buildToolCapabilityCatalog, resolveCapabilityPolicyDecision } from "./capability-policy.js";
+import {
+  buildToolCapabilityCatalog,
+  resolveCapabilityPolicyDecision,
+} from "./capability-policy.js";
 
 const tools: ToolImpl[] = [
   {
@@ -36,18 +39,20 @@ describe("capability policy", () => {
         return toolName === "mcp_docs_search" ? "docs" : undefined;
       },
       listServers() {
-        return [{
-          name: "docs",
-          enabled: true,
-          connected: true,
-          transport: "stdio" as const,
-          trust: "prompt" as const,
-          sessionAvailability: "session_opt_in" as const,
-          defaultSessionEnabled: false,
-          toolCount: 1,
-          promptCount: 0,
-          resourceCount: 0,
-        }];
+        return [
+          {
+            name: "docs",
+            enabled: true,
+            connected: true,
+            transport: "stdio" as const,
+            trust: "prompt" as const,
+            sessionAvailability: "session_opt_in" as const,
+            defaultSessionEnabled: false,
+            toolCount: 1,
+            promptCount: 0,
+            resourceCount: 0,
+          },
+        ];
       },
     });
 
@@ -68,13 +73,17 @@ describe("capability policy", () => {
   });
 
   test("resolves approval decisions from danger level and connector policy", () => {
-    const decision = resolveCapabilityPolicyDecision({
-      toolName: "exec",
-      source: "builtin",
-      toolsetName: "terminal",
-      executionBackend: "local",
-      approvalPolicy: "operator_gated",
-    }, "dangerous", "never");
+    const decision = resolveCapabilityPolicyDecision(
+      {
+        toolName: "exec",
+        source: "builtin",
+        toolsetName: "terminal",
+        executionBackend: "local",
+        approvalPolicy: "operator_gated",
+      },
+      "dangerous",
+      "never",
+    );
 
     expect(decision.approvalRequired).toBe(true);
     expect(decision.policyDecision).toBe("require_operator_approval");

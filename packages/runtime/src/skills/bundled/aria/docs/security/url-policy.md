@@ -8,13 +8,13 @@ ports.
 
 ## Blocked by Default
 
-| Category | Blocked |
-|----------|---------|
-| Localhost | `127.0.0.1`, `::1`, `localhost`, `0.0.0.0` |
-| Private ranges | `10.*`, `172.16-31.*`, `192.168.*`, `169.254.*` |
-| Cloud metadata | `169.254.169.254`, `metadata.google.internal` |
-| Esperta Aria engine ports | `127.0.0.1:7420`, `127.0.0.1:7421` |
-| Schemes | Only `http:` and `https:` allowed |
+| Category                  | Blocked                                         |
+| ------------------------- | ----------------------------------------------- |
+| Localhost                 | `127.0.0.1`, `::1`, `localhost`, `0.0.0.0`      |
+| Private ranges            | `10.*`, `172.16-31.*`, `192.168.*`, `169.254.*` |
+| Cloud metadata            | `169.254.169.254`, `metadata.google.internal`   |
+| Esperta Aria engine ports | `127.0.0.1:7420`, `127.0.0.1:7421`              |
+| Schemes                   | Only `http:` and `https:` allowed               |
 
 All private and loopback addresses are blocked to prevent the agent from
 accessing internal services, cloud instance metadata, or the Esperta Aria engine itself
@@ -35,10 +35,10 @@ via HTTP.
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `additionalBlockedHosts` | `string[]` | Extra hostnames/IPs to block |
-| `allowedExceptions` | `string[]` | Exact host/host:port allowlist entries or exact URL prefixes matched by parsed origin + path-boundary rules |
+| Field                    | Type       | Description                                                                                                 |
+| ------------------------ | ---------- | ----------------------------------------------------------------------------------------------------------- |
+| `additionalBlockedHosts` | `string[]` | Extra hostnames/IPs to block                                                                                |
+| `allowedExceptions`      | `string[]` | Exact host/host:port allowlist entries or exact URL prefixes matched by parsed origin + path-boundary rules |
 
 ### Exception Matching
 

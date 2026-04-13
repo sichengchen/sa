@@ -21,10 +21,10 @@ During this phase:
 
 ## Current-To-Target Ownership Map
 
-| Target surface | Current source owner | Seeded seam should own | Compatibility surface kept at |
-| --- | --- | --- | --- |
-| `@aria/desktop` | `apps/aria-desktop/src/index.ts` plus shared client shell composition currently spread across `@aria/access-client`, `@aria/ui`, and `@aria/projects` | Desktop shell metadata, navigation/bootstrap composition, and desktop-specific thread/project-shell helpers over the existing client seams | `apps/aria-desktop`, `@aria/access-client`, `@aria/ui`, and `@aria/projects` |
-| `@aria/mobile` | `apps/aria-mobile/src/index.ts` plus shared client shell composition currently spread across `@aria/access-client`, `@aria/ui`, and `@aria/projects` | Mobile shell metadata, remote review/navigation composition, and mobile-specific thread/project-shell helpers over the existing client seams | `apps/aria-mobile`, `@aria/access-client`, `@aria/ui`, and `@aria/projects` |
+| Target surface  | Current source owner                                                                                                                                  | Seeded seam should own                                                                                                                       | Compatibility surface kept at                                                |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `@aria/desktop` | `apps/aria-desktop/src/index.ts` plus shared client shell composition currently spread across `@aria/access-client`, `@aria/ui`, and `@aria/projects` | Desktop shell metadata, navigation/bootstrap composition, and desktop-specific thread/project-shell helpers over the existing client seams   | `apps/aria-desktop`, `@aria/access-client`, `@aria/ui`, and `@aria/projects` |
+| `@aria/mobile`  | `apps/aria-mobile/src/index.ts` plus shared client shell composition currently spread across `@aria/access-client`, `@aria/ui`, and `@aria/projects`  | Mobile shell metadata, remote review/navigation composition, and mobile-specific thread/project-shell helpers over the existing client seams | `apps/aria-mobile`, `@aria/access-client`, `@aria/ui`, and `@aria/projects`  |
 
 ## Review Notes And Hotspots
 

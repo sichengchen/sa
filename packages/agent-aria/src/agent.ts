@@ -142,9 +142,7 @@ export class Agent {
     const timeoutMs = this.options.timeoutMs ?? DEFAULT_AGENT_TIMEOUT_MS;
     const ac = new AbortController();
     this.activeAbortController = ac;
-    const timeoutId = timeoutMs > 0
-      ? setTimeout(() => ac.abort(), timeoutMs)
-      : null;
+    const timeoutId = timeoutMs > 0 ? setTimeout(() => ac.abort(), timeoutMs) : null;
 
     // Set up loop detection
     const loopDetector = this.createLoopDetector();
@@ -203,7 +201,10 @@ export class Agent {
                   for (const tc of toolCalls) {
                     // Check timeout before each tool execution
                     if (ac?.signal.aborted) {
-                      yield { type: "error", message: `Agent timeout (${timeoutMs / 1000}s) exceeded` };
+                      yield {
+                        type: "error",
+                        message: `Agent timeout (${timeoutMs / 1000}s) exceeded`,
+                      };
                       return;
                     }
 
@@ -212,9 +213,10 @@ export class Agent {
                       const args = tc.arguments as Record<string, unknown>;
                       const question = String(args.question ?? "");
                       const rawOptions = args.options;
-                      const options = Array.isArray(rawOptions) && rawOptions.length > 0
-                        ? rawOptions.map(String)
-                        : undefined;
+                      const options =
+                        Array.isArray(rawOptions) && rawOptions.length > 0
+                          ? rawOptions.map(String)
+                          : undefined;
 
                       yield { type: "user_question", id: tc.id, question, options };
 
@@ -233,7 +235,10 @@ export class Agent {
                         this.messages.push(toolResultMsg);
                       } catch (err) {
                         const errMsg = err instanceof Error ? err.message : String(err);
-                        const result = { content: `Question timed out or failed: ${errMsg}`, isError: true };
+                        const result = {
+                          content: `Question timed out or failed: ${errMsg}`,
+                          isError: true,
+                        };
                         yield { type: "tool_end", name: tc.name, id: tc.id, result };
                         const toolResultMsg: ToolResultMessage = {
                           role: "toolResult",
@@ -366,16 +371,29 @@ export class Agent {
               case "error": {
                 const errorMsg = event.error.errorMessage ?? "Unknown error";
                 const modelName = model.id ?? "unknown";
-                logStreamError(errorMsg, modelName, this.messages.length, context.tools?.length ?? 0, attempt);
+                logStreamError(
+                  errorMsg,
+                  modelName,
+                  this.messages.length,
+                  context.tools?.length ?? 0,
+                  attempt,
+                );
 
-                if (attempt <= MAX_STREAM_RETRIES && isRetryableError(errorMsg) && !ac?.signal.aborted) {
+                if (
+                  attempt <= MAX_STREAM_RETRIES &&
+                  isRetryableError(errorMsg) &&
+                  !ac?.signal.aborted
+                ) {
                   // Don't push the error message into history — it would corrupt the conversation
                   // Sanitize history in case the error was caused by malformed messages
                   this.messages = sanitizeHistoryForRetry(this.messages);
                   context.messages = this.messages;
                   shouldRetry = true;
                   lastError = errorMsg;
-                  yield { type: "warning", message: `Provider error, retrying (${attempt}/${MAX_STREAM_RETRIES})...` };
+                  yield {
+                    type: "warning",
+                    message: `Provider error, retrying (${attempt}/${MAX_STREAM_RETRIES})...`,
+                  };
                 } else {
                   // Final failure — push error and yield
                   this.messages.push(event.error);

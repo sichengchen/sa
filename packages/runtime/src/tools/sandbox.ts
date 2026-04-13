@@ -127,10 +127,18 @@ export class SeatbeltSandbox implements Sandbox {
 
   cleanup(): void {
     if (this.profilePath) {
-      try { unlinkSync(this.profilePath); } catch { /* ignore */ }
+      try {
+        unlinkSync(this.profilePath);
+      } catch {
+        /* ignore */
+      }
     }
     if (this.tempDir) {
-      try { unlinkSync(this.tempDir); } catch { /* ignore — may not be empty */ }
+      try {
+        unlinkSync(this.tempDir);
+      } catch {
+        /* ignore — may not be empty */
+      }
     }
     this.profilePath = undefined;
     this.tempDir = undefined;
@@ -152,7 +160,9 @@ export class NoopSandbox implements Sandbox {
 
   wrap(command: string[], _opts: SandboxOptions): string[] {
     if (!noopWarned) {
-      console.warn("[aria] OS sandbox unavailable on this platform. Relying on application-level exec fence.");
+      console.warn(
+        "[aria] OS sandbox unavailable on this platform. Relying on application-level exec fence.",
+      );
       noopWarned = true;
     }
     return command;

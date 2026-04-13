@@ -1,9 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  buildAccessClientConfig,
-  resolveAccessClientRoute,
-} from "@aria/access-client";
+import { buildAccessClientConfig, resolveAccessClientRoute } from "@aria/access-client";
 import { selectRelayRoute } from "@aria/relay";
 
 describe("relay routing and client transport", () => {

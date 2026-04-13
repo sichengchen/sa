@@ -24,9 +24,12 @@ async function executeWithAriaRuntime(
   observer?: RuntimeBackendExecutionObserver,
 ): Promise<RuntimeBackendExecutionResult> {
   const session = request.sessionId
-    ? runtime.sessions.getSession(request.sessionId) ?? runtime.sessions.create(request.sessionId, "engine")
+    ? (runtime.sessions.getSession(request.sessionId) ??
+      runtime.sessions.create(request.sessionId, "engine"))
     : runtime.sessions.create(`dispatch:${request.executionId}`, "engine");
-  const caller = createAppRouter(runtime).createCaller(createContext({ rawToken: runtime.auth.getMasterToken() }));
+  const caller = createAppRouter(runtime).createCaller(
+    createContext({ rawToken: runtime.auth.getMasterToken() }),
+  );
 
   let stdout = "";
   let stderr = "";
@@ -64,7 +67,7 @@ async function executeWithAriaRuntime(
         executionId: session.id,
         timestamp: Date.now(),
         metadata: {
-          ...(request.metadata ?? {}),
+          ...request.metadata,
           toolCallId: event.id,
           toolName: event.name,
         },
@@ -108,7 +111,9 @@ async function executeWithAriaRuntime(
   };
 }
 
-export function createRuntimeBackendRegistry(runtime: EngineRuntime): Map<string, RuntimeBackendAdapter> {
+export function createRuntimeBackendRegistry(
+  runtime: EngineRuntime,
+): Map<string, RuntimeBackendAdapter> {
   return new Map<string, RuntimeBackendAdapter>([
     [
       "aria",
@@ -116,7 +121,9 @@ export function createRuntimeBackendRegistry(runtime: EngineRuntime): Map<string
         driver: {
           execute: (request, observer) => executeWithAriaRuntime(runtime, request, observer),
           cancel: async (executionId) => {
-            const caller = createAppRouter(runtime).createCaller(createContext({ rawToken: runtime.auth.getMasterToken() }));
+            const caller = createAppRouter(runtime).createCaller(
+              createContext({ rawToken: runtime.auth.getMasterToken() }),
+            );
             await caller.chat.stop({ sessionId: executionId });
           },
         },
@@ -126,7 +133,9 @@ export function createRuntimeBackendRegistry(runtime: EngineRuntime): Map<string
   ]);
 }
 
-export async function listRuntimeBackends(runtime: EngineRuntime): Promise<RuntimeBackendSummary[]> {
+export async function listRuntimeBackends(
+  runtime: EngineRuntime,
+): Promise<RuntimeBackendSummary[]> {
   const registry = createRuntimeBackendRegistry(runtime);
   const summaries = await Promise.all(
     Array.from(registry.values()).map(async (adapter) => ({

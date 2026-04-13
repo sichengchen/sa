@@ -42,7 +42,10 @@ export function SkillSetup({ currentValues, onNext, onBack }: SkillSetupProps) {
   useInput((input, key) => {
     if (loading) return;
 
-    if (key.escape) { onBack(); return; }
+    if (key.escape) {
+      onBack();
+      return;
+    }
 
     if (key.upArrow) {
       setCursor((c) => Math.max(0, c - 1));
@@ -90,18 +93,22 @@ export function SkillSetup({ currentValues, onNext, onBack }: SkillSetupProps) {
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">Bundled Skills</Text>
-      <Text />
-      <Text>
-        Choose which skills to activate. You can change this later.
+      <Text bold color="cyan">
+        Bundled Skills
       </Text>
+      <Text />
+      <Text>Choose which skills to activate. You can change this later.</Text>
       <Text />
       {skills.map((skill, i) => {
         const isChecked = checked.has(skill.name);
         const isCursor = i === cursor;
         return (
           <Text key={skill.name}>
-            {isCursor ? <Text color="green">{isChecked ? "[x] " : "[ ] "}</Text> : <Text dimColor={!isChecked}>{isChecked ? "[x] " : "[ ] "}</Text>}
+            {isCursor ? (
+              <Text color="green">{isChecked ? "[x] " : "[ ] "}</Text>
+            ) : (
+              <Text dimColor={!isChecked}>{isChecked ? "[x] " : "[ ] "}</Text>
+            )}
             <Text bold={isCursor}>{skill.name}</Text>
             <Text dimColor> — {skill.description}</Text>
           </Text>

@@ -38,11 +38,11 @@ use a pairing code flow:
 
 ### Pairing Security
 
-| Property | Value |
-|----------|-------|
-| Code charset | `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (28 chars) |
-| Code length | 8 characters (default, configurable) |
-| Code TTL | 10 minutes (default, configurable) |
+| Property      | Value                                                       |
+| ------------- | ----------------------------------------------------------- |
+| Code charset  | `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (28 chars)               |
+| Code length   | 8 characters (default, configurable)                        |
+| Code TTL      | 10 minutes (default, configurable)                          |
 | Rate limiting | Per-connector exponential backoff (1s, 2s, 4s, ... 60s cap) |
 
 ---
@@ -71,11 +71,11 @@ const authMiddleware = middleware(async ({ ctx, next }) => {
 Authentication only proves that a token is valid. Esperta Aria also enforces a second
 authorization step based on token type:
 
-| Token type | Scope |
-|------------|-------|
-| `master` | Full engine access. Required for admin surfaces such as model/provider management, cron/webhook task management, MCP metadata, engine lifecycle, and global session control. |
-| `session` | Restricted to sessions owned by the paired connector ID and connector type. Can create/resume/list only its own connector sessions and answer approvals/questions for those sessions. |
-| `webhook` | HTTP webhook endpoints only. Rejected by tRPC middleware. |
+| Token type | Scope                                                                                                                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `master`   | Full engine access. Required for admin surfaces such as model/provider management, cron/webhook task management, MCP metadata, engine lifecycle, and global session control.          |
+| `session`  | Restricted to sessions owned by the paired connector ID and connector type. Can create/resume/list only its own connector sessions and answer approvals/questions for those sessions. |
+| `webhook`  | HTTP webhook endpoints only. Rejected by tRPC middleware.                                                                                                                             |
 
 ### Session Ownership
 
@@ -162,8 +162,8 @@ function safeCompare(a: string, b: string): boolean {
 }
 ```
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `sessionTTL` | `number` (seconds) | `86400` (24h) | Session token TTL |
-| `pairingTTL` | `number` (seconds) | `600` (10min) | Pairing code TTL |
-| `pairingCodeLength` | `number` | `8` | Pairing code length |
+| Field               | Type               | Default       | Description         |
+| ------------------- | ------------------ | ------------- | ------------------- |
+| `sessionTTL`        | `number` (seconds) | `86400` (24h) | Session token TTL   |
+| `pairingTTL`        | `number` (seconds) | `600` (10min) | Pairing code TTL    |
+| `pairingCodeLength` | `number`           | `8`           | Pairing code length |

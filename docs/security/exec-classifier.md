@@ -33,16 +33,16 @@ The engine never blindly trusts the agent. Even if the agent declares
 
 Matched against the full command string. Any match forces `"dangerous"`:
 
-| Category | Patterns |
-|----------|----------|
-| Destructive file ops | `rm -rf`, `rm -f`, `rm /...`, `mkfs`, `dd`, `shred` |
-| Privilege escalation | `sudo`, `su`, `doas`, `pkexec` |
-| System control | `shutdown`, `reboot`, `systemctl start/stop/...`, `launchctl load/unload/...` |
-| Process killing | `kill`, `killall`, `pkill` |
-| Permission changes | `chmod`, `chown`, `chgrp` |
-| Pipe-to-shell (RCE) | `\| sh`, `\| bash`, `\| zsh`, `\| source`, `curl ... \|`, `wget ... \|` |
-| Disk operations | `fdisk`, `parted`, `mount`, `umount` |
-| Network danger | `iptables`, `nft`, `ufw`, `nc -l` |
+| Category             | Patterns                                                                      |
+| -------------------- | ----------------------------------------------------------------------------- |
+| Destructive file ops | `rm -rf`, `rm -f`, `rm /...`, `mkfs`, `dd`, `shred`                           |
+| Privilege escalation | `sudo`, `su`, `doas`, `pkexec`                                                |
+| System control       | `shutdown`, `reboot`, `systemctl start/stop/...`, `launchctl load/unload/...` |
+| Process killing      | `kill`, `killall`, `pkill`                                                    |
+| Permission changes   | `chmod`, `chown`, `chgrp`                                                     |
+| Pipe-to-shell (RCE)  | `\| sh`, `\| bash`, `\| zsh`, `\| source`, `curl ... \|`, `wget ... \|`       |
+| Disk operations      | `fdisk`, `parted`, `mount`, `umount`                                          |
+| Network danger       | `iptables`, `nft`, `ufw`, `nc -l`                                             |
 
 ---
 
@@ -75,16 +75,16 @@ rev-parse, describe, shortlog, blame, reflog
 
 ## Examples
 
-| Command | Agent declares | Effective | Reason |
-|---------|----------------|-----------|--------|
-| `ls -la` | safe | safe | Always-safe command |
-| `git status` | safe | safe | Safe git subcommand |
-| `npm install` | safe | safe | Trusted agent declaration |
-| `rm -rf /tmp/build` | safe | dangerous | Always-dangerous pattern |
-| `sudo apt update` | moderate | dangerous | Privilege escalation |
-| `curl url \| sh` | safe | dangerous | Pipe-to-shell RCE |
-| `git push --force` | moderate | moderate | Not in safe-git list, trust agent |
-| `python script.py` | moderate | moderate | No pattern match, trust agent |
+| Command             | Agent declares | Effective | Reason                            |
+| ------------------- | -------------- | --------- | --------------------------------- |
+| `ls -la`            | safe           | safe      | Always-safe command               |
+| `git status`        | safe           | safe      | Safe git subcommand               |
+| `npm install`       | safe           | safe      | Trusted agent declaration         |
+| `rm -rf /tmp/build` | safe           | dangerous | Always-dangerous pattern          |
+| `sudo apt update`   | moderate       | dangerous | Privilege escalation              |
+| `curl url \| sh`    | safe           | dangerous | Pipe-to-shell RCE                 |
+| `git push --force`  | moderate       | moderate  | Not in safe-git list, trust agent |
+| `python script.py`  | moderate       | moderate  | No pattern match, trust agent     |
 
 ---
 

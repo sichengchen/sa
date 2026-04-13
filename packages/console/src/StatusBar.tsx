@@ -8,7 +8,13 @@ interface StatusBarProps {
   connectorType?: string;
 }
 
-export function StatusBar({ modelName, isStreaming, connected, sessionId, connectorType }: StatusBarProps) {
+export function StatusBar({
+  modelName,
+  isStreaming,
+  connected,
+  sessionId,
+  connectorType,
+}: StatusBarProps) {
   const sessionLabel = sessionId ? `${connectorType ?? "?"}:${sessionId.slice(0, 8)}` : "none";
   const dot = connected ? "●" : "○";
   const dotColor = connected ? "green" : "red";

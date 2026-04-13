@@ -2,25 +2,14 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Agent } from "@aria/agent-aria";
 import type { EngineRuntime } from "@aria/server/runtime";
-import {
-  createSessionToolEnvironment,
-  mergeAllowedTools,
-} from "@aria/tools";
+import { createSessionToolEnvironment, mergeAllowedTools } from "@aria/tools";
 import type {
   AutomationDeliveryStatus,
   AutomationTaskType,
   AutomationRunStatus,
 } from "@aria/store/operational-store";
-import type {
-  CronTask,
-  DeliveryTarget,
-  RetryPolicy,
-  WebhookTask,
-} from "./config.js";
-import {
-  CRON_DEFAULT_TOOLS,
-  WEBHOOK_DEFAULT_TOOLS,
-} from "./config.js";
+import type { CronTask, DeliveryTarget, RetryPolicy, WebhookTask } from "./config.js";
+import { CRON_DEFAULT_TOOLS, WEBHOOK_DEFAULT_TOOLS } from "./config.js";
 import { computeNextRunAt } from "./automation-schedule.js";
 
 export interface AutomationTaskRunInput {
@@ -99,13 +88,15 @@ async function runAutomationAttempt(
   maxAttempts: number,
 ): Promise<AutomationAttemptResult> {
   const session = runtime.sessions.create(task.sessionPrefix, task.connectorType);
-  const defaultTools = task.connectorType === "webhook" ? WEBHOOK_DEFAULT_TOOLS : CRON_DEFAULT_TOOLS;
+  const defaultTools =
+    task.connectorType === "webhook" ? WEBHOOK_DEFAULT_TOOLS : CRON_DEFAULT_TOOLS;
   const sessionScopedTools = runtime.mcp.filterToolsForSession(runtime.tools, session.id);
-  const allowedTools = mergeAllowedTools(
-    sessionScopedTools,
-    task.allowedTools ?? defaultTools,
-    task.allowedToolsets,
-  ) ?? defaultTools;
+  const allowedTools =
+    mergeAllowedTools(
+      sessionScopedTools,
+      task.allowedTools ?? defaultTools,
+      task.allowedToolsets,
+    ) ?? defaultTools;
   const toolEnvironment = createSessionToolEnvironment({
     baseTools: sessionScopedTools.filter((tool) => allowedTools.includes(tool.name)),
     checkpointManager: runtime.checkpoints,
@@ -271,7 +262,10 @@ export async function runAutomationAgent(
   };
 }
 
-function resolveTaskId(task: Pick<CronTask, "id" | "name"> | Pick<WebhookTask, "id" | "name">, prefix: string): string {
+function resolveTaskId(
+  task: Pick<CronTask, "id" | "name"> | Pick<WebhookTask, "id" | "name">,
+  prefix: string,
+): string {
   return task.id ?? `${prefix}:${task.name}`;
 }
 
@@ -417,17 +411,16 @@ export async function logAutomationResult(
       responseText || "(no response)",
       toolCalls.length > 0 ? "## Tool calls" : "",
       ...toolCalls.map((toolCall) => `- ${toolCall.name}: ${toolCall.content.slice(0, 200)}`),
-    ].filter(Boolean).join("\n");
+    ]
+      .filter(Boolean)
+      .join("\n");
     await writeFile(join(autoDir, `${name}-${ts}.md`), logContent + "\n");
   } catch {
     // Log failure is non-fatal.
   }
 }
 
-export function registerCronTask(
-  runtime: EngineRuntime,
-  task: CronTask,
-): void {
+export function registerCronTask(runtime: EngineRuntime, task: CronTask): void {
   upsertCronTaskRecord(runtime, task);
   runtime.scheduler.register({
     name: task.name,
@@ -456,7 +449,13 @@ export function registerCronTask(
         delivery: task.delivery,
       });
 
-      await logAutomationResult(runtime, task.name, task.prompt, result.responseText, result.toolCalls);
+      await logAutomationResult(
+        runtime,
+        task.name,
+        task.prompt,
+        result.responseText,
+        result.toolCalls,
+      );
       const lastRunAt = new Date().toISOString();
       const nextRunAt = computeNextRunAt({
         schedule: task.schedule,
@@ -483,16 +482,15 @@ export function registerCronTask(
       console.log(`[cron] Task "${task.name}" completed: ${result.summary}`);
       return { status: result.status, summary: result.summary };
     },
-    onComplete: task.oneShot ? async (taskName) => {
-      await removeCronTaskFromConfig(runtime, taskName);
-    } : undefined,
+    onComplete: task.oneShot
+      ? async (taskName) => {
+          await removeCronTaskFromConfig(runtime, taskName);
+        }
+      : undefined,
   });
 }
 
-export async function persistCronTask(
-  runtime: EngineRuntime,
-  task: CronTask,
-): Promise<void> {
+export async function persistCronTask(runtime: EngineRuntime, task: CronTask): Promise<void> {
   const configFile = runtime.config.getConfigFile();
   const automation = configFile.runtime.automation ?? { cronTasks: [], webhookTasks: [] };
   automation.cronTasks = automation.cronTasks.filter((t) => t.name !== task.name);
@@ -504,7 +502,10 @@ export async function persistCronTask(
   upsertCronTaskRecord(runtime, task);
 }
 
-export async function removeCronTaskFromConfig(runtime: EngineRuntime, name: string): Promise<void> {
+export async function removeCronTaskFromConfig(
+  runtime: EngineRuntime,
+  name: string,
+): Promise<void> {
   const configFile = runtime.config.getConfigFile();
   const automation = configFile.runtime.automation ?? { cronTasks: [], webhookTasks: [] };
   automation.cronTasks = automation.cronTasks.filter((t) => t.name !== name);
@@ -515,7 +516,11 @@ export async function removeCronTaskFromConfig(runtime: EngineRuntime, name: str
   deleteCronTaskRecord(runtime, name);
 }
 
-export async function updateCronTaskState(runtime: EngineRuntime, name: string, patch: Partial<CronTask>): Promise<void> {
+export async function updateCronTaskState(
+  runtime: EngineRuntime,
+  name: string,
+  patch: Partial<CronTask>,
+): Promise<void> {
   const configFile = runtime.config.getConfigFile();
   const automation = configFile.runtime.automation ?? { cronTasks: [], webhookTasks: [] };
   let updatedTask: CronTask | undefined;

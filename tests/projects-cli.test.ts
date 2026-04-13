@@ -9,7 +9,9 @@ import { projectsCommand } from "../packages/cli/src/projects.js";
 let runtimeHome = "";
 let originalAriaHome: string | undefined;
 
-async function withRepository<T>(fn: (repository: ProjectsEngineRepository) => Promise<T> | T): Promise<T> {
+async function withRepository<T>(
+  fn: (repository: ProjectsEngineRepository) => Promise<T> | T,
+): Promise<T> {
   const store = new ProjectsEngineStore(join(runtimeHome, "aria.db"));
   await store.init();
   const repository = new ProjectsEngineRepository(store);
@@ -53,23 +55,54 @@ afterEach(() => {
 describe("projectsCommand", () => {
   test("creates and mutates tracked work records through the CLI", async () => {
     await projectsCommand(["project-create", "project-1", "aria", "Aria"]);
-    await projectsCommand(["repo-register", "repo-1", "project-1", "aria", "git@github.com:test/aria.git", "main"]);
+    await projectsCommand([
+      "repo-register",
+      "repo-1",
+      "project-1",
+      "aria",
+      "git@github.com:test/aria.git",
+      "main",
+    ]);
     await projectsCommand(["task-create", "task-1", "project-1", "Implement runtime extraction"]);
     await projectsCommand(["task-status", "task-1", "ready"]);
     await projectsCommand(["thread-create", "thread-1", "project-1", "Tracked thread"]);
     await projectsCommand(["job-add", "thread-1", "user", "Please", "continue", "this", "work"]);
     await projectsCommand(["dispatch-create", "dispatch-1", "project-1", "thread-1", "codex"]);
-    await projectsCommand(["worktree-register", "worktree-1", "repo-1", "/tmp/aria-thread-1", "aria/thread/thread-1", "thread-1"]);
+    await projectsCommand([
+      "worktree-register",
+      "worktree-1",
+      "repo-1",
+      "/tmp/aria-thread-1",
+      "aria/thread/thread-1",
+      "thread-1",
+    ]);
     await projectsCommand(["worktree-retain", "worktree-1", "12345"]);
     await projectsCommand(["worktree-prune", "worktree-1"]);
     await projectsCommand(["review-create", "dispatch-1", "thread-1", "self", "Looks", "good"]);
-    const reviewId = await withRepository((repository) => repository.listReviews("thread-1")[0]?.reviewId ?? "");
+    const reviewId = await withRepository(
+      (repository) => repository.listReviews("thread-1")[0]?.reviewId ?? "",
+    );
     expect(reviewId).toBeTruthy();
     await projectsCommand(["review-resolve", reviewId, "approved", "Approved"]);
-    await projectsCommand(["publish-create", "dispatch-1", "thread-1", "repo-1", "aria/thread/thread-1", "origin"]);
-    const publishRunId = await withRepository((repository) => repository.listPublishRuns("thread-1")[0]?.publishRunId ?? "");
+    await projectsCommand([
+      "publish-create",
+      "dispatch-1",
+      "thread-1",
+      "repo-1",
+      "aria/thread/thread-1",
+      "origin",
+    ]);
+    const publishRunId = await withRepository(
+      (repository) => repository.listPublishRuns("thread-1")[0]?.publishRunId ?? "",
+    );
     expect(publishRunId).toBeTruthy();
-    await projectsCommand(["publish-complete", publishRunId, "pr_created", "abc123", "https://example.com/pr/1"]);
+    await projectsCommand([
+      "publish-complete",
+      publishRunId,
+      "pr_created",
+      "abc123",
+      "https://example.com/pr/1",
+    ]);
 
     await withRepository((repository) => {
       expect(repository.getProject("project-1")?.name).toBe("Aria");
@@ -85,7 +118,16 @@ describe("projectsCommand", () => {
   });
 
   test("creates, updates, and lists server hierarchy records through the CLI", async () => {
-    await projectsCommand(["server-create", "server-1", "Aria", "Server", "--relay", "relay-1", "--base-url", "https://aria.example"]);
+    await projectsCommand([
+      "server-create",
+      "server-1",
+      "Aria",
+      "Server",
+      "--relay",
+      "relay-1",
+      "--base-url",
+      "https://aria.example",
+    ]);
     await projectsCommand(["server-create", "server-2", "Relay", "Server", "--relay", "relay-2"]);
     await projectsCommand([
       "server-update",
@@ -99,8 +141,24 @@ describe("projectsCommand", () => {
       "https://aria.example/v2",
     ]);
 
-    await projectsCommand(["workspace-create", "workspace-1", "desktop_local", "Local", "Workspace", "--server", "server-1"]);
-    await projectsCommand(["workspace-create", "workspace-2", "aria_server", "Remote", "Workspace", "--server", "server-1"]);
+    await projectsCommand([
+      "workspace-create",
+      "workspace-1",
+      "desktop_local",
+      "Local",
+      "Workspace",
+      "--server",
+      "server-1",
+    ]);
+    await projectsCommand([
+      "workspace-create",
+      "workspace-2",
+      "aria_server",
+      "Remote",
+      "Workspace",
+      "--server",
+      "server-1",
+    ]);
     await projectsCommand([
       "workspace-update",
       "workspace-1",
@@ -185,8 +243,14 @@ describe("projectsCommand", () => {
       expect(repository.getEnvironment("environment-1")?.projectId).toBe("project-2");
       expect(repository.getEnvironment("environment-1")?.workspaceId).toBe("workspace-2");
       expect(repository.getEnvironment("environment-1")?.label).toBe("Remote Project");
-      expect(repository.listWorkspaces("server-2").map((workspace) => workspace.workspaceId)).toEqual(["workspace-1"]);
-      expect(repository.listEnvironments("project-2", "workspace-2").map((environment) => environment.environmentId)).toEqual(["environment-1"]);
+      expect(
+        repository.listWorkspaces("server-2").map((workspace) => workspace.workspaceId),
+      ).toEqual(["workspace-1"]);
+      expect(
+        repository
+          .listEnvironments("project-2", "workspace-2")
+          .map((environment) => environment.environmentId),
+      ).toEqual(["environment-1"]);
     });
   });
 
@@ -196,7 +260,7 @@ describe("projectsCommand", () => {
       "handoff-submit",
       "project-2",
       "key-1",
-      "{\"title\":\"Imported Thread\",\"body\":\"from handoff\",\"requestedBackend\":\"claude-code\"}",
+      '{"title":"Imported Thread","body":"from handoff","requestedBackend":"claude-code"}',
     ]);
 
     const handoffStore = new HandoffStore(join(runtimeHome, "aria.db"));
@@ -225,7 +289,12 @@ describe("projectsCommand", () => {
   });
 
   test("creates richer tracked threads and exposes environment bindings", async () => {
-    await projectsCommand(["project-create", "project-3", "aria-thread-model", "Aria Thread Model"]);
+    await projectsCommand([
+      "project-create",
+      "project-3",
+      "aria-thread-model",
+      "Aria Thread Model",
+    ]);
     await projectsCommand([
       "thread-create",
       "thread-3",

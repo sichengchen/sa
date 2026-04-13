@@ -19,8 +19,9 @@ describe("chunkMarkdown", () => {
 
   test("splits large content into multiple chunks", () => {
     // Create content with many paragraphs, each ~200 chars
-    const paragraphs = Array.from({ length: 20 }, (_, i) =>
-      `Paragraph ${i + 1}. ${"x".repeat(150)}`
+    const paragraphs = Array.from(
+      { length: 20 },
+      (_, i) => `Paragraph ${i + 1}. ${"x".repeat(150)}`,
     );
     const content = paragraphs.join("\n\n");
     const chunks = chunkMarkdown(content, 400, 100);
@@ -53,8 +54,9 @@ describe("chunkMarkdown", () => {
 
   test("chunks have overlap", () => {
     // Create enough content to need splitting
-    const paragraphs = Array.from({ length: 15 }, (_, i) =>
-      `Section ${i + 1}: ${"data ".repeat(60)}`
+    const paragraphs = Array.from(
+      { length: 15 },
+      (_, i) => `Section ${i + 1}: ${"data ".repeat(60)}`,
     );
     const content = paragraphs.join("\n\n");
     const chunks = chunkMarkdown(content, 800, 200);
@@ -78,9 +80,7 @@ describe("chunkMarkdown", () => {
   });
 
   test("respects custom target and overlap sizes", () => {
-    const paragraphs = Array.from({ length: 10 }, (_, i) =>
-      `Paragraph ${i}: ${"y".repeat(100)}`
-    );
+    const paragraphs = Array.from({ length: 10 }, (_, i) => `Paragraph ${i}: ${"y".repeat(100)}`);
     const content = paragraphs.join("\n\n");
 
     const smallChunks = chunkMarkdown(content, 200, 50);

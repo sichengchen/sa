@@ -4,18 +4,18 @@ Public CLI identity: `aria`.
 
 ## Core Commands
 
-| Command | Purpose |
-| --- | --- |
-| `aria` | Start the runtime if needed and open the TUI |
-| `aria onboard` | Run the onboarding wizard |
-| `aria config` | Open the interactive configuration editor |
-| `aria automation` | Inspect durable automation tasks and runs |
-| `aria audit` | Inspect the runtime audit log |
-| `aria memory` | Inspect layered memory and memory search results |
-| `aria engine ...` | Manage runtime lifecycle |
-| `aria stop` | Cancel all currently running agent work |
-| `aria restart` | Restart Aria Runtime |
-| `aria shutdown` | Stop Aria Runtime gracefully |
+| Command           | Purpose                                          |
+| ----------------- | ------------------------------------------------ |
+| `aria`            | Start the runtime if needed and open the TUI     |
+| `aria onboard`    | Run the onboarding wizard                        |
+| `aria config`     | Open the interactive configuration editor        |
+| `aria automation` | Inspect durable automation tasks and runs        |
+| `aria audit`      | Inspect the runtime audit log                    |
+| `aria memory`     | Inspect layered memory and memory search results |
+| `aria engine ...` | Manage runtime lifecycle                         |
+| `aria stop`       | Cancel all currently running agent work          |
+| `aria restart`    | Restart Aria Runtime                             |
+| `aria shutdown`   | Stop Aria Runtime gracefully                     |
 
 ## Projects Commands
 

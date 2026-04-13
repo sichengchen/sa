@@ -8,7 +8,11 @@ import { createContext } from "./context.js";
 import type { EngineRuntime } from "@aria/server/runtime";
 import { heartbeatState } from "@aria/automation/scheduler";
 import { frameAsData } from "@aria/agent-aria/content-frame";
-import { logAutomationResult, runAutomationAgent, upsertWebhookTaskRecord } from "@aria/automation/automation";
+import {
+  logAutomationResult,
+  runAutomationAgent,
+  upsertWebhookTaskRecord,
+} from "@aria/automation/automation";
 import { RUNTIME_NAME, getRuntimeHome } from "@aria/server/brand";
 
 const DEFAULT_PORT = 7420;
@@ -22,10 +26,7 @@ interface WebhookBody {
  * Authenticate a webhook request using the dedicated webhook bearer token.
  * Returns a Response if authentication fails, or null if authenticated.
  */
-function authenticateWebhook(
-  req: Request,
-  runtime: EngineRuntime,
-): Response | null {
+function authenticateWebhook(req: Request, runtime: EngineRuntime): Response | null {
   const authHeader = req.headers.get("authorization") ?? "";
   const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
   if (!bearerToken || !runtime.auth.validateWebhookToken(bearerToken)) {
@@ -36,7 +37,9 @@ function authenticateWebhook(
         event: "auth_failure",
         summary: "Webhook authentication failed",
       });
-    } catch { /* non-fatal */ }
+    } catch {
+      /* non-fatal */
+    }
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "content-type": "application/json" },
@@ -46,7 +49,11 @@ function authenticateWebhook(
 }
 
 /** Handle POST /webhook/agent requests (direct agent chat) */
-async function handleWebhookAgent(req: Request, runtime: EngineRuntime, appRouter: ReturnType<typeof createAppRouter>): Promise<Response> {
+async function handleWebhookAgent(
+  req: Request,
+  runtime: EngineRuntime,
+  appRouter: ReturnType<typeof createAppRouter>,
+): Promise<Response> {
   const configFile = runtime.config.getConfigFile();
   const webhookConfig = configFile.runtime.webhook;
 
@@ -59,7 +66,7 @@ async function handleWebhookAgent(req: Request, runtime: EngineRuntime, appRoute
 
   let body: WebhookBody;
   try {
-    body = await req.json() as WebhookBody;
+    body = (await req.json()) as WebhookBody;
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
       status: 400,
@@ -99,7 +106,9 @@ async function handleWebhookAgent(req: Request, runtime: EngineRuntime, appRoute
 
   if (acceptSSE) {
     // SSE streaming response — use master token for internal calls
-    const caller = appRouter.createCaller(createContext({ rawToken: runtime.auth.getMasterToken() }));
+    const caller = appRouter.createCaller(
+      createContext({ rawToken: runtime.auth.getMasterToken() }),
+    );
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
@@ -111,7 +120,9 @@ async function handleWebhookAgent(req: Request, runtime: EngineRuntime, appRoute
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: msg })}\n\n`));
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "error", message: msg })}\n\n`),
+          );
         }
         controller.close();
       },
@@ -154,14 +165,17 @@ async function handleWebhookAgent(req: Request, runtime: EngineRuntime, appRoute
     });
   }
 
-  return new Response(
-    JSON.stringify({ sessionId, response: responseText, toolCalls }),
-    { headers: { "content-type": "application/json" } },
-  );
+  return new Response(JSON.stringify({ sessionId, response: responseText, toolCalls }), {
+    headers: { "content-type": "application/json" },
+  });
 }
 
 /** Handle POST /webhook/tasks/:slug — routed webhook automation tasks */
-async function handleWebhookTask(req: Request, slug: string, runtime: EngineRuntime): Promise<Response> {
+async function handleWebhookTask(
+  req: Request,
+  slug: string,
+  runtime: EngineRuntime,
+): Promise<Response> {
   const configFile = runtime.config.getConfigFile();
   const webhookConfig = configFile.runtime.webhook;
 
@@ -225,7 +239,13 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
     delivery: task.delivery,
   });
 
-  await logAutomationResult(runtime, `webhook-${slug}`, prompt, result.responseText, result.toolCalls);
+  await logAutomationResult(
+    runtime,
+    `webhook-${slug}`,
+    prompt,
+    result.responseText,
+    result.toolCalls,
+  );
 
   console.log(`[webhook] Task "${task.name}" (${slug}) completed: ${result.summary}`);
 
@@ -233,12 +253,16 @@ async function handleWebhookTask(req: Request, slug: string, runtime: EngineRunt
   const refreshedConfig = runtime.config.getConfigFile();
   const webhookTasks = refreshedConfig.runtime.automation?.webhookTasks ?? [];
   const lastRunAt = new Date().toISOString();
-  const updatedWebhookTasks = webhookTasks.map((item) => item.slug === slug ? {
-    ...item,
-    lastRunAt,
-    lastStatus: result.status,
-    lastSummary: result.summary,
-  } : item);
+  const updatedWebhookTasks = webhookTasks.map((item) =>
+    item.slug === slug
+      ? {
+          ...item,
+          lastRunAt,
+          lastStatus: result.status,
+          lastSummary: result.summary,
+        }
+      : item,
+  );
   await runtime.config.saveConfig({
     ...refreshedConfig,
     runtime: {
@@ -320,7 +344,10 @@ export interface EngineServer {
 }
 
 /** Start the Engine's HTTP + WebSocket server */
-export async function startServer(runtime: EngineRuntime, options: EngineServerOptions = {}): Promise<EngineServer> {
+export async function startServer(
+  runtime: EngineRuntime,
+  options: EngineServerOptions = {},
+): Promise<EngineServer> {
   const port = options.port ?? DEFAULT_PORT;
   const hostname = options.hostname ?? "127.0.0.1";
   const runtimeHome = getRuntimeHome();
@@ -397,7 +424,9 @@ export async function startServer(runtime: EngineRuntime, options: EngineServerO
       wssHandler.broadcastReconnectNotification();
       wss.close();
       // Clean up discovery files
-      try { await unlink(join(runtimeHome, "engine.url")); } catch {}
+      try {
+        await unlink(join(runtimeHome, "engine.url"));
+      } catch {}
       await runtime.close();
     },
   };

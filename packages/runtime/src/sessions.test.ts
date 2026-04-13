@@ -13,9 +13,7 @@ describe("SessionManager", () => {
       const session = manager.create("main", "engine");
       // Format: "main:<uuid>" where uuid is 36 chars (8-4-4-4-12 with hyphens)
       const suffix = session.id.slice("main:".length);
-      expect(suffix).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-      );
+      expect(suffix).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
     });
 
     it("generates unique session IDs", () => {

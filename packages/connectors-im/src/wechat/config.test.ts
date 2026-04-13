@@ -3,7 +3,12 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { saveSecrets } from "@aria/engine/config/secrets.js";
-import { DEFAULT_WECHAT_API_BASE_URL, loadWeChatAccounts, normalizeWeChatAccount, upsertWeChatAccount } from "./config.js";
+import {
+  DEFAULT_WECHAT_API_BASE_URL,
+  loadWeChatAccounts,
+  normalizeWeChatAccount,
+  upsertWeChatAccount,
+} from "./config.js";
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -13,12 +18,14 @@ describe("wechat config", () => {
   });
 
   it("normalizes the base URL and user list", () => {
-    expect(normalizeWeChatAccount({
-      accountId: " wx-alias ",
-      botToken: " token ",
-      apiBaseUrl: "https://example.com/api",
-      allowedUserIds: [" alice ", "alice", "bob"],
-    })).toEqual({
+    expect(
+      normalizeWeChatAccount({
+        accountId: " wx-alias ",
+        botToken: " token ",
+        apiBaseUrl: "https://example.com/api",
+        allowedUserIds: [" alice ", "alice", "bob"],
+      }),
+    ).toEqual({
       accountId: "wx-alias",
       botToken: "token",
       apiBaseUrl: "https://example.com/api/",
@@ -72,11 +79,14 @@ describe("wechat config", () => {
         ],
       });
 
-      const next = await upsertWeChatAccount({
-        accountId: "alpha",
-        botToken: "new-token",
-        allowedUserIds: ["owner"],
-      }, homeDir);
+      const next = await upsertWeChatAccount(
+        {
+          accountId: "alpha",
+          botToken: "new-token",
+          allowedUserIds: ["owner"],
+        },
+        homeDir,
+      );
 
       expect(next).toEqual([
         {

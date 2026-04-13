@@ -2,12 +2,14 @@
 
 ## Quick Reference
 
-| Command | Purpose |
-|---------|---------|
-| `bun test` | Run all tests (live tests skip without API key) |
-| `bun test packages/runtime/src/tools/policy.test.ts` | Run one file |
-| `bun test tests/live/` | Run only live LLM tests |
-| `ANTHROPIC_API_KEY=sk-... bun test` | Run all tests including live |
+| Command                                 | Purpose                                    |
+| --------------------------------------- | ------------------------------------------ |
+| `vp run repo:check`                     | Run the cached repo check flow             |
+| `vp run repo:test`                      | Run all tests through the repo task runner |
+| `bun run check`                         | Wrapper for `vp run repo:check`            |
+| `bun run test`                          | Wrapper for `vp run repo:test`             |
+| `bun run test -- tests/tools.test.ts`   | Run one file                               |
+| `ANTHROPIC_API_KEY=sk-... bun run test` | Run all tests including live               |
 
 ## Rules
 
@@ -20,13 +22,13 @@
 
 ## Where to put tests
 
-| Test type | Location | When to use |
-|-----------|----------|-------------|
-| Co-located unit test | `packages/**/*.test.ts` | Testing a single module's pure logic (no I/O, no LLM) |
-| External unit test | `tests/*.test.ts` | Testing a subsystem with I/O or cross-module deps |
-| Live LLM test | `tests/live/*.test.ts` | Testing agent chat, tool dispatch, tRPC chat.stream |
-| Integration test | `tests/integration/*.test.ts` | Testing two+ subsystems without LLM |
-| E2E test | `tests/e2e/*.test.ts` | Testing full system initialization or user flows |
+| Test type            | Location                      | When to use                                           |
+| -------------------- | ----------------------------- | ----------------------------------------------------- |
+| Co-located unit test | `packages/**/*.test.ts`       | Testing a single module's pure logic (no I/O, no LLM) |
+| External unit test   | `tests/*.test.ts`             | Testing a subsystem with I/O or cross-module deps     |
+| Live LLM test        | `tests/live/*.test.ts`        | Testing agent chat, tool dispatch, tRPC chat.stream   |
+| Integration test     | `tests/integration/*.test.ts` | Testing two+ subsystems without LLM                   |
+| E2E test             | `tests/e2e/*.test.ts`         | Testing full system initialization or user flows      |
 
 ## Live LLM test patterns
 
@@ -74,7 +76,7 @@ describeLive("Agent tool use", () => {
       events.push(event);
     }
 
-    const toolStart = events.find(e => e.type === "tool_start");
+    const toolStart = events.find((e) => e.type === "tool_start");
     expect(toolStart).toBeDefined();
     expect(events.at(-1).type).toBe("done");
   }, 30_000);
@@ -138,6 +140,7 @@ test("my_tool returns input", async () => {
 ## Danger level testing
 
 When adding or modifying a tool:
+
 - Test that `dangerLevel` is set correctly
 - For `exec`-adjacent tools, test command classification
 - For dangerous tools, write a live test verifying the approval flow

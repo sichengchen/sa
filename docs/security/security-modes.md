@@ -7,11 +7,11 @@ approval flow and security layer behavior.
 
 ## Modes
 
-| Mode | Effect | Default TTL |
-|------|--------|-------------|
-| `default` | Standard approval flow -- all security layers active | Permanent |
-| `trusted` | Moderate tools auto-approve, URL policy relaxed, exec fence widened | 1 hour |
-| `unrestricted` | All tools auto-approve, URL policy off, exec fence off | 30 minutes |
+| Mode           | Effect                                                              | Default TTL |
+| -------------- | ------------------------------------------------------------------- | ----------- |
+| `default`      | Standard approval flow -- all security layers active                | Permanent   |
+| `trusted`      | Moderate tools auto-approve, URL policy relaxed, exec fence widened | 1 hour      |
+| `unrestricted` | All tools auto-approve, URL policy off, exec fence off              | 30 minutes  |
 
 ### default
 
@@ -61,12 +61,12 @@ after their TTL expires. The `SecurityModeManager` checks expiry on every
 }
 ```
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `defaultMode` | `SecurityMode` | `"default"` | Mode for new sessions |
-| `modeTTL.trusted` | `number` (seconds) | `3600` | Trusted mode TTL |
-| `modeTTL.unrestricted` | `number` (seconds) | `1800` | Unrestricted mode TTL |
-| `allowUnrestrictedFromIM` | `boolean` | `false` | Allow unrestricted from IM connectors |
+| Field                     | Type               | Default     | Description                           |
+| ------------------------- | ------------------ | ----------- | ------------------------------------- |
+| `defaultMode`             | `SecurityMode`     | `"default"` | Mode for new sessions                 |
+| `modeTTL.trusted`         | `number` (seconds) | `3600`      | Trusted mode TTL                      |
+| `modeTTL.unrestricted`    | `number` (seconds) | `1800`      | Unrestricted mode TTL                 |
+| `allowUnrestrictedFromIM` | `boolean`          | `false`     | Allow unrestricted from IM connectors |
 
 ---
 

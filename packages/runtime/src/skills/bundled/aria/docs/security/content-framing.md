@@ -8,13 +8,13 @@ between trusted instructions and untrusted data.
 
 ## Data Tags
 
-| Source | Tag | Example use |
-|--------|-----|-------------|
-| Web fetch results | `<data-web>` | HTML/text from `web_fetch` |
-| Exec output | `<data-exec>` | stdout/stderr from `exec` |
-| Webhook payloads | `<data-webhook>` | Incoming webhook request bodies |
-| Skill content | `<data-skill>` | Loaded skill definitions |
-| Memory context | `<data-memory>` | Memory file contents injected into context |
+| Source            | Tag              | Example use                                |
+| ----------------- | ---------------- | ------------------------------------------ |
+| Web fetch results | `<data-web>`     | HTML/text from `web_fetch`                 |
+| Exec output       | `<data-exec>`    | stdout/stderr from `exec`                  |
+| Webhook payloads  | `<data-webhook>` | Incoming webhook request bodies            |
+| Skill content     | `<data-skill>`   | Loaded skill definitions                   |
+| Memory context    | `<data-memory>`  | Memory file contents injected into context |
 
 ---
 
