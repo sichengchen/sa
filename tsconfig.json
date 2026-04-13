@@ -23,6 +23,8 @@
       "@aria/protocol/*": ["./packages/protocol/src/*"],
       "@aria/runtime": ["./packages/runtime/src/index.ts"],
       "@aria/runtime/*": ["./packages/runtime/src/*"],
+      "aria-server": ["./apps/aria-server/src/index.ts"],
+      "aria-server/*": ["./apps/aria-server/src/*"],
       "@aria/server": ["./packages/server/src/index.ts"],
       "@aria/server/*": ["./packages/server/src/*"],
       "@aria/desktop": ["./packages/desktop/src/index.ts"],
