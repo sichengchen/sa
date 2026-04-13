@@ -632,6 +632,74 @@ describe("aria-desktop app assembly", () => {
     expect(text).toContain("desktop:archived-1 - archived");
   });
 
+  test("wires desktop shell callbacks for switching servers and opening sessions", () => {
+    const model = createAriaDesktopAppShellModel({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "desktop",
+    });
+    const shell = AriaDesktopAppShell({
+      model: {
+        ...model,
+        ariaRecentSessions: [
+          {
+            sessionId: "desktop:recent-1",
+            connectorType: "tui",
+            connectorId: "desktop",
+            archived: false,
+          },
+        ],
+      },
+      onSwitchServer() {},
+      onOpenAriaSession() {},
+    });
+
+    const root = asElementWithProps(shell);
+    const findElement = (
+      node: ReactNode,
+      predicate: (props: Record<string, unknown>) => boolean,
+    ): { props: Record<string, unknown> } | undefined => {
+      if (Array.isArray(node)) {
+        for (const entry of node) {
+          const found = findElement(entry, predicate);
+          if (found) return found;
+        }
+        return undefined;
+      }
+      if (!isValidElement(node)) {
+        return undefined;
+      }
+
+      const props = node.props as Record<string, unknown>;
+      if (predicate(props)) {
+        return { props };
+      }
+      return findElement(props.children as ReactNode, predicate);
+    };
+    const topChrome = childElements(root)[0]!;
+    const serverLabel = childElements(topChrome).find(
+      (element) => element.props["data-slot"] === "server-switcher",
+    )!;
+    const select = childElements(serverLabel)[0]!;
+    expect(typeof select.props.onChange).toBe("function");
+
+    const openButton = findElement(
+      shell,
+      (props) => props["data-session-id"] === "desktop:recent-1",
+    );
+    expect(openButton?.props.children).toBe("Open");
+    expect(typeof openButton?.props.onClick).toBe("function");
+  });
+
   test("can switch the desktop app shell to another server", async () => {
     const relayState = {
       connected: true,

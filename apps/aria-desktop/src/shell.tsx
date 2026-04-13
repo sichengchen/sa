@@ -165,6 +165,8 @@ function resolveDesktopServerTarget(
 
 export interface AriaDesktopAppShellProps {
   model: AriaDesktopAppShellModel;
+  onSwitchServer?(serverId: string): void;
+  onOpenAriaSession?(sessionId: string): void;
 }
 
 function section(slot: string, title: string, children: ReactNode): ReactElement {
@@ -204,7 +206,11 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
           data-placement={model.application.frame.serverSwitcher.placement}
         >
           {model.application.frame.serverSwitcher.label}
-          <select aria-label="Server switcher" defaultValue={model.activeServerId}>
+          <select
+            aria-label="Server switcher"
+            defaultValue={model.activeServerId}
+            onChange={(event) => props.onSwitchServer?.(event.currentTarget.value)}
+          >
             {model.shell.serverSwitcher.availableServers.map((server) => (
               <option key={server.id} value={server.id}>
                 {server.label}
@@ -319,6 +325,15 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
                   {model.ariaRecentSessions.map((session) => (
                     <li key={session.sessionId}>
                       {session.sessionId} - {session.archived ? "archived" : "live"}
+                      {props.onOpenAriaSession ? (
+                        <button
+                          type="button"
+                          data-session-id={session.sessionId}
+                          onClick={() => props.onOpenAriaSession?.(session.sessionId)}
+                        >
+                          Open
+                        </button>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

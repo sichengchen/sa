@@ -111,7 +111,17 @@ export async function mountAriaDesktopRenderer(
   });
   const root = createRoot(container);
   const render = (nextModel: AriaDesktopAppShellModel) =>
-    root.render(createElement(AriaDesktopApplicationRoot, { model: nextModel }));
+    root.render(
+      createElement(AriaDesktopApplicationRoot, {
+        model: nextModel,
+        onSwitchServer: (serverId: string) => {
+          void controller.switchServer(serverId);
+        },
+        onOpenAriaSession: (sessionId: string) => {
+          void controller.openSession(sessionId);
+        },
+      }),
+    );
   render(controller.getModel());
   controller.subscribe(render);
   const model = await controller.start();
