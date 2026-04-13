@@ -2,7 +2,7 @@
 
 Every interactive or automated runtime interaction happens inside a durable session.
 
-`SessionManager` lives under `packages/runtime/src/sessions.ts`.
+`SessionManager` lives under `packages/server/src/sessions.ts`.
 
 ## Session ID Format
 
