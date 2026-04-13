@@ -62,7 +62,6 @@ flowchart TD
 - [storage-and-recovery.md](./storage-and-recovery.md)
 - [prompt-engine.md](./prompt-engine.md)
 - [tool-runtime.md](./tool-runtime.md)
-- [relay.md](./relay.md)
 - [handoff.md](./handoff.md)
 - [providers.md](./providers.md)
 - [interaction-protocol.md](./interaction-protocol.md)
