@@ -10,6 +10,8 @@ export interface AriaDesktopApplicationRootProps {
   model: AriaDesktopAppShellModel;
   onSwitchServer?(serverId: string): void;
   onOpenAriaSession?(sessionId: string): void;
+  onSendAriaMessage?(message: string): void;
+  onStopAriaSession?(): void;
 }
 
 export function AriaDesktopApplicationRoot(props: AriaDesktopApplicationRootProps): ReactElement {
@@ -18,6 +20,8 @@ export function AriaDesktopApplicationRoot(props: AriaDesktopApplicationRootProp
       model={props.model}
       onSwitchServer={props.onSwitchServer}
       onOpenAriaSession={props.onOpenAriaSession}
+      onSendAriaMessage={props.onSendAriaMessage}
+      onStopAriaSession={props.onStopAriaSession}
     />
   );
 }

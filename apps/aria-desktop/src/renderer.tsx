@@ -120,6 +120,12 @@ export async function mountAriaDesktopRenderer(
         onOpenAriaSession: (sessionId: string) => {
           void controller.openSession(sessionId);
         },
+        onSendAriaMessage: (message: string) => {
+          void controller.sendMessage(message);
+        },
+        onStopAriaSession: () => {
+          void controller.stop();
+        },
       }),
     );
   render(controller.getModel());

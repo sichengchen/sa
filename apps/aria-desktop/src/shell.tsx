@@ -167,6 +167,8 @@ export interface AriaDesktopAppShellProps {
   model: AriaDesktopAppShellModel;
   onSwitchServer?(serverId: string): void;
   onOpenAriaSession?(sessionId: string): void;
+  onSendAriaMessage?(message: string): void;
+  onStopAriaSession?(): void;
 }
 
 function section(slot: string, title: string, children: ReactNode): ReactElement {
@@ -366,7 +368,27 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
 
       <footer data-slot="status-strip">
         <p>Placement: {model.application.frame.composer.placement}</p>
-        <textarea readOnly value={composerValue} />
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const field = form.elements.namedItem("aria-composer-draft");
+            if (field instanceof HTMLTextAreaElement) {
+              props.onSendAriaMessage?.(field.value);
+            }
+          }}
+        >
+          <textarea name="aria-composer-draft" defaultValue={composerValue} />
+          <button type="submit">Send</button>
+          <button
+            type="button"
+            onClick={() => {
+              props.onStopAriaSession?.();
+            }}
+          >
+            Stop
+          </button>
+        </form>
       </footer>
     </div>
   );
