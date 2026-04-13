@@ -1,6 +1,5 @@
 import { test, expect } from "bun:test";
-import { Agent } from "@aria/engine/agent/index.js";
-import type { AgentEvent } from "@aria/engine/agent/types.js";
+import { Agent, type AgentEvent } from "@aria/agent-aria";
 import {
   describeLive,
   getLiveTestLabel,

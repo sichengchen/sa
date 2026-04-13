@@ -2,7 +2,7 @@
   "name": "@aria/runtime",
   "version": "0.0.0",
   "private": true,
-  "description": "Aria runtime package scaffold for incremental monorepo adoption",
+  "description": "Aria runtime compatibility surface for the shared execution kernel",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

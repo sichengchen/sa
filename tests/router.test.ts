@@ -1,6 +1,5 @@
 import { describe, test, expect, beforeEach } from "bun:test";
-import { ModelRouter } from "@aria/engine/router/index.js";
-import type { ModelRouterData } from "@aria/engine/router/index.js";
+import { ModelRouter, type ModelRouterData } from "@aria/gateway/router";
 
 const validConfig: ModelRouterData = {
   defaultModel: "sonnet",

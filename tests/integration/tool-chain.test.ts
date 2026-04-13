@@ -1,8 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { readTool } from "@aria/engine/tools/read.js";
-import { writeTool } from "@aria/engine/tools/write.js";
-import { editTool } from "@aria/engine/tools/edit.js";
-import { bashTool } from "@aria/engine/tools/bash.js";
+import { bashTool, editTool, readTool, writeTool } from "@aria/tools";
 import { rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -22,7 +19,10 @@ describe("Tool chain integration", () => {
     const filePath = join(testDir, "chain.txt");
 
     // Write
-    const w = await writeTool.execute({ file_path: filePath, content: "hello world" });
+    const w = await writeTool.execute({
+      file_path: filePath,
+      content: "hello world",
+    });
     expect(w.isError).toBeUndefined();
 
     // Read

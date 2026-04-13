@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { chunkMarkdown } from "@aria/engine/memory/chunker.js";
+import { chunkMarkdown } from "@aria/memory/chunker";
 
 describe("chunkMarkdown", () => {
   test("returns empty array for empty content", () => {

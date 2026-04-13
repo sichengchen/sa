@@ -39,7 +39,7 @@ This order keeps low-level durable services moving before higher-level orchestra
 
 ## Review Hotspots
 
-- `packages/runtime/src/runtime.ts` is the current composition root. Keep it as the temporary compatibility shell while package-owned factories replace direct in-package construction.
+- `packages/server/src/runtime.ts` is now the live composition root. Keep `packages/runtime/src/runtime.ts` as a thin compatibility re-export while the remaining runtime-owned kernel submodules are moved or retired.
 - `packages/runtime/package.json` exports are the public compatibility contract for Phase 1. Preserve those export paths with re-exports until downstream imports move.
 - `packages/runtime/src/procedures.ts` is the highest-coupling file in the current runtime surface. Prefer moving helper modules under their target package boundaries before cutting over the router bindings themselves.
 
@@ -63,4 +63,4 @@ Every extraction step should still pass:
 
 ## Exit Condition
 
-Phase 1 is complete when each listed domain has a package-owned implementation path, the repo can still build from the current CLI entrypoint, and `@aria/runtime` acts only as the compatibility composition root for those extracted subsystems.
+Phase 1 is complete when each listed domain has a package-owned implementation path, the repo can still build from the current CLI entrypoint, and `@aria/runtime` acts only as a compatibility surface around the remaining shared-kernel submodules.

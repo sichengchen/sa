@@ -5,12 +5,12 @@ import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
+  parseFrontmatter,
   SkillRegistry,
-  scanSkillDirectory,
-  formatSkillsDiscovery,
   formatActiveSkills,
-} from "@aria/engine/skills/index.js";
-import { parseFrontmatter } from "@aria/engine/skills/loader.js";
+  formatSkillsDiscovery,
+  scanSkillDirectory,
+} from "@aria/memory/skills";
 
 const testHome = join(tmpdir(), "aria-test-skills-" + Date.now());
 const skillsDir = join(testHome, "skills");

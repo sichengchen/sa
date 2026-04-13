@@ -1,5 +1,5 @@
 import { describe } from "bun:test";
-import { ModelRouter } from "@aria/engine/router/index.js";
+import { ModelRouter } from "@aria/gateway/router";
 import type { KnownProvider } from "@mariozechner/pi-ai";
 
 export type LiveProviderId = "anthropic" | "openai" | "google" | "minimax";

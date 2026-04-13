@@ -2,8 +2,8 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtemp, rm, writeFile, readFile, readdir, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Scheduler, matchesCron } from "@aria/engine/scheduler.js";
-import { SessionManager } from "@aria/engine/sessions.js";
+import { Scheduler, matchesCron } from "@aria/automation";
+import { SessionManager } from "@aria/runtime/sessions";
 
 let testDir: string;
 
@@ -107,7 +107,12 @@ describe("Cron persistence roundtrip", () => {
         memory: { enabled: true, directory: "memory" },
         automation: {
           cronTasks: [
-            { name: "daily", schedule: "0 9 * * *", prompt: "Morning report", enabled: true },
+            {
+              name: "daily",
+              schedule: "0 9 * * *",
+              prompt: "Morning report",
+              enabled: true,
+            },
             {
               name: "once",
               schedule: "30 14 * * *",

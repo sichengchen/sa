@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { MemoryManager } from "@aria/engine/memory/index.js";
+import { MemoryManager } from "@aria/memory";
 import { writeFile, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -156,8 +156,12 @@ describe("MemoryManager — FTS5 search", () => {
     await mgr.save("note", "Meeting notes for today");
     await mgr.appendJournal("Had a meeting about project X");
 
-    const topicOnly = await mgr.searchIndex("meeting", { sourceType: "project" });
-    const journalOnly = await mgr.searchIndex("meeting", { sourceType: "journal" });
+    const topicOnly = await mgr.searchIndex("meeting", {
+      sourceType: "project",
+    });
+    const journalOnly = await mgr.searchIndex("meeting", {
+      sourceType: "journal",
+    });
 
     expect(topicOnly.every((r) => r.sourceType === "project")).toBe(true);
     expect(journalOnly.every((r) => r.sourceType === "journal")).toBe(true);

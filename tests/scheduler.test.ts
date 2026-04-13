@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "bun:test";
-import { Scheduler, matchesCron, createHeartbeatTask } from "@aria/engine/scheduler.js";
+import { Scheduler, createHeartbeatTask, matchesCron } from "@aria/automation";
 import { mkdir, rm, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -79,7 +79,11 @@ describe("Scheduler", () => {
   });
 
   test("unregisters user tasks", () => {
-    scheduler.register({ name: "removable", schedule: "* * * * *", handler: () => {} });
+    scheduler.register({
+      name: "removable",
+      schedule: "* * * * *",
+      handler: () => {},
+    });
     expect(scheduler.size).toBe(1);
 
     const removed = scheduler.unregister("removable");

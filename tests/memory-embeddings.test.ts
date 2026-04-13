@@ -1,6 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { MemoryManager } from "@aria/engine/memory/index.js";
-import type { EmbeddingConfig } from "@aria/engine/memory/index.js";
+import { MemoryManager, type EmbeddingConfig } from "@aria/memory";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

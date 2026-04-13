@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { ConfigManager } from "@aria/engine/config/index.js";
+import { ConfigManager } from "@aria/server/config";
 import { writeFile, rm, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -114,7 +114,11 @@ describe("ConfigManager", () => {
 
       const configFile = mgr.getConfigFile();
       configFile.defaultModel = "new-default";
-      configFile.models.push({ name: "new-default", provider: "anthropic", model: "m" });
+      configFile.models.push({
+        name: "new-default",
+        provider: "anthropic",
+        model: "m",
+      });
       await mgr.saveConfig(configFile);
 
       // Reload and verify

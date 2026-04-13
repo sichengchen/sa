@@ -85,18 +85,11 @@ function makeTool(
 }
 
 describe("phase-1 extraction package verification", () => {
-  test("@aria/runtime composes moved package-owned services from target packages", async () => {
+  test("@aria/runtime forwards runtime composition to the server-owned root", async () => {
     const runtimeSource = await import("node:fs/promises").then((fs) =>
       fs.readFile(new URL("../packages/runtime/src/runtime.ts", import.meta.url), "utf-8"),
     );
-    expect(runtimeSource).toContain("@aria/tools");
-    expect(runtimeSource).toContain("@aria/prompt");
-    expect(runtimeSource).toContain("@aria/store");
-    expect(runtimeSource).toContain("@aria/audit");
-    expect(runtimeSource).toContain("@aria/memory");
-    expect(runtimeSource).toContain("@aria/policy");
-    expect(runtimeSource).toContain("@aria/automation");
-    expect(runtimeSource).toContain("@aria/gateway/auth");
+    expect(runtimeSource).toContain("@aria/server/runtime");
     const backendRegistrySource = await import("node:fs/promises").then((fs) =>
       fs.readFile(new URL("../packages/runtime/src/backend-registry.ts", import.meta.url), "utf-8"),
     );
@@ -161,7 +154,8 @@ describe("phase-1 extraction package verification", () => {
     const serverRuntimeSource = await import("node:fs/promises").then((fs) =>
       fs.readFile(new URL("../packages/server/src/runtime.ts", import.meta.url), "utf-8"),
     );
-    expect(serverRuntimeSource).toContain("@aria/runtime/runtime");
+    expect(serverRuntimeSource).toContain("export async function createRuntime");
+    expect(serverRuntimeSource).toContain("new ConfigManager(runtimeHome)");
     const serverSessionCoordinatorSource = await import("node:fs/promises").then((fs) =>
       fs.readFile(
         new URL("../packages/server/src/session-coordinator.ts", import.meta.url),

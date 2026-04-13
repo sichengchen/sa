@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { ConfigManager } from "@aria/engine/config/index.js";
-import { ModelRouter } from "@aria/engine/router/index.js";
+import { ConfigManager } from "@aria/server/config";
+import { ModelRouter } from "@aria/gateway/router";
 import { rm, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -39,7 +39,11 @@ describe("Config + Router integration", () => {
         memory: { enabled: true, directory: "memory" },
       },
       providers: [
-        { id: "anthropic", type: "anthropic", apiKeyEnvVar: "ANTHROPIC_API_KEY" },
+        {
+          id: "anthropic",
+          type: "anthropic",
+          apiKeyEnvVar: "ANTHROPIC_API_KEY",
+        },
         { id: "openai", type: "openai", apiKeyEnvVar: "OPENAI_API_KEY" },
       ],
       models: [
@@ -49,7 +53,12 @@ describe("Config + Router integration", () => {
           model: "claude-sonnet-4-5-20250514",
           temperature: 0.5,
         },
-        { name: "smart", provider: "openai", model: "gpt-4o", temperature: 0.3 },
+        {
+          name: "smart",
+          provider: "openai",
+          model: "gpt-4o",
+          temperature: 0.3,
+        },
       ],
       defaultModel: "fast",
     };

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { saveSecrets } from "@aria/engine/config/secrets.js";
+import { saveSecrets } from "@aria/server/config/secrets";
 import { loadConnectorRuntimeEnv } from "@aria/cli/connector-env.js";
 
 const testHome = join(tmpdir(), `aria-connector-env-${Date.now()}`);

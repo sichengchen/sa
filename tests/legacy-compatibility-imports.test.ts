@@ -13,6 +13,7 @@ const LEGACY_IMPORT_PATTERNS = [
 ];
 
 const EXCLUDED_PREFIXES = [
+  "packages/memory/src/skills/embedded-skills.generated.ts",
   "packages/runtime/src/skills/",
   "scripts/migrate-legacy-esperta-code.ts",
 ];

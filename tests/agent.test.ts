@@ -1,7 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach, mock } from "bun:test";
-import { Agent, ToolRegistry } from "@aria/engine/agent/index.js";
-import type { ToolImpl } from "@aria/engine/agent/index.js";
-import { ModelRouter } from "@aria/engine/router/index.js";
+import { Agent, ToolRegistry, type ToolImpl } from "@aria/agent-aria";
+import { ModelRouter } from "@aria/gateway/router";
 import { Type } from "@mariozechner/pi-ai";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";

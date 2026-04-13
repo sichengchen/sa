@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import type { WebhookTask, AutomationConfig } from "@aria/engine/config/types.js";
+import type { AutomationConfig, WebhookTask } from "@aria/server/config";
 
 describe("Webhook task types", () => {
   test("WebhookTask has required fields", () => {
@@ -205,7 +205,12 @@ describe("Webhook bearer-token-only authentication", () => {
 
 describe("Webhook slug routing", () => {
   const tasks: WebhookTask[] = [
-    { name: "Deploy Notify", slug: "deploy-notify", prompt: "{{payload}}", enabled: true },
+    {
+      name: "Deploy Notify",
+      slug: "deploy-notify",
+      prompt: "{{payload}}",
+      enabled: true,
+    },
     {
       name: "Alert Handler",
       slug: "alert",

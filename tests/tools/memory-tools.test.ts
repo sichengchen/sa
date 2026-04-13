@@ -2,11 +2,13 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { MemoryManager } from "@aria/engine/memory/manager.js";
-import { createMemoryWriteTool } from "@aria/engine/tools/memory-write.js";
-import { createMemorySearchTool } from "@aria/engine/tools/memory-search.js";
-import { createMemoryReadTool } from "@aria/engine/tools/memory-read.js";
-import { createMemoryDeleteTool } from "@aria/engine/tools/memory-delete.js";
+import { MemoryManager } from "@aria/memory/manager";
+import {
+  createMemoryDeleteTool,
+  createMemoryReadTool,
+  createMemorySearchTool,
+  createMemoryWriteTool,
+} from "@aria/tools";
 
 let tmpDir: string;
 let memory: MemoryManager;
@@ -25,7 +27,10 @@ afterEach(async () => {
 describe("memory_write tool", () => {
   it("saves project memory with key", async () => {
     const tool = createMemoryWriteTool(memory);
-    const result = await tool.execute({ key: "greeting", content: "Hello world" });
+    const result = await tool.execute({
+      key: "greeting",
+      content: "Hello world",
+    });
     expect(result.content).toBe("Saved memory: greeting");
 
     const content = await memory.get("greeting");
@@ -44,13 +49,20 @@ describe("memory_write tool", () => {
 
   it("appends to journal with explicit type", async () => {
     const tool = createMemoryWriteTool(memory);
-    const result = await tool.execute({ content: "Session notes", type: "journal" });
+    const result = await tool.execute({
+      content: "Session notes",
+      type: "journal",
+    });
     expect(result.content).toContain("Appended to journal:");
   });
 
   it("saves project memory when key and type: project provided", async () => {
     const tool = createMemoryWriteTool(memory);
-    const result = await tool.execute({ key: "prefs", content: "Dark mode", type: "project" });
+    const result = await tool.execute({
+      key: "prefs",
+      content: "Dark mode",
+      type: "project",
+    });
     expect(result.content).toBe("Saved memory: prefs");
   });
 });
@@ -88,7 +100,10 @@ describe("memory_search tool", () => {
     await memory.appendJournal("Had a meeting about project X");
     const tool = createMemorySearchTool(memory);
 
-    const projectResult = await tool.execute({ query: "meeting", source: "project" });
+    const projectResult = await tool.execute({
+      query: "meeting",
+      source: "project",
+    });
     expect(projectResult.content).toContain("project/");
     expect(projectResult.content).not.toContain("journal/");
   });
@@ -98,10 +113,16 @@ describe("memory_search tool", () => {
     await memory.saveLayer("operational", "mode", "Trusted mode for this session");
     const tool = createMemorySearchTool(memory);
 
-    const profileResult = await tool.execute({ query: "direct", source: "profile" });
+    const profileResult = await tool.execute({
+      query: "direct",
+      source: "profile",
+    });
     expect(profileResult.content).toContain("profile/tone.md");
 
-    const operationalResult = await tool.execute({ query: "trusted", source: "operational" });
+    const operationalResult = await tool.execute({
+      query: "trusted",
+      source: "operational",
+    });
     expect(operationalResult.content).toContain("operational/mode.md");
   });
 });

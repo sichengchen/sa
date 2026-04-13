@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach } from "bun:test";
-import { MemoryManager } from "@aria/engine/memory/index.js";
+import { MemoryManager } from "@aria/memory";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

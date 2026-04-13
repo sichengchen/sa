@@ -18,7 +18,7 @@ The build currently embeds the bundled skill asset tree from `packages/runtime/s
 
 - `scripts/copy-docs.ts` mirrors `docs/` into the bundled Aria skill docs tree
 - `scripts/embed-skills.ts` reads `packages/runtime/src/skills/bundled/*/`
-- embedded output is written to `packages/runtime/src/skills/embedded-skills.generated.ts`
+- embedded output is written to both `packages/runtime/src/skills/embedded-skills.generated.ts` and `packages/memory/src/skills/embedded-skills.generated.ts`
 
 ## Runtime Model
 

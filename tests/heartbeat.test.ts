@@ -3,9 +3,9 @@ import { mkdtemp, readdir, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { Scheduler, createHeartbeatTask, heartbeatState } from "@aria/engine/scheduler.js";
-import { DEFAULT_HEARTBEAT } from "@aria/engine/config/defaults.js";
-import { SessionManager } from "@aria/engine/sessions.js";
+import { Scheduler, createHeartbeatTask, heartbeatState } from "@aria/automation";
+import { DEFAULT_HEARTBEAT } from "@aria/server/config/defaults";
+import { SessionManager } from "@aria/runtime/sessions";
 
 let testDir: string;
 
@@ -40,7 +40,10 @@ describe("Heartbeat task", () => {
   });
 
   test("uses configurable interval", () => {
-    const task = createHeartbeatTask(testDir, null, { ...DEFAULT_HEARTBEAT, intervalMinutes: 15 });
+    const task = createHeartbeatTask(testDir, null, {
+      ...DEFAULT_HEARTBEAT,
+      intervalMinutes: 15,
+    });
     expect(task.schedule).toBe("*/15 * * * *");
   });
 
@@ -50,13 +53,19 @@ describe("Heartbeat task", () => {
   });
 
   test("formats long intervals with a cadence schedule", () => {
-    const task = createHeartbeatTask(testDir, null, { ...DEFAULT_HEARTBEAT, intervalMinutes: 120 });
+    const task = createHeartbeatTask(testDir, null, {
+      ...DEFAULT_HEARTBEAT,
+      intervalMinutes: 120,
+    });
     expect(task.schedule).toBe("@every 120m");
     expect(task.intervalMinutes).toBe(120);
   });
 
   test("skips agent when heartbeat is disabled", async () => {
-    const task = createHeartbeatTask(testDir, null, { ...DEFAULT_HEARTBEAT, enabled: false });
+    const task = createHeartbeatTask(testDir, null, {
+      ...DEFAULT_HEARTBEAT,
+      enabled: false,
+    });
     await task.handler();
 
     expect(heartbeatState.lastResult).toBeTruthy();
@@ -98,7 +107,10 @@ describe("Heartbeat task", () => {
     let notified = "";
     const fakeAgent = {
       async *chat() {
-        yield { type: "text_delta", delta: "Please check the background jobs." };
+        yield {
+          type: "text_delta",
+          delta: "Please check the background jobs.",
+        };
       },
     } as any;
 

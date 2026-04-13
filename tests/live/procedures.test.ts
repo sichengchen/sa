@@ -2,15 +2,21 @@ import { test, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createAppRouter } from "@aria/engine/procedures.js";
-import { createContext } from "@aria/engine/context.js";
-import { SessionManager } from "@aria/engine/sessions.js";
+import { Agent } from "@aria/agent-aria";
+import { Scheduler, createHeartbeatTask } from "@aria/automation";
+import { AuditLogger } from "@aria/audit";
+import { createContext } from "@aria/gateway/context";
+import { createAppRouter } from "@aria/gateway/procedures";
+import { SkillRegistry } from "@aria/memory/skills";
+import { SecurityModeManager } from "@aria/policy";
+import { ConfigManager } from "@aria/server/config";
+import { CheckpointManager } from "@aria/server/checkpoints";
+import type { EngineRuntime } from "@aria/server/runtime";
+import { OperationalStore } from "@aria/store/operational-store";
+import { MCPManager } from "@aria/runtime/mcp";
+import { SessionArchiveManager } from "@aria/runtime/session-archive";
+import { SessionManager } from "@aria/runtime/sessions";
 import { AuthManager } from "@aria/gateway/auth";
-import { ConfigManager } from "@aria/engine/config/index.js";
-import { Agent } from "@aria/engine/agent/index.js";
-import { SkillRegistry } from "@aria/engine/skills/index.js";
-import { Scheduler, createHeartbeatTask } from "@aria/engine/scheduler.js";
-import type { EngineRuntime } from "@aria/engine/runtime.js";
 import type { EngineEvent } from "@aria/protocol";
 import {
   describeLive,
@@ -19,12 +25,6 @@ import {
   resolveLiveProviderSelection,
 } from "../helpers/live-model.js";
 import { echoTool } from "../helpers/test-tools.js";
-import { SessionArchiveManager } from "@aria/engine/session-archive.js";
-import { AuditLogger } from "@aria/engine/audit.js";
-import { SecurityModeManager } from "@aria/engine/security-mode.js";
-import { CheckpointManager } from "@aria/engine/checkpoints.js";
-import { MCPManager } from "@aria/engine/mcp.js";
-import { OperationalStore } from "@aria/engine/operational-store.js";
 
 let testDir: string;
 let runtime: EngineRuntime;
