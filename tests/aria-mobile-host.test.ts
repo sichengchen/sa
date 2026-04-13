@@ -1,16 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import {
   createAriaMobileAppShell,
-  startAriaMobileNativeHostShell,
-} from "../apps/aria-mobile/src/app.js";
-import {
   createAriaMobileNativeHostController,
   createAriaMobileNativeHostBootstrap,
+  createAriaMobileNativeHostModel,
   resolveAriaMobileNativeHostTarget,
   startAriaMobileNativeHostBootstrap,
+  startAriaMobileNativeHostShell,
   switchAriaMobileNativeHostBootstrapServer,
-} from "../apps/aria-mobile/src/native-host.js";
-import { createAriaMobileNativeHostModel } from "../apps/aria-mobile/src/native-model.js";
+} from "aria-mobile";
 
 describe("aria-mobile native host scaffold", () => {
   test("derives a native host summary from the mobile app shell", () => {

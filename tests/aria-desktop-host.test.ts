@@ -2,14 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { resolveHostAccessClientTarget } from "@aria/access-client";
 import {
   createAriaDesktopElectronHostBootstrap,
-  runAriaDesktopElectronHost,
-} from "../apps/aria-desktop/src/electron-host.js";
-import {
   createAriaDesktopRendererController,
   resolveAriaDesktopRendererTarget,
+  runAriaDesktopElectronHost,
   startAriaDesktopRendererModel,
   switchAriaDesktopRendererModel,
-} from "../apps/aria-desktop/src/renderer.js";
+} from "aria-desktop";
 
 describe("aria-desktop host scaffold", () => {
   test("resolves renderer targets with desktop defaults", () => {

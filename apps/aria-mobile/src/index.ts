@@ -40,12 +40,15 @@ import {
   type AriaMobileApplicationRootProps,
 } from "./root.js";
 import {
+  createAriaMobileNativeHostController,
   createAriaMobileNativeHostBootstrap,
+  type AriaMobileNativeHostController,
   resolveAriaMobileNativeHostTarget,
   startAriaMobileNativeHostBootstrap,
   switchAriaMobileNativeHostBootstrapServer,
   type AriaMobileNativeHostBootstrap,
 } from "./native-host.js";
+import { createAriaMobileNativeHostModel, type AriaMobileNativeHostModel } from "./native-model.js";
 import {
   AriaMobileApplicationShell,
   createAriaMobileApplicationShell,
@@ -77,7 +80,9 @@ export {
   sendAriaMobileAppShellMessage,
   stopAriaMobileAppShell,
   AriaMobileApplicationRoot,
+  createAriaMobileNativeHostController,
   createAriaMobileNativeHostBootstrap,
+  createAriaMobileNativeHostModel,
   createAriaMobileApplicationRoot,
   AriaMobileApplicationShell,
   resolveAriaMobileNativeHostTarget,
@@ -88,7 +93,9 @@ export {
   type AriaMobileApplicationShellBootstrap,
   type AriaMobileApplicationShellProps,
   type AriaMobileApplicationRootProps,
+  type AriaMobileNativeHostController,
   type AriaMobileNativeHostBootstrap,
+  type AriaMobileNativeHostModel,
   type AriaMobileNavigation,
   type AriaMobileNavigationSpace,
   type AriaMobileNavigationSpaceScreen,
