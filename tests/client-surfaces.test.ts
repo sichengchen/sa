@@ -405,4 +405,117 @@ describe("client surfaces", () => {
       toolName: "ask_user",
     });
   });
+
+  test("lists and opens recent aria chat sessions", async () => {
+    const controller = createAriaChatController(
+      {
+        health: {
+          ping: {
+            query: async () => ({ model: "sonnet", agentName: "Esperta Aria" }),
+          },
+        },
+        session: {
+          create: {
+            mutate: async () => ({ session: { id: "unused" } }),
+          },
+          list: {
+            query: async () => [
+              {
+                id: "tui:session-live",
+                connectorType: "tui",
+                connectorId: "tui",
+                lastActiveAt: 100,
+              },
+            ],
+          },
+          listArchived: {
+            query: async () => [
+              {
+                sessionId: "tui:session-archived",
+                connectorType: "tui",
+                connectorId: "tui",
+                lastActiveAt: 99,
+                preview: "Preview",
+                summary: "Summary",
+              },
+            ],
+          },
+          search: {
+            query: async () => [
+              {
+                sessionId: "tui:session-search",
+                connectorType: "tui",
+                connectorId: "tui",
+                lastActiveAt: 98,
+                preview: "Search preview",
+                summary: "Search summary",
+                score: 0.5,
+              },
+            ],
+          },
+        },
+        chat: {
+          history: {
+            query: async () => ({
+              archived: false,
+              messages: [
+                { role: "user", content: "Earlier question" },
+                { role: "assistant", content: "Earlier answer" },
+              ],
+            }),
+          },
+          stream: {
+            subscribe() {
+              return;
+            },
+          },
+        },
+      },
+      { connectorType: "tui", prefix: "tui" },
+    );
+
+    expect(await controller.listSessions()).toEqual([
+      {
+        sessionId: "tui:session-live",
+        connectorType: "tui",
+        connectorId: "tui",
+        archived: false,
+        lastActiveAt: 100,
+      },
+    ]);
+
+    expect(await controller.listArchivedSessions()).toEqual([
+      {
+        sessionId: "tui:session-archived",
+        connectorType: "tui",
+        connectorId: "tui",
+        archived: true,
+        lastActiveAt: 99,
+        preview: "Preview",
+        summary: "Summary",
+        score: undefined,
+      },
+    ]);
+
+    expect(await controller.searchSessions("question")).toEqual([
+      {
+        sessionId: "tui:session-search",
+        connectorType: "tui",
+        connectorId: "tui",
+        archived: true,
+        lastActiveAt: 98,
+        preview: "Search preview",
+        summary: "Search summary",
+        score: 0.5,
+      },
+    ]);
+
+    const opened = await controller.openSession("tui:session-archived");
+    expect(opened.sessionId).toBe("tui:session-archived");
+    expect(opened.sessionStatus).toBe("resumed");
+    expect(opened.messages).toEqual([
+      { role: "user", content: "Earlier question", toolName: undefined },
+      { role: "assistant", content: "Earlier answer", toolName: undefined },
+    ]);
+  });
 });

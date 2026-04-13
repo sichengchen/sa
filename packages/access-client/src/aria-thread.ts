@@ -20,6 +20,17 @@ export interface AriaChatPendingQuestion {
   options?: string[];
 }
 
+export interface AriaChatSessionSummary {
+  sessionId: string;
+  connectorType: string;
+  connectorId: string;
+  archived: boolean;
+  lastActiveAt?: number;
+  preview?: string;
+  summary?: string;
+  score?: number;
+}
+
 export interface AriaChatState {
   connected: boolean;
   sessionId: string | null;
@@ -49,6 +60,41 @@ export interface AriaChatClient {
         connectorType: string;
         prefix: string;
       }): Promise<{ session: { id: string } }>;
+    };
+    list?: {
+      query(): Promise<
+        Array<{
+          id: string;
+          connectorType: string;
+          connectorId: string;
+          lastActiveAt?: number;
+        }>
+      >;
+    };
+    listArchived?: {
+      query(input?: { limit?: number }): Promise<
+        Array<{
+          sessionId: string;
+          connectorType: string;
+          connectorId: string;
+          lastActiveAt: number;
+          preview: string;
+          summary: string;
+        }>
+      >;
+    };
+    search?: {
+      query(input: { query: string; limit?: number }): Promise<
+        Array<{
+          sessionId: string;
+          connectorType: string;
+          connectorId: string;
+          lastActiveAt: number;
+          preview: string;
+          summary: string;
+          score: number;
+        }>
+      >;
     };
   };
   chat: {
@@ -91,6 +137,10 @@ export interface AriaChatController {
   getState(): AriaChatState;
   connect(): Promise<AriaChatState>;
   sendMessage(message: string): Promise<AriaChatState>;
+  listSessions(): Promise<AriaChatSessionSummary[]>;
+  listArchivedSessions(limit?: number): Promise<AriaChatSessionSummary[]>;
+  searchSessions(query: string, limit?: number): Promise<AriaChatSessionSummary[]>;
+  openSession(sessionId: string): Promise<AriaChatState>;
   approveToolCall(toolCallId: string, approved: boolean): Promise<AriaChatState>;
   acceptToolCallForSession(toolCallId: string): Promise<AriaChatState>;
   answerQuestion(questionId: string, answer: string): Promise<AriaChatState>;
@@ -158,6 +208,42 @@ function normalizeHistoryMessages(messages: unknown[]): AriaChatMessage[] {
 
     return [{ role, content, toolName: record.toolName }];
   });
+}
+
+function normalizeLiveSession(entry: {
+  id: string;
+  connectorType: string;
+  connectorId: string;
+  lastActiveAt?: number;
+}): AriaChatSessionSummary {
+  return {
+    sessionId: entry.id,
+    connectorType: entry.connectorType,
+    connectorId: entry.connectorId,
+    archived: false,
+    lastActiveAt: entry.lastActiveAt,
+  };
+}
+
+function normalizeArchivedSession(entry: {
+  sessionId: string;
+  connectorType: string;
+  connectorId: string;
+  lastActiveAt: number;
+  preview: string;
+  summary: string;
+  score?: number;
+}): AriaChatSessionSummary {
+  return {
+    sessionId: entry.sessionId,
+    connectorType: entry.connectorType,
+    connectorId: entry.connectorId,
+    archived: true,
+    lastActiveAt: entry.lastActiveAt,
+    preview: entry.preview,
+    summary: entry.summary,
+    score: entry.score,
+  };
 }
 
 export function createAriaChatController(
@@ -330,6 +416,35 @@ export function createAriaChatController(
             },
           },
         );
+      });
+    },
+    async listSessions() {
+      const sessions = (await client.session.list?.query?.()) ?? [];
+      return sessions.map(normalizeLiveSession);
+    },
+    async listArchivedSessions(limit = 20) {
+      const sessions = (await client.session.listArchived?.query?.({ limit })) ?? [];
+      return sessions.map(normalizeArchivedSession);
+    },
+    async searchSessions(query: string, limit = 10) {
+      const sessions = (await client.session.search?.query?.({ query, limit })) ?? [];
+      return sessions.map(normalizeArchivedSession);
+    },
+    async openSession(sessionId: string) {
+      const history = client.chat.history
+        ? await client.chat.history.query({ sessionId })
+        : { messages: [], archived: false };
+
+      return setState({
+        connected: true,
+        sessionId,
+        sessionStatus: "resumed",
+        messages: normalizeHistoryMessages(history.messages),
+        streamingText: "",
+        isStreaming: false,
+        pendingApproval: null,
+        pendingQuestion: null,
+        lastError: null,
       });
     },
     async approveToolCall(toolCallId: string, approved: boolean) {
