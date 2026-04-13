@@ -23,6 +23,9 @@ export interface AriaMobileApplicationShellProps {
   onOpenAriaSession?(sessionId: string): void;
   onSendAriaMessage?(message: string): void;
   onStopAriaSession?(): void;
+  onApproveToolCall?(toolCallId: string, approved: boolean): void;
+  onAcceptToolCallForSession?(toolCallId: string): void;
+  onAnswerQuestion?(questionId: string, answer: string): void;
 }
 
 function renderServerSwitcher(
@@ -139,6 +142,60 @@ export function AriaMobileApplicationShell(props: AriaMobileApplicationShellProp
             Pending approval: {props.shell.ariaThread.state.pendingApproval?.toolName ?? "none"} |
             Pending question: {props.shell.ariaThread.state.pendingQuestion?.question ?? "none"}
           </p>
+          {props.shell.ariaThread.state.pendingApproval ? (
+            <div>
+              <button
+                type="button"
+                onClick={() =>
+                  props.onApproveToolCall?.(
+                    props.shell.ariaThread.state.pendingApproval!.toolCallId,
+                    true,
+                  )
+                }
+              >
+                Approve
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  props.onAcceptToolCallForSession?.(
+                    props.shell.ariaThread.state.pendingApproval!.toolCallId,
+                  )
+                }
+              >
+                Allow for session
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  props.onApproveToolCall?.(
+                    props.shell.ariaThread.state.pendingApproval!.toolCallId,
+                    false,
+                  )
+                }
+              >
+                Deny
+              </button>
+            </div>
+          ) : null}
+          {props.shell.ariaThread.state.pendingQuestion ? (
+            <div>
+              {(props.shell.ariaThread.state.pendingQuestion.options ?? []).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() =>
+                    props.onAnswerQuestion?.(
+                      props.shell.ariaThread.state.pendingQuestion!.questionId,
+                      option,
+                    )
+                  }
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <p>
             Approval mode: {props.shell.ariaThread.state.approvalMode} | Security mode:{" "}
             {props.shell.ariaThread.state.securityMode}

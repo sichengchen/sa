@@ -715,6 +715,46 @@ describe("Aria mobile app surface", () => {
     expect(sendButton!.props.type).toBe("submit");
     expect(stopButton).toBeDefined();
     expect(typeof stopButton!.props.onClick).toBe("function");
+
+    const shellWithInteractions = AriaMobileApplicationShell({
+      shell: {
+        ...shell,
+        ariaThread: {
+          ...shell.ariaThread,
+          state: {
+            ...shell.ariaThread.state,
+            pendingApproval: {
+              toolCallId: "tool-1",
+              toolName: "exec",
+              args: { command: "rm -rf tmp" },
+            },
+            pendingQuestion: {
+              questionId: "question-1",
+              question: "Ship it?",
+              options: ["Yes", "No"],
+            },
+          },
+        },
+      },
+      onApproveToolCall() {},
+      onAcceptToolCallForSession() {},
+      onAnswerQuestion() {},
+    });
+
+    const approveButton = findElement(
+      shellWithInteractions,
+      (props) => props.children === "Approve",
+    );
+    const allowButton = findElement(
+      shellWithInteractions,
+      (props) => props.children === "Allow for session",
+    );
+    const denyButton = findElement(shellWithInteractions, (props) => props.children === "Deny");
+    const answerButton = findElement(shellWithInteractions, (props) => props.children === "Yes");
+    expect(typeof approveButton?.props.onClick).toBe("function");
+    expect(typeof allowButton?.props.onClick).toBe("function");
+    expect(typeof denyButton?.props.onClick).toBe("function");
+    expect(typeof answerButton?.props.onClick).toBe("function");
   });
 
   test("can switch the mobile app shell to another server", async () => {

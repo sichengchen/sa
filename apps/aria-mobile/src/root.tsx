@@ -10,6 +10,9 @@ export interface AriaMobileApplicationRootProps {
   onOpenAriaSession?(sessionId: string): void;
   onSendAriaMessage?(message: string): void;
   onStopAriaSession?(): void;
+  onApproveToolCall?(toolCallId: string, approved: boolean): void;
+  onAcceptToolCallForSession?(toolCallId: string): void;
+  onAnswerQuestion?(questionId: string, answer: string): void;
 }
 
 export function AriaMobileApplicationRoot(props: AriaMobileApplicationRootProps): ReactElement {
@@ -21,6 +24,9 @@ export function AriaMobileApplicationRoot(props: AriaMobileApplicationRootProps)
       onOpenAriaSession={props.onOpenAriaSession}
       onSendAriaMessage={props.onSendAriaMessage}
       onStopAriaSession={props.onStopAriaSession}
+      onApproveToolCall={props.onApproveToolCall}
+      onAcceptToolCallForSession={props.onAcceptToolCallForSession}
+      onAnswerQuestion={props.onAnswerQuestion}
     />
   );
 }
