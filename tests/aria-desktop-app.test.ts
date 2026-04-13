@@ -22,7 +22,7 @@ import {
   stopAriaDesktopAppShell,
   switchAriaDesktopAppShellServer,
   type AriaDesktopAppShellModel,
-} from "../apps/aria-desktop/src/index.js";
+} from "aria-desktop";
 
 function collectTextContent(node: ReactNode): string[] {
   if (node === null || node === undefined || typeof node === "boolean") {

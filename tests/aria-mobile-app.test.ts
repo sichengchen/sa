@@ -24,7 +24,7 @@ import {
   sendAriaMobileAppShellMessage,
   stopAriaMobileAppShell,
   switchAriaMobileAppShellServer,
-} from "../apps/aria-mobile/src/index.js";
+} from "aria-mobile";
 
 describe("Aria mobile app surface", () => {
   test("composes a real app-level shell over the mobile client seam", () => {

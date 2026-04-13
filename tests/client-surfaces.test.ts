@@ -17,14 +17,8 @@ import {
   describeUiEngineEvent,
 } from "@aria/ui";
 
-import {
-  ariaDesktopApplication,
-  createAriaDesktopApplicationBootstrap,
-} from "../apps/aria-desktop/src/index.js";
-import {
-  ariaMobileApplication,
-  createAriaMobileApplicationBootstrap,
-} from "../apps/aria-mobile/src/index.js";
+import { ariaDesktopApplication, createAriaDesktopApplicationBootstrap } from "aria-desktop";
+import { ariaMobileApplication, createAriaMobileApplicationBootstrap } from "aria-mobile";
 
 describe("client surfaces", () => {
   test("normalizes multi-server access and project thread summaries", () => {

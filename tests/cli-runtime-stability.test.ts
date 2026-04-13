@@ -3,8 +3,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ariaDesktopApp, ariaDesktopHost } from "../apps/aria-desktop/src/index.js";
-import { ariaMobileApp, ariaMobileHost } from "../apps/aria-mobile/src/index.js";
+import { ariaDesktopApp, ariaDesktopHost } from "aria-desktop";
+import { ariaMobileApp, ariaMobileHost } from "aria-mobile";
 
 const REPO_DIR = fileURLToPath(new URL("..", import.meta.url));
 
