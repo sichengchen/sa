@@ -23,10 +23,6 @@
     "./session-coordinator": "./src/session-coordinator.ts",
     "./daemon": "./src/daemon.ts",
     "./discovery": "./src/discovery.ts",
-    "./engine": "./src/engine.ts",
     "./sessions": "./src/sessions.ts"
-  },
-  "scripts": {
-    "dev": "bun ./src/engine.ts"
   }
 }

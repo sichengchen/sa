@@ -94,10 +94,6 @@ describe("phase-1 extraction package verification", () => {
       fs.readFile(new URL("../packages/runtime/src/backend-registry.ts", import.meta.url), "utf-8"),
     );
     expect(backendRegistrySource).toContain("@aria/jobs/backend-registry");
-    const runtimeEngineSource = await import("node:fs/promises").then((fs) =>
-      fs.readFile(new URL("../packages/runtime/src/engine.ts", import.meta.url), "utf-8"),
-    );
-    expect(runtimeEngineSource).toContain("@aria/server/engine");
     const runtimeMcpSource = await import("node:fs/promises").then((fs) =>
       fs.readFile(new URL("../packages/runtime/src/mcp.ts", import.meta.url), "utf-8"),
     );

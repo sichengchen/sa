@@ -22,7 +22,6 @@
     "./context-files": "./src/context-files.ts",
     "./context-references": "./src/context-references.ts",
     "./dispatch-runner": "./src/dispatch-runner.ts",
-    "./engine": "./src/engine.ts",
     "./memory": "./src/memory/index.ts",
     "./mcp": "./src/mcp.ts",
     "./operational-store": "./src/operational-store.ts",
