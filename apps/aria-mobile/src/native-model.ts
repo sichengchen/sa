@@ -19,6 +19,9 @@ export interface AriaMobileNativeHostModel {
   recentSessions: Array<{
     sessionId: string;
     kind: "live" | "archived";
+    preview?: string;
+    summary?: string;
+    score?: number;
   }>;
 }
 
@@ -44,6 +47,9 @@ export function createAriaMobileNativeHostModel(
     recentSessions: shell.ariaRecentSessions.map((session) => ({
       sessionId: session.sessionId,
       kind: session.archived ? "archived" : "live",
+      preview: session.preview,
+      summary: session.summary,
+      score: session.score,
     })),
   };
 }

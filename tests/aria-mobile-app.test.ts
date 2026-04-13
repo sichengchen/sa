@@ -632,6 +632,8 @@ describe("Aria mobile app surface", () => {
     expect(serialized).toContain("Recent Aria sessions:");
     expect(serialized).toContain("mobile:live-1");
     expect(serialized).toContain("mobile:archived-1");
+    expect(serialized).toContain("Archived");
+    expect(serialized).toContain("Archived summary");
   });
 
   test("wires mobile shell callbacks for switching servers and opening sessions", () => {

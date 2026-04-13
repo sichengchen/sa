@@ -398,6 +398,8 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
                   {model.ariaRecentSessions.map((session) => (
                     <li key={session.sessionId}>
                       {session.sessionId} - {session.archived ? "archived" : "live"}
+                      {session.preview ? ` - ${session.preview}` : ""}
+                      {session.summary ? ` - ${session.summary}` : ""}
                       {props.onOpenAriaSession ? (
                         <button
                           type="button"

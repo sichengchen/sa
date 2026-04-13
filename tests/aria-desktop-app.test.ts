@@ -633,7 +633,7 @@ describe("aria-desktop app assembly", () => {
       .replace(/\s+/g, " ");
     expect(text).toContain("Recent Aria sessions: 2");
     expect(text).toContain("desktop:live-1 - live");
-    expect(text).toContain("desktop:archived-1 - archived");
+    expect(text).toContain("desktop:archived-1 - archived - Archived - Archived summary");
   });
 
   test("wires desktop shell callbacks for switching servers and opening sessions", () => {

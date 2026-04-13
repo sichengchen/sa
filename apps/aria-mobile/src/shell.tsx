@@ -223,6 +223,8 @@ export function AriaMobileApplicationShell(props: AriaMobileApplicationShellProp
               {props.shell.ariaRecentSessions.map((session) => (
                 <li key={session.sessionId} data-session-id={session.sessionId}>
                   {session.sessionId} - {session.archived ? "archived" : "live"}
+                  {session.preview ? ` - ${session.preview}` : ""}
+                  {session.summary ? ` - ${session.summary}` : ""}
                   {props.onOpenAriaSession ? (
                     <button
                       type="button"
