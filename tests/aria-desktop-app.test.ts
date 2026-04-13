@@ -187,6 +187,7 @@ describe("aria-desktop app assembly", () => {
     expect(model.ariaThread.state).toMatchObject({
       connected: false,
       sessionId: null,
+      sessionStatus: "disconnected",
       modelName: "unknown",
       messages: [],
       isStreaming: false,
@@ -276,6 +277,7 @@ describe("aria-desktop app assembly", () => {
     expect(text).toContain("Context Panels");
     expect(text).toContain("Home Server / main");
     expect(text.replace(/\s+/g, " ")).toContain("Aria thread: disconnected");
+    expect(text.replace(/\s+/g, " ")).toContain("Status: disconnected");
     expect(text.replace(/\s+/g, " ")).toContain("Aria chat messages: 0");
     expect(text.replace(/\s+/g, " ")).toContain("Placement: bottom-docked");
   });
@@ -316,6 +318,7 @@ describe("aria-desktop app assembly", () => {
     const connectedState = {
       connected: true,
       sessionId: "desktop:session-1",
+      sessionStatus: "created" as const,
       modelName: "sonnet",
       agentName: "Esperta Aria",
       messages: [{ role: "assistant" as const, content: "hello" }],
@@ -336,6 +339,7 @@ describe("aria-desktop app assembly", () => {
     expect(model.ariaThread.state).toMatchObject({
       connected: true,
       sessionId: "desktop:session-1",
+      sessionStatus: "created",
       modelName: "sonnet",
     });
 
@@ -351,6 +355,7 @@ describe("aria-desktop app assembly", () => {
     const sentState = {
       connected: true,
       sessionId: "desktop:session-1",
+      sessionStatus: "created" as const,
       modelName: "sonnet",
       agentName: "Esperta Aria",
       messages: [

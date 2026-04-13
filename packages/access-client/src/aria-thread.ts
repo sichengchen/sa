@@ -11,6 +11,7 @@ export interface AriaChatMessage {
 export interface AriaChatState {
   connected: boolean;
   sessionId: string | null;
+  sessionStatus: "disconnected" | "created" | "resumed";
   modelName: string;
   agentName: string;
   messages: AriaChatMessage[];
@@ -26,6 +27,9 @@ export interface AriaChatClient {
     };
   };
   session: {
+    getLatest?: {
+      query(input: { prefix: string }): Promise<{ id: string } | null>;
+    };
     create: {
       mutate(input: {
         connectorType: string;
@@ -63,6 +67,7 @@ function initialState(): AriaChatState {
   return {
     connected: false,
     sessionId: null,
+    sessionStatus: "disconnected",
     modelName: "unknown",
     agentName: "Esperta Aria",
     messages: [],
@@ -104,16 +109,24 @@ export function createAriaChatController(
     async connect() {
       try {
         const ping = await client.health.ping.query();
-        const created = await client.session.create.mutate({
-          connectorType: options.connectorType,
-          prefix: options.prefix,
-        });
+        const latest = client.session.getLatest
+          ? await client.session.getLatest.query({ prefix: options.prefix })
+          : null;
+        const sessionId = latest?.id
+          ? latest.id
+          : (
+              await client.session.create.mutate({
+                connectorType: options.connectorType,
+                prefix: options.prefix,
+              })
+            ).session.id;
 
         return setState({
           connected: true,
           modelName: ping.model,
           agentName: ping.agentName,
-          sessionId: created.session.id,
+          sessionId,
+          sessionStatus: latest?.id ? "resumed" : "created",
           lastError: null,
         });
       } catch (error) {
@@ -123,6 +136,7 @@ export function createAriaChatController(
         });
         return setState({
           connected: false,
+          sessionStatus: "disconnected",
           lastError: errorMessage(error),
         });
       }

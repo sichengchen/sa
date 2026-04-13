@@ -138,6 +138,7 @@ describe("Aria mobile app surface", () => {
     expect(appShell.ariaThread.state).toMatchObject({
       connected: false,
       sessionId: null,
+      sessionStatus: "disconnected",
       modelName: "unknown",
       messages: [],
       isStreaming: false,
@@ -305,6 +306,7 @@ describe("Aria mobile app surface", () => {
     const connectedState = {
       connected: true,
       sessionId: "mobile:session-1",
+      sessionStatus: "created" as const,
       modelName: "sonnet",
       agentName: "Esperta Aria",
       messages: [{ role: "assistant" as const, content: "hello" }],
@@ -325,6 +327,7 @@ describe("Aria mobile app surface", () => {
     expect(shell.ariaThread.state).toMatchObject({
       connected: true,
       sessionId: "mobile:session-1",
+      sessionStatus: "created",
       modelName: "sonnet",
     });
 
@@ -341,6 +344,7 @@ describe("Aria mobile app surface", () => {
     const sentState = {
       connected: true,
       sessionId: "mobile:session-1",
+      sessionStatus: "created" as const,
       modelName: "sonnet",
       agentName: "Esperta Aria",
       messages: [

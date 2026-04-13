@@ -192,6 +192,9 @@ describe("client surfaces", () => {
           },
         },
         session: {
+          getLatest: {
+            query: async () => null,
+          },
           create: {
             mutate: async () => ({ session: { id: "tui:session-1" } }),
           },
@@ -215,6 +218,7 @@ describe("client surfaces", () => {
 
     expect(finalState.connected).toBe(true);
     expect(finalState.sessionId).toBe("tui:session-1");
+    expect(finalState.sessionStatus).toBe("created");
     expect(finalState.modelName).toBe("sonnet");
     expect(finalState.messages).toEqual([
       { role: "user", content: "hi" },
@@ -222,5 +226,39 @@ describe("client surfaces", () => {
     ]);
     expect(finalState.streamingText).toBe("");
     expect(finalState.isStreaming).toBe(false);
+  });
+
+  test("resumes an existing aria chat session before creating a new one", async () => {
+    const controller = createAriaChatController(
+      {
+        health: {
+          ping: {
+            query: async () => ({ model: "sonnet", agentName: "Esperta Aria" }),
+          },
+        },
+        session: {
+          getLatest: {
+            query: async () => ({ id: "tui:session-existing" }),
+          },
+          create: {
+            mutate: async () => {
+              throw new Error("create should not be called when latest session exists");
+            },
+          },
+        },
+        chat: {
+          stream: {
+            subscribe() {
+              return;
+            },
+          },
+        },
+      },
+      { connectorType: "tui", prefix: "tui" },
+    );
+
+    const connected = await controller.connect();
+    expect(connected.sessionId).toBe("tui:session-existing");
+    expect(connected.sessionStatus).toBe("resumed");
   });
 });

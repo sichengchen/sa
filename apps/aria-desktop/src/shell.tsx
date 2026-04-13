@@ -139,6 +139,8 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
           {model.ariaThread.state.connected ? model.ariaThread.state.sessionId : "disconnected"}
           {" | "}
           Model: {model.ariaThread.state.modelName}
+          {" | "}
+          Status: {model.ariaThread.state.sessionStatus}
         </small>
         <label
           data-slot="server-switcher"

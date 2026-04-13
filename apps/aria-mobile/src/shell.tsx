@@ -113,6 +113,8 @@ export function AriaMobileApplicationShell(props: AriaMobileApplicationShellProp
               : "disconnected"}
             {" | "}
             Model: {props.shell.ariaThread.state.modelName}
+            {" | "}
+            Status: {props.shell.ariaThread.state.sessionStatus}
           </p>
           <p>
             Transcript items: {props.shell.ariaThread.state.messages.length} | Streaming:{" "}
