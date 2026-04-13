@@ -1,4 +1,9 @@
 import { createEngineClient, type ClientOptions } from "./client.js";
+import {
+  selectRelayRoute,
+  type RelayTransportMode,
+  type RelayTransportPreference,
+} from "@aria/relay";
 
 export type {
   EngineEvent,
@@ -13,10 +18,20 @@ export interface AccessClientTarget {
   serverId: string;
   baseUrl: string;
   token?: string;
+  directBaseUrl?: string;
+  relayBaseUrl?: string;
+  directReachable?: boolean;
+  preferredTransportMode?: RelayTransportPreference;
 }
 
 export interface AccessClientConfig extends ClientOptions {
   serverId: string;
+}
+
+export interface AccessClientRoute extends AccessClientConfig {
+  baseUrl: string;
+  transportMode: RelayTransportMode;
+  usesRelay: boolean;
 }
 
 export interface AccessClientHandle {
@@ -43,8 +58,17 @@ function stripTrailingSlash(value: string): string {
   return value.endsWith("/") ? value.slice(0, -1) : value;
 }
 
-export function buildAccessClientConfig(target: AccessClientTarget): AccessClientConfig {
-  const httpUrl = new URL(target.baseUrl);
+export function resolveAccessClientRoute(
+  target: AccessClientTarget,
+): AccessClientRoute {
+  const route = selectRelayRoute({
+    serverId: target.serverId,
+    directBaseUrl: target.directBaseUrl ?? target.baseUrl,
+    relayBaseUrl: target.relayBaseUrl,
+    directReachable: target.directReachable,
+    preferredTransportMode: target.preferredTransportMode,
+  });
+  const httpUrl = new URL(route.baseUrl);
   httpUrl.search = "";
   httpUrl.hash = "";
   const wsUrl = new URL(httpUrl.toString());
@@ -52,9 +76,24 @@ export function buildAccessClientConfig(target: AccessClientTarget): AccessClien
 
   return {
     serverId: target.serverId,
+    baseUrl: stripTrailingSlash(httpUrl.toString()),
     httpUrl: stripTrailingSlash(httpUrl.toString()),
     wsUrl: stripTrailingSlash(wsUrl.toString()),
     token: target.token,
+    transportMode: route.transportMode,
+    usesRelay: route.usesRelay,
+  };
+}
+
+export function buildAccessClientConfig(
+  target: AccessClientTarget,
+): AccessClientConfig {
+  const route = resolveAccessClientRoute(target);
+  return {
+    serverId: route.serverId,
+    httpUrl: route.httpUrl,
+    wsUrl: route.wsUrl,
+    token: route.token,
   };
 }
 
@@ -62,7 +101,10 @@ function resolveSelectedServerId(
   targets: ReadonlyArray<AccessClientTarget>,
   selectedServerId?: string | null,
 ): string | null {
-  if (selectedServerId && targets.some((target) => target.serverId === selectedServerId)) {
+  if (
+    selectedServerId &&
+    targets.some((target) => target.serverId === selectedServerId)
+  ) {
     return selectedServerId;
   }
 
@@ -91,17 +133,28 @@ export function buildAccessClientTargetSummaries(
   targets: ReadonlyArray<AccessClientTarget>,
   selectedServerId?: string | null,
 ): AccessClientTargetSummary[] {
-  const resolvedSelectedServerId = resolveSelectedServerId(targets, selectedServerId);
+  const resolvedSelectedServerId = resolveSelectedServerId(
+    targets,
+    selectedServerId,
+  );
 
-  return targets.map((target) => buildAccessClientTargetSummary(target, resolvedSelectedServerId));
+  return targets.map((target) =>
+    buildAccessClientTargetSummary(target, resolvedSelectedServerId),
+  );
 }
 
 export function buildAccessClientTargetRoster(
   targets: ReadonlyArray<AccessClientTarget>,
   selectedServerId?: string | null,
 ): AccessClientTargetRoster {
-  const resolvedSelectedServerId = resolveSelectedServerId(targets, selectedServerId);
-  const summaries = buildAccessClientTargetSummaries(targets, resolvedSelectedServerId);
+  const resolvedSelectedServerId = resolveSelectedServerId(
+    targets,
+    selectedServerId,
+  );
+  const summaries = buildAccessClientTargetSummaries(
+    targets,
+    resolvedSelectedServerId,
+  );
 
   return {
     selectedServerId: resolvedSelectedServerId,
@@ -110,7 +163,9 @@ export function buildAccessClientTargetRoster(
   };
 }
 
-export function createAccessClient(target: AccessClientTarget): AccessClientHandle {
+export function createAccessClient(
+  target: AccessClientTarget,
+): AccessClientHandle {
   const { serverId, ...clientOptions } = buildAccessClientConfig(target);
   return {
     serverId,
