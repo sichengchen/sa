@@ -170,10 +170,9 @@ describe("aria-desktop host scaffold", () => {
     });
 
     expect(model.ariaThread.state.connected).toBe(true);
-    expect(model.ariaRecentSessions.map((session) => session.sessionId)).toEqual([
-      "desktop:live-1",
-      "desktop:archived-1",
-    ]);
+    expect(
+      model.ariaRecentSessions.map((session) => session.sessionId),
+    ).toEqual(["desktop:live-1", "desktop:archived-1"]);
   });
 
   test("switches a desktop renderer model to another server", async () => {
@@ -265,7 +264,9 @@ describe("aria-desktop host scaffold", () => {
     expect(switched.activeServerId).toBe("relay");
     expect(switched.activeServerLabel).toBe("Relay Mirror");
     expect(switched.ariaThread.state.sessionId).toBe("relay:session-1");
-    expect(switched.ariaRecentSessions.map((session) => session.sessionId)).toEqual(["relay:live"]);
+    expect(
+      switched.ariaRecentSessions.map((session) => session.sessionId),
+    ).toEqual(["relay:live"]);
   });
 
   test("exposes a pure desktop renderer controller", async () => {
@@ -295,13 +296,50 @@ describe("aria-desktop host scaffold", () => {
     };
     const controller = createAriaDesktopRendererController({
       target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      projects: [
+        {
+          project: { name: "Aria" },
+          threads: [
+            {
+              threadId: "thread-1",
+              title: "Active thread",
+              status: "running",
+              threadType: "local_project",
+              environmentId: "desktop-main",
+              agentId: "codex",
+            },
+            {
+              threadId: "thread-2",
+              title: "Review thread",
+              status: "idle",
+              threadType: "local_project",
+              environmentId: "desktop-review",
+              agentId: "codex",
+            },
+          ],
+        },
+      ],
+      initialThread: {
+        project: { name: "Aria" },
+        thread: {
+          threadId: "thread-1",
+          title: "Active thread",
+          status: "running",
+          threadType: "local_project",
+          environmentId: "desktop-main",
+          agentId: "codex",
+        },
+      },
       createAriaThreadController: (() => ({
         getState: () => state,
         connect: async () => state,
         sendMessage: async () => {
           state = {
             ...state,
-            messages: [...state.messages, { role: "assistant" as const, content: "sent" }],
+            messages: [
+              ...state.messages,
+              { role: "assistant" as const, content: "sent" },
+            ],
           };
           return state;
         },
@@ -351,7 +389,18 @@ describe("aria-desktop host scaffold", () => {
 
     const started = await controller.start();
     expect(started.ariaThread.state.sessionId).toBe("desktop:session-1");
-    expect(controller.getModel().ariaThread.state.messages.at(-1)?.content).toBe("hello");
+    expect(
+      controller.getModel().ariaThread.state.messages.at(-1)?.content,
+    ).toBe("hello");
+
+    const selected = await controller.selectThread("thread-2");
+    expect(selected.shell.activeThreadScreen?.header.title).toBe(
+      "Review thread",
+    );
+    expect(selected.shell.activeThreadScreen?.header.projectLabel).toBe("Aria");
+    expect(controller.getModel().ariaThread.state.sessionId).toBe(
+      "desktop:session-1",
+    );
 
     const sent = await controller.sendMessage("hi");
     expect(sent.ariaThread.state.messages.at(-1)?.content).toBe("sent");
@@ -360,13 +409,17 @@ describe("aria-desktop host scaffold", () => {
     expect(searched.ariaRecentSessions).toEqual([]);
 
     const stopped = await controller.stop();
-    expect(stopped.ariaThread.state.messages.at(-1)?.content).toBe("Stopped by user");
+    expect(stopped.ariaThread.state.messages.at(-1)?.content).toBe(
+      "Stopped by user",
+    );
 
     const approved = await controller.approveToolCall("tool-1", true);
     expect(approved.ariaThread.state.pendingApproval).toBeNull();
 
     const answered = await controller.answerQuestion("question-1", "Yes");
     expect(answered.ariaThread.state.pendingQuestion).toBeNull();
-    expect(answered.ariaThread.state.messages.at(-1)?.content).toBe("Answer: Yes");
+    expect(answered.ariaThread.state.messages.at(-1)?.content).toBe(
+      "Answer: Yes",
+    );
   });
 });

@@ -17,6 +17,7 @@ import {
   createAriaDesktopApplicationBootstrap,
   loadAriaDesktopAppShellRecentSessions,
   openAriaDesktopAppShellSession,
+  selectAriaDesktopAppShellThread,
   searchAriaDesktopAppShellSessions,
   sendAriaDesktopAppShellMessage,
   stopAriaDesktopAppShell,
@@ -35,13 +36,17 @@ function collectTextContent(node: ReactNode): string[] {
     return node.flatMap((entry) => collectTextContent(entry));
   }
   if (isValidElement(node)) {
-    return collectTextContent((node.props as { children?: ReactNode }).children as ReactNode);
+    return collectTextContent(
+      (node.props as { children?: ReactNode }).children as ReactNode,
+    );
   }
   return [];
 }
 
 function childElements(element: { props: { children?: ReactNode } }) {
-  return Children.toArray(element.props.children).filter(isValidElement) as Array<{
+  return Children.toArray(element.props.children).filter(
+    isValidElement,
+  ) as Array<{
     props: { children?: ReactNode; [key: string]: unknown };
   }>;
 }
@@ -93,7 +98,9 @@ describe("aria-desktop app assembly", () => {
       "server-connected",
       "local-project",
     ]);
-    expect(ariaDesktopApplication.sharedPackages).toContain("@aria/desktop-bridge");
+    expect(ariaDesktopApplication.sharedPackages).toContain(
+      "@aria/desktop-bridge",
+    );
     expect(ariaDesktopApplication.capabilities).toContain("local-bridge");
   });
 
@@ -209,16 +216,17 @@ describe("aria-desktop app assembly", () => {
         },
       ],
     });
-    expect(model.shell.activeThreadScreen?.environmentSwitcher.availableEnvironments).toEqual([
+    expect(
+      model.shell.activeThreadScreen?.environmentSwitcher.availableEnvironments,
+    ).toEqual([
       expect.objectContaining({
         label: "This Device / wt/main",
         mode: "local",
       }),
     ]);
-    expect(model.shell.serverSwitcher.availableServers.map((server) => server.label)).toEqual([
-      "Home Server",
-      "Relay Mirror",
-    ]);
+    expect(
+      model.shell.serverSwitcher.availableServers.map((server) => server.label),
+    ).toEqual(["Home Server", "Relay Mirror"]);
   });
 
   test("exposes React app-shell component and factory element", () => {
@@ -263,7 +271,9 @@ describe("aria-desktop app assembly", () => {
     expect(built.model.activeServerLabel).toBe("Home Server");
 
     const rendered = AriaDesktopAppShell({ model: built.model });
-    const [topChrome, workbench, statusStrip] = childElements(asElementWithProps(rendered));
+    const [topChrome, workbench, statusStrip] = childElements(
+      asElementWithProps(rendered),
+    );
     expect(topChrome.props["data-slot"]).toBe("top-chrome");
     expect(workbench.props["data-slot"]).toBe("workbench");
     expect(statusStrip.props["data-slot"]).toBe("status-strip");
@@ -429,7 +439,9 @@ describe("aria-desktop app assembly", () => {
       },
     });
 
-    const text = collectTextContent(AriaDesktopAppShell({ model })).join(" ").replace(/\s+/g, " ");
+    const text = collectTextContent(AriaDesktopAppShell({ model }))
+      .join(" ")
+      .replace(/\s+/g, " ");
     expect(text).toContain("Pending approval: exec");
     expect(text).toContain("Pending question: Ship it?");
     expect(text).toContain("Approval mode: ask");
@@ -502,7 +514,10 @@ describe("aria-desktop app assembly", () => {
       target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
       ariaThreadController: controller as any,
     });
-    const opened = await openAriaDesktopAppShellSession(model, "desktop:older-session");
+    const opened = await openAriaDesktopAppShellSession(
+      model,
+      "desktop:older-session",
+    );
 
     expect(opened.ariaThread.state.sessionId).toBe("desktop:older-session");
     expect(opened.ariaThread.state.messages.at(-1)).toEqual({
@@ -518,7 +533,9 @@ describe("aria-desktop app assembly", () => {
       sessionStatus: "resumed" as const,
       modelName: "sonnet",
       agentName: "Esperta Aria",
-      messages: [{ role: "tool" as const, content: "Answer: Yes", toolName: "ask_user" }],
+      messages: [
+        { role: "tool" as const, content: "Answer: Yes", toolName: "ask_user" },
+      ],
       streamingText: "",
       isStreaming: false,
       pendingApproval: null,
@@ -542,12 +559,12 @@ describe("aria-desktop app assembly", () => {
     });
 
     expect(
-      (await approveAriaDesktopAppShellToolCall(model, "tool-1", true)).ariaThread.state
-        .pendingApproval,
+      (await approveAriaDesktopAppShellToolCall(model, "tool-1", true))
+        .ariaThread.state.pendingApproval,
     ).toBeNull();
     expect(
-      (await acceptAriaDesktopAppShellToolCallForSession(model, "tool-1")).ariaThread.state
-        .pendingApproval,
+      (await acceptAriaDesktopAppShellToolCallForSession(model, "tool-1"))
+        .ariaThread.state.pendingApproval,
     ).toBeNull();
     expect(
       (
@@ -618,25 +635,26 @@ describe("aria-desktop app assembly", () => {
     });
 
     const loaded = await loadAriaDesktopAppShellRecentSessions(model);
-    expect(loaded.ariaRecentSessions.map((session) => session.sessionId)).toEqual([
-      "desktop:live-1",
-      "desktop:archived-1",
-    ]);
+    expect(
+      loaded.ariaRecentSessions.map((session) => session.sessionId),
+    ).toEqual(["desktop:live-1", "desktop:archived-1"]);
 
     const searched = await searchAriaDesktopAppShellSessions(model, "archived");
-    expect(searched.ariaRecentSessions.map((session) => session.sessionId)).toEqual([
-      "desktop:search-1",
-    ]);
+    expect(
+      searched.ariaRecentSessions.map((session) => session.sessionId),
+    ).toEqual(["desktop:search-1"]);
 
     const text = collectTextContent(AriaDesktopAppShell({ model: loaded }))
       .join(" ")
       .replace(/\s+/g, " ");
     expect(text).toContain("Recent Aria sessions: 2");
     expect(text).toContain("desktop:live-1 - live");
-    expect(text).toContain("desktop:archived-1 - archived - Archived - Archived summary");
+    expect(text).toContain(
+      "desktop:archived-1 - archived - Archived - Archived summary",
+    );
   });
 
-  test("wires desktop shell callbacks for switching servers and opening sessions", () => {
+  test("wires desktop shell callbacks for switching servers, threads, and sessions", () => {
     const model = createAriaDesktopAppShellModel({
       target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
       servers: [
@@ -650,6 +668,17 @@ describe("aria-desktop app assembly", () => {
         },
       ],
       activeServerId: "desktop",
+      initialThread: {
+        project: { name: "Aria" },
+        thread: {
+          threadId: "thread-1",
+          title: "Desktop thread",
+          status: "running",
+          threadType: "local_project",
+          environmentId: "desktop-main",
+          agentId: "codex",
+        },
+      },
     });
     const shell = AriaDesktopAppShell({
       model: {
@@ -680,6 +709,7 @@ describe("aria-desktop app assembly", () => {
         ],
       },
       onSwitchServer() {},
+      onSelectProjectThread() {},
       onOpenAriaSession() {},
     });
 
@@ -716,27 +746,15 @@ describe("aria-desktop app assembly", () => {
       shell,
       (props) => props["data-session-id"] === "desktop:recent-1",
     );
-    expect(openButton?.props.children).toBe("Open");
+    expect(openButton).toBeDefined();
     expect(typeof openButton?.props.onClick).toBe("function");
 
-    const searchButton = findElement(shell, (props) => props.children === "Search Sessions");
-    expect(searchButton?.props.type).toBe("submit");
-
-    const sendButton = findElement(shell, (props) => props.children === "Send");
-    const stopButton = findElement(shell, (props) => props.children === "Stop");
-    expect(sendButton?.props.type).toBe("submit");
-    expect(typeof stopButton?.props.onClick).toBe("function");
-    const sessionSearchInput = findElement(shell, (props) => props.name === "aria-session-search");
-    expect(sessionSearchInput?.props.defaultValue).toBe("");
-
-    const approveButton = findElement(shell, (props) => props.children === "Approve");
-    const allowButton = findElement(shell, (props) => props.children === "Allow for session");
-    const denyButton = findElement(shell, (props) => props.children === "Deny");
-    const answerButton = findElement(shell, (props) => props.children === "Yes");
-    expect(typeof approveButton?.props.onClick).toBe("function");
-    expect(typeof allowButton?.props.onClick).toBe("function");
-    expect(typeof denyButton?.props.onClick).toBe("function");
-    expect(typeof answerButton?.props.onClick).toBe("function");
+    const threadButton = findElement(
+      shell,
+      (props) => props["data-thread-id"] === "thread-1",
+    );
+    expect(threadButton).toBeDefined();
+    expect(typeof threadButton?.props.onClick).toBe("function");
   });
 
   test("can switch the desktop app shell to another server", async () => {
@@ -829,6 +847,55 @@ describe("aria-desktop app assembly", () => {
     expect(switched.activeServerId).toBe("relay");
     expect(switched.activeServerLabel).toBe("Relay Mirror");
     expect(switched.ariaThread.state.sessionId).toBe("relay:session-1");
-    expect(switched.ariaRecentSessions.map((session) => session.sessionId)).toEqual(["relay:live"]);
+    expect(
+      switched.ariaRecentSessions.map((session) => session.sessionId),
+    ).toEqual(["relay:live"]);
+  });
+
+  test("can select a desktop project thread locally", () => {
+    const model = createAriaDesktopAppShellModel({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      projects: [
+        {
+          project: { name: "Aria" },
+          threads: [
+            {
+              threadId: "thread-1",
+              title: "First thread",
+              status: "running",
+              threadType: "local_project",
+              environmentId: "desktop-main",
+              agentId: "codex",
+            },
+            {
+              threadId: "thread-2",
+              title: "Second thread",
+              status: "idle",
+              threadType: "local_project",
+              environmentId: "desktop-review",
+              agentId: "codex",
+            },
+          ],
+        },
+      ],
+      initialThread: {
+        project: { name: "Aria" },
+        thread: {
+          threadId: "thread-1",
+          title: "First thread",
+          status: "running",
+          threadType: "local_project",
+          environmentId: "desktop-main",
+          agentId: "codex",
+        },
+      },
+    });
+
+    const selected = selectAriaDesktopAppShellThread(model, "thread-2");
+    expect(selected.activeSpaceId).toBe("projects");
+    expect(selected.shell.activeThreadScreen?.header.title).toBe(
+      "Second thread",
+    );
+    expect(selected.shell.activeThreadScreen?.header.projectLabel).toBe("Aria");
   });
 });

@@ -10,6 +10,7 @@ import {
   createAriaDesktopAppShellModel,
   loadAriaDesktopAppShellRecentSessions,
   openAriaDesktopAppShellSession,
+  selectAriaDesktopAppShellThread,
   searchAriaDesktopAppShellSessions,
   sendAriaDesktopAppShellMessage,
   stopAriaDesktopAppShell,
@@ -35,6 +36,7 @@ export interface AriaDesktopRendererController {
   start(): Promise<AriaDesktopAppShellModel>;
   switchServer(serverId: string): Promise<AriaDesktopAppShellModel>;
   openSession(sessionId: string): Promise<AriaDesktopAppShellModel>;
+  selectThread(threadId: string): Promise<AriaDesktopAppShellModel>;
   searchSessions(query: string): Promise<AriaDesktopAppShellModel>;
   sendMessage(message: string): Promise<AriaDesktopAppShellModel>;
   stop(): Promise<AriaDesktopAppShellModel>;
@@ -92,6 +94,9 @@ export function createAriaDesktopRendererController(
     openSession(sessionId: string) {
       return update(openAriaDesktopAppShellSession(model, sessionId));
     },
+    selectThread(threadId: string) {
+      return update(Promise.resolve(selectAriaDesktopAppShellThread(model, threadId)));
+    },
     searchSessions(query: string) {
       return update(searchAriaDesktopAppShellSessions(model, query));
     },
@@ -139,6 +144,9 @@ export async function mountAriaDesktopRenderer(
         },
         onOpenAriaSession: (sessionId: string) => {
           void controller.openSession(sessionId);
+        },
+        onSelectProjectThread: (threadId: string) => {
+          void controller.selectThread(threadId);
         },
         onSearchAriaSessions: (query: string) => {
           void controller.searchSessions(query);
