@@ -11,8 +11,11 @@ import type { EngineServer } from "@aria/gateway/server";
 import type { EngineRuntime } from "@aria/server/runtime";
 
 import {
+  ARIA_SERVER_DAEMON_COMMAND,
   ariaServerHost,
+  createAriaServerDaemonHostBootstrap,
   createAriaServerHostBootstrap,
+  runAriaServerDaemonHost,
   runAriaServerHost,
 } from "../apps/aria-server/src/index.js";
 
@@ -119,5 +122,13 @@ describe("server host surface", () => {
 
     expect(app.runtime).toBe(runtime);
     expect(app.server).toBe(server);
+  });
+
+  test("exposes a daemon-host bootstrap over the app wrapper", () => {
+    const bootstrap = createAriaServerDaemonHostBootstrap("/tmp/aria-server-app");
+    expect(bootstrap.host).toBe(ariaServerHost);
+    expect(bootstrap.hiddenCommand).toBe(ARIA_SERVER_DAEMON_COMMAND);
+    expect(bootstrap.discoveryPaths).toEqual(getRuntimeDiscoveryPaths("/tmp/aria-server-app"));
+    expect(typeof runAriaServerDaemonHost).toBe("function");
   });
 });

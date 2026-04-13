@@ -253,6 +253,10 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     const { startDiscordConnector } = await import("@aria/connectors-im/discord");
     await startDiscordConnector(port);
   },
+  __server_host: async () => {
+    const { runAriaServerDaemonHost } = await import("../../../apps/aria-server/src/index.js");
+    await runAriaServerDaemonHost();
+  },
   __engine: async () => {
     await import("@aria/server/engine");
   },
