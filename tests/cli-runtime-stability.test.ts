@@ -101,19 +101,26 @@ describe("cli and runtime stability", () => {
     const runtimeEngine = readRepoFile("packages/runtime/src/engine.ts");
     const runtimeDiscovery = readRepoFile("packages/runtime/src/discovery.ts");
     const serverEngine = readRepoFile("packages/server/src/engine.ts");
+    const serverDaemon = readRepoFile("packages/server/src/daemon.ts");
     const appIndex = readRepoFile("apps/aria-server/src/index.ts");
     const appMain = readRepoFile("apps/aria-server/src/main.ts");
 
-    expect(cliIndex).toContain('await import("@aria/server/engine");');
+    expect(cliIndex).toContain('await import("../../../apps/aria-server/src/index.js");');
+    expect(cliIndex).toContain("__server_host");
     expect(cliEngine).toContain('from "@aria/server/daemon";');
     expect(runtimeEngine).toContain('export * from "@aria/server/engine";');
     expect(runtimeDiscovery).toContain('from "@aria/server/discovery";');
+    expect(serverDaemon).toContain("ARIA_SERVER_DAEMON_COMMAND");
+    expect(serverDaemon).toContain(
+      "spawn(process.execPath, [process.argv[1], ARIA_SERVER_DAEMON_COMMAND]",
+    );
     expect(serverEngine).toContain('import { startAriaServer } from "./app.js";');
     expect(serverEngine).toContain('import { getRuntimeDiscoveryPaths } from "./discovery.js";');
     expect(appIndex).toContain('from "@aria/server"');
+    expect(appIndex).toContain("ARIA_SERVER_DAEMON_COMMAND");
     expect(appMain).toContain('import { RUNTIME_NAME } from "@aria/server";');
-    expect(appMain).toContain('import { runAriaServerHost } from "./index.js";');
-    expect(appMain).toContain("runAriaServerHost().catch");
+    expect(appMain).toContain('import { runAriaServerDaemonHost } from "./index.js";');
+    expect(appMain).toContain("runAriaServerDaemonHost().catch");
   });
 
   test("preserves the CLI-owned root entrypoints while client package shells evolve", () => {
