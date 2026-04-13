@@ -35,16 +35,16 @@ The migration tool supports dry-run reporting before mutation and a normal write
 
 ## Safe Write-Mode Flow
 
-The script does not create backups or rollback artifacts for you. Use the dry-run output and your own filesystem backup as the safety boundary before mutating `aria.db`.
+Dry-run is read-only and leaves the target database untouched. Write mode creates a backup directory under `.aria-migration-backups/`, writes `migration-manifest.json`, and prints rollback instructions/hints on stderr.
 
-1. Back up the runtime home or at least the current `aria.db` before write mode.
-2. Run the migration with `--dry-run` and save the JSON output alongside the backup. Treat that JSON as the migration manifest.
-3. Review the manifest counts and source/target paths, then rerun the same command without `--dry-run` to perform the import.
-4. After the write pass, compare the target database against the manifest and keep both with the backup until you are done validating the cutover.
+1. Run the migration with `--dry-run` first and save the JSON output. Treat that JSON as the migration report you review before mutation.
+2. Rerun the same command without `--dry-run` to perform the write pass.
+3. Keep the generated backup directory and manifest with the dry-run report until validation is complete.
+4. If the write pass needs to be retried, restore the backup database from the generated backup directory and rerun dry-run before attempting write mode again.
 
 ## Rollback
 
-If the write pass needs to be undone, stop Aria, restore the backed-up `aria.db` and any other runtime-home files you captured, and rerun dry-run before retrying. The rollback path is a filesystem restore, not a script flag.
+If the write pass needs to be undone, stop Aria, restore `aria.db` from the generated backup copy in the migration backup directory, copy any companion files back alongside it, and rerun dry-run before retrying. When no pre-existing target database existed, rollback is deleting the imported target db and reseeding from the original source.
 
 ## Current State
 
