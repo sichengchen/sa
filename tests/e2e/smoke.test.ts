@@ -3,16 +3,16 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { AriaDesktopAppShell } from "../../apps/aria-desktop/src/index.js";
+import { AriaDesktopAppShell } from "aria-desktop";
 import {
   AriaMobileApplicationShell,
   createAriaMobileApplicationBootstrap,
   createAriaMobileApplicationRoot,
-} from "../../apps/aria-mobile/src/index.js";
+} from "aria-mobile";
 import {
   createAriaDesktopApplicationBootstrap,
   createAriaDesktopApplicationRoot,
-} from "../../apps/aria-desktop/src/index.js";
+} from "aria-desktop";
 import { createAriaServerHostBootstrap } from "aria-server";
 import { createAriaRelayServiceBootstrap } from "aria-relay";
 

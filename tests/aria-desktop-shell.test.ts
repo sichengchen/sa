@@ -7,7 +7,7 @@ import {
   createAriaDesktopApplicationShell,
   createAriaDesktopApplicationRoot,
   type AriaDesktopAppShellModel,
-} from "../apps/aria-desktop/src/index.js";
+} from "aria-desktop";
 
 type ElementWithProps = {
   props: { children?: ReactNode; [key: string]: unknown };
@@ -47,7 +47,10 @@ describe("aria-desktop React shell", () => {
           hostLabel: "This Device",
           environmentLabel: "desktop-main",
           mode: "local",
-          target: { serverId: "desktop-local", baseUrl: "http://127.0.0.1:8123/" },
+          target: {
+            serverId: "desktop-local",
+            baseUrl: "http://127.0.0.1:8123/",
+          },
         },
       ],
       initialThread: {
