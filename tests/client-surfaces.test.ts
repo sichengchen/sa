@@ -200,6 +200,9 @@ describe("client surfaces", () => {
           },
         },
         chat: {
+          history: {
+            query: async () => ({ messages: [], archived: false }),
+          },
           stream: {
             subscribe(_input, handlers) {
               for (const event of events) {
@@ -260,5 +263,51 @@ describe("client surfaces", () => {
     const connected = await controller.connect();
     expect(connected.sessionId).toBe("tui:session-existing");
     expect(connected.sessionStatus).toBe("resumed");
+  });
+
+  test("hydrates transcript history when resuming an aria chat session", async () => {
+    const controller = createAriaChatController(
+      {
+        health: {
+          ping: {
+            query: async () => ({ model: "sonnet", agentName: "Esperta Aria" }),
+          },
+        },
+        session: {
+          getLatest: {
+            query: async () => ({ id: "tui:session-existing" }),
+          },
+          create: {
+            mutate: async () => {
+              throw new Error("create should not be called when latest session exists");
+            },
+          },
+        },
+        chat: {
+          history: {
+            query: async () => ({
+              archived: true,
+              messages: [
+                { role: "user", content: "Previous question" },
+                { role: "assistant", content: "Previous answer" },
+              ],
+            }),
+          },
+          stream: {
+            subscribe() {
+              return;
+            },
+          },
+        },
+      },
+      { connectorType: "tui", prefix: "tui" },
+    );
+
+    const connected = await controller.connect();
+    expect(connected.sessionStatus).toBe("resumed");
+    expect(connected.messages).toEqual([
+      { role: "user", content: "Previous question", toolName: undefined },
+      { role: "assistant", content: "Previous answer", toolName: undefined },
+    ]);
   });
 });

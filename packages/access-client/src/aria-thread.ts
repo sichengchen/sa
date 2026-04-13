@@ -38,6 +38,9 @@ export interface AriaChatClient {
     };
   };
   chat: {
+    history?: {
+      query(input: { sessionId: string }): Promise<{ messages: unknown[]; archived: boolean }>;
+    };
     stream: {
       subscribe(
         input: { sessionId: string; message: string },
@@ -81,6 +84,50 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function extractMessageContent(content: unknown): string {
+  if (typeof content === "string") {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
+          return part.text;
+        }
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (content && typeof content === "object") {
+    return JSON.stringify(content);
+  }
+
+  return "";
+}
+
+function normalizeHistoryMessages(messages: unknown[]): AriaChatMessage[] {
+  return messages.flatMap((message) => {
+    const record = message as {
+      role?: string;
+      content?: unknown;
+      toolName?: string;
+    };
+    const content = extractMessageContent(record.content).trim();
+    if (!content) return [];
+
+    const role: AriaChatMessageRole =
+      record.role === "user" || record.role === "assistant" || record.role === "tool"
+        ? record.role
+        : "error";
+
+    return [{ role, content, toolName: record.toolName }];
+  });
+}
+
 export function createAriaChatController(
   client: AriaChatClient,
   options: AriaChatControllerOptions,
@@ -121,12 +168,18 @@ export function createAriaChatController(
               })
             ).session.id;
 
+        const hydratedMessages =
+          latest?.id && client.chat.history
+            ? normalizeHistoryMessages((await client.chat.history.query({ sessionId })).messages)
+            : [];
+
         return setState({
           connected: true,
           modelName: ping.model,
           agentName: ping.agentName,
           sessionId,
           sessionStatus: latest?.id ? "resumed" : "created",
+          messages: hydratedMessages,
           lastError: null,
         });
       } catch (error) {
