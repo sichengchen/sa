@@ -3,7 +3,12 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { writeFile } from "node:fs/promises";
 import { withTempDir } from "./temp-dir.js";
-import { LIVE, makeLiveRouter, describeLive } from "./live-model.js";
+import {
+  LIVE,
+  describeLive,
+  makeLiveRouter,
+  resolveLiveProviderSelection,
+} from "./live-model.js";
 import { echoTool, failTool, slowTool } from "./test-tools.js";
 
 // --- temp-dir helper ---
@@ -41,7 +46,9 @@ describe("echoTool", () => {
 
 describe("failTool", () => {
   test("throws with default message", async () => {
-    await expect(failTool.execute({})).rejects.toThrow("intentional test failure");
+    await expect(failTool.execute({})).rejects.toThrow(
+      "intentional test failure",
+    );
   });
 
   test("throws with custom reason", async () => {
@@ -62,18 +69,36 @@ describe("slowTool", () => {
 // --- live-model ---
 
 describe("live-model", () => {
-  test("LIVE flag reflects ANTHROPIC_API_KEY presence", () => {
+  test("LIVE flag reflects supported live provider presence", () => {
     expect(typeof LIVE).toBe("boolean");
-    expect(LIVE).toBe(!!process.env.ANTHROPIC_API_KEY);
+    expect(LIVE).toBe(resolveLiveProviderSelection() !== null);
   });
 
   test("makeLiveRouter() throws without API key", () => {
-    const saved = process.env.ANTHROPIC_API_KEY;
+    const saved = {
+      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+      GOOGLE_AI_API_KEY: process.env.GOOGLE_AI_API_KEY,
+      MINIMAX_API_KEY: process.env.MINIMAX_API_KEY,
+      ARIA_LIVE_PROVIDER: process.env.ARIA_LIVE_PROVIDER,
+    };
     try {
       delete process.env.ANTHROPIC_API_KEY;
-      expect(() => makeLiveRouter()).toThrow("requires ANTHROPIC_API_KEY");
+      delete process.env.OPENAI_API_KEY;
+      delete process.env.GOOGLE_AI_API_KEY;
+      delete process.env.MINIMAX_API_KEY;
+      delete process.env.ARIA_LIVE_PROVIDER;
+      expect(() => makeLiveRouter()).toThrow(
+        "requires one of ANTHROPIC_API_KEY",
+      );
     } finally {
-      if (saved) process.env.ANTHROPIC_API_KEY = saved;
+      for (const [key, value] of Object.entries(saved)) {
+        if (value) {
+          process.env[key] = value;
+        } else {
+          delete process.env[key];
+        }
+      }
     }
   });
 
@@ -86,7 +111,9 @@ describe("live-model", () => {
 describeLive("makeLiveRouter (live)", () => {
   test("creates a working router", () => {
     const router = makeLiveRouter();
-    expect(router.getActiveModelName()).toBe("haiku");
-    expect(router.listModels()).toContain("haiku");
+    const selection = resolveLiveProviderSelection();
+    expect(selection).not.toBeNull();
+    expect(router.getActiveModelName()).toBe(selection!.modelName);
+    expect(router.listModels()).toContain(selection!.modelName);
   });
 });
