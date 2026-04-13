@@ -6,6 +6,8 @@ import {
   connectAriaDesktopAppShellModel,
   createAriaDesktopAppShellModel,
   loadAriaDesktopAppShellRecentSessions,
+  switchAriaDesktopAppShellServer,
+  type AriaDesktopAppShellModel,
   type CreateAriaDesktopAppShellModelOptions,
 } from "./index.js";
 
@@ -24,6 +26,13 @@ export async function startAriaDesktopRendererModel(
 ) {
   const connected = await connectAriaDesktopAppShellModel(createAriaDesktopAppShellModel(options));
   return loadAriaDesktopAppShellRecentSessions(connected);
+}
+
+export async function switchAriaDesktopRendererModel(
+  model: AriaDesktopAppShellModel,
+  serverId: string,
+) {
+  return switchAriaDesktopAppShellServer(model, serverId);
 }
 
 export function resolveAriaDesktopRendererTarget(

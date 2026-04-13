@@ -7,8 +7,10 @@ import {
 import { createAriaMobileNativeHostModel, type AriaMobileNativeHostModel } from "./native-model.js";
 import {
   createAriaMobileAppShell,
+  switchAriaMobileAppShellServer,
   startAriaMobileNativeHostShell,
   type AriaMobileAppShell,
+  type AriaMobileAppShellSourceOptions,
 } from "./app.js";
 
 export function resolveAriaMobileNativeHostTarget(
@@ -27,7 +29,13 @@ export interface AriaMobileNativeHostBootstrap {
 }
 
 export interface AriaMobileNativeHostBootstrapOptions extends Partial<AccessClientTarget> {
+  servers?: AriaMobileAppShellSourceOptions["servers"];
+  activeServerId?: AriaMobileAppShellSourceOptions["activeServerId"];
+  projects?: AriaMobileAppShellSourceOptions["projects"];
+  initialThread?: AriaMobileAppShellSourceOptions["initialThread"];
+  activeThreadContext?: AriaMobileAppShellSourceOptions["activeThreadContext"];
   ariaThreadController?: AriaChatController;
+  createAriaThreadController?: (target: AccessClientTarget) => AriaChatController;
   ariaThreadState?: AriaChatState;
 }
 
@@ -37,7 +45,13 @@ export function createAriaMobileNativeHostBootstrap(
   const target = resolveAriaMobileNativeHostTarget(config);
   const shell = createAriaMobileAppShell({
     target,
+    servers: config?.servers,
+    activeServerId: config?.activeServerId,
+    projects: config?.projects,
+    initialThread: config?.initialThread,
+    activeThreadContext: config?.activeThreadContext,
     ariaThreadController: config?.ariaThreadController,
+    createAriaThreadController: config?.createAriaThreadController,
     ariaThreadState: config?.ariaThreadState,
   });
   return {
@@ -53,11 +67,30 @@ export async function startAriaMobileNativeHostBootstrap(
   const target = resolveAriaMobileNativeHostTarget(config);
   const shell = await startAriaMobileNativeHostShell({
     target,
+    servers: config?.servers,
+    activeServerId: config?.activeServerId,
+    projects: config?.projects,
+    initialThread: config?.initialThread,
+    activeThreadContext: config?.activeThreadContext,
     ariaThreadController: config?.ariaThreadController,
+    createAriaThreadController: config?.createAriaThreadController,
     ariaThreadState: config?.ariaThreadState,
   });
   return {
     target,
+    shell,
+    model: createAriaMobileNativeHostModel(shell),
+  };
+}
+
+export async function switchAriaMobileNativeHostBootstrapServer(
+  bootstrap: AriaMobileNativeHostBootstrap,
+  serverId: string,
+): Promise<AriaMobileNativeHostBootstrap> {
+  const shell = await switchAriaMobileAppShellServer(bootstrap.shell, serverId);
+  return {
+    ...bootstrap,
+    target: shell.sourceOptions.target,
     shell,
     model: createAriaMobileNativeHostModel(shell),
   };

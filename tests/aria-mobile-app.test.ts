@@ -23,6 +23,7 @@ import {
   searchAriaMobileAppShellSessions,
   sendAriaMobileAppShellMessage,
   stopAriaMobileAppShell,
+  switchAriaMobileAppShellServer,
 } from "../apps/aria-mobile/src/index.js";
 
 describe("Aria mobile app surface", () => {
@@ -624,5 +625,98 @@ describe("Aria mobile app surface", () => {
     expect(serialized).toContain("Recent Aria sessions:");
     expect(serialized).toContain("mobile:live-1");
     expect(serialized).toContain("mobile:archived-1");
+  });
+
+  test("can switch the mobile app shell to another server", async () => {
+    const relayState = {
+      connected: true,
+      sessionId: "relay:session-1",
+      sessionStatus: "resumed" as const,
+      approvalMode: "ask" as const,
+      securityMode: "trusted" as const,
+      securityModeRemainingTTL: 600,
+      modelName: "sonnet",
+      agentName: "Esperta Aria",
+      messages: [],
+      streamingText: "",
+      isStreaming: false,
+      pendingApproval: null,
+      pendingQuestion: null,
+      lastError: null,
+    };
+    const mobileState = {
+      ...relayState,
+      sessionId: "mobile:session-1",
+    };
+    const controllers = new Map([
+      [
+        "mobile",
+        {
+          state: mobileState,
+          recent: [
+            {
+              sessionId: "mobile:live",
+              connectorType: "tui",
+              connectorId: "mobile",
+              archived: false,
+            },
+          ],
+        },
+      ],
+      [
+        "relay",
+        {
+          state: relayState,
+          recent: [
+            {
+              sessionId: "relay:live",
+              connectorType: "tui",
+              connectorId: "relay",
+              archived: true,
+              preview: "Relay",
+              summary: "Relay",
+            },
+          ],
+        },
+      ],
+    ]);
+    const factory = (target: { serverId: string }) => {
+      const entry = controllers.get(target.serverId)!;
+      return {
+        getState: () => entry.state,
+        connect: async () => entry.state,
+        sendMessage: async () => entry.state,
+        stop: async () => entry.state,
+        openSession: async () => entry.state,
+        approveToolCall: async () => entry.state,
+        acceptToolCallForSession: async () => entry.state,
+        answerQuestion: async () => entry.state,
+        listSessions: async () => entry.recent as any,
+        listArchivedSessions: async () => [],
+        searchSessions: async () => [],
+      };
+    };
+
+    const shell = createAriaMobileAppShell({
+      target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "mobile",
+      createAriaThreadController: factory as any,
+    });
+
+    const switched = await switchAriaMobileAppShellServer(shell, "relay");
+    expect(switched.activeServerId).toBe("relay");
+    expect(switched.activeServerLabel).toBe("Relay Mirror");
+    expect(switched.ariaThread.state.sessionId).toBe("relay:session-1");
+    expect(switched.ariaRecentSessions.map((session) => session.sessionId)).toEqual(["relay:live"]);
   });
 });

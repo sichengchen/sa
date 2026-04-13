@@ -25,8 +25,14 @@ export interface CreateAriaDesktopAppShellModelOptions {
   activeSpaceId?: (typeof ariaDesktopSpaces)[number]["id"];
   activeContextPanelId?: (typeof ariaDesktopContextPanels)[number]["id"];
   ariaThreadController?: AriaChatController;
+  createAriaThreadController?: (target: AccessClientTarget) => AriaChatController;
   ariaThreadState?: AriaChatState;
 }
+
+export interface AriaDesktopAppShellSourceOptions extends Omit<
+  CreateAriaDesktopAppShellModelOptions,
+  "ariaThreadController" | "ariaThreadState"
+> {}
 
 export interface AriaDesktopAppShellModel {
   application: ReturnType<typeof createAriaDesktopApplicationBootstrap>["application"];
@@ -38,6 +44,7 @@ export interface AriaDesktopAppShellModel {
   activeContextPanelId: (typeof ariaDesktopContextPanels)[number]["id"];
   ariaThread: ReturnType<typeof createAriaDesktopAriaThread>;
   ariaRecentSessions: AriaChatSessionSummary[];
+  sourceOptions: AriaDesktopAppShellSourceOptions;
 }
 
 function deriveProjectsFromInitialThread(
@@ -107,10 +114,53 @@ export function createAriaDesktopAppShellModel(
       options.activeContextPanelId ?? bootstrap.application.startup.defaultContextPanelId,
     ariaThread: createAriaDesktopAriaThread(options.target, {
       controller: options.ariaThreadController,
+      controllerFactory: options.createAriaThreadController,
       state: options.ariaThreadState,
     }),
     ariaRecentSessions: [],
+    sourceOptions: {
+      target: options.target,
+      initialThread: options.initialThread,
+      servers: options.servers,
+      activeServerId: options.activeServerId,
+      projects: options.projects,
+      environments: options.environments,
+      activeThreadContext: options.activeThreadContext,
+      activeSpaceId: options.activeSpaceId,
+      activeContextPanelId: options.activeContextPanelId,
+      createAriaThreadController: options.createAriaThreadController,
+    },
   };
+}
+
+function resolveDesktopServerTarget(
+  model: AriaDesktopAppShellModel,
+  serverId: string,
+): AccessClientTarget | null {
+  const explicitServers = model.sourceOptions.servers ?? [];
+  for (const entry of explicitServers) {
+    const target = "target" in entry ? entry.target : entry;
+    if (target.serverId === serverId) {
+      return target;
+    }
+  }
+
+  if (model.sourceOptions.target.serverId === serverId) {
+    return model.sourceOptions.target;
+  }
+
+  const fallback = model.shell.serverSwitcher.availableServers.find(
+    (server) => server.id === serverId,
+  );
+  if (fallback) {
+    return {
+      serverId: fallback.id,
+      baseUrl: fallback.access.httpUrl,
+      token: fallback.access.token,
+    };
+  }
+
+  return null;
 }
 
 export interface AriaDesktopAppShellProps {
@@ -470,4 +520,22 @@ export async function searchAriaDesktopAppShellSessions(
     ...model,
     ariaRecentSessions: await model.ariaThread.controller.searchSessions(query),
   };
+}
+
+export async function switchAriaDesktopAppShellServer(
+  model: AriaDesktopAppShellModel,
+  serverId: string,
+): Promise<AriaDesktopAppShellModel> {
+  const target = resolveDesktopServerTarget(model, serverId);
+  if (!target) {
+    return model;
+  }
+
+  const rebuilt = createAriaDesktopAppShellModel({
+    ...model.sourceOptions,
+    target,
+    activeServerId: serverId,
+  });
+  const connected = await connectAriaDesktopAppShellModel(rebuilt);
+  return loadAriaDesktopAppShellRecentSessions(connected);
 }

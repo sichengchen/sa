@@ -7,6 +7,7 @@ import {
   createAriaMobileNativeHostBootstrap,
   resolveAriaMobileNativeHostTarget,
   startAriaMobileNativeHostBootstrap,
+  switchAriaMobileNativeHostBootstrapServer,
 } from "../apps/aria-mobile/src/native-host.js";
 import { createAriaMobileNativeHostModel } from "../apps/aria-mobile/src/native-model.js";
 
@@ -126,6 +127,17 @@ describe("aria-mobile native host scaffold", () => {
     const bootstrap = await startAriaMobileNativeHostBootstrap({
       serverId: "mobile",
       baseUrl: "https://aria.example.test/",
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "mobile",
       ariaThreadController: controller as any,
     });
     expect(bootstrap.target.serverId).toBe("mobile");
@@ -133,5 +145,99 @@ describe("aria-mobile native host scaffold", () => {
       { sessionId: "mobile:live-1", kind: "live" },
       { sessionId: "mobile:archived-1", kind: "archived" },
     ]);
+  });
+
+  test("switches a mobile native host bootstrap to another server", async () => {
+    const relayState = {
+      connected: true,
+      sessionId: "relay:session-1",
+      sessionStatus: "resumed" as const,
+      approvalMode: "ask" as const,
+      securityMode: "trusted" as const,
+      securityModeRemainingTTL: 600,
+      modelName: "sonnet",
+      agentName: "Esperta Aria",
+      messages: [],
+      streamingText: "",
+      isStreaming: false,
+      pendingApproval: null,
+      pendingQuestion: null,
+      lastError: null,
+    };
+    const mobileState = {
+      ...relayState,
+      sessionId: "mobile:session-1",
+    };
+    const controllers = new Map([
+      [
+        "mobile",
+        {
+          state: mobileState,
+          recent: [
+            {
+              sessionId: "mobile:live",
+              connectorType: "tui",
+              connectorId: "mobile",
+              archived: false,
+            },
+          ],
+        },
+      ],
+      [
+        "relay",
+        {
+          state: relayState,
+          recent: [
+            {
+              sessionId: "relay:live",
+              connectorType: "tui",
+              connectorId: "relay",
+              archived: true,
+              preview: "Relay",
+              summary: "Relay",
+            },
+          ],
+        },
+      ],
+    ]);
+    const factory = (target: { serverId: string }) => {
+      const entry = controllers.get(target.serverId)!;
+      return {
+        getState: () => entry.state,
+        connect: async () => entry.state,
+        sendMessage: async () => entry.state,
+        stop: async () => entry.state,
+        openSession: async () => entry.state,
+        approveToolCall: async () => entry.state,
+        acceptToolCallForSession: async () => entry.state,
+        answerQuestion: async () => entry.state,
+        listSessions: async () => entry.recent as any,
+        listArchivedSessions: async () => [],
+        searchSessions: async () => [],
+      };
+    };
+
+    const bootstrap = await startAriaMobileNativeHostBootstrap({
+      serverId: "mobile",
+      baseUrl: "https://aria.example.test/",
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "mobile",
+      ariaThreadController: factory({ serverId: "mobile" }) as any,
+      createAriaThreadController: factory as any,
+    });
+
+    const switched = await switchAriaMobileNativeHostBootstrapServer(bootstrap, "relay");
+    expect(switched.target.serverId).toBe("relay");
+    expect(switched.shell.activeServerId).toBe("relay");
+    expect(switched.model.sessionId).toBe("relay:session-1");
   });
 });

@@ -17,6 +17,7 @@ import {
   createAriaMobileApplicationBootstrap,
   createConnectedAriaMobileAppShell,
   createAriaMobileAppShell,
+  switchAriaMobileAppShellServer,
   startAriaMobileNativeHostShell,
   answerAriaMobileAppShellQuestion,
   approveAriaMobileAppShellToolCall,
@@ -42,6 +43,7 @@ import {
   createAriaMobileNativeHostBootstrap,
   resolveAriaMobileNativeHostTarget,
   startAriaMobileNativeHostBootstrap,
+  switchAriaMobileNativeHostBootstrapServer,
   type AriaMobileNativeHostBootstrap,
 } from "./native-host.js";
 import {
@@ -63,6 +65,7 @@ export {
   createAriaMobileApplicationShell,
   createAriaMobileApplicationShellBootstrap,
   createAriaMobileAppShell,
+  switchAriaMobileAppShellServer,
   startAriaMobileNativeHostShell,
   answerAriaMobileAppShellQuestion,
   approveAriaMobileAppShellToolCall,
@@ -79,6 +82,7 @@ export {
   AriaMobileApplicationShell,
   resolveAriaMobileNativeHostTarget,
   startAriaMobileNativeHostBootstrap,
+  switchAriaMobileNativeHostBootstrapServer,
   type AriaMobileAppShell,
   type AriaMobileApplicationBootstrap,
   type AriaMobileApplicationShellBootstrap,

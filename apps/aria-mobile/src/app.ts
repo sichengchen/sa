@@ -73,6 +73,7 @@ export interface AriaMobileAppShell extends AriaMobileShell {
     state: AriaChatState;
   };
   ariaRecentSessions: AriaChatSessionSummary[];
+  sourceOptions: AriaMobileAppShellSourceOptions;
   layout: {
     threadListScreen: {
       placement: "stacked";
@@ -87,8 +88,18 @@ export interface AriaMobileAppShell extends AriaMobileShell {
   };
 }
 
+export interface AriaMobileAppShellSourceOptions extends Omit<
+  CreateAriaMobileShellOptions & {
+    ariaThreadController?: AriaChatController;
+    createAriaThreadController?: (target: AccessClientTarget) => AriaChatController;
+    ariaThreadState?: AriaChatState;
+  },
+  "ariaThreadController" | "ariaThreadState"
+> {}
+
 export interface AriaMobileAriaThreadOptions {
   controller?: AriaChatController;
+  controllerFactory?: (target: AccessClientTarget) => AriaChatController;
   state?: AriaChatState;
   connectorType?: string;
   prefix?: string;
@@ -100,6 +111,7 @@ export function createAriaMobileAriaThread(
 ) {
   const controller =
     options.controller ??
+    options.controllerFactory?.(target) ??
     createTargetAriaChatController(target, {
       connectorType: options.connectorType ?? "tui",
       prefix: options.prefix ?? "mobile",
@@ -114,6 +126,7 @@ export function createAriaMobileAriaThread(
 export function createAriaMobileAppShell(
   options: CreateAriaMobileShellOptions & {
     ariaThreadController?: AriaChatController;
+    createAriaThreadController?: (target: AccessClientTarget) => AriaChatController;
     ariaThreadState?: AriaChatState;
   },
 ): AriaMobileAppShell {
@@ -124,9 +137,19 @@ export function createAriaMobileAppShell(
     navigation: ariaMobileNavigation,
     ariaThread: createAriaMobileAriaThread(options.target, {
       controller: options.ariaThreadController,
+      controllerFactory: options.createAriaThreadController,
       state: options.ariaThreadState,
     }),
     ariaRecentSessions: [],
+    sourceOptions: {
+      target: options.target,
+      servers: options.servers,
+      activeServerId: options.activeServerId,
+      projects: options.projects,
+      initialThread: options.initialThread,
+      activeThreadContext: options.activeThreadContext,
+      createAriaThreadController: options.createAriaThreadController,
+    },
     layout: {
       threadListScreen: {
         placement: "stacked",
@@ -159,6 +182,7 @@ export async function connectAriaMobileAppShell(
 export async function createConnectedAriaMobileAppShell(
   options: CreateAriaMobileShellOptions & {
     ariaThreadController?: AriaChatController;
+    createAriaThreadController?: (target: AccessClientTarget) => AriaChatController;
     ariaThreadState?: AriaChatState;
   },
 ): Promise<AriaMobileAppShell> {
@@ -168,6 +192,7 @@ export async function createConnectedAriaMobileAppShell(
 export async function startAriaMobileNativeHostShell(
   options: CreateAriaMobileShellOptions & {
     ariaThreadController?: AriaChatController;
+    createAriaThreadController?: (target: AccessClientTarget) => AriaChatController;
     ariaThreadState?: AriaChatState;
   },
 ): Promise<AriaMobileAppShell> {
@@ -288,6 +313,52 @@ export async function searchAriaMobileAppShellSessions(
     ...shell,
     ariaRecentSessions: await shell.ariaThread.controller.searchSessions(query),
   };
+}
+
+function resolveMobileServerTarget(
+  shell: AriaMobileAppShell,
+  serverId: string,
+): AccessClientTarget | null {
+  const explicitServers = shell.sourceOptions.servers ?? [];
+  for (const entry of explicitServers) {
+    const target = "target" in entry ? entry.target : entry;
+    if (target.serverId === serverId) {
+      return target;
+    }
+  }
+
+  if (shell.sourceOptions.target.serverId === serverId) {
+    return shell.sourceOptions.target;
+  }
+
+  const fallback = shell.serverSwitcher.availableServers.find((server) => server.id === serverId);
+  if (fallback) {
+    return {
+      serverId: fallback.id,
+      baseUrl: fallback.access.httpUrl,
+      token: fallback.access.token,
+    };
+  }
+
+  return null;
+}
+
+export async function switchAriaMobileAppShellServer(
+  shell: AriaMobileAppShell,
+  serverId: string,
+): Promise<AriaMobileAppShell> {
+  const target = resolveMobileServerTarget(shell, serverId);
+  if (!target) {
+    return shell;
+  }
+
+  const rebuilt = createAriaMobileAppShell({
+    ...shell.sourceOptions,
+    target,
+    activeServerId: serverId,
+  });
+  const connected = await connectAriaMobileAppShell(rebuilt);
+  return loadAriaMobileAppShellRecentSessions(connected);
 }
 
 export const ariaMobileAppModel = {
