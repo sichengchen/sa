@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import type { AriaConfigFile } from "@aria/engine/config/index.js";
+import type { AriaConfigFile } from "@aria/server/config";
 
 type Substep =
   | "menu"
@@ -26,10 +26,19 @@ export function MemorySettings({ config, onSave, onBack }: MemorySettingsProps) 
   const decay = search.temporalDecay ?? {};
 
   const menuItems = [
-    { key: "toggle", label: `Memory: ${memory.enabled ? "enabled" : "disabled"}` },
+    {
+      key: "toggle",
+      label: `Memory: ${memory.enabled ? "enabled" : "disabled"}`,
+    },
     { key: "directory", label: `Directory: ${memory.directory}` },
-    { key: "journal", label: `Journal: ${journal.enabled !== false ? "enabled" : "disabled"}` },
-    { key: "search-results", label: `Max search results: ${search.maxResults ?? 10}` },
+    {
+      key: "journal",
+      label: `Journal: ${journal.enabled !== false ? "enabled" : "disabled"}`,
+    },
+    {
+      key: "search-results",
+      label: `Max search results: ${search.maxResults ?? 10}`,
+    },
     {
       key: "vector-weight",
       label: `Vector weight: ${search.vectorWeight ?? 0.6} / Text: ${search.textWeight ?? 0.4}`,
@@ -38,7 +47,10 @@ export function MemorySettings({ config, onSave, onBack }: MemorySettingsProps) 
       key: "decay-toggle",
       label: `Temporal decay: ${decay.enabled !== false ? "enabled" : "disabled"}`,
     },
-    { key: "decay-halflife", label: `Decay half-life: ${decay.halfLifeDays ?? 30} days` },
+    {
+      key: "decay-halflife",
+      label: `Decay half-life: ${decay.halfLifeDays ?? 30} days`,
+    },
   ];
 
   function updateMemory(patch: Partial<typeof memory>) {
@@ -83,7 +95,9 @@ export function MemorySettings({ config, onSave, onBack }: MemorySettingsProps) 
           return;
         }
         if (item.key === "journal") {
-          updateMemory({ journal: { ...journal, enabled: journal.enabled === false } });
+          updateMemory({
+            journal: { ...journal, enabled: journal.enabled === false },
+          });
           return;
         }
         if (item.key === "search-results") {
@@ -97,7 +111,9 @@ export function MemorySettings({ config, onSave, onBack }: MemorySettingsProps) 
           return;
         }
         if (item.key === "decay-toggle") {
-          updateSearch({ temporalDecay: { ...decay, enabled: decay.enabled === false } });
+          updateSearch({
+            temporalDecay: { ...decay, enabled: decay.enabled === false },
+          });
           return;
         }
         if (item.key === "decay-halflife") {
@@ -124,7 +140,10 @@ export function MemorySettings({ config, onSave, onBack }: MemorySettingsProps) 
       } else if (substep === "edit-vector-weight") {
         const vw = parseFloat(val);
         if (vw >= 0 && vw <= 1)
-          updateSearch({ vectorWeight: vw, textWeight: Math.round((1 - vw) * 100) / 100 });
+          updateSearch({
+            vectorWeight: vw,
+            textWeight: Math.round((1 - vw) * 100) / 100,
+          });
       } else if (substep === "edit-decay-halflife") {
         const d = parseInt(val);
         if (d > 0) updateSearch({ temporalDecay: { ...decay, halfLifeDays: d } });
@@ -142,7 +161,10 @@ export function MemorySettings({ config, onSave, onBack }: MemorySettingsProps) 
   });
 
   const editLabels: Record<string, { title: string; hint: string }> = {
-    "edit-directory": { title: "Memory Directory", hint: "Relative to ~/.aria/ — default: memory" },
+    "edit-directory": {
+      title: "Memory Directory",
+      hint: "Relative to ~/.aria/ — default: memory",
+    },
     "edit-search-results": {
       title: "Max Search Results",
       hint: "Number of results returned by memory search (default: 10)",

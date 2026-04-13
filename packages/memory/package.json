@@ -11,6 +11,7 @@
     "./chunker": "./src/chunker.ts",
     "./manager": "./src/manager.ts",
     "./skills": "./src/skills.ts",
+    "./skills/assets": "./src/skills/assets.ts",
     "./skills/loader": "./src/skills/loader.ts",
     "./skills/prompt": "./src/skills/prompt.ts",
     "./skills/registry": "./src/skills/registry.ts",

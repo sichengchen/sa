@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import { existsSync } from "node:fs";
-import { scanSkillDirectory, parseEmbeddedSkills } from "@aria/engine/skills/loader.js";
-import { BUNDLED_SKILLS_DIR } from "@aria/engine/skills/registry.js";
-import { EMBEDDED_SKILLS } from "@aria/engine/skills/embedded-skills.generated.js";
-import type { SkillMetadata } from "@aria/engine/skills/types.js";
+import { BUNDLED_SKILLS_DIR, EMBEDDED_SKILLS } from "@aria/memory/skills/assets";
+import { parseEmbeddedSkills, scanSkillDirectory } from "@aria/memory/skills/loader";
+import type { SkillMetadata } from "@aria/memory/skills/types";
 
 export interface SkillSetupData {
   selectedSkills: string[];
@@ -79,7 +78,9 @@ export function SkillSetup({ currentValues, onNext, onBack }: SkillSetupProps) {
     }
 
     if (key.return) {
-      onNext({ selectedSkills: skills.filter((s) => checked.has(s.name)).map((s) => s.name) });
+      onNext({
+        selectedSkills: skills.filter((s) => checked.has(s.name)).map((s) => s.name),
+      });
     }
   });
 

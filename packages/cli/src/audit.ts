@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { queryAuditEntries, type AuditEntry } from "@aria/engine/audit.js";
+import { queryAuditEntries, type AuditEntry } from "@aria/audit";
 import { CLI_NAME, PRODUCT_NAME, getRuntimeHome } from "@aria/server/brand";
 
 /** ANSI color helpers */

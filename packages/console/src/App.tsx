@@ -9,7 +9,7 @@ import { SessionPicker } from "./SessionPicker.js";
 import { ToolApproval } from "./ToolApproval.js";
 import { UserQuestion } from "./UserQuestion.js";
 import { createTuiClient } from "./client.js";
-import type { ModelConfig, ProviderConfig } from "@aria/engine/router/types.js";
+import type { ModelConfig, ProviderConfig } from "@aria/gateway/router/types";
 import type { Session } from "@aria/protocol";
 
 type EngineClient = ReturnType<typeof createTuiClient>;
@@ -88,7 +88,10 @@ export function App({ client }: AppProps) {
         setSessionId(session.id);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        addMessage({ role: "error", content: `Failed to connect to Engine: ${msg}` });
+        addMessage({
+          role: "error",
+          content: `Failed to connect to Engine: ${msg}`,
+        });
       }
       try {
         const modelList = await client.model.list.query();
@@ -182,7 +185,11 @@ export function App({ client }: AppProps) {
       // Handle /restart command — restart the engine
       if (text === "/restart") {
         try {
-          addMessage({ role: "tool", content: "Restarting Aria Runtime...", toolName: "system" });
+          addMessage({
+            role: "tool",
+            content: "Restarting Aria Runtime...",
+            toolName: "system",
+          });
           await client.engine.restart.mutate();
           // Engine will shut down — exit TUI so user can reconnect
           setTimeout(() => exit(), 500);
@@ -231,7 +238,11 @@ export function App({ client }: AppProps) {
             const suffix = extras.length > 0 ? `  (${extras.join(", ")})` : "";
             return `${marker} ${m.name}  ${m.provider} → ${m.model}${suffix}`;
           });
-          addMessage({ role: "tool", content: `Models:\n${lines.join("\n")}`, toolName: "system" });
+          addMessage({
+            role: "tool",
+            content: `Models:\n${lines.join("\n")}`,
+            toolName: "system",
+          });
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           addMessage({ role: "error", content: msg });
@@ -283,13 +294,18 @@ export function App({ client }: AppProps) {
           const list = await client.session.list.query();
           const match = list.find((s: Session) => s.id.startsWith(target));
           if (!match) {
-            addMessage({ role: "error", content: `No session found matching: ${target}` });
+            addMessage({
+              role: "error",
+              content: `No session found matching: ${target}`,
+            });
             return;
           }
           setSessionId(match.id);
           setSessionConnectorType(match.connectorType);
           // Load history
-          const history = await client.chat.history.query({ sessionId: match.id });
+          const history = await client.chat.history.query({
+            sessionId: match.id,
+          });
           const historyMessages: ChatMessage[] = (history.messages as any[]).map((m: any) => ({
             id: nextId(),
             role: m.role === "assistant" ? "assistant" : m.role === "user" ? "user" : "tool",
@@ -320,7 +336,10 @@ export function App({ client }: AppProps) {
           return;
         }
         try {
-          const results = await client.session.search.query({ query, limit: 5 });
+          const results = await client.session.search.query({
+            query,
+            limit: 5,
+          });
           if (results.length === 0) {
             addMessage({
               role: "tool",
@@ -352,11 +371,16 @@ export function App({ client }: AppProps) {
       if (text.startsWith("/history ")) {
         const target = text.slice(9).trim();
         if (!target) {
-          addMessage({ role: "error", content: "Usage: /history <session-id>" });
+          addMessage({
+            role: "error",
+            content: "Usage: /history <session-id>",
+          });
           return;
         }
         try {
-          const history = await client.chat.history.query({ sessionId: target });
+          const history = await client.chat.history.query({
+            sessionId: target,
+          });
           if ((history.messages as any[]).length === 0) {
             addMessage({
               role: "tool",
@@ -392,7 +416,9 @@ export function App({ client }: AppProps) {
 
       if (text === "/archives") {
         try {
-          const archived = await client.session.listArchived.query({ limit: 10 });
+          const archived = await client.session.listArchived.query({
+            limit: 10,
+          });
           if (archived.length === 0) {
             addMessage({
               role: "tool",
@@ -421,7 +447,11 @@ export function App({ client }: AppProps) {
         try {
           const tasks = await client.automation.list.query();
           if (tasks.length === 0) {
-            addMessage({ role: "tool", content: "No automation tasks found.", toolName: "system" });
+            addMessage({
+              role: "tool",
+              content: "No automation tasks found.",
+              toolName: "system",
+            });
             return;
           }
           const lines = tasks.map((task: any) => {
@@ -453,7 +483,10 @@ export function App({ client }: AppProps) {
                 task.taskId.startsWith(target) || task.name === target || task.slug === target,
             );
             if (!match) {
-              addMessage({ role: "error", content: `No automation task matched: ${target}` });
+              addMessage({
+                role: "error",
+                content: `No automation task matched: ${target}`,
+              });
               return;
             }
             taskId = match.taskId;
@@ -463,7 +496,11 @@ export function App({ client }: AppProps) {
             taskId ? { taskId, limit: 10 } : { limit: 10 },
           );
           if (runs.length === 0) {
-            addMessage({ role: "tool", content: "No automation runs found.", toolName: "system" });
+            addMessage({
+              role: "tool",
+              content: "No automation runs found.",
+              toolName: "system",
+            });
             return;
           }
 
@@ -544,10 +581,16 @@ export function App({ client }: AppProps) {
           if (rest.startsWith("search ")) {
             const query = rest.slice(7).trim();
             if (!query) {
-              addMessage({ role: "error", content: "Usage: /memory search <query>" });
+              addMessage({
+                role: "error",
+                content: "Usage: /memory search <query>",
+              });
               return;
             }
-            const results = await client.memory.search.query({ query, limit: 8 });
+            const results = await client.memory.search.query({
+              query,
+              limit: 8,
+            });
             if (results.length === 0) {
               addMessage({
                 role: "tool",
@@ -593,7 +636,9 @@ export function App({ client }: AppProps) {
           if (["curated", "profile", "project", "operational", "journal"].includes(rest)) {
             const overview = await client.memory.overview.query();
             if (rest === "curated") {
-              const result = await client.memory.read.query({ layer: "curated" });
+              const result = await client.memory.read.query({
+                layer: "curated",
+              });
               addMessage({
                 role: "tool",
                 content: result.content || "(curated memory is empty)",
@@ -636,7 +681,11 @@ export function App({ client }: AppProps) {
             session: showAll ? undefined : (sessionId ?? undefined),
           });
           if (entries.length === 0) {
-            addMessage({ role: "tool", content: "No audit entries found.", toolName: "system" });
+            addMessage({
+              role: "tool",
+              content: "No audit entries found.",
+              toolName: "system",
+            });
             return;
           }
           const lines = entries.map((entry: any) => {
@@ -688,7 +737,10 @@ export function App({ client }: AppProps) {
           if (rest.startsWith("diff ")) {
             const hash = rest.slice(5).trim();
             if (!hash) {
-              addMessage({ role: "error", content: "Usage: /rollback diff <hash>" });
+              addMessage({
+                role: "error",
+                content: "Usage: /rollback diff <hash>",
+              });
               return;
             }
             const result = await client.checkpoint.diff.query({
@@ -696,7 +748,10 @@ export function App({ client }: AppProps) {
               commitHash: hash,
             });
             if (!result.success) {
-              addMessage({ role: "error", content: result.error ?? "Failed to diff checkpoint." });
+              addMessage({
+                role: "error",
+                content: result.error ?? "Failed to diff checkpoint.",
+              });
               return;
             }
             addMessage({
@@ -709,7 +764,10 @@ export function App({ client }: AppProps) {
 
           const [commitHash, ...fileParts] = rest.split(/\s+/);
           if (!commitHash) {
-            addMessage({ role: "error", content: "Usage: /rollback <hash> [file]" });
+            addMessage({
+              role: "error",
+              content: "Usage: /rollback <hash> [file]",
+            });
             return;
           }
           const filePath = fileParts.length > 0 ? fileParts.join(" ") : undefined;
@@ -719,7 +777,10 @@ export function App({ client }: AppProps) {
             filePath,
           });
           if (!result.success) {
-            addMessage({ role: "error", content: result.error ?? "Rollback failed." });
+            addMessage({
+              role: "error",
+              content: result.error ?? "Rollback failed.",
+            });
             return;
           }
           addMessage({
@@ -781,7 +842,11 @@ export function App({ client }: AppProps) {
                   });
                   break;
                 case "reaction":
-                  addMessage({ role: "tool", content: event.emoji, toolName: "reaction" });
+                  addMessage({
+                    role: "tool",
+                    content: event.emoji,
+                    toolName: "reaction",
+                  });
                   break;
                 case "done":
                   if (fullText) {
@@ -828,7 +893,11 @@ export function App({ client }: AppProps) {
       try {
         await client.model.switch.mutate({ name });
         setModelName(name);
-        addMessage({ role: "tool", content: `Switched to model: ${name}`, toolName: "system" });
+        addMessage({
+          role: "tool",
+          content: `Switched to model: ${name}`,
+          toolName: "system",
+        });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         addMessage({ role: "error", content: msg });
@@ -850,7 +919,9 @@ export function App({ client }: AppProps) {
         }
         setSessionId(match.id);
         setSessionConnectorType(match.connectorType);
-        const history = await client.chat.history.query({ sessionId: match.id });
+        const history = await client.chat.history.query({
+          sessionId: match.id,
+        });
         const historyMessages: ChatMessage[] = (history.messages as any[]).map((m: any) => ({
           id: nextId(),
           role: m.role === "assistant" ? "assistant" : m.role === "user" ? "user" : "tool",
@@ -902,7 +973,11 @@ export function App({ client }: AppProps) {
     (questionId: string, answer: string) => {
       client.question.answer.mutate({ id: questionId, answer });
       setPendingQuestion(null);
-      addMessage({ role: "tool", content: `Answer: ${answer}`, toolName: "ask_user" });
+      addMessage({
+        role: "tool",
+        content: `Answer: ${answer}`,
+        toolName: "ask_user",
+      });
     },
     [client],
   );

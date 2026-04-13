@@ -35,7 +35,7 @@ async function runOnboarding(existingConfig?: unknown): Promise<void> {
 
 async function loadExistingConfig(): Promise<unknown | undefined> {
   try {
-    const { ConfigManager } = await import("@aria/engine/config/index.js");
+    const { ConfigManager } = await import("@aria/server/config");
     const config = new ConfigManager(runtimeHome);
     const ariaConfig = await config.load();
     const secrets = await config.loadSecrets();

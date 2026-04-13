@@ -1,6 +1,6 @@
 import { getRuntimeHome } from "@aria/server/brand";
-import { loadSecrets, saveSecrets } from "@aria/engine/config/secrets.js";
-import type { SecretsFile, WeChatAccountSecret } from "@aria/engine/config/types.js";
+import { loadSecrets, saveSecrets } from "@aria/server/config/secrets";
+import type { SecretsFile, WeChatAccountSecret } from "@aria/server/config";
 
 export const DEFAULT_WECHAT_API_BASE_URL = "https://ilinkai.weixin.qq.com/";
 

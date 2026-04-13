@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { ConfigManager } from "@aria/engine/config/index.js";
-import { loadSecrets } from "@aria/engine/config/secrets.js";
+import { ConfigManager } from "@aria/server/config";
+import { loadSecrets } from "@aria/server/config/secrets";
 import { getRuntimeHome } from "@aria/server/brand";
 
 /**

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import type { AriaConfigFile } from "@aria/engine/config/index.js";
-import { loadSecrets, saveSecrets } from "@aria/engine/config/secrets.js";
-import type { SecretsFile } from "@aria/engine/config/types.js";
+import type { AriaConfigFile, SecretsFile } from "@aria/server/config";
+import { loadSecrets, saveSecrets } from "@aria/server/config/secrets";
 import type { ToolApprovalMode, ConnectorType } from "@aria/protocol";
 
 type Substep =
@@ -202,7 +201,10 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
       return;
     }
     if (key.return) {
-      const updated: SecretsFile = { ...secrets!, apiKeys: { ...secrets!.apiKeys } };
+      const updated: SecretsFile = {
+        ...secrets!,
+        apiKeys: { ...secrets!.apiKeys },
+      };
       if (substep === "edit-telegram-token") {
         const val = editValue.trim();
         if (val) {

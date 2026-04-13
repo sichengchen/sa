@@ -1,9 +1,13 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createEngineClient, type ClientOptions } from "./client.js";
 import {
   selectRelayRoute,
   type RelayTransportMode,
   type RelayTransportPreference,
 } from "@aria/relay";
+import { getRuntimeHome } from "@aria/server/brand";
+import { getRuntimeDiscoveryPaths } from "@aria/server/discovery";
 
 export type { EngineEvent, Session, SkillInfo, ToolApprovalRequest } from "@aria/protocol";
 
@@ -33,6 +37,8 @@ export interface AccessClientHandle {
   serverId: string;
   client: ReturnType<typeof createEngineClient>;
 }
+
+const DEFAULT_LOCAL_HTTP_PORT = 7420;
 
 export interface AccessClientTargetSummary {
   serverId: string;
@@ -146,4 +152,26 @@ export function createAccessClient(target: AccessClientTarget): AccessClientHand
     serverId,
     client: createEngineClient(clientOptions),
   };
+}
+
+export function buildLocalAccessClientOptions(runtimeHome = getRuntimeHome()): ClientOptions {
+  const { urlFile } = getRuntimeDiscoveryPaths(runtimeHome);
+  const httpUrl = existsSync(urlFile)
+    ? readFileSync(urlFile, "utf-8").trim()
+    : `http://127.0.0.1:${DEFAULT_LOCAL_HTTP_PORT}`;
+  const url = new URL(httpUrl);
+  const wsPort = parseInt(url.port, 10) + 1;
+  const wsUrl = `ws://${url.hostname}:${wsPort}`;
+  const tokenPath = join(runtimeHome, "engine.token");
+  const token = existsSync(tokenPath) ? readFileSync(tokenPath, "utf-8").trim() : undefined;
+
+  return {
+    httpUrl,
+    wsUrl,
+    token,
+  };
+}
+
+export function createLocalAccessClient(runtimeHome?: string) {
+  return createEngineClient(buildLocalAccessClientOptions(runtimeHome));
 }

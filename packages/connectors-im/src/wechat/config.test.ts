@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { saveSecrets } from "@aria/engine/config/secrets.js";
+import { saveSecrets } from "@aria/server/config/secrets";
 import {
   DEFAULT_WECHAT_API_BASE_URL,
   loadWeChatAccounts,

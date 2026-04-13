@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import { ConfigManager } from "@aria/engine/config/index.js";
-import type { AriaConfigFile } from "@aria/engine/config/index.js";
+import { ConfigManager, type AriaConfigFile } from "@aria/server/config";
 import { ProviderManager } from "./ProviderManager.js";
 import { ModelManager } from "./ModelManager.js";
 import { ConnectorSettings } from "./ConnectorSettings.js";

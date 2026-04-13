@@ -5,7 +5,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { createChatSDKClient } from "../chat-sdk/client.js";
 import { formatToolResult, splitMessage } from "../chat-sdk/formatter.js";
 import { getRuntimeHome } from "@aria/server/brand";
-import type { WeChatAccountSecret } from "@aria/engine/config/types.js";
+import type { WeChatAccountSecret } from "@aria/server/config";
 import { DEFAULT_WECHAT_API_BASE_URL, loadWeChatAccounts, upsertWeChatAccount } from "./config.js";
 
 const WECHAT_APP_ID = "bot";
@@ -162,7 +162,11 @@ function parseCommand(text: string): WeChatCommand | null {
 
   const answerMatch = trimmed.match(/^\/answer\s+(\S+)\s+([\s\S]+)$/i);
   if (answerMatch) {
-    return { kind: "answer", questionId: answerMatch[1]!, answer: answerMatch[2]!.trim() };
+    return {
+      kind: "answer",
+      questionId: answerMatch[1]!,
+      answer: answerMatch[2]!.trim(),
+    };
   }
 
   const modelMatch = trimmed.match(/^\/model\s+(.+)$/i);
@@ -374,7 +378,10 @@ class WeChatAccountRunner {
           return;
         }
         case "approve":
-          await this.client.tool.approve.mutate({ toolCallId: command.toolCallId, approved: true });
+          await this.client.tool.approve.mutate({
+            toolCallId: command.toolCallId,
+            approved: true,
+          });
           await this.sendText(peerId, `Approved ${command.toolCallId}.`);
           return;
         case "reject":
@@ -385,7 +392,9 @@ class WeChatAccountRunner {
           await this.sendText(peerId, `Rejected ${command.toolCallId}.`);
           return;
         case "always":
-          await this.client.tool.acceptForSession.mutate({ toolCallId: command.toolCallId });
+          await this.client.tool.acceptForSession.mutate({
+            toolCallId: command.toolCallId,
+          });
           await this.sendText(
             peerId,
             `Allowed ${command.toolCallId} for the rest of this session.`,

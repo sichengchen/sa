@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import type { AriaConfigFile } from "@aria/engine/config/index.js";
-import type { ProviderConfig } from "@aria/engine/router/index.js";
-import { loadSecrets, saveSecrets } from "@aria/engine/config/secrets.js";
-import type { SecretsFile } from "@aria/engine/config/types.js";
+import type { AriaConfigFile, SecretsFile } from "@aria/server/config";
+import { loadSecrets, saveSecrets } from "@aria/server/config/secrets";
+import type { ProviderConfig } from "@aria/gateway/router/types";
 import {
   MINIMAX_API_KEY_ENV_VAR,
   MINIMAX_BASE_URL,
@@ -22,16 +21,36 @@ const PROVIDER_TYPES: {
   baseUrl?: string;
   compatMode?: "custom";
 }[] = [
-  { id: "anthropic", type: "anthropic", label: "Anthropic", defaultEnvVar: "ANTHROPIC_API_KEY" },
-  { id: "openai", type: "openai", label: "OpenAI", defaultEnvVar: "OPENAI_API_KEY" },
-  { id: "google", type: "google", label: "Google", defaultEnvVar: "GOOGLE_AI_API_KEY" },
+  {
+    id: "anthropic",
+    type: "anthropic",
+    label: "Anthropic",
+    defaultEnvVar: "ANTHROPIC_API_KEY",
+  },
+  {
+    id: "openai",
+    type: "openai",
+    label: "OpenAI",
+    defaultEnvVar: "OPENAI_API_KEY",
+  },
+  {
+    id: "google",
+    type: "google",
+    label: "Google",
+    defaultEnvVar: "GOOGLE_AI_API_KEY",
+  },
   {
     id: "openrouter",
     type: "openrouter",
     label: "OpenRouter",
     defaultEnvVar: "OPENROUTER_API_KEY",
   },
-  { id: "nvidia", type: "nvidia", label: "Nvidia NIM", defaultEnvVar: "NVIDIA_API_KEY" },
+  {
+    id: "nvidia",
+    type: "nvidia",
+    label: "Nvidia NIM",
+    defaultEnvVar: "NVIDIA_API_KEY",
+  },
   {
     id: MINIMAX_PROVIDER_ID,
     type: "openai-compat",
@@ -158,14 +177,20 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
           apiKeyEnvVar: pt.defaultEnvVar,
           ...(pt.baseUrl ? { baseUrl: pt.baseUrl } : {}),
         };
-        const updated = { ...config, providers: [...config.providers, newProvider] };
+        const updated = {
+          ...config,
+          providers: [...config.providers, newProvider],
+        };
 
         // Save provider config + secret
         const saveAll = async () => {
           if (apiKeyValue.trim() && secrets) {
             const updatedSecrets = {
               ...secrets,
-              apiKeys: { ...secrets.apiKeys, [pt.defaultEnvVar]: apiKeyValue.trim() },
+              apiKeys: {
+                ...secrets.apiKeys,
+                [pt.defaultEnvVar]: apiKeyValue.trim(),
+              },
             };
             await saveSecrets(homeDir, updatedSecrets);
             setSecrets(updatedSecrets);
@@ -228,7 +253,10 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
           apiKeyEnvVar: envVar,
           ...(newBaseUrl.trim() ? { baseUrl: newBaseUrl.trim() } : {}),
         };
-        const updated = { ...config, providers: [...config.providers, newProvider] };
+        const updated = {
+          ...config,
+          providers: [...config.providers, newProvider],
+        };
 
         const saveAll = async () => {
           if (newApiKey.trim() && secrets) {

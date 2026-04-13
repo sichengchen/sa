@@ -2,9 +2,13 @@ import { describe, expect, test } from "bun:test";
 
 import {
   buildAccessClientConfig,
+  buildLocalAccessClientOptions,
   buildAccessClientTargetRoster,
   buildClientProjectThreadSummary,
 } from "@aria/access-client";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   createProjectServerRoster,
   createProjectThreadListItem,
@@ -153,5 +157,22 @@ describe("client surfaces", () => {
     });
     expect(mobile.bootstrap.activeServerLabel).toBe("Home Server");
     expect(mobile.bootstrap.initialThread?.threadType).toBe("remote_project");
+  });
+
+  test("builds local access client options from discovery and token files", async () => {
+    const runtimeHome = await mkdtemp(join(tmpdir(), "aria-access-client-"));
+
+    try {
+      await writeFile(join(runtimeHome, "engine.url"), "http://127.0.0.1:8123\n");
+      await writeFile(join(runtimeHome, "engine.token"), "secret-token\n");
+
+      expect(buildLocalAccessClientOptions(runtimeHome)).toEqual({
+        httpUrl: "http://127.0.0.1:8123",
+        wsUrl: "ws://127.0.0.1:8124",
+        token: "secret-token",
+      });
+    } finally {
+      await rm(runtimeHome, { recursive: true, force: true });
+    }
   });
 });

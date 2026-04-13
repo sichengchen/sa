@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import type { AriaConfigFile } from "@aria/engine/config/index.js";
-import type { ModelConfig, ProviderConfig } from "@aria/engine/router/index.js";
-import type { ModelTier } from "@aria/engine/router/task-types.js";
-import { loadSecrets } from "@aria/engine/config/secrets.js";
+import type { AriaConfigFile } from "@aria/server/config";
+import { loadSecrets } from "@aria/server/config/secrets";
+import type { ModelTier } from "@aria/gateway/router/task-types";
+import type { ModelConfig, ProviderConfig } from "@aria/gateway/router/types";
 import { fetchModelList, lookupModelMeta } from "../shared/fetch-models.js";
 
 type Screen =
@@ -382,7 +382,10 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
           temperature: parseFloat(newTemp) || 0.7,
           maxTokens: parseInt(newMaxTokens) || 8192,
         };
-        const updated = { ...config, models: [...config.models, newModelConfig] };
+        const updated = {
+          ...config,
+          models: [...config.models, newModelConfig],
+        };
         onSave(updated).then(() => {
           setScreen("chat-list");
           setSelected(0);
@@ -446,7 +449,10 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
         <>
           {[
             { label: "Chat models", detail: `${chatModels.length} configured` },
-            { label: "Embedding models", detail: `${embeddingModels.length} configured` },
+            {
+              label: "Embedding models",
+              detail: `${embeddingModels.length} configured`,
+            },
           ].map((item, i) => (
             <Text key={item.label}>
               {i === selected ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}

@@ -16,11 +16,10 @@ import { LinearSetup, type LinearSetupData } from "./steps/LinearSetup.js";
 import { SkillSetup, type SkillSetupData } from "./steps/SkillSetup.js";
 import { UserProfile, type UserProfileData } from "./steps/UserProfile.js";
 import { Confirm, type WizardData } from "./steps/Confirm.js";
-import { loadSecrets, saveSecrets } from "@aria/engine/config/secrets.js";
-import { BUNDLED_SKILLS_DIR } from "@aria/engine/skills/registry.js";
-import { EMBEDDED_SKILLS } from "@aria/engine/skills/embedded-skills.generated.js";
-import type { ModelConfig, ProviderConfig } from "@aria/engine/router/types.js";
-import type { ModelTier } from "@aria/engine/router/task-types.js";
+import { loadSecrets, saveSecrets } from "@aria/server/config/secrets";
+import { BUNDLED_SKILLS_DIR, EMBEDDED_SKILLS } from "@aria/memory/skills/assets";
+import type { ModelConfig, ProviderConfig } from "@aria/gateway/router/types";
+import type { ModelTier } from "@aria/gateway/router/task-types";
 
 type Step =
   | "welcome"
@@ -335,7 +334,10 @@ ${recurringContext}
         <DiscordSetup
           currentValues={
             existingConfig
-              ? { discordToken: data.discordToken ?? "", discordGuildId: data.discordGuildId ?? "" }
+              ? {
+                  discordToken: data.discordToken ?? "",
+                  discordGuildId: data.discordGuildId ?? "",
+                }
               : undefined
           }
           onNext={(discordData: DiscordSetupData) => {
@@ -368,7 +370,10 @@ ${recurringContext}
         <TeamsSetup
           currentValues={
             existingConfig
-              ? { teamsBotId: data.teamsBotId ?? "", teamsBotPassword: data.teamsBotPassword ?? "" }
+              ? {
+                  teamsBotId: data.teamsBotId ?? "",
+                  teamsBotPassword: data.teamsBotPassword ?? "",
+                }
               : undefined
           }
           onNext={(teamsData: TeamsSetupData) => {

@@ -14,5 +14,6 @@ export type {
   SecretsFile,
   ToolPolicyConfig,
   ToolVerbosity,
+  WeChatAccountSecret,
   WebhookTask,
 } from "./config/types.js";

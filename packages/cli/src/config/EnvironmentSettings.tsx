@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import type { AriaConfigFile } from "@aria/engine/config/index.js";
-import { loadSecrets, saveSecrets } from "@aria/engine/config/secrets.js";
-import type { SecretsFile } from "@aria/engine/config/types.js";
+import type { AriaConfigFile, SecretsFile } from "@aria/server/config";
+import { loadSecrets, saveSecrets } from "@aria/server/config/secrets";
 
 type Screen = "menu" | "variables" | "secrets";
 type ListMode = "list" | "edit-value" | "add-name" | "add-value" | "confirm-delete";
@@ -339,7 +338,10 @@ export function EnvironmentSettings({ config, homeDir, onSave, onBack }: Environ
         entries={secretEntries}
         maskValues
         onSave={async (key, value) => {
-          const updated = { ...secrets, apiKeys: { ...secrets.apiKeys, [key]: value } };
+          const updated = {
+            ...secrets,
+            apiKeys: { ...secrets.apiKeys, [key]: value },
+          };
           await saveSecrets(homeDir, updated);
           setSecrets(updated);
         }}
@@ -351,7 +353,10 @@ export function EnvironmentSettings({ config, homeDir, onSave, onBack }: Environ
           setSecrets(updated);
         }}
         onAdd={async (key, value) => {
-          const updated = { ...secrets, apiKeys: { ...secrets.apiKeys, [key]: value } };
+          const updated = {
+            ...secrets,
+            apiKeys: { ...secrets.apiKeys, [key]: value },
+          };
           await saveSecrets(homeDir, updated);
           setSecrets(updated);
         }}
