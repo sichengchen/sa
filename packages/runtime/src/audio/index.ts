@@ -3,4 +3,4 @@ export {
   type Transcriber,
   type TranscriberOptions,
   type TranscriptionBackend,
-} from "./transcriber.js";
+} from "@aria/server/audio";

@@ -18,16 +18,16 @@ During this phase:
 
 ## Current-To-Target Ownership Map
 
-| Target surface     | Current source owner                                                                                                                    | Seeded seam should own                                                                                                                                                         | Compatibility surface kept at                                          |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `@aria/server`     | `packages/server/src/{app,brand,daemon,discovery,engine}.ts` plus `packages/gateway/src/server.ts` and `@aria/runtime` composition      | Server bootstrap helpers, runtime + gateway composition root, runtime-home/brand helpers, discovery-file lifecycle coordination, and a package-owned Aria Server entry surface | `@aria/runtime`, `@aria/gateway`, and the current `aria` CLI boot path |
-| `apps/aria-server` | Root `package.json` scripts plus the current CLI/daemon launch flow in `packages/cli/src/index.ts` and `packages/runtime/src/engine.ts` | Thin deployable app wrapper for local dev/build/start flows that runs `@aria/server` without re-owning runtime internals                                                       | Root repo scripts, `dist/index.mjs`, and the current `aria` binary     |
+| Target surface     | Current source owner                                                                                                                                       | Seeded seam should own                                                                                                                                                         | Compatibility surface kept at                                          |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `@aria/server`     | `packages/server/src/{app,brand,daemon,discovery,engine,runtime}.ts` plus `packages/gateway/src/server.ts` and remaining `@aria/runtime` kernel submodules | Server bootstrap helpers, runtime + gateway composition root, runtime-home/brand helpers, discovery-file lifecycle coordination, and a package-owned Aria Server entry surface | `@aria/runtime`, `@aria/gateway`, and the current `aria` CLI boot path |
+| `apps/aria-server` | Root `package.json` scripts plus the current CLI/daemon launch flow in `packages/cli/src/index.ts` and `packages/runtime/src/engine.ts`                    | Thin deployable app wrapper for local dev/build/start flows that runs `@aria/server` without re-owning runtime internals                                                       | Root repo scripts, `dist/index.mjs`, and the current `aria` binary     |
 
 ## Review Notes And Hotspots
 
 ### `@aria/server`
 
-- `packages/server/src/{brand,daemon,discovery,engine}.ts` now own the daemon bootstrap, runtime-home/brand helpers, discovery-file, and lifecycle shell; keep any remaining compatibility wrappers thin.
+- `packages/server/src/{brand,daemon,discovery,engine,runtime}.ts` now own the daemon bootstrap, runtime-home/brand helpers, discovery-file lifecycle, and the live server composition root; keep any remaining compatibility wrappers thin.
 - `packages/gateway/src/server.ts` should stay focused on transport/auth concerns; the new package seam should compose it, not move assistant or project logic into the gateway layer.
 - `@aria/server` should depend on the already-seeded server packages (`@aria/gateway`, `@aria/agent-aria`, `@aria/projects`, `@aria/jobs`, `@aria/workspaces`, `@aria/memory`, `@aria/automation`, `@aria/connectors-im`) instead of recreating their boundaries.
 
