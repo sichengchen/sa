@@ -120,8 +120,20 @@ describe("aria-mobile native host scaffold", () => {
     });
 
     expect(createAriaMobileNativeHostModel(shell).recentSessions).toEqual([
-      { sessionId: "mobile:live-1", kind: "live" },
-      { sessionId: "mobile:archived-1", kind: "archived" },
+      {
+        sessionId: "mobile:live-1",
+        kind: "live",
+        preview: undefined,
+        summary: undefined,
+        score: undefined,
+      },
+      {
+        sessionId: "mobile:archived-1",
+        kind: "archived",
+        preview: "Archived",
+        summary: "Archived summary",
+        score: undefined,
+      },
     ]);
 
     const bootstrap = await startAriaMobileNativeHostBootstrap({
@@ -142,8 +154,20 @@ describe("aria-mobile native host scaffold", () => {
     });
     expect(bootstrap.target.serverId).toBe("mobile");
     expect(bootstrap.model.recentSessions).toEqual([
-      { sessionId: "mobile:live-1", kind: "live" },
-      { sessionId: "mobile:archived-1", kind: "archived" },
+      {
+        sessionId: "mobile:live-1",
+        kind: "live",
+        preview: undefined,
+        summary: undefined,
+        score: undefined,
+      },
+      {
+        sessionId: "mobile:archived-1",
+        kind: "archived",
+        preview: "Archived",
+        summary: "Archived summary",
+        score: undefined,
+      },
     ]);
   });
 
@@ -347,7 +371,13 @@ describe("aria-mobile native host scaffold", () => {
 
     const searched = await controller.searchSessions("archived");
     expect(searched.model.recentSessions).toEqual([
-      { sessionId: "mobile:search-1", kind: "archived" },
+      {
+        sessionId: "mobile:search-1",
+        kind: "archived",
+        preview: "Search preview",
+        summary: "Search summary",
+        score: undefined,
+      },
     ]);
 
     const answered = await controller.answerQuestion("question-1", "Yes");

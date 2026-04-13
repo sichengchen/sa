@@ -165,6 +165,9 @@ export function AriaMobileNativeHost() {
             >
               <Text>
                 {session.sessionId} - {session.kind}
+                {session.preview ? ` - ${session.preview}` : ""}
+                {session.summary ? ` - ${session.summary}` : ""}
+                {session.score !== undefined ? ` - score:${session.score}` : ""}
               </Text>
             </Pressable>
           ))
