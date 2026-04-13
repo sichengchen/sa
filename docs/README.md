@@ -36,7 +36,6 @@ This tree is organized by reader intent, not by the old code layout.
 
 - Remaining current-state notes while the old architecture docs are retired in favor of `new-architecture/*`.
 - [architecture/README.md](./architecture/README.md)
-- [architecture/monorepo.md](./architecture/monorepo.md)
 - [architecture/runtime.md](./architecture/runtime.md)
 - [architecture/storage-and-recovery.md](./architecture/storage-and-recovery.md)
 - [architecture/tool-runtime.md](./architecture/tool-runtime.md)

@@ -73,6 +73,30 @@ services/
   aria-relay/
 ```
 
+## System Model
+
+```text
+Surface or Connector
+  -> Interaction Protocol
+  -> Runtime
+
+Projects / Workspaces / Jobs
+  -> durable tracked work
+  -> repo/worktree behavior
+  -> dispatch records and execution routing
+
+Relay
+  -> paired-device trust
+  -> attachment and envelope transport
+
+Handoff
+  -> local/runtime work submission into Projects
+```
+
+## Core Rule
+
+One tracked dispatch creates one runtime execution.
+
 ## Recommended Toolchain
 
 For desktop, shared UI packages, and client-facing libraries, Aria should standardize on the broader VoidZero stack while using `Vite+` for monorepo management and `bun` as the package manager/runtime choice where supported.
@@ -119,6 +143,10 @@ For the concrete app-shell decisions and Bun-runtime clarification, see [tech-de
 | `@aria/desktop-git`    | Local git and worktree integration helpers                                                                     |
 | `@aria/ui`             | Shared UI primitives and cross-app presentation components                                                     |
 | `@aria/relay`          | Secure access broker and optional hosted runtime service                                                       |
+
+## Current Repo State
+
+The repo is now package-first. Most target-state packages are real owners on `new-aria`, while a smaller set of legacy surfaces remain only as compatibility layers. Use [../development/phase-9-architecture-truth-table.md](../development/phase-9-architecture-truth-table.md) when you need the exact current repo owner to edit first.
 
 ## Tooling Ownership Notes
 

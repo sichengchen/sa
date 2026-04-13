@@ -57,7 +57,6 @@ flowchart TD
     STORE -.persists live state.-> PROJECTS
 ```
 
-- [monorepo.md](./monorepo.md)
 - [runtime.md](./runtime.md)
 - [storage-and-recovery.md](./storage-and-recovery.md)
 - [tool-runtime.md](./tool-runtime.md)
