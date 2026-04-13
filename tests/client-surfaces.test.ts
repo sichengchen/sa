@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
   buildAccessClientConfig,
+  createAriaChatController,
   buildLocalAccessClientOptions,
   buildAccessClientTargetRoster,
   buildClientProjectThreadSummary,
@@ -174,5 +175,52 @@ describe("client surfaces", () => {
     } finally {
       await rm(runtimeHome, { recursive: true, force: true });
     }
+  });
+
+  test("drives a live aria chat controller from health, session, and stream events", async () => {
+    const events = [
+      { type: "text_delta", delta: "Hello" },
+      { type: "text_delta", delta: " world" },
+      { type: "done", stopReason: "end_turn" },
+    ];
+
+    const controller = createAriaChatController(
+      {
+        health: {
+          ping: {
+            query: async () => ({ model: "sonnet", agentName: "Esperta Aria" }),
+          },
+        },
+        session: {
+          create: {
+            mutate: async () => ({ session: { id: "tui:session-1" } }),
+          },
+        },
+        chat: {
+          stream: {
+            subscribe(_input, handlers) {
+              for (const event of events) {
+                handlers.onData(event);
+              }
+              handlers.onComplete();
+            },
+          },
+        },
+      },
+      { connectorType: "tui", prefix: "tui" },
+    );
+
+    await controller.connect();
+    const finalState = await controller.sendMessage("hi");
+
+    expect(finalState.connected).toBe(true);
+    expect(finalState.sessionId).toBe("tui:session-1");
+    expect(finalState.modelName).toBe("sonnet");
+    expect(finalState.messages).toEqual([
+      { role: "user", content: "hi" },
+      { role: "assistant", content: "Hello world" },
+    ]);
+    expect(finalState.streamingText).toBe("");
+    expect(finalState.isStreaming).toBe(false);
   });
 });
