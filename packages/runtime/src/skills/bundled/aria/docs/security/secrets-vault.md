@@ -71,7 +71,7 @@ different ciphertext.
 
 ```ts
 interface SecretsFile {
-  apiKeys: Record<string, string>;   // e.g. { "ANTHROPIC_API_KEY": "sk-..." }
+  apiKeys: Record<string, string>;   // e.g. { "ANTHROPIC_API_KEY": "sk-...", "MINIMAX_API_KEY": "sk-..." }
   botToken?: string;                 // Telegram bot token
   pairedChatId?: number;             // Telegram paired chat ID
   pairingCode?: string;              // One-time pairing code

@@ -46,6 +46,7 @@ Common variables:
 | `OPENAI_API_KEY` | OpenAI provider auth |
 | `GOOGLE_AI_API_KEY` | Google provider auth |
 | `OPENROUTER_API_KEY` | OpenRouter provider auth |
+| `MINIMAX_API_KEY` | MiniMax provider auth |
 | connector-specific tokens | Telegram, Discord, Slack, Teams, Google Chat, GitHub, Linear, WeChat |
 
 Resolution order remains:
@@ -59,7 +60,7 @@ Resolution order remains:
 `config.json` owns:
 
 - runtime defaults and active model
-- provider and model registry
+- provider and model registry, including OpenAI-compatible presets such as MiniMax
 - tool approval defaults
 - tool reporting policy
 - heartbeat configuration
@@ -81,3 +82,5 @@ User-installed skills live under `~/.aria/skills/`. Bundled skills are shipped w
 - Secrets stay encrypted at rest in `secrets.enc`.
 - Runtime-managed non-secret env values are loaded into the process at startup.
 - Persisted automation and tracked-work records should be considered durable state, not cache.
+- When using `scripts/migrate-legacy-esperta-code.ts`, back up `aria.db` before write mode and keep the dry-run JSON output as the migration manifest. The script does not create a backup or rollback point for you.
+- If a write pass needs to be reverted, restore the saved database backup first, then rerun dry-run to confirm the source state before trying again.

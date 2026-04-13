@@ -31,7 +31,20 @@ The legacy import path should preserve:
 - dispatch and worktree relationships where recoverable
 - external refs to legacy systems
 
-The migration tool supports dry-run reporting before mutation.
+The migration tool supports dry-run reporting before mutation and a normal write pass when run without `--dry-run`.
+
+## Safe Write-Mode Flow
+
+The script does not create backups or rollback artifacts for you. Use the dry-run output and your own filesystem backup as the safety boundary before mutating `aria.db`.
+
+1. Back up the runtime home or at least the current `aria.db` before write mode.
+2. Run the migration with `--dry-run` and save the JSON output alongside the backup. Treat that JSON as the migration manifest.
+3. Review the manifest counts and source/target paths, then rerun the same command without `--dry-run` to perform the import.
+4. After the write pass, compare the target database against the manifest and keep both with the backup until you are done validating the cutover.
+
+## Rollback
+
+If the write pass needs to be undone, stop Aria, restore the backed-up `aria.db` and any other runtime-home files you captured, and rerun dry-run before retrying. The rollback path is a filesystem restore, not a script flag.
 
 ## Current State
 

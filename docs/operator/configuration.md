@@ -82,3 +82,6 @@ User-installed skills live under `~/.aria/skills/`. Bundled skills are shipped w
 - Secrets stay encrypted at rest in `secrets.enc`.
 - Runtime-managed non-secret env values are loaded into the process at startup.
 - Persisted automation and tracked-work records should be considered durable state, not cache.
+- When using `scripts/migrate-legacy-esperta-code.ts`, start with `--dry-run` and keep the JSON output as the migration report you review before mutation.
+- Write mode creates a `.aria-migration-backups/<stem>/<migration-id>/` directory beside `aria.db`, writes `migration-manifest.json`, and prints the rollback hint on stderr.
+- If a write pass needs to be reverted, restore `aria.db` from the generated backup copy, copy any companion files back, then rerun dry-run before trying again.

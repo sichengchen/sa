@@ -16,6 +16,8 @@ Each backend adapter still has its own:
 - cancellation behavior
 - capability matrix
 
+The current provider registry includes Anthropic, OpenAI, Google, OpenRouter, and MiniMax. MiniMax is treated as an OpenAI-compatible provider.
+
 The runtime/jobs layer resolves a backend through the shared coding-agent registry rather than hard-coding one execution path.
 
 ## Runtime Integration
