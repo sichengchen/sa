@@ -627,6 +627,82 @@ describe("Aria mobile app surface", () => {
     expect(serialized).toContain("mobile:archived-1");
   });
 
+  test("wires mobile shell callbacks for switching servers and opening sessions", () => {
+    const shell = createAriaMobileAppShell({
+      target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      activeServerId: "mobile",
+    });
+
+    const rendered = AriaMobileApplicationShell({
+      shell: {
+        ...shell,
+        ariaRecentSessions: [
+          {
+            sessionId: "mobile:recent-1",
+            connectorType: "tui",
+            connectorId: "mobile",
+            archived: false,
+          },
+        ],
+      },
+      onSwitchServer() {},
+      onOpenAriaSession() {},
+    });
+
+    const findElement = (
+      node: unknown,
+      predicate: (props: Record<string, unknown>) => boolean,
+    ): { props: Record<string, unknown> } | undefined => {
+      if (Array.isArray(node)) {
+        for (const entry of node) {
+          const found = findElement(entry, predicate);
+          if (found) return found;
+        }
+        return undefined;
+      }
+      if (!node || typeof node !== "object" || !("props" in node)) {
+        return undefined;
+      }
+
+      const props = (node as { props: Record<string, unknown> }).props;
+      if (predicate(props)) {
+        return { props };
+      }
+      return findElement(props.children, predicate);
+    };
+
+    const header = (
+      (rendered as { props: { children: unknown[] } }).props.children as unknown[]
+    )[0] as {
+      props: { children: unknown[] };
+    };
+    const serverSwitcher = header.props.children[3] as {
+      props: { children: unknown[] };
+    };
+    const select = serverSwitcher.props.children[2] as {
+      props: Record<string, unknown>;
+    };
+    expect(typeof select.props.onChange).toBe("function");
+
+    const openButton = findElement(
+      rendered,
+      (props) => props["data-open-session-id"] === "mobile:recent-1",
+    );
+    expect(openButton).toBeDefined();
+    expect(openButton!.props["data-open-session-id"]).toBe("mobile:recent-1");
+    expect(typeof openButton!.props.onClick).toBe("function");
+  });
+
   test("can switch the mobile app shell to another server", async () => {
     const relayState = {
       connected: true,

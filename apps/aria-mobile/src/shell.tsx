@@ -19,14 +19,23 @@ import {
 export interface AriaMobileApplicationShellProps {
   shell: AriaMobileAppShell;
   navigation?: AriaMobileNavigation;
+  onSwitchServer?(serverId: string): void;
+  onOpenAriaSession?(sessionId: string): void;
 }
 
-function renderServerSwitcher(shell: AriaMobileAppShell): ReactElement {
+function renderServerSwitcher(
+  shell: AriaMobileAppShell,
+  onSwitchServer?: (serverId: string) => void,
+): ReactElement {
   return (
     <section data-slot="server-switcher" data-placement={shell.app.serverSwitcher.placement}>
       <h2>{shell.app.serverSwitcher.label}</h2>
       <p>Active: {shell.activeServerLabel}</p>
-      <select aria-label="Server switcher" defaultValue={shell.activeServerId}>
+      <select
+        aria-label="Server switcher"
+        defaultValue={shell.activeServerId}
+        onChange={(event) => onSwitchServer?.((event.target as HTMLSelectElement).value)}
+      >
         {shell.serverSwitcher.availableServers.map((server) => (
           <option key={server.id} value={server.id}>
             {server.label}
@@ -91,7 +100,7 @@ export function AriaMobileApplicationShell(props: AriaMobileApplicationShellProp
         <h1>{ariaMobileApplication.displayName}</h1>
         <p>{ariaMobileApplication.startup.landingDescription}</p>
         <small>Remote-first stacked shell with approvals, reconnect, and project review.</small>
-        {renderServerSwitcher(props.shell)}
+        {renderServerSwitcher(props.shell, props.onSwitchServer)}
       </header>
 
       <nav aria-label="Primary tabs" data-tabs={ariaMobileTabs.length}>
@@ -141,6 +150,15 @@ export function AriaMobileApplicationShell(props: AriaMobileApplicationShellProp
               {props.shell.ariaRecentSessions.map((session) => (
                 <li key={session.sessionId} data-session-id={session.sessionId}>
                   {session.sessionId} - {session.archived ? "archived" : "live"}
+                  {props.onOpenAriaSession ? (
+                    <button
+                      type="button"
+                      data-open-session-id={session.sessionId}
+                      onClick={() => props.onOpenAriaSession?.(session.sessionId)}
+                    >
+                      Open
+                    </button>
+                  ) : null}
                 </li>
               ))}
             </ul>
