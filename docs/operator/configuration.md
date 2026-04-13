@@ -46,6 +46,7 @@ Common variables:
 | `OPENAI_API_KEY` | OpenAI provider auth |
 | `GOOGLE_AI_API_KEY` | Google provider auth |
 | `OPENROUTER_API_KEY` | OpenRouter provider auth |
+| `MINIMAX_API_KEY` | MiniMax provider auth |
 | connector-specific tokens | Telegram, Discord, Slack, Teams, Google Chat, GitHub, Linear, WeChat |
 
 Resolution order remains:
@@ -59,7 +60,7 @@ Resolution order remains:
 `config.json` owns:
 
 - runtime defaults and active model
-- provider and model registry
+- provider and model registry, including OpenAI-compatible presets such as MiniMax
 - tool approval defaults
 - tool reporting policy
 - heartbeat configuration

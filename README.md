@@ -38,6 +38,7 @@ bun run dev
 ```
 
 On first run, Aria writes operator state under `~/.aria/` and opens the onboarding flow if needed.
+That flow can configure provider presets such as Anthropic, OpenAI, Google, OpenRouter, and MiniMax.
 
 ## CLI
 
