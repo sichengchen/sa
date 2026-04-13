@@ -287,6 +287,8 @@ describe("aria-desktop app assembly", () => {
     expect(text.replace(/\s+/g, " ")).toContain("Aria thread: disconnected");
     expect(text.replace(/\s+/g, " ")).toContain("Status: disconnected");
     expect(text.replace(/\s+/g, " ")).toContain("Aria chat messages: 0");
+    expect(text).toContain("Send");
+    expect(text).toContain("Stop");
     expect(text.replace(/\s+/g, " ")).toContain("Placement: bottom-docked");
   });
 
@@ -315,6 +317,8 @@ describe("aria-desktop app assembly", () => {
 
     const manualRoot = AriaDesktopApplicationRoot({
       model,
+      onSendAriaMessage() {},
+      onStopAriaSession() {},
     });
     expect(manualRoot.type).toBe(AriaDesktopAppShell);
     const rendered = AriaDesktopAppShell({ model });
@@ -698,6 +702,11 @@ describe("aria-desktop app assembly", () => {
     );
     expect(openButton?.props.children).toBe("Open");
     expect(typeof openButton?.props.onClick).toBe("function");
+
+    const sendButton = findElement(shell, (props) => props.children === "Send");
+    const stopButton = findElement(shell, (props) => props.children === "Stop");
+    expect(sendButton?.props.type).toBe("submit");
+    expect(typeof stopButton?.props.onClick).toBe("function");
   });
 
   test("can switch the desktop app shell to another server", async () => {
