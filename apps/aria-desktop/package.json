@@ -3,5 +3,15 @@
   "private": true,
   "description": "Aria Desktop app assembly and host wrapper over the @aria/desktop shell seam",
   "type": "module",
-  "main": "./src/index.ts"
+  "main": "./dist/electron-main.js",
+  "scripts": {
+    "dev:renderer": "vite --config ./vite.config.ts",
+    "build:renderer": "vite build --config ./vite.config.ts",
+    "build:host": "bun build ./src/electron-main.ts ./src/electron-preload.ts --outdir ./dist --target node --external electron",
+    "build": "bun run build:renderer && bun run build:host",
+    "start": "bun run build && electron ./dist/electron-main.js"
+  },
+  "dependencies": {
+    "electron": "^37.2.0"
+  }
 }
