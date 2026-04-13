@@ -45,7 +45,7 @@ afterEach(() => {
 describe("relayCommand", () => {
   test("consumes the public relay package instead of package src internals", async () => {
     const relayCliSource = await readRepoText("packages/cli/src/relay.ts");
-    expect(relayCliSource).toContain('from "../../../services/aria-relay/src/index.js"');
+    expect(relayCliSource).toContain('from "aria-relay"');
     expect(relayCliSource).toContain("runAriaRelayServiceHost");
     expect(relayCliSource).not.toContain('from "@aria/relay/service"');
     expect(relayCliSource).not.toContain('from "@aria/relay/store"');

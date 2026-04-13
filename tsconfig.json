@@ -25,6 +25,8 @@
       "@aria/runtime/*": ["./packages/runtime/src/*"],
       "aria-server": ["./apps/aria-server/src/index.ts"],
       "aria-server/*": ["./apps/aria-server/src/*"],
+      "aria-relay": ["./services/aria-relay/src/index.ts"],
+      "aria-relay/*": ["./services/aria-relay/src/*"],
       "@aria/server": ["./packages/server/src/index.ts"],
       "@aria/server/*": ["./packages/server/src/*"],
       "@aria/desktop": ["./packages/desktop/src/index.ts"],
