@@ -36,7 +36,11 @@ function buildSkillDir(homeDir: string, name: string, category?: string): string
   return category ? join(skillsRoot(homeDir), category, name) : join(skillsRoot(homeDir), name);
 }
 
-function findWritableSkillPath(homeDir: string, registry: SkillRegistry, name: string): string | null {
+function findWritableSkillPath(
+  homeDir: string,
+  registry: SkillRegistry,
+  name: string,
+): string | null {
   const meta = registry.get(name);
   if (!meta || meta.filePath.startsWith("embedded:")) {
     return null;
@@ -76,7 +80,8 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
   return {
     name: "skill_manage",
     description: "Create, update, patch, and delete reusable skills under ~/.aria/skills.",
-    summary: "Manage reusable skills. Use this to save successful workflows as skills and patch outdated skills.",
+    summary:
+      "Manage reusable skills. Use this to save successful workflows as skills and patch outdated skills.",
     dangerLevel: "moderate",
     parameters: Type.Object({
       action: Type.Union([
@@ -88,11 +93,17 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
         Type.Literal("remove_file"),
       ]),
       name: Type.String({ description: "Skill name" }),
-      category: Type.Optional(Type.String({ description: "Optional category directory for new skills" })),
+      category: Type.Optional(
+        Type.String({ description: "Optional category directory for new skills" }),
+      ),
       content: Type.Optional(Type.String({ description: "Full SKILL.md content for create/edit" })),
       old_string: Type.Optional(Type.String({ description: "Existing text to replace for patch" })),
       new_string: Type.Optional(Type.String({ description: "Replacement text for patch" })),
-      file_path: Type.Optional(Type.String({ description: "Relative path under references/, templates/, scripts/, or assets/" })),
+      file_path: Type.Optional(
+        Type.String({
+          description: "Relative path under references/, templates/, scripts/, or assets/",
+        }),
+      ),
       file_content: Type.Optional(Type.String({ description: "Content for write_file" })),
     }),
     async execute(args) {
@@ -136,7 +147,10 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
           }
           const skillPath = findWritableSkillPath(deps.homeDir, deps.registry, name);
           if (!skillPath) {
-            return { content: `Skill "${name}" is not editable from ~/.aria/skills.`, isError: true };
+            return {
+              content: `Skill "${name}" is not editable from ~/.aria/skills.`,
+              isError: true,
+            };
           }
           await writeFile(skillPath, content);
           await deps.registry.loadAll(deps.homeDir);
@@ -149,16 +163,25 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
           const newString = String(args.new_string ?? "");
           const skillPath = findWritableSkillPath(deps.homeDir, deps.registry, name);
           if (!skillPath) {
-            return { content: `Skill "${name}" is not editable from ~/.aria/skills.`, isError: true };
+            return {
+              content: `Skill "${name}" is not editable from ~/.aria/skills.`,
+              isError: true,
+            };
           }
           const current = await readFile(skillPath, "utf-8");
           const occurrences = current.split(oldString).length - 1;
           if (occurrences !== 1) {
-            return { content: `Patch target must appear exactly once; found ${occurrences}.`, isError: true };
+            return {
+              content: `Patch target must appear exactly once; found ${occurrences}.`,
+              isError: true,
+            };
           }
           const updated = current.replace(oldString, newString);
           if (updated.length > MAX_SKILL_CONTENT_CHARS) {
-            return { content: `Patched skill would exceed ${MAX_SKILL_CONTENT_CHARS.toLocaleString()} characters.`, isError: true };
+            return {
+              content: `Patched skill would exceed ${MAX_SKILL_CONTENT_CHARS.toLocaleString()} characters.`,
+              isError: true,
+            };
           }
           await writeFile(skillPath, updated);
           await deps.registry.loadAll(deps.homeDir);
@@ -169,7 +192,10 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
         case "delete": {
           const skillPath = findWritableSkillPath(deps.homeDir, deps.registry, name);
           if (!skillPath) {
-            return { content: `Skill "${name}" is not removable from ~/.aria/skills.`, isError: true };
+            return {
+              content: `Skill "${name}" is not removable from ~/.aria/skills.`,
+              isError: true,
+            };
           }
           await rm(dirname(skillPath), { recursive: true, force: true });
           await deps.registry.loadAll(deps.homeDir);
@@ -185,7 +211,10 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
           }
           const skillPath = findWritableSkillPath(deps.homeDir, deps.registry, name);
           if (!skillPath) {
-            return { content: `Skill "${name}" is not editable from ~/.aria/skills.`, isError: true };
+            return {
+              content: `Skill "${name}" is not editable from ~/.aria/skills.`,
+              isError: true,
+            };
           }
           const skillDir = dirname(skillPath);
           const targetPath = ensureInsideSkillsRoot(rootDir, join(skillDir, relativePath));
@@ -208,7 +237,10 @@ export function createSkillManageTool(deps: SkillManageDeps): ToolImpl {
           }
           const skillPath = findWritableSkillPath(deps.homeDir, deps.registry, name);
           if (!skillPath) {
-            return { content: `Skill "${name}" is not editable from ~/.aria/skills.`, isError: true };
+            return {
+              content: `Skill "${name}" is not editable from ~/.aria/skills.`,
+              isError: true,
+            };
           }
           const skillDir = dirname(skillPath);
           const targetPath = ensureInsideSkillsRoot(rootDir, join(skillDir, relativePath));

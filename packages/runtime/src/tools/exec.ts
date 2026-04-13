@@ -97,13 +97,10 @@ export const execTool: ToolImpl = {
   parameters: Type.Object({
     command: Type.String({ description: "The shell command to execute" }),
     danger: Type.Optional(
-      Type.Union(
-        [Type.Literal("safe"), Type.Literal("moderate"), Type.Literal("dangerous")],
-        {
-          description:
-            'Self-declared danger level: "safe" for read-only (ls, cat, git status), "moderate" for reversible writes (git commit, npm install), "dangerous" for destructive ops (rm, sudo, kill). Defaults to "dangerous" if omitted.',
-        },
-      ),
+      Type.Union([Type.Literal("safe"), Type.Literal("moderate"), Type.Literal("dangerous")], {
+        description:
+          'Self-declared danger level: "safe" for read-only (ls, cat, git status), "moderate" for reversible writes (git commit, npm install), "dangerous" for destructive ops (rm, sudo, kill). Defaults to "dangerous" if omitted.',
+      }),
     ),
     workdir: Type.Optional(Type.String({ description: "Working directory (defaults to cwd)" })),
     env: Type.Optional(
@@ -121,7 +118,9 @@ export const execTool: ToolImpl = {
       }),
     ),
     timeout: Type.Optional(
-      Type.Number({ description: "Kill after this many seconds (default 300 foreground, 1800 background)" }),
+      Type.Number({
+        description: "Kill after this many seconds (default 300 foreground, 1800 background)",
+      }),
     ),
   }),
   async execute(args) {
@@ -163,7 +162,9 @@ export const execTool: ToolImpl = {
         const handle = generateHandle();
         registerBackground(handle, command, proc);
         setTimeout(() => {
-          try { proc.kill(); } catch {}
+          try {
+            proc.kill();
+          } catch {}
         }, timeoutMs);
         return {
           content: JSON.stringify({ handle, status: "running" }),
@@ -185,7 +186,9 @@ export const execTool: ToolImpl = {
           const handle = generateHandle();
           registerBackground(handle, command, proc);
           setTimeout(() => {
-            try { proc.kill(); } catch {}
+            try {
+              proc.kill();
+            } catch {}
           }, timeoutMs);
           return {
             content: JSON.stringify({

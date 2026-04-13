@@ -6,8 +6,15 @@ import type { ModelTier } from "@aria/engine/router/task-types.js";
 import { loadSecrets } from "@aria/engine/config/secrets.js";
 import { fetchModelList, lookupModelMeta } from "../shared/fetch-models.js";
 
-type Screen = "categories" | "chat-list" | "embedding-list" | "tier-assign"
-  | "add-provider" | "fetching" | "select-model" | "add-fields"
+type Screen =
+  | "categories"
+  | "chat-list"
+  | "embedding-list"
+  | "tier-assign"
+  | "add-provider"
+  | "fetching"
+  | "select-model"
+  | "add-fields"
   | "confirm-remove";
 type AddField = "name" | "temperature" | "maxTokens";
 type AddModelType = "chat" | "embedding";
@@ -56,7 +63,10 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
   useEffect(() => {
     if (screen !== "fetching") return;
     const provider = config.providers[providerIdx];
-    if (!provider) { setScreen("add-provider"); return; }
+    if (!provider) {
+      setScreen("add-provider");
+      return;
+    }
 
     (async () => {
       try {
@@ -125,7 +135,9 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
   function setTier(tier: ModelTier, modelName: string) {
     const newTiers = { ...tiers, [tier]: modelName };
     // If all tiers point to default, remove modelTiers entirely
-    const allDefault = TIERS.every((t) => (newTiers[t] ?? config.defaultModel) === config.defaultModel);
+    const allDefault = TIERS.every(
+      (t) => (newTiers[t] ?? config.defaultModel) === config.defaultModel,
+    );
     const updated: AriaConfigFile = {
       ...config,
       runtime: {
@@ -139,9 +151,18 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
   useInput((input, key) => {
     // --- CATEGORIES ---
     if (screen === "categories") {
-      if (key.escape) { onBack(); return; }
-      if (key.upArrow) { setSelected((s) => Math.max(0, s - 1)); return; }
-      if (key.downArrow) { setSelected((s) => Math.min(1, s + 1)); return; }
+      if (key.escape) {
+        onBack();
+        return;
+      }
+      if (key.upArrow) {
+        setSelected((s) => Math.max(0, s - 1));
+        return;
+      }
+      if (key.downArrow) {
+        setSelected((s) => Math.min(1, s + 1));
+        return;
+      }
       if (key.return) {
         setSelected(0);
         setScreen(selected === 0 ? "chat-list" : "embedding-list");
@@ -153,9 +174,21 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
     if (screen === "chat-list") {
       // Items: chat models + "Tier Assignments" separator + tier rows + "+ Add chat model"
       const items = chatModels.length + 1 + TIERS.length + 1; // models + separator + tiers + add
-      if (key.escape) { setScreen("categories"); setSelected(0); return; }
-      if (key.upArrow) { setSelected((s) => Math.max(0, s - 1)); setNotice(""); return; }
-      if (key.downArrow) { setSelected((s) => Math.min(items - 1, s + 1)); setNotice(""); return; }
+      if (key.escape) {
+        setScreen("categories");
+        setSelected(0);
+        return;
+      }
+      if (key.upArrow) {
+        setSelected((s) => Math.max(0, s - 1));
+        setNotice("");
+        return;
+      }
+      if (key.downArrow) {
+        setSelected((s) => Math.min(items - 1, s + 1));
+        setNotice("");
+        return;
+      }
 
       if (key.return) {
         if (selected < chatModels.length) {
@@ -203,9 +236,19 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
     // --- EMBEDDING LIST ---
     if (screen === "embedding-list") {
       const items = embeddingModels.length + 1; // models + add
-      if (key.escape) { setScreen("categories"); setSelected(0); return; }
-      if (key.upArrow) { setSelected((s) => Math.max(0, s - 1)); return; }
-      if (key.downArrow) { setSelected((s) => Math.min(items - 1, s + 1)); return; }
+      if (key.escape) {
+        setScreen("categories");
+        setSelected(0);
+        return;
+      }
+      if (key.upArrow) {
+        setSelected((s) => Math.max(0, s - 1));
+        return;
+      }
+      if (key.downArrow) {
+        setSelected((s) => Math.min(items - 1, s + 1));
+        return;
+      }
 
       if (key.return && selected === items - 1) {
         // Add embedding model
@@ -224,9 +267,18 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
 
     // --- TIER ASSIGN ---
     if (screen === "tier-assign") {
-      if (key.escape) { setScreen("chat-list"); return; }
-      if (key.upArrow) { setTierModelIdx((i) => Math.max(0, i - 1)); return; }
-      if (key.downArrow) { setTierModelIdx((i) => Math.min(chatModels.length - 1, i + 1)); return; }
+      if (key.escape) {
+        setScreen("chat-list");
+        return;
+      }
+      if (key.upArrow) {
+        setTierModelIdx((i) => Math.max(0, i - 1));
+        return;
+      }
+      if (key.downArrow) {
+        setTierModelIdx((i) => Math.min(chatModels.length - 1, i + 1));
+        return;
+      }
       if (key.return) {
         setTier(TIERS[tierIdx], chatModels[tierModelIdx].name);
         setScreen("chat-list");
@@ -241,8 +293,14 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
         setSelected(0);
         return;
       }
-      if (key.upArrow) { setProviderIdx((i) => Math.max(0, i - 1)); return; }
-      if (key.downArrow) { setProviderIdx((i) => Math.min(config.providers.length - 1, i + 1)); return; }
+      if (key.upArrow) {
+        setProviderIdx((i) => Math.max(0, i - 1));
+        return;
+      }
+      if (key.downArrow) {
+        setProviderIdx((i) => Math.min(config.providers.length - 1, i + 1));
+        return;
+      }
       if (key.return) {
         setFetchedModels([]);
         setFetchError(null);
@@ -256,7 +314,10 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
 
     // --- SELECT MODEL ---
     if (screen === "select-model") {
-      if (key.escape) { setScreen("add-provider"); return; }
+      if (key.escape) {
+        setScreen("add-provider");
+        return;
+      }
       if (fetchedModels.length > 0) {
         if (key.upArrow) {
           setSelectedModelIdx((i) => {
@@ -285,18 +346,32 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
           if (manualModel.trim()) selectModel(manualModel.trim());
           return;
         }
-        if (key.backspace || key.delete) { setManualModel((v) => v.slice(0, -1)); return; }
-        if (input && !key.ctrl && !key.meta) { setManualModel((v) => v + input); }
+        if (key.backspace || key.delete) {
+          setManualModel((v) => v.slice(0, -1));
+          return;
+        }
+        if (input && !key.ctrl && !key.meta) {
+          setManualModel((v) => v + input);
+        }
       }
       return;
     }
 
     // --- ADD FIELDS (chat only) ---
     if (screen === "add-fields") {
-      if (key.escape) { setScreen("select-model"); return; }
+      if (key.escape) {
+        setScreen("select-model");
+        return;
+      }
       if (key.return) {
-        if (addField === "name") { setAddField("temperature"); return; }
-        if (addField === "temperature") { setAddField("maxTokens"); return; }
+        if (addField === "name") {
+          setAddField("temperature");
+          return;
+        }
+        if (addField === "temperature") {
+          setAddField("maxTokens");
+          return;
+        }
         // Save
         if (!newName.trim()) return;
         if (config.models.some((m) => m.name === newName.trim())) return;
@@ -362,7 +437,9 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">Models</Text>
+      <Text bold color="cyan">
+        Models
+      </Text>
       <Text />
 
       {screen === "categories" && (
@@ -391,21 +468,20 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
                 {i === selected ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}
                 {m.name} ({m.provider}/{m.model})
                 {isDefault && <Text color="yellow"> *default</Text>}
-                {tierLabels.length > 0 && (
-                  <Text dimColor> [{tierLabels.join(", ")}]</Text>
-                )}
+                {tierLabels.length > 0 && <Text dimColor> [{tierLabels.join(", ")}]</Text>}
               </Text>
             );
           })}
-          <Text dimColor>  ─────────────────</Text>
-          <Text bold>  Tier Assignments</Text>
+          <Text dimColor> ─────────────────</Text>
+          <Text bold> Tier Assignments</Text>
           {TIERS.map((tier, i) => {
             const idx = chatModels.length + 1 + i;
             const assigned = getTierModel(tier);
             return (
               <Text key={tier}>
                 {idx === selected ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}
-                {"  "}{tier} → {assigned}
+                {"  "}
+                {tier} → {assigned}
               </Text>
             );
           })}
@@ -413,8 +489,8 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
             const addIdx = chatModels.length + 1 + TIERS.length;
             return (
               <Text>
-                {addIdx === selected ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}
-                + Add chat model
+                {addIdx === selected ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}+ Add
+                chat model
               </Text>
             );
           })()}
@@ -436,7 +512,11 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
             </Text>
           ))}
           <Text>
-            {embeddingModels.length === selected ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}
+            {embeddingModels.length === selected ? (
+              <Text color="green">{"● "}</Text>
+            ) : (
+              <Text>{"○ "}</Text>
+            )}
             + Add embedding model
           </Text>
           <Text />
@@ -482,7 +562,8 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
           {fetchedModels.length > 0 ? (
             <>
               <Text>
-                Choose a {addModelType} model ({fetchedModels.length} available from {config.providers[providerIdx]?.id}):
+                Choose a {addModelType} model ({fetchedModels.length} available from{" "}
+                {config.providers[providerIdx]?.id}):
               </Text>
               {fetchedModels.slice(scrollOffset, scrollOffset + VISIBLE_MODELS).map((m, i) => {
                 const absIdx = scrollOffset + i;
@@ -510,9 +591,7 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
             </>
           ) : (
             <>
-              {fetchError && (
-                <Text dimColor>Could not fetch models: {fetchError}</Text>
-              )}
+              {fetchError && <Text dimColor>Could not fetch models: {fetchError}</Text>}
               <Text>Enter model ID manually:</Text>
               <Box>
                 <Text color="blue">Model: </Text>
@@ -528,20 +607,34 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
 
       {screen === "add-fields" && (
         <>
-          <Text bold>New chat model (provider: {config.providers[providerIdx]?.id}, model: {newModel})</Text>
+          <Text bold>
+            New chat model (provider: {config.providers[providerIdx]?.id}, model: {newModel})
+          </Text>
           <Text />
           <Box>
-            <Text color={addField === "name" ? "blue" : "white"} bold={addField === "name"}>Name: </Text>
+            <Text color={addField === "name" ? "blue" : "white"} bold={addField === "name"}>
+              Name:{" "}
+            </Text>
             <Text>{newName}</Text>
             {addField === "name" && <Text color="blue">▊</Text>}
           </Box>
           <Box>
-            <Text color={addField === "temperature" ? "blue" : "white"} bold={addField === "temperature"}>Temperature: </Text>
+            <Text
+              color={addField === "temperature" ? "blue" : "white"}
+              bold={addField === "temperature"}
+            >
+              Temperature:{" "}
+            </Text>
             <Text>{newTemp}</Text>
             {addField === "temperature" && <Text color="blue">▊</Text>}
           </Box>
           <Box>
-            <Text color={addField === "maxTokens" ? "blue" : "white"} bold={addField === "maxTokens"}>Max Tokens: </Text>
+            <Text
+              color={addField === "maxTokens" ? "blue" : "white"}
+              bold={addField === "maxTokens"}
+            >
+              Max Tokens:{" "}
+            </Text>
             <Text>{newMaxTokens}</Text>
             {addField === "maxTokens" && <Text color="blue">▊</Text>}
           </Box>
@@ -550,9 +643,7 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
         </>
       )}
 
-      {screen === "confirm-remove" && (
-        <Text>Remove model "{removeTarget}"? (y/n)</Text>
-      )}
+      {screen === "confirm-remove" && <Text>Remove model "{removeTarget}"? (y/n)</Text>}
     </Box>
   );
 }

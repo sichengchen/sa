@@ -13,10 +13,7 @@ async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-async function copyIfPresent(
-  sourcePath: string,
-  targetPath: string,
-): Promise<string | undefined> {
+async function copyIfPresent(sourcePath: string, targetPath: string): Promise<string | undefined> {
   if (!(await fileExists(sourcePath))) {
     return undefined;
   }
@@ -42,10 +39,7 @@ export async function createAriaStoreMigrationBackup(
   backupRoot: string,
 ): Promise<AriaStoreMigrationBackup> {
   const createdAt = Date.now();
-  const backupDir = join(
-    backupRoot,
-    `${basename(sourcePath)}.${createdAt}.${randomUUID()}`,
-  );
+  const backupDir = join(backupRoot, `${basename(sourcePath)}.${createdAt}.${randomUUID()}`);
 
   await mkdir(backupDir, { recursive: true });
 
@@ -54,10 +48,7 @@ export async function createAriaStoreMigrationBackup(
 
   const [wal, shm] = await Promise.all(
     SQLITE_COMPANION_SUFFIXES.map((suffix) =>
-      copyIfPresent(
-        `${sourcePath}${suffix}`,
-        join(backupDir, `${basename(sourcePath)}${suffix}`),
-      ),
+      copyIfPresent(`${sourcePath}${suffix}`, join(backupDir, `${basename(sourcePath)}${suffix}`)),
     ),
   );
 

@@ -1,10 +1,4 @@
-import {
-  createTRPCClient,
-  httpBatchLink,
-  splitLink,
-  wsLink,
-  createWSClient,
-} from "@trpc/client";
+import { createTRPCClient, httpBatchLink, splitLink, wsLink, createWSClient } from "@trpc/client";
 import superjson from "superjson";
 import type { AppRouter } from "@aria/gateway/procedures";
 
@@ -19,9 +13,7 @@ export interface ClientOptions {
 
 /** Create a typed tRPC client for connecting to the Engine */
 export function createEngineClient(options: ClientOptions) {
-  const headers = options.token
-    ? { authorization: `Bearer ${options.token}` }
-    : {};
+  const headers = options.token ? { authorization: `Bearer ${options.token}` } : {};
 
   // Pass token in WS URL query string for WebSocket connection-level auth
   const wsUrlWithAuth = options.token

@@ -1,6 +1,11 @@
 import type { EngineRuntime } from "@aria/server/runtime";
 import type { CronTask, WebhookTask } from "./config.js";
-import { registerCronTask, upsertCronTaskRecord, upsertHeartbeatTaskRecord, upsertWebhookTaskRecord } from "./automation.js";
+import {
+  registerCronTask,
+  upsertCronTaskRecord,
+  upsertHeartbeatTaskRecord,
+  upsertWebhookTaskRecord,
+} from "./automation.js";
 
 export class AutomationRegistry {
   constructor(private readonly runtime: EngineRuntime) {}

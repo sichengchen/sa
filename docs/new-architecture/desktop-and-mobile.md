@@ -64,12 +64,12 @@ flowchart LR
 
 ## Desktop Responsibilities
 
-| Component | Responsibility |
-| --- | --- |
-| `Desktop UI Shell` | Sidebar, thread views, project pickers, environment selection, approvals UI |
-| `Access Client` | Connects to one or more `Aria Server` deployments directly or through relay |
-| `Local Workspace Bridge` | Local filesystem, git, worktree, shell, and environment integration |
-| `Local Coding Agent Adapters` | Codex, Claude Code, OpenCode on the current machine |
+| Component                       | Responsibility                                                                 |
+| ------------------------------- | ------------------------------------------------------------------------------ |
+| `Desktop UI Shell`              | Sidebar, thread views, project pickers, environment selection, approvals UI    |
+| `Access Client`                 | Connects to one or more `Aria Server` deployments directly or through relay    |
+| `Local Workspace Bridge`        | Local filesystem, git, worktree, shell, and environment integration            |
+| `Local Coding Agent Adapters`   | Codex, Claude Code, OpenCode on the current machine                            |
 | `Local Thread Store + UI Cache` | Local project thread state, UI cache, local run history, server metadata cache |
 
 ## Desktop Shell Recommendation
@@ -302,16 +302,16 @@ Both desktop and mobile should share the same access model:
 
 Current repo migration note: the thin seam wave for `@aria/access-client`, `@aria/ui`, `apps/aria-desktop`, and `apps/aria-mobile` is tracked in [../development/phase-6-client-app-seams-ledger.md](../development/phase-6-client-app-seams-ledger.md). The follow-on shell-package wave for `@aria/desktop` and `@aria/mobile` is tracked in [../development/phase-8-client-shell-seams-ledger.md](../development/phase-8-client-shell-seams-ledger.md). The cross-phase owner classification that says whether a change belongs in the target shell or in a compatibility seam is tracked in [../development/phase-9-architecture-truth-table.md](../development/phase-9-architecture-truth-table.md). Today, those desktop/mobile surfaces should be treated as hybrid target shells that still compose shared-client compatibility seams during the cutover.
 
-| Responsibility | Package |
-| --- | --- |
-| Desktop shell | `@aria/desktop` |
-| Mobile shell | `@aria/mobile` |
-| Shared access client | `@aria/access-client` |
+| Responsibility              | Package                                                   |
+| --------------------------- | --------------------------------------------------------- |
+| Desktop shell               | `@aria/desktop`                                           |
+| Mobile shell                | `@aria/mobile`                                            |
+| Shared access client        | `@aria/access-client`                                     |
 | Shared project client state | `@aria/projects` or a dedicated client-facing slice of it |
-| Desktop local bridge | `@aria/desktop-bridge` |
-| Local git integration | `@aria/desktop-git` |
-| Local coding agent adapters | `@aria/agents-coding` or `@aria/desktop-agents` |
-| Shared UI primitives | `@aria/ui` |
+| Desktop local bridge        | `@aria/desktop-bridge`                                    |
+| Local git integration       | `@aria/desktop-git`                                       |
+| Local coding agent adapters | `@aria/agents-coding` or `@aria/desktop-agents`           |
+| Shared UI primitives        | `@aria/ui`                                                |
 
 ## Current Repo Migration Note
 

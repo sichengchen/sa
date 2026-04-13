@@ -1,10 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { ProjectsEngineRepository } from "./repository.js";
-import type {
-  ProjectRecord,
-  TaskRecord,
-  ThreadRecord,
-} from "./types.js";
+import type { ProjectRecord, TaskRecord, ThreadRecord } from "./types.js";
 import type { DispatchRecord } from "@aria/jobs/types";
 import type { RepoRecord } from "@aria/workspaces/types";
 import {
@@ -58,7 +54,10 @@ function pickLimit(limit?: number): number {
   return Math.floor(limit);
 }
 
-function compareByWorkPriority(left: { thread: ThreadRecord; task?: TaskRecord }, right: { thread: ThreadRecord; task?: TaskRecord }): number {
+function compareByWorkPriority(
+  left: { thread: ThreadRecord; task?: TaskRecord },
+  right: { thread: ThreadRecord; task?: TaskRecord },
+): number {
   const leftThreadPriority = left.thread.status === "dirty" ? 0 : 1;
   const rightThreadPriority = right.thread.status === "dirty" ? 0 : 1;
   if (leftThreadPriority !== rightThreadPriority) {
@@ -132,8 +131,13 @@ export class ProjectsPlanningService {
       .filter((thread) => !filter.repoId || thread.repoId === filter.repoId)
       .map((thread) => {
         const resolvedThread = resolveThreadForPlanning(this.repository, thread);
-        const task = resolvedThread.taskId ? this.repository.getTask(resolvedThread.taskId) : undefined;
-        const dispatches = this.repository.listDispatches(resolvedThread.threadId, resolvedThread.taskId ?? undefined);
+        const task = resolvedThread.taskId
+          ? this.repository.getTask(resolvedThread.taskId)
+          : undefined;
+        const dispatches = this.repository.listDispatches(
+          resolvedThread.threadId,
+          resolvedThread.taskId ?? undefined,
+        );
         return {
           thread: resolvedThread,
           task,
@@ -164,9 +168,18 @@ export class ProjectsPlanningService {
     const plans = dispatches
       .map((dispatch) => {
         const thread = this.repository.getThread(dispatch.threadId);
-        const resolvedThread = thread ? resolveThreadForPlanning(this.repository, thread) : undefined;
-        const task = dispatch.taskId ? this.repository.getTask(dispatch.taskId) : resolvedThread?.taskId ? this.repository.getTask(resolvedThread.taskId) : undefined;
-        const siblingDispatches = this.repository.listDispatches(dispatch.threadId, dispatch.taskId ?? resolvedThread?.taskId ?? undefined);
+        const resolvedThread = thread
+          ? resolveThreadForPlanning(this.repository, thread)
+          : undefined;
+        const task = dispatch.taskId
+          ? this.repository.getTask(dispatch.taskId)
+          : resolvedThread?.taskId
+            ? this.repository.getTask(resolvedThread.taskId)
+            : undefined;
+        const siblingDispatches = this.repository.listDispatches(
+          dispatch.threadId,
+          dispatch.taskId ?? resolvedThread?.taskId ?? undefined,
+        );
         return {
           dispatch,
           thread: resolvedThread,
@@ -200,7 +213,9 @@ export class ProjectsPlanningService {
     for (const plan of runnableThreads) {
       if (queued.length >= limit) break;
 
-      const hasQueuedOrActiveDispatch = plan.dispatches.some((dispatch) => isActiveDispatchStatus(dispatch.status));
+      const hasQueuedOrActiveDispatch = plan.dispatches.some((dispatch) =>
+        isActiveDispatchStatus(dispatch.status),
+      );
       if (hasQueuedOrActiveDispatch || hasActiveDispatch(plan.dispatches)) {
         continue;
       }

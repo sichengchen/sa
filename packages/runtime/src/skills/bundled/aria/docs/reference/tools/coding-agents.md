@@ -13,15 +13,15 @@ Delegates coding tasks to Claude Code CLI (`claude --print`).
 
 ### Parameters
 
-| Parameter  | Type     | Required | Description                                      |
-|-----------|----------|----------|--------------------------------------------------|
-| task      | string   | yes*     | The coding task description                      |
-| files     | string[] | no       | Relevant file paths passed as context            |
-| workdir   | string   | no       | Working directory (default: current directory)    |
-| background| boolean  | no       | Run in background and return handle ID           |
-| handle    | string   | no       | Check status of a background task by handle ID   |
+| Parameter  | Type     | Required | Description                                    |
+| ---------- | -------- | -------- | ---------------------------------------------- |
+| task       | string   | yes\*    | The coding task description                    |
+| files      | string[] | no       | Relevant file paths passed as context          |
+| workdir    | string   | no       | Working directory (default: current directory) |
+| background | boolean  | no       | Run in background and return handle ID         |
+| handle     | string   | no       | Check status of a background task by handle ID |
 
-*Required unless `handle` is provided for status polling.
+\*Required unless `handle` is provided for status polling.
 
 ### Danger Level
 
@@ -62,34 +62,34 @@ Shared process manager lives in `packages/runtime/src/tools/agent-subprocess.ts`
 
 ### Core Functions
 
-| Function | Description |
-|---|---|
-| `probeAuth(cli)` | Check CLI installation and auth status |
-| `runSubprocess(config)` | Run foreground subprocess with timeout |
-| `runBackground(config)` | Start background subprocess, return handle |
-| `getBackgroundStatus(id)` | Poll background task status |
+| Function                  | Description                                |
+| ------------------------- | ------------------------------------------ |
+| `probeAuth(cli)`          | Check CLI installation and auth status     |
+| `runSubprocess(config)`   | Run foreground subprocess with timeout     |
+| `runBackground(config)`   | Start background subprocess, return handle |
+| `getBackgroundStatus(id)` | Poll background task status                |
 
 ### Subprocess Config
 
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `cli` | string | — | CLI binary name |
-| `args` | string[] | — | Command-line arguments |
-| `env` | object | — | Additional environment variables |
-| `workdir` | string | cwd | Working directory |
-| `timeoutMs` | number | 300s (fg) / 1800s (bg) | Execution timeout |
+| Field       | Type     | Default                | Description                      |
+| ----------- | -------- | ---------------------- | -------------------------------- |
+| `cli`       | string   | —                      | CLI binary name                  |
+| `args`      | string[] | —                      | Command-line arguments           |
+| `env`       | object   | —                      | Additional environment variables |
+| `workdir`   | string   | cwd                    | Working directory                |
+| `timeoutMs` | number   | 300s (fg) / 1800s (bg) | Execution timeout                |
 
 ### Result Structure
 
-| Field | Type | Description |
-|---|---|---|
-| `status` | string | `"done"`, `"error"`, or `"timeout"` |
-| `exitCode` | number | Process exit code |
-| `stdout` | string | Standard output (max 2MB) |
-| `stderr` | string | Standard error (max 2MB) |
-| `duration` | number | Execution time in milliseconds |
-| `summary` | string? | Parsed summary from output |
-| `filesModified` | string[]? | Parsed list of modified files |
+| Field           | Type      | Description                         |
+| --------------- | --------- | ----------------------------------- |
+| `status`        | string    | `"done"`, `"error"`, or `"timeout"` |
+| `exitCode`      | number    | Process exit code                   |
+| `stdout`        | string    | Standard output (max 2MB)           |
+| `stderr`        | string    | Standard error (max 2MB)            |
+| `duration`      | number    | Execution time in milliseconds      |
+| `summary`       | string?   | Parsed summary from output          |
+| `filesModified` | string[]? | Parsed list of modified files       |
 
 ### Background Execution
 
@@ -103,9 +103,9 @@ Background handles are stored in memory and can be polled via the tool's
 
 ### Auth Status
 
-| Field | Type | Description |
-|---|---|---|
-| `installed` | boolean | CLI binary found |
-| `authenticated` | boolean | Valid auth credentials detected |
-| `version` | string? | CLI version string |
-| `authMethod` | string? | `"oauth"`, `"api_key"`, or `"none"` |
+| Field           | Type    | Description                         |
+| --------------- | ------- | ----------------------------------- |
+| `installed`     | boolean | CLI binary found                    |
+| `authenticated` | boolean | Valid auth credentials detected     |
+| `version`       | string? | CLI version string                  |
+| `authMethod`    | string? | `"oauth"`, `"api_key"`, or `"none"` |

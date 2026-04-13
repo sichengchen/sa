@@ -4,7 +4,12 @@
 
 import { Type } from "@sinclair/typebox";
 import type { ToolImpl, ToolResult } from "@aria/agent-aria";
-import { getBackgroundStatus, probeAuth, runBackground, runSubprocess } from "./agent-subprocess.js";
+import {
+  getBackgroundStatus,
+  probeAuth,
+  runBackground,
+  runSubprocess,
+} from "./agent-subprocess.js";
 import type { AgentSubprocessResult } from "./agent-subprocess-types.js";
 
 export interface ClaudeCodeToolDeps {
@@ -143,14 +148,16 @@ function formatResult(result: AgentSubprocessResult): string {
   const output = result.stdout.trim();
   if (output) {
     const maxLen = 8000;
-    const truncated = output.length > maxLen ? output.slice(0, maxLen) + "\n...(truncated)" : output;
+    const truncated =
+      output.length > maxLen ? output.slice(0, maxLen) + "\n...(truncated)" : output;
     lines.push(`\nOutput:\n${truncated}`);
   }
 
   if (result.stderr.trim()) {
     const stderr = result.stderr.trim();
     const maxLen = 2000;
-    const truncated = stderr.length > maxLen ? stderr.slice(0, maxLen) + "\n...(truncated)" : stderr;
+    const truncated =
+      stderr.length > maxLen ? stderr.slice(0, maxLen) + "\n...(truncated)" : stderr;
     lines.push(`\nStderr:\n${truncated}`);
   }
 

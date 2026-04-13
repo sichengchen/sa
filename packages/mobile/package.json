@@ -2,8 +2,8 @@
   "name": "@aria/mobile",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "description": "Aria Mobile shell composition and remote review surfaces over shared client seams",
+  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

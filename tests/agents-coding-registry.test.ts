@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { createAriaRuntimeBackendAdapter, createCodingAgentBackendRegistry } from "@aria/agents-coding";
+import {
+  createAriaRuntimeBackendAdapter,
+  createCodingAgentBackendRegistry,
+} from "@aria/agents-coding";
 
 describe("createCodingAgentBackendRegistry", () => {
   test("registers the target-state coding agent adapters", () => {
@@ -12,12 +15,19 @@ describe("createCodingAgentBackendRegistry", () => {
   });
 });
 
-
 describe("Aria runtime adapter export", () => {
   test("re-exports the Aria runtime backend adapter from @aria/agents-coding", async () => {
     const adapter = createAriaRuntimeBackendAdapter({
       driver: {
-        execute: async () => ({ backend: "aria", executionId: "1", status: "succeeded", exitCode: 0, stdout: "", stderr: "", filesChanged: [] }),
+        execute: async () => ({
+          backend: "aria",
+          executionId: "1",
+          status: "succeeded",
+          exitCode: 0,
+          stdout: "",
+          stderr: "",
+          filesChanged: [],
+        }),
         cancel: async () => {},
       },
     });

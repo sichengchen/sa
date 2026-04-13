@@ -94,11 +94,7 @@ export function ConfigApp({ homeDir, onExit }: ConfigAppProps) {
       );
     case "memory":
       return (
-        <MemorySettings
-          config={config}
-          onSave={saveConfig}
-          onBack={() => setScreen("menu")}
-        />
+        <MemorySettings config={config} onSave={saveConfig} onBack={() => setScreen("menu")} />
       );
     case "environment":
       return (
@@ -163,7 +159,8 @@ function ConfigMenuScreen({ config, onSelect, onExit }: ConfigMenuScreenProps) {
           const embed = config.models.filter((m) => m.type === "embedding").length;
           detail = ` (${chat} chat${embed > 0 ? `, ${embed} embedding` : ""}, default: ${config.defaultModel})`;
         }
-        if (item.key === "memory") detail = config.runtime.memory.enabled ? " (enabled)" : " (disabled)";
+        if (item.key === "memory")
+          detail = config.runtime.memory.enabled ? " (enabled)" : " (disabled)";
 
         return (
           <Text key={item.key}>

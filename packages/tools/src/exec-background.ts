@@ -25,7 +25,11 @@ export function generateHandle(): string {
   return `bg-${nextId++}`;
 }
 
-export function registerBackground(handle: string, command: string, proc: Subprocess): BackgroundProcess {
+export function registerBackground(
+  handle: string,
+  command: string,
+  proc: Subprocess,
+): BackgroundProcess {
   const bg: BackgroundProcess = {
     id: handle,
     command,
@@ -92,7 +96,8 @@ export function removeBackground(handle: string): boolean {
 export const execStatusTool: ToolImpl = {
   name: "exec_status",
   description: "Check the status and output of a background exec process.",
-  summary: "Check status/output of a background process by handle. Returns stdout, stderr, exit code, and whether still running.",
+  summary:
+    "Check status/output of a background process by handle. Returns stdout, stderr, exit code, and whether still running.",
   dangerLevel: "safe",
   parameters: Type.Object({
     handle: Type.String({ description: "The background process handle returned by exec" }),

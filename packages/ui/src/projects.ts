@@ -71,7 +71,10 @@ function formatStatusLabel(status: TaskStatus | ThreadStatus): string {
 
 export function createProjectThreadListItem(
   project: Pick<ProjectRecord, "name">,
-  thread: Pick<ThreadRecord, "threadId" | "title" | "status" | "threadType" | "environmentId" | "agentId">,
+  thread: Pick<
+    ThreadRecord,
+    "threadId" | "title" | "status" | "threadType" | "environmentId" | "agentId"
+  >,
 ): ProjectThreadListItem {
   const threadType = resolveThreadType(thread);
   return {
@@ -115,7 +118,9 @@ export function createProjectServerListItem(server: ProjectServerSummary): Proje
   };
 }
 
-export function createProjectServerRoster(servers: ReadonlyArray<ProjectServerSummary>): ProjectServerRoster {
+export function createProjectServerRoster(
+  servers: ReadonlyArray<ProjectServerSummary>,
+): ProjectServerRoster {
   const items = servers.map((server) => createProjectServerListItem(server));
 
   return {

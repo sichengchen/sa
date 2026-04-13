@@ -118,7 +118,6 @@ Use the [phase 9 architecture truth table](./phase-9-architecture-truth-table.md
 - which package/app should be edited first when target architecture docs and repo history appear to disagree
 - which earlier phase ledger still governs a surface after the owner classification is known
 
-
 ## Phase 13 Relay Service Seam
 
 Phase 13 keeps current relay behavior stable while seeding the target-state relay service surface for `services/aria-relay` over `@aria/relay`.

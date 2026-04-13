@@ -73,7 +73,8 @@ export async function probeAuth(cli: string): Promise<AgentAuthStatus> {
       if (exitCode === 0) {
         result.authenticated = true;
         if (stdout.includes("oauth")) result.authMethod = "oauth";
-        else if (stdout.includes("api_key") || stdout.includes("API key")) result.authMethod = "api_key";
+        else if (stdout.includes("api_key") || stdout.includes("API key"))
+          result.authMethod = "api_key";
         else result.authMethod = "oauth"; // Default for Claude
       } else {
         result.authMethod = "none";
@@ -101,13 +102,14 @@ export async function probeAuth(cli: string): Promise<AgentAuthStatus> {
  * timeouts and abort signals. Returns structured results.
  */
 export async function runSubprocess(config: AgentSubprocessConfig): Promise<AgentSubprocessResult> {
-  const timeout = config.timeout ??
+  const timeout =
+    config.timeout ??
     (config.background ? DEFAULT_BACKGROUND_TIMEOUT_MS : DEFAULT_FOREGROUND_TIMEOUT_MS);
   const startedAt = Date.now();
   const abortController = new AbortController();
 
   // Build environment — inherit process.env + any extras
-  const env: Record<string, string> = { ...process.env as Record<string, string> };
+  const env: Record<string, string> = { ...(process.env as Record<string, string>) };
   if (config.env) {
     Object.assign(env, config.env);
   }
@@ -133,10 +135,14 @@ export async function runSubprocess(config: AgentSubprocessConfig): Promise<Agen
   // Set up timeout
   const timeoutId = setTimeout(() => {
     abortController.abort();
-    try { proc.kill("SIGTERM"); } catch {}
+    try {
+      proc.kill("SIGTERM");
+    } catch {}
     // Give 5s grace period, then SIGKILL
     setTimeout(() => {
-      try { proc.kill("SIGKILL"); } catch {}
+      try {
+        proc.kill("SIGKILL");
+      } catch {}
     }, 5000);
   }, timeout);
 
@@ -205,19 +211,21 @@ export function runBackground(config: AgentSubprocessConfig): AgentSubprocessHan
 
   // Run in background
   const promise = runSubprocess({ ...config, background: true });
-  promise.then((result) => {
-    handle.running = false;
-    handle.result = result;
-  }).catch((err) => {
-    handle.running = false;
-    handle.result = {
-      status: "error",
-      exitCode: -1,
-      stdout: "",
-      stderr: err instanceof Error ? err.message : String(err),
-      duration: Date.now() - startedAt,
-    };
-  });
+  promise
+    .then((result) => {
+      handle.running = false;
+      handle.result = result;
+    })
+    .catch((err) => {
+      handle.running = false;
+      handle.result = {
+        status: "error",
+        exitCode: -1,
+        stdout: "",
+        stderr: err instanceof Error ? err.message : String(err),
+        duration: Date.now() - startedAt,
+      };
+    });
 
   return handle;
 }

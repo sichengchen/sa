@@ -54,7 +54,8 @@ export class ToolLoopDetector {
   constructor(config?: ToolLoopConfig) {
     this.warnThreshold = config?.warnThreshold ?? DEFAULT_WARN_THRESHOLD;
     this.blockThreshold = config?.blockThreshold ?? DEFAULT_BLOCK_THRESHOLD;
-    this.circuitBreakerThreshold = config?.circuitBreakerThreshold ?? DEFAULT_CIRCUIT_BREAKER_THRESHOLD;
+    this.circuitBreakerThreshold =
+      config?.circuitBreakerThreshold ?? DEFAULT_CIRCUIT_BREAKER_THRESHOLD;
     this.windowSize = config?.windowSize ?? DEFAULT_WINDOW_SIZE;
   }
 
@@ -62,10 +63,7 @@ export class ToolLoopDetector {
    * Check before executing a tool call. Returns the detection level.
    * This counts how many times the same call hash appears in the window.
    */
-  checkBeforeExecution(
-    name: string,
-    args: Record<string, unknown>,
-  ): LoopCheckResult {
+  checkBeforeExecution(name: string, args: Record<string, unknown>): LoopCheckResult {
     const callHash = hashCall(name, args);
 
     // Count identical calls (same tool + same args) in the window

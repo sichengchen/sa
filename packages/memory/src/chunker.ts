@@ -18,11 +18,7 @@ export interface Chunk {
  * @param targetChars  Target chunk size in characters (default ~1600 ≈ 400 tokens)
  * @param overlapChars Overlap between consecutive chunks (default ~320 ≈ 80 tokens)
  */
-export function chunkMarkdown(
-  content: string,
-  targetChars = 1600,
-  overlapChars = 320,
-): Chunk[] {
+export function chunkMarkdown(content: string, targetChars = 1600, overlapChars = 320): Chunk[] {
   if (!content.trim()) return [];
 
   const lines = content.split("\n");
@@ -90,7 +86,8 @@ export function chunkMarkdown(
         overlapStart = j;
       }
       chunkParas = chunkParas.slice(overlapStart);
-      chunkLen = chunkParas.reduce((sum, p) => sum + p.text.length, 0) +
+      chunkLen =
+        chunkParas.reduce((sum, p) => sum + p.text.length, 0) +
         Math.max(0, chunkParas.length - 1) * 2;
     }
 

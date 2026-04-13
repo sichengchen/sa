@@ -88,7 +88,9 @@ function asTimestamp(value: string): number {
 }
 
 function usage(): never {
-  console.error("Usage: bun run scripts/migrate-legacy-esperta-code.ts <legacy-db-path> [aria-db-path] [--dry-run]");
+  console.error(
+    "Usage: bun run scripts/migrate-legacy-esperta-code.ts <legacy-db-path> [aria-db-path] [--dry-run]",
+  );
   process.exit(1);
 }
 
@@ -113,7 +115,9 @@ function mapLegacyDispatchStatus(status: string): DispatchRecord["status"] {
 }
 
 function shouldCreateDispatch(thread: LegacyThreadRow): boolean {
-  return Boolean(thread.linear_session_id || thread.worktree_path || thread.branch_name || thread.status);
+  return Boolean(
+    thread.linear_session_id || thread.worktree_path || thread.branch_name || thread.status,
+  );
 }
 
 function createMigrationId(): string {
@@ -147,7 +151,12 @@ async function prepareWriteModeSafetyArtifacts(options: {
   rollbackHint: string;
 }> {
   const stem = safeStem(options.ariaDbPath);
-  const backupDirectory = join(dirname(options.ariaDbPath), ".aria-migration-backups", stem, options.migrationId);
+  const backupDirectory = join(
+    dirname(options.ariaDbPath),
+    ".aria-migration-backups",
+    stem,
+    options.migrationId,
+  );
   await mkdir(backupDirectory, { recursive: true });
 
   const backupCompanionPaths: string[] = [];
@@ -191,7 +200,9 @@ async function prepareWriteModeSafetyArtifacts(options: {
     rollbackInstructions: backupMainDbPath
       ? [
           `Copy ${backupMainDbPath} back to ${options.ariaDbPath}.`,
-          ...backupCompanionPaths.map((path) => `Copy ${path} back alongside ${options.ariaDbPath}.`),
+          ...backupCompanionPaths.map(
+            (path) => `Copy ${path} back alongside ${options.ariaDbPath}.`,
+          ),
           "Re-run the migration only after the rollback is complete.",
         ]
       : [
@@ -214,7 +225,8 @@ async function prepareWriteModeSafetyArtifacts(options: {
 
 const args = positionalArgs();
 const legacyDbPath = args[0];
-const ariaDbPath = args[1] ?? join(process.env.ARIA_HOME ?? join(process.env.HOME ?? "", ".aria"), "aria.db");
+const ariaDbPath =
+  args[1] ?? join(process.env.ARIA_HOME ?? join(process.env.HOME ?? "", ".aria"), "aria.db");
 const dryRun = hasFlag("--dry-run");
 const migrationId = createMigrationId();
 const startedAt = new Date().toISOString();
@@ -245,9 +257,7 @@ const report: MigrationReport = {
   importedExternalRefs: 0,
 };
 
-let writeModeArtifacts:
-  | Awaited<ReturnType<typeof prepareWriteModeSafetyArtifacts>>
-  | undefined;
+let writeModeArtifacts: Awaited<ReturnType<typeof prepareWriteModeSafetyArtifacts>> | undefined;
 
 if (!dryRun) {
   writeModeArtifacts = await prepareWriteModeSafetyArtifacts({
@@ -263,7 +273,8 @@ if (!dryRun) {
   report.manifestPath = writeModeArtifacts.manifestPath;
   report.rollbackHint = writeModeArtifacts.rollbackHint;
 } else {
-  report.rollbackHint = "Dry-run mode does not mutate the target database and does not generate backup artifacts.";
+  report.rollbackHint =
+    "Dry-run mode does not mutate the target database and does not generate backup artifacts.";
 }
 
 const legacyDb = new Sqlite(legacyDbPath, { readonly: true });
@@ -271,11 +282,13 @@ const store = new ProjectsEngineStore(ariaDbPath);
 try {
   await store.init();
 
-  const legacyProjects = legacyDb.prepare(`
+  const legacyProjects = legacyDb
+    .prepare(`
   SELECT id, name, repo_url, base_branch
   FROM projects
   ORDER BY created_at ASC
-`).all() as LegacyProjectRow[];
+`)
+    .all() as LegacyProjectRow[];
 
   for (const project of legacyProjects) {
     const now = Date.now();
@@ -303,11 +316,13 @@ try {
     report.importedRepos += 1;
   }
 
-  const legacyThreads = legacyDb.prepare(`
+  const legacyThreads = legacyDb
+    .prepare(`
   SELECT id, project_id, linear_issue_id, linear_identifier, linear_session_id, title, status, worktree_path, branch_name, created_at, updated_at
   FROM threads
   ORDER BY created_at ASC
-`).all() as LegacyThreadRow[];
+`)
+    .all() as LegacyThreadRow[];
 
   for (const thread of legacyThreads) {
     const repoId = `repo:${thread.project_id}`;
@@ -359,7 +374,8 @@ try {
           error: null,
           createdAt,
           acceptedAt: thread.linear_session_id ? createdAt : null,
-          completedAt: thread.status === "completed" || thread.status === "stopped" ? updatedAt : null,
+          completedAt:
+            thread.status === "completed" || thread.status === "stopped" ? updatedAt : null,
         });
       }
       report.importedDispatches += 1;
@@ -401,11 +417,13 @@ try {
     }
   }
 
-  const legacyJobs = legacyDb.prepare(`
+  const legacyJobs = legacyDb
+    .prepare(`
   SELECT id, thread_id, author, body, created_at
   FROM jobs
   ORDER BY created_at ASC
-`).all() as LegacyJobRow[];
+`)
+    .all() as LegacyJobRow[];
 
   for (const job of legacyJobs) {
     if (!dryRun) {

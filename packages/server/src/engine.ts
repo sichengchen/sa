@@ -32,10 +32,16 @@ export async function runAriaServerProcess(): Promise<void> {
     console.log(`\n${RUNTIME_NAME} shutting down...`);
     const shouldRestart = existsSync(RESTART_MARKER);
     if (shouldRestart) {
-      try { unlinkSync(RESTART_MARKER); } catch {}
+      try {
+        unlinkSync(RESTART_MARKER);
+      } catch {}
     }
-    try { unlinkSync(PID_FILE); } catch {}
-    try { unlinkSync(URL_FILE); } catch {}
+    try {
+      unlinkSync(PID_FILE);
+    } catch {}
+    try {
+      unlinkSync(URL_FILE);
+    } catch {}
     const forceTimer = setTimeout(() => process.exit(1), 5000);
     app.stop().then(
       () => {

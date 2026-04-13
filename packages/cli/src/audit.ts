@@ -5,18 +5,18 @@ import { CLI_NAME, PRODUCT_NAME, getRuntimeHome } from "@aria/server/brand";
 
 /** ANSI color helpers */
 const COLORS: Record<string, string> = {
-  tool_call: "\x1b[36m",       // cyan
-  tool_result: "\x1b[90m",     // dim
-  tool_approval: "\x1b[32m",   // green
-  tool_denial: "\x1b[31m",     // red
-  security_block: "\x1b[31m",  // red
+  tool_call: "\x1b[36m", // cyan
+  tool_result: "\x1b[90m", // dim
+  tool_approval: "\x1b[32m", // green
+  tool_denial: "\x1b[31m", // red
+  security_block: "\x1b[31m", // red
   security_escalation: "\x1b[33m", // yellow
-  auth_success: "\x1b[32m",    // green
-  auth_failure: "\x1b[31m",    // red
-  mode_change: "\x1b[33m",     // yellow
-  session_create: "\x1b[90m",  // dim
+  auth_success: "\x1b[32m", // green
+  auth_failure: "\x1b[31m", // red
+  mode_change: "\x1b[33m", // yellow
+  session_create: "\x1b[90m", // dim
   session_destroy: "\x1b[90m", // dim
-  error: "\x1b[31m",           // red
+  error: "\x1b[31m", // red
 };
 const RESET = "\x1b[0m";
 
@@ -111,9 +111,7 @@ export async function auditCommand(args: string[]): Promise<void> {
     }
   } else {
     // Header
-    console.log(
-      `${"Time".padEnd(19)}  ${"Event".padEnd(22)}  ${"Session".padEnd(24)}  Detail`
-    );
+    console.log(`${"Time".padEnd(19)}  ${"Event".padEnd(22)}  ${"Session".padEnd(24)}  Detail`);
     console.log("-".repeat(90));
     for (const entry of entries) {
       console.log(formatEntry(entry));

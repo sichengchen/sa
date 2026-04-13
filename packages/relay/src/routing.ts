@@ -42,14 +42,10 @@ function requireRouteBaseUrl(
     return value;
   }
 
-  throw new Error(
-    `Relay route ${transportMode} is unavailable for server ${serverId}`,
-  );
+  throw new Error(`Relay route ${transportMode} is unavailable for server ${serverId}`);
 }
 
-export function selectRelayRoute(
-  target: RelayRouteTarget,
-): RelayRouteSelection {
+export function selectRelayRoute(target: RelayRouteTarget): RelayRouteSelection {
   const directBaseUrl = normalizeBaseUrl(target.directBaseUrl);
   const relayBaseUrl = normalizeBaseUrl(target.relayBaseUrl);
   const preferredTransportMode = target.preferredTransportMode ?? "auto";
@@ -68,11 +64,7 @@ export function selectRelayRoute(
   if (preferredTransportMode === "relay_assisted") {
     return {
       serverId: target.serverId,
-      baseUrl: requireRouteBaseUrl(
-        directBaseUrl,
-        "relay_assisted",
-        target.serverId,
-      ),
+      baseUrl: requireRouteBaseUrl(directBaseUrl, "relay_assisted", target.serverId),
       transportMode: "relay_assisted",
       usesRelay: true,
       reason: "preferred-relay-assisted",
@@ -82,11 +74,7 @@ export function selectRelayRoute(
   if (preferredTransportMode === "relay_tunnel") {
     return {
       serverId: target.serverId,
-      baseUrl: requireRouteBaseUrl(
-        relayBaseUrl,
-        "relay_tunnel",
-        target.serverId,
-      ),
+      baseUrl: requireRouteBaseUrl(relayBaseUrl, "relay_tunnel", target.serverId),
       transportMode: "relay_tunnel",
       usesRelay: true,
       reason: "preferred-relay-tunnel",
@@ -133,7 +121,5 @@ export function selectRelayRoute(
     };
   }
 
-  throw new Error(
-    `No direct or relay route is configured for server ${target.serverId}`,
-  );
+  throw new Error(`No direct or relay route is configured for server ${target.serverId}`);
 }

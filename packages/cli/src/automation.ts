@@ -1,4 +1,4 @@
-import { ensureEngine } from "./engine.js";
+import { ensureEngine } from "@aria/server/daemon";
 import { createTuiClient } from "@aria/console/client.js";
 import { CLI_NAME } from "@aria/server/brand";
 
@@ -13,7 +13,9 @@ function printHelp(): void {
   console.log(`Usage: ${CLI_NAME} automation [list|runs [task]]\n`);
   console.log("Commands:");
   console.log("  list          Show durable automation tasks");
-  console.log("  runs [task]   Show recent automation runs, optionally filtered by task ID or task name");
+  console.log(
+    "  runs [task]   Show recent automation runs, optionally filtered by task ID or task name",
+  );
 }
 
 export async function automationCommand(args: string[]): Promise<void> {
@@ -40,7 +42,9 @@ export async function automationCommand(args: string[]): Promise<void> {
       const lastRun = formatDateTime(task.lastRunAt);
       const summary = task.lastSummary ? ` | ${task.lastSummary}` : "";
       console.log(`[${task.taskType}] ${task.name} (${status})${slug}`);
-      console.log(`  id=${task.taskId} next=${nextRun} last=${lastRun} last_status=${task.lastStatus ?? "n/a"}${summary}`);
+      console.log(
+        `  id=${task.taskId} next=${nextRun} last=${lastRun} last_status=${task.lastStatus ?? "n/a"}${summary}`,
+      );
     }
     return;
   }
@@ -51,7 +55,9 @@ export async function automationCommand(args: string[]): Promise<void> {
 
     if (target) {
       const tasks = await client.automation.list.query();
-      const match = tasks.find((task) => task.taskId.startsWith(target) || task.name === target || task.slug === target);
+      const match = tasks.find(
+        (task) => task.taskId.startsWith(target) || task.name === target || task.slug === target,
+      );
       if (!match) {
         console.log(`No automation task matched: ${target}`);
         return;
@@ -66,12 +72,16 @@ export async function automationCommand(args: string[]): Promise<void> {
     }
 
     for (const run of runs) {
-      const attempts = run.maxAttempts > 1 ? ` attempt=${run.attemptNumber}/${run.maxAttempts}` : "";
-      const delivery = run.deliveryStatus !== "not_requested"
-        ? ` delivery=${run.deliveryStatus}${run.deliveryError ? ` (${run.deliveryError})` : ""}`
-        : "";
+      const attempts =
+        run.maxAttempts > 1 ? ` attempt=${run.attemptNumber}/${run.maxAttempts}` : "";
+      const delivery =
+        run.deliveryStatus !== "not_requested"
+          ? ` delivery=${run.deliveryStatus}${run.deliveryError ? ` (${run.deliveryError})` : ""}`
+          : "";
       console.log(`[${run.taskType}] ${run.taskName} ${run.status}`);
-      console.log(`  task=${run.taskId} run=${run.runId ?? "n/a"} session=${run.sessionId ?? "n/a"} started=${new Date(run.startedAt).toLocaleString()}${attempts}${delivery}`);
+      console.log(
+        `  task=${run.taskId} run=${run.runId ?? "n/a"} session=${run.sessionId ?? "n/a"} started=${new Date(run.startedAt).toLocaleString()}${attempts}${delivery}`,
+      );
       if (run.summary) {
         console.log(`  ${run.summary}`);
       } else if (run.errorMessage) {

@@ -7,7 +7,7 @@ import type { DangerLevel } from "@aria/agent-aria";
 const ALWAYS_DANGEROUS_PATTERNS: RegExp[] = [
   // Destructive file operations
   /\brm\s+(-[a-zA-Z]*r|-[a-zA-Z]*f|--recursive|--force)/i,
-  /\brm\b.*\s+\//,                   // rm targeting root paths
+  /\brm\b.*\s+\//, // rm targeting root paths
   /\bmkfs\b/,
   /\bdd\b\s+/,
   /\bshred\b/,
@@ -47,19 +47,19 @@ const ALWAYS_DANGEROUS_PATTERNS: RegExp[] = [
  * These catch patterns where the command invokes another command dynamically.
  */
 const SHELL_INDIRECTION: RegExp[] = [
-  /\$\(/,                             // command substitution $(...)
-  /`[^`]+`/,                          // backtick substitution
-  /\beval\b/,                         // dynamic execution
-  /\bsource\b/,                       // source scripts
-  /\bexec\b\s/,                       // process replacement
+  /\$\(/, // command substitution $(...)
+  /`[^`]+`/, // backtick substitution
+  /\beval\b/, // dynamic execution
+  /\bsource\b/, // source scripts
+  /\bexec\b\s/, // process replacement
   /\bxargs\b.*\b(ba|da|k|z|c|tc|fi)?sh\b/, // xargs piping to shell
-  /\bfind\b.*-exec/,                  // find -exec
-  /\bawk\b.*\bsystem\b/,             // awk system()
-  /\bperl\b.*-e/,                     // inline Perl
-  /\bpython3?\b.*-c/,                // inline Python
-  /\bruby\b.*-e/,                     // inline Ruby
-  /\bnode\b.*-e/,                     // inline Node
-  /\bphp\b.*-r/,                      // inline PHP
+  /\bfind\b.*-exec/, // find -exec
+  /\bawk\b.*\bsystem\b/, // awk system()
+  /\bperl\b.*-e/, // inline Perl
+  /\bpython3?\b.*-c/, // inline Python
+  /\bruby\b.*-e/, // inline Ruby
+  /\bnode\b.*-e/, // inline Node
+  /\bphp\b.*-r/, // inline PHP
 ];
 
 /**
@@ -67,44 +67,96 @@ const SHELL_INDIRECTION: RegExp[] = [
  * Matched against the base command (first word, no path prefix).
  */
 const ALWAYS_SAFE_COMMANDS = new Set([
-  "ls", "ll", "la",
+  "ls",
+  "ll",
+  "la",
   "pwd",
   "echo",
-  "cat", "head", "tail", "less", "more",
-  "wc", "sort", "uniq", "tr", "cut", "paste",
-  "date", "cal",
-  "whoami", "id", "hostname", "uname",
-  "which", "where", "type", "command",
-  "file", "stat",
+  "cat",
+  "head",
+  "tail",
+  "less",
+  "more",
+  "wc",
+  "sort",
+  "uniq",
+  "tr",
+  "cut",
+  "paste",
+  "date",
+  "cal",
+  "whoami",
+  "id",
+  "hostname",
+  "uname",
+  "which",
+  "where",
+  "type",
+  "command",
+  "file",
+  "stat",
   "tree",
-  "du", "df",
-  "env", "printenv",
-  "true", "false",
-  "test", "[",
-  "basename", "dirname", "realpath", "readlink",
-  "md5", "md5sum", "shasum", "sha256sum",
-  "diff", "cmp", "comm", "column",
-  "jq", "yq",
-  "man", "help", "info",
-  "grep", "rg", "ag", "ack",
-  "sed", "awk",
+  "du",
+  "df",
+  "env",
+  "printenv",
+  "true",
+  "false",
+  "test",
+  "[",
+  "basename",
+  "dirname",
+  "realpath",
+  "readlink",
+  "md5",
+  "md5sum",
+  "shasum",
+  "sha256sum",
+  "diff",
+  "cmp",
+  "comm",
+  "column",
+  "jq",
+  "yq",
+  "man",
+  "help",
+  "info",
+  "grep",
+  "rg",
+  "ag",
+  "ack",
+  "sed",
+  "awk",
   "find",
-  "curl", "wget", "http",
+  "curl",
+  "wget",
+  "http",
 ]);
 
 /** Git subcommands that are read-only and safe */
 const SAFE_GIT_SUBCOMMANDS = new Set([
-  "status", "log", "diff", "show", "branch", "tag",
-  "remote", "stash list", "config --list", "config --get",
-  "ls-files", "ls-tree", "cat-file", "rev-parse",
-  "describe", "shortlog", "blame", "reflog",
+  "status",
+  "log",
+  "diff",
+  "show",
+  "branch",
+  "tag",
+  "remote",
+  "stash list",
+  "config --list",
+  "config --get",
+  "ls-files",
+  "ls-tree",
+  "cat-file",
+  "rev-parse",
+  "describe",
+  "shortlog",
+  "blame",
+  "reflog",
 ]);
 
 /** Git subcommands that are always dangerous */
-const DANGEROUS_GIT_SUBCOMMANDS = new Set([
-  "push", "reset", "clean",
-  "checkout .", "restore .",
-]);
+const DANGEROUS_GIT_SUBCOMMANDS = new Set(["push", "reset", "clean", "checkout .", "restore ."]);
 
 /**
  * Classify an exec command using pattern matching.
@@ -137,7 +189,8 @@ export function classifyExecCommand(
   const baseCmd = firstWord.split("/").pop() ?? firstWord;
 
   // Check if it's a simple safe command (no pipes, no semicolons, no &&)
-  const isSimple = !/[|;&]/.test(trimmed) || /^\s*\S+(\s+-[a-zA-Z0-9]+)*(\s+\S+)*\s*$/.test(trimmed);
+  const isSimple =
+    !/[|;&]/.test(trimmed) || /^\s*\S+(\s+-[a-zA-Z0-9]+)*(\s+\S+)*\s*$/.test(trimmed);
 
   if (isSimple && ALWAYS_SAFE_COMMANDS.has(baseCmd)) {
     return "safe";

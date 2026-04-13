@@ -92,10 +92,11 @@ describe("projects workflow services", () => {
       reason: "Switch to worktree",
     });
 
-    expect(repository.listThreadEnvironmentBindings("thread-binding").map((binding) => binding.bindingId)).toEqual([
-      "binding-2",
-      "binding-1",
-    ]);
+    expect(
+      repository
+        .listThreadEnvironmentBindings("thread-binding")
+        .map((binding) => binding.bindingId),
+    ).toEqual(["binding-2", "binding-1"]);
     expect(repository.getActiveThreadEnvironmentBinding("thread-binding")).toMatchObject({
       bindingId: "binding-2",
       environmentId: "env-worktree",
@@ -185,7 +186,9 @@ describe("projects workflow services", () => {
     });
 
     expect(completedPublishRun.status).toBe("pr_created");
-    expect(repository.getPublishRun(publishRun.publishRunId)?.prUrl).toBe("https://example.com/pr/1");
+    expect(repository.getPublishRun(publishRun.publishRunId)?.prUrl).toBe(
+      "https://example.com/pr/1",
+    );
   });
 
   test("external ref helpers preserve legacy linear thread lookup behavior", async () => {
@@ -217,7 +220,7 @@ describe("projects workflow services", () => {
       linearIssueId: "ARI-101",
       linearIdentifier: "ARIA-101",
       linearSessionId: "session-linear",
-      metadataJson: "{\"source\":\"test\"}",
+      metadataJson: '{"source":"test"}',
       createdAt: now,
       updatedAt: now,
     });
@@ -239,11 +242,15 @@ describe("projects workflow services", () => {
     expect(buildExternalRefId("thread", "thread-linear", "linear", "ARI-101")).toBe(
       "thread:thread-linear:linear:ARI-101",
     );
-    expect(findThreadRefsByLinearIssueId(repository, "ARI-101").map((ref) => ref.externalId)).toEqual(["ARI-101"]);
-    expect(findThreadRefsByLinearIssueId(repository, "ARIA-101").map((ref) => ref.externalId)).toEqual(["ARIA-101"]);
-    expect(findThreadRefsByLinearIssueId(repository, "ARI-102").map((ref) => ref.externalRefId)).toEqual([
-      direct.externalRefId,
-    ]);
+    expect(
+      findThreadRefsByLinearIssueId(repository, "ARI-101").map((ref) => ref.externalId),
+    ).toEqual(["ARI-101"]);
+    expect(
+      findThreadRefsByLinearIssueId(repository, "ARIA-101").map((ref) => ref.externalId),
+    ).toEqual(["ARIA-101"]);
+    expect(
+      findThreadRefsByLinearIssueId(repository, "ARI-102").map((ref) => ref.externalRefId),
+    ).toEqual([direct.externalRefId]);
   });
 
   test("handoff materialization creates a thread, job, and queued dispatch idempotently", async () => {
@@ -265,18 +272,22 @@ describe("projects workflow services", () => {
       updatedAt: now,
     });
 
-    handoffService.submit("handoff-1", {
-      idempotencyKey: "handoff-key",
-      sourceKind: "local_session",
-      projectId: "project-2",
-      payloadJson: JSON.stringify({
-        title: "Imported handoff thread",
-        body: "Please continue this tracked work.",
-        workspaceId: "workspace-local",
-        environmentId: "env-main",
-        requestedBackend: "codex",
-      }),
-    }, now);
+    handoffService.submit(
+      "handoff-1",
+      {
+        idempotencyKey: "handoff-key",
+        sourceKind: "local_session",
+        projectId: "project-2",
+        payloadJson: JSON.stringify({
+          title: "Imported handoff thread",
+          body: "Please continue this tracked work.",
+          workspaceId: "workspace-local",
+          environmentId: "env-main",
+          requestedBackend: "codex",
+        }),
+      },
+      now,
+    );
 
     const first = handoffService.materialize("handoff-1", repository, now + 1);
     const second = handoffService.materialize("handoff-1", repository, now + 2);
@@ -337,7 +348,7 @@ describe("projects workflow services", () => {
       idempotencyKey: "handoff-missing-key",
       sourceKind: "local_session",
       projectId: "missing-project",
-      payloadJson: "{\"body\":\"hello\"}",
+      payloadJson: '{"body":"hello"}',
     });
 
     expect(() => handoffService.materialize("handoff-missing", repository)).toThrow(
@@ -404,8 +415,13 @@ describe("projects workflow services", () => {
       environmentId: "env-2",
       environmentBindingId: "binding-2",
     });
-    expect(repository.getActiveThreadEnvironmentBinding("thread-binding")).toMatchObject(secondBinding);
-    expect(repository.listThreadEnvironmentBindings("thread-binding")).toEqual([secondBinding, firstBinding]);
+    expect(repository.getActiveThreadEnvironmentBinding("thread-binding")).toMatchObject(
+      secondBinding,
+    );
+    expect(repository.listThreadEnvironmentBindings("thread-binding")).toEqual([
+      secondBinding,
+      firstBinding,
+    ]);
 
     repository.upsertThreadEnvironmentBinding({
       bindingId: "binding-3",

@@ -1,9 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import {
-  formatSkillsDiscovery,
-  MAX_SKILLS_IN_PROMPT,
-  MAX_SKILLS_PROMPT_CHARS,
-} from "./prompt.js";
+import { formatSkillsDiscovery, MAX_SKILLS_IN_PROMPT, MAX_SKILLS_PROMPT_CHARS } from "./prompt.js";
 import type { SkillMetadata } from "./types.js";
 
 function makeSkill(name: string, description = "A test skill."): SkillMetadata {
@@ -43,7 +39,7 @@ describe("formatSkillsDiscovery", () => {
 
   it("truncates at MAX_SKILLS_IN_PROMPT and shows omission note", () => {
     const skills = Array.from({ length: MAX_SKILLS_IN_PROMPT + 10 }, (_, i) =>
-      makeSkill(`skill-${String(i).padStart(4, "0")}`)
+      makeSkill(`skill-${String(i).padStart(4, "0")}`),
     );
     const result = formatSkillsDiscovery(skills);
     // Should have exactly MAX_SKILLS_IN_PROMPT skill entries
@@ -57,7 +53,7 @@ describe("formatSkillsDiscovery", () => {
     // Create skills with very long descriptions to exceed char limit
     const longDesc = "x".repeat(500);
     const skills = Array.from({ length: 100 }, (_, i) =>
-      makeSkill(`skill-${String(i).padStart(3, "0")}`, longDesc)
+      makeSkill(`skill-${String(i).padStart(3, "0")}`, longDesc),
     );
     const result = formatSkillsDiscovery(skills);
     expect(result.length).toBeLessThanOrEqual(MAX_SKILLS_PROMPT_CHARS);

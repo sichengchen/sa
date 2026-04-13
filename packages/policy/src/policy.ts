@@ -25,14 +25,14 @@ export interface ToolEventContext {
  */
 export class ToolPolicyManager {
   private verbosity: Record<string, ToolVerbosity>;
-  private overrides: Record<string, { dangerLevel?: DangerLevel; report?: "always" | "never" | "on_error" }>;
+  private overrides: Record<
+    string,
+    { dangerLevel?: DangerLevel; report?: "always" | "never" | "on_error" }
+  >;
   /** Built-in danger levels from tool registrations */
   private builtinLevels: Map<string, DangerLevel>;
 
-  constructor(
-    policy: ToolPolicyConfig | undefined,
-    builtinLevels: Map<string, DangerLevel>,
-  ) {
+  constructor(policy: ToolPolicyConfig | undefined, builtinLevels: Map<string, DangerLevel>) {
     this.verbosity = { ...DEFAULT_VERBOSITY, ...policy?.verbosity };
     this.overrides = policy?.overrides ?? {};
     this.builtinLevels = builtinLevels;
@@ -40,9 +40,7 @@ export class ToolPolicyManager {
 
   /** Get the effective danger level for a tool (override takes precedence) */
   getDangerLevel(toolName: string): DangerLevel {
-    return this.overrides[toolName]?.dangerLevel
-      ?? this.builtinLevels.get(toolName)
-      ?? "dangerous";
+    return this.overrides[toolName]?.dangerLevel ?? this.builtinLevels.get(toolName) ?? "dangerous";
   }
 
   /** Get the verbosity for a connector type */
@@ -92,7 +90,11 @@ export class ToolPolicyManager {
   }
 
   /** Decide whether to emit a tool_approval_request event */
-  shouldEmitApproval(_connectorType: ConnectorType, ctx: ToolEventContext, approvalMode: ToolApprovalMode): boolean {
+  shouldEmitApproval(
+    _connectorType: ConnectorType,
+    ctx: ToolEventContext,
+    approvalMode: ToolApprovalMode,
+  ): boolean {
     // Safe tools never need approval
     if (ctx.dangerLevel === "safe") return false;
     // Dangerous tools always need approval

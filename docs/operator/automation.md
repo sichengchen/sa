@@ -12,12 +12,12 @@ Agent-based periodic check running in the **main session**. The agent reads a us
 
 ### Configuration (`runtime.heartbeat`)
 
-| Field              | Type    | Default          | Description                                       |
-|--------------------|---------|------------------|---------------------------------------------------|
-| `enabled`          | boolean | `true`           | Whether the heartbeat agent runs on each cycle    |
-| `intervalMinutes`  | number  | `30`             | Minutes between heartbeat checks                  |
-| `checklistPath`    | string  | `"HEARTBEAT.md"` | Path to checklist, relative to `ARIA_HOME`          |
-| `suppressToken`    | string  | `"HEARTBEAT_OK"` | Exact response that suppresses user notification  |
+| Field             | Type    | Default          | Description                                      |
+| ----------------- | ------- | ---------------- | ------------------------------------------------ |
+| `enabled`         | boolean | `true`           | Whether the heartbeat agent runs on each cycle   |
+| `intervalMinutes` | number  | `30`             | Minutes between heartbeat checks                 |
+| `checklistPath`   | string  | `"HEARTBEAT.md"` | Path to checklist, relative to `ARIA_HOME`       |
+| `suppressToken`   | string  | `"HEARTBEAT_OK"` | Exact response that suppresses user notification |
 
 ### How It Works
 
@@ -35,17 +35,18 @@ User-editable Markdown. Read fresh on each cycle. Default:
 
 ```markdown
 # Heartbeat checklist
+
 - Check if any background tasks have completed -- summarize results
 - If idle for 8+ hours, send a brief check-in
 ```
 
 ### tRPC API
 
-| Procedure           | Type     | Description                                    |
-|---------------------|----------|------------------------------------------------|
-| `heartbeat.status`    | query    | Current config and last heartbeat result     |
-| `heartbeat.configure` | mutation | Update `enabled` and/or `intervalMinutes`    |
-| `heartbeat.trigger`   | mutation | Manually trigger a heartbeat check           |
+| Procedure             | Type     | Description                               |
+| --------------------- | -------- | ----------------------------------------- |
+| `heartbeat.status`    | query    | Current config and last heartbeat result  |
+| `heartbeat.configure` | mutation | Update `enabled` and/or `intervalMinutes` |
+| `heartbeat.trigger`   | mutation | Manually trigger a heartbeat check        |
 
 ### HTTP Endpoint
 
@@ -59,47 +60,47 @@ Scheduled tasks dispatch a prompt to a fresh, isolated agent session. Esperta Ar
 
 ### Task Fields
 
-| Field            | Type      | Required | Description |
-|------------------|-----------|----------|-------------|
-| `name`           | string    | yes      | Unique task identifier |
-| `schedule`       | string    | yes      | Cron expression, `every 2h`, `30m`, or ISO timestamp |
-| `prompt`         | string    | yes      | Prompt sent to the agent |
-| `enabled`        | boolean   | no       | Whether active (default: true) |
-| `paused`         | boolean   | no       | Pause without deleting the task |
-| `oneShot`        | boolean   | no       | Auto-remove after first execution |
-| `model`          | string    | no       | Model override |
-| `allowedTools`   | string[]  | no       | Explicit tool allowlist |
-| `allowedToolsets`| string[]  | no       | Toolset names expanded at runtime |
-| `skills`         | string[]  | no       | Skills injected into the task system prompt |
-| `retryPolicy`    | object    | no       | Retry config: `maxAttempts`, `delaySeconds` |
-| `delivery`       | object    | no       | Optional connector delivery target |
-| `scheduleKind`   | enum      | no       | Derived scheduler mode: `cron`, `interval`, or `once` |
-| `intervalMinutes`| number    | no       | Derived fixed interval for cadence schedules |
-| `runAt`          | string    | no       | Absolute timestamp for one-shot tasks |
-| `lastRunAt`      | string    | no       | Last execution timestamp |
-| `nextRunAt`      | string    | no       | Next scheduled execution timestamp |
-| `lastStatus`     | string    | no       | Last execution status: `success` or `error` |
-| `lastSummary`    | string    | no       | Compact summary of the last run |
+| Field             | Type     | Required | Description                                           |
+| ----------------- | -------- | -------- | ----------------------------------------------------- |
+| `name`            | string   | yes      | Unique task identifier                                |
+| `schedule`        | string   | yes      | Cron expression, `every 2h`, `30m`, or ISO timestamp  |
+| `prompt`          | string   | yes      | Prompt sent to the agent                              |
+| `enabled`         | boolean  | no       | Whether active (default: true)                        |
+| `paused`          | boolean  | no       | Pause without deleting the task                       |
+| `oneShot`         | boolean  | no       | Auto-remove after first execution                     |
+| `model`           | string   | no       | Model override                                        |
+| `allowedTools`    | string[] | no       | Explicit tool allowlist                               |
+| `allowedToolsets` | string[] | no       | Toolset names expanded at runtime                     |
+| `skills`          | string[] | no       | Skills injected into the task system prompt           |
+| `retryPolicy`     | object   | no       | Retry config: `maxAttempts`, `delaySeconds`           |
+| `delivery`        | object   | no       | Optional connector delivery target                    |
+| `scheduleKind`    | enum     | no       | Derived scheduler mode: `cron`, `interval`, or `once` |
+| `intervalMinutes` | number   | no       | Derived fixed interval for cadence schedules          |
+| `runAt`           | string   | no       | Absolute timestamp for one-shot tasks                 |
+| `lastRunAt`       | string   | no       | Last execution timestamp                              |
+| `nextRunAt`       | string   | no       | Next scheduled execution timestamp                    |
+| `lastStatus`      | string   | no       | Last execution status: `success` or `error`           |
+| `lastSummary`     | string   | no       | Compact summary of the last run                       |
 
 ### Schedule Syntax
 
 Esperta Aria normalizes four schedule forms:
 
-| Input              | Meaning |
-|--------------------|---------|
-| `0 9 * * *`        | Cron: daily at 09:00 |
-| `every 2h`         | Fixed interval every 120 minutes |
-| `30m`              | One-shot run 30 minutes from now |
+| Input                  | Meaning                          |
+| ---------------------- | -------------------------------- |
+| `0 9 * * *`            | Cron: daily at 09:00             |
+| `every 2h`             | Fixed interval every 120 minutes |
+| `30m`                  | One-shot run 30 minutes from now |
 | `2026-04-07T15:30:00Z` | One-shot run at an absolute time |
 
 Cron expressions use `minute hour day month weekday` and support `*`, `*/N`, and comma-separated values.
 
-| Expression       | Meaning                            |
-|------------------|------------------------------------|
-| `0 9 * * *`      | Daily at 09:00                     |
-| `*/15 * * * *`   | Every 15 minutes                   |
-| `0 0 1 * *`      | First of month at midnight         |
-| `30 17 * * 1,5`  | Monday and Friday at 17:30         |
+| Expression      | Meaning                    |
+| --------------- | -------------------------- |
+| `0 9 * * *`     | Daily at 09:00             |
+| `*/15 * * * *`  | Every 15 minutes           |
+| `0 0 1 * *`     | First of month at midnight |
+| `30 17 * * 1,5` | Monday and Friday at 17:30 |
 
 ### Session Isolation
 
@@ -143,15 +144,15 @@ Each persisted automation run records:
 
 ### tRPC API
 
-| Procedure     | Type     | Description                                   |
-|---------------|----------|-----------------------------------------------|
+| Procedure     | Type     | Description                                            |
+| ------------- | -------- | ------------------------------------------------------ |
 | `cron.list`   | query    | List all tasks (built-in + user) with runtime metadata |
-| `cron.add`    | mutation | Add a scheduled task |
-| `cron.update` | mutation | Update schedule, prompt, tools, skills, or delivery |
-| `cron.pause`  | mutation | Pause a task without deleting it |
-| `cron.resume` | mutation | Resume a paused task |
-| `cron.run`    | mutation | Trigger a task immediately |
-| `cron.remove` | mutation | Remove a user task by name |
+| `cron.add`    | mutation | Add a scheduled task                                   |
+| `cron.update` | mutation | Update schedule, prompt, tools, skills, or delivery    |
+| `cron.pause`  | mutation | Pause a task without deleting it                       |
+| `cron.resume` | mutation | Resume a paused task                                   |
+| `cron.run`    | mutation | Trigger a task immediately                             |
+| `cron.remove` | mutation | Remove a user task by name                             |
 
 Built-in tasks (heartbeat) cannot be removed via `cron.remove`.
 
@@ -163,21 +164,21 @@ Event-driven tasks triggered by HTTP POST from external systems. Each has a URL 
 
 ### Task Fields
 
-| Field            | Type      | Required | Description |
-|------------------|-----------|----------|-------------|
-| `name`           | string    | yes      | Human-readable name |
-| `slug`           | string    | yes      | URL slug (alphanumeric, hyphens, underscores) |
-| `prompt`         | string    | yes      | Prompt template; `{{payload}}` replaced with request body |
-| `enabled`        | boolean   | yes      | Whether active |
-| `model`          | string    | no       | Model override |
-| `allowedTools`   | string[]  | no       | Explicit tool allowlist |
-| `allowedToolsets`| string[]  | no       | Toolset names expanded at runtime |
-| `skills`         | string[]  | no       | Skills injected into the task system prompt |
-| `retryPolicy`    | object    | no       | Retry config: `maxAttempts`, `delaySeconds` |
-| `delivery`       | object    | no       | Optional delivery target override |
-| `lastRunAt`      | string    | no       | Last execution timestamp |
-| `lastStatus`     | string    | no       | Last execution status |
-| `lastSummary`    | string    | no       | Compact summary of the last run |
+| Field             | Type     | Required | Description                                               |
+| ----------------- | -------- | -------- | --------------------------------------------------------- |
+| `name`            | string   | yes      | Human-readable name                                       |
+| `slug`            | string   | yes      | URL slug (alphanumeric, hyphens, underscores)             |
+| `prompt`          | string   | yes      | Prompt template; `{{payload}}` replaced with request body |
+| `enabled`         | boolean  | yes      | Whether active                                            |
+| `model`           | string   | no       | Model override                                            |
+| `allowedTools`    | string[] | no       | Explicit tool allowlist                                   |
+| `allowedToolsets` | string[] | no       | Toolset names expanded at runtime                         |
+| `skills`          | string[] | no       | Skills injected into the task system prompt               |
+| `retryPolicy`     | object   | no       | Retry config: `maxAttempts`, `delaySeconds`               |
+| `delivery`        | object   | no       | Optional delivery target override                         |
+| `lastRunAt`       | string   | no       | Last execution timestamp                                  |
+| `lastStatus`      | string   | no       | Last execution status                                     |
+| `lastSummary`     | string   | no       | Compact summary of the last run                           |
 
 ### HTTP Endpoint
 
@@ -201,12 +202,12 @@ Persisted in `config.json` at `runtime.automation.webhookTasks`.
 
 ### tRPC API
 
-| Procedure              | Type     | Description                      |
-|------------------------|----------|----------------------------------|
-| `webhookTask.list`     | query    | List all webhook tasks           |
-| `webhookTask.add`      | mutation | Add a webhook task               |
-| `webhookTask.update`   | mutation | Update a task by slug            |
-| `webhookTask.remove`   | mutation | Remove a task by slug            |
+| Procedure            | Type     | Description            |
+| -------------------- | -------- | ---------------------- |
+| `webhookTask.list`   | query    | List all webhook tasks |
+| `webhookTask.add`    | mutation | Add a webhook task     |
+| `webhookTask.update` | mutation | Update a task by slug  |
+| `webhookTask.remove` | mutation | Remove a task by slug  |
 
 ---
 
@@ -218,8 +219,8 @@ Both webhook endpoints use bearer token auth configured at `runtime.webhook.toke
 
 ## Decision Guide
 
-| Mechanism | Trigger            | Session                     | Best For                                           |
-|-----------|--------------------|-----------------------------|----------------------------------------------------|
-| Heartbeat | Timer (periodic)   | Main session                | Periodic monitoring, status checks, idle check-ins |
-| Cron      | Timer (scheduled)  | Isolated (`cron:<name>`)    | Scheduled tasks -- reports, cleanup, reminders     |
-| Webhook   | HTTP POST          | Isolated (`webhook:<slug>`) | Event-driven -- GitHub, CI/CD, monitoring alerts   |
+| Mechanism | Trigger           | Session                     | Best For                                           |
+| --------- | ----------------- | --------------------------- | -------------------------------------------------- |
+| Heartbeat | Timer (periodic)  | Main session                | Periodic monitoring, status checks, idle check-ins |
+| Cron      | Timer (scheduled) | Isolated (`cron:<name>`)    | Scheduled tasks -- reports, cleanup, reminders     |
+| Webhook   | HTTP POST         | Isolated (`webhook:<slug>`) | Event-driven -- GitHub, CI/CD, monitoring alerts   |

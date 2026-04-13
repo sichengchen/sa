@@ -26,27 +26,21 @@ interface RunningProcess {
   cancelled: boolean;
 }
 
-export abstract class SubprocessRuntimeBackendAdapter
-  implements RuntimeBackendAdapter
-{
+export abstract class SubprocessRuntimeBackendAdapter implements RuntimeBackendAdapter {
   abstract readonly backend: RuntimeBackendId;
   abstract readonly displayName: string;
   abstract readonly capabilities: RuntimeBackendCapabilities;
 
   private readonly running = new Map<string, RunningProcess>();
 
-  protected abstract buildCommand(
-    request: RuntimeBackendExecutionRequest
-  ): string[];
+  protected abstract buildCommand(request: RuntimeBackendExecutionRequest): string[];
 
-  protected buildEnv(
-    request: RuntimeBackendExecutionRequest
-  ): Record<string, string> {
+  protected buildEnv(request: RuntimeBackendExecutionRequest): Record<string, string> {
     const env = { ...process.env, ...request.env };
     return Object.fromEntries(
       Object.entries(env).filter(
-        (entry): entry is [string, string] => typeof entry[1] === "string"
-      )
+        (entry): entry is [string, string] => typeof entry[1] === "string",
+      ),
     );
   }
 
@@ -58,13 +52,11 @@ export abstract class SubprocessRuntimeBackendAdapter
     filesChanged: string[];
   }): RuntimeBackendExecutionResult;
 
-  protected async beforeExecute(
-    _request: RuntimeBackendExecutionRequest
-  ): Promise<void> {}
+  protected async beforeExecute(_request: RuntimeBackendExecutionRequest): Promise<void> {}
 
   protected async afterExecute(
     _request: RuntimeBackendExecutionRequest,
-    _result: RuntimeBackendExecutionResult
+    _result: RuntimeBackendExecutionResult,
   ): Promise<void> {}
 
   async probeAvailability(): Promise<RuntimeBackendAvailability> {
@@ -77,7 +69,7 @@ export abstract class SubprocessRuntimeBackendAdapter
 
   async execute(
     request: RuntimeBackendExecutionRequest,
-    observer?: RuntimeBackendExecutionObserver
+    observer?: RuntimeBackendExecutionObserver,
   ): Promise<RuntimeBackendExecutionResult> {
     await this.beforeExecute(request);
 
@@ -194,7 +186,10 @@ export abstract class SubprocessRuntimeBackendAdapter
     this.running.delete(executionId);
   }
 
-  protected probeBinary(command: string, versionArg = "--version"): {
+  protected probeBinary(
+    command: string,
+    versionArg = "--version",
+  ): {
     available: boolean;
     detectedVersion?: string | null;
   } {
@@ -216,7 +211,7 @@ export abstract class SubprocessRuntimeBackendAdapter
 
   protected runCheck(
     command: string[],
-    env?: Record<string, string>
+    env?: Record<string, string>,
   ): { exitCode: number; stdout: string; stderr: string } {
     const result = Bun.spawnSync(command, {
       stdout: "pipe",

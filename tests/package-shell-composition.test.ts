@@ -1,9 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  ariaServerApp,
-  createAriaServerBootstrap,
-} from "@aria/server";
+import { ariaServerApp, createAriaServerBootstrap } from "@aria/server";
 import { createAriaDesktopShell } from "@aria/desktop";
 import { createAriaMobileShell } from "@aria/mobile";
 
@@ -30,10 +27,7 @@ describe("package shell composition", () => {
       connectors: "server-only",
       projectLocalExecution: "desktop-only",
     });
-    expect(ariaServerApp.sharedPackages).toEqual([
-      "@aria/runtime",
-      "@aria/gateway",
-    ]);
+    expect(ariaServerApp.sharedPackages).toEqual(["@aria/runtime", "@aria/gateway"]);
     expect(bootstrap).toMatchObject({
       app: ariaServerApp,
       runtimeHome: "/tmp/aria-shell-test",
@@ -62,12 +56,26 @@ describe("package shell composition", () => {
       projects: [
         {
           project: { name: "Aria" },
-          threads: [{ threadId: "thread-1", title: "Inbox", status: "running", threadType: "aria", agentId: "aria-agent" }],
+          threads: [
+            {
+              threadId: "thread-1",
+              title: "Inbox",
+              status: "running",
+              threadType: "aria",
+              agentId: "aria-agent",
+            },
+          ],
         },
       ],
       initialThread: {
         project: { name: "Aria" },
-        thread: { threadId: "thread-1", title: "Inbox", status: "running", threadType: "aria", agentId: "aria-agent" },
+        thread: {
+          threadId: "thread-1",
+          title: "Inbox",
+          status: "running",
+          threadType: "aria",
+          agentId: "aria-agent",
+        },
       },
       activeThreadContext: {
         projectLabel: "Aria",
@@ -236,18 +244,20 @@ describe("package shell composition", () => {
       projects: [
         {
           project: { name: "Aria" },
-          threads: [{
-            threadId: "thread-2",
-            title: "Review",
-            status: "idle",
-            threadType: "remote_project",
-            agentId: "codex",
-            approvalLabel: "2 approvals pending",
-            automationLabel: "Automation queued",
-            remoteReviewLabel: "Ready for remote review",
-            connectionLabel: "Connected to Home Server",
-            reconnectLabel: "Reconnect after sleep",
-          }],
+          threads: [
+            {
+              threadId: "thread-2",
+              title: "Review",
+              status: "idle",
+              threadType: "remote_project",
+              agentId: "codex",
+              approvalLabel: "2 approvals pending",
+              automationLabel: "Automation queued",
+              remoteReviewLabel: "Ready for remote review",
+              connectionLabel: "Connected to Home Server",
+              reconnectLabel: "Reconnect after sleep",
+            },
+          ],
         },
       ],
       initialThread: {

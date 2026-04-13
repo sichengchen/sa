@@ -2,12 +2,21 @@ import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { isPathInside, toRelativeIfInside } from "@aria/policy";
 
-const REFERENCE_PATTERN = /(?<![\w/])@(?:(?<simple>diff|staged)\b|(?<kind>file|folder|url):(?<value>\S+))/g;
+const REFERENCE_PATTERN =
+  /(?<![\w/])@(?:(?<simple>diff|staged)\b|(?<kind>file|folder|url):(?<value>\S+))/g;
 const TRAILING_PUNCTUATION = /[.,;!?]+$/;
 const MAX_INJECTED_CHARS = 80_000;
 const SOFT_WARNING_CHARS = 40_000;
 const MAX_FOLDER_ENTRIES = 200;
-const SECRET_PATH_FRAGMENTS = ["/.ssh", "/.aws", "/.gnupg", "/.kube", "/.docker", "/.config/gh", "/.aria"];
+const SECRET_PATH_FRAGMENTS = [
+  "/.ssh",
+  "/.aws",
+  "/.gnupg",
+  "/.kube",
+  "/.docker",
+  "/.config/gh",
+  "/.aria",
+];
 
 export interface ContextReference {
   raw: string;
@@ -115,7 +124,11 @@ function removeReferenceTokens(message: string, refs: ContextReference[]): strin
   return stripped.trim();
 }
 
-async function expandFileReference(ref: ContextReference, cwd: string, allowedRoot: string): Promise<string> {
+async function expandFileReference(
+  ref: ContextReference,
+  cwd: string,
+  allowedRoot: string,
+): Promise<string> {
   const filePath = normalizePath(cwd, ref.target);
   ensurePathAllowed(filePath, allowedRoot);
   const raw = await readFile(filePath, "utf-8");
@@ -138,12 +151,14 @@ async function walkFolder(dirPath: string, root: string, depth = 0): Promise<str
 
   const entries = await readdir(dirPath, { withFileTypes: true });
   const lines: string[] = [];
-  for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name)).slice(0, MAX_FOLDER_ENTRIES)) {
+  for (const entry of entries
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, MAX_FOLDER_ENTRIES)) {
     const fullPath = resolve(dirPath, entry.name);
     const display = relativePath(root, fullPath);
     lines.push(`${"  ".repeat(depth)}- ${display}${entry.isDirectory() ? "/" : ""}`);
     if (entry.isDirectory()) {
-      lines.push(...await walkFolder(fullPath, root, depth + 1));
+      lines.push(...(await walkFolder(fullPath, root, depth + 1)));
     }
   }
   return lines;
@@ -153,7 +168,11 @@ function relativePath(root: string, target: string): string {
   return toRelativeIfInside(root, target) ?? target;
 }
 
-async function expandFolderReference(ref: ContextReference, cwd: string, allowedRoot: string): Promise<string> {
+async function expandFolderReference(
+  ref: ContextReference,
+  cwd: string,
+  allowedRoot: string,
+): Promise<string> {
   const folderPath = normalizePath(cwd, ref.target);
   ensurePathAllowed(folderPath, allowedRoot);
   const listing = await walkFolder(folderPath, folderPath);
@@ -173,7 +192,10 @@ function expandGitReference(ref: ContextReference, cwd: string): string {
   return `🧾 ${ref.raw}\n\`\`\`diff\n${output}\n\`\`\``;
 }
 
-async function expandUrlReference(ref: ContextReference, fetchUrl?: (url: string) => Promise<string>): Promise<string> {
+async function expandUrlReference(
+  ref: ContextReference,
+  fetchUrl?: (url: string) => Promise<string>,
+): Promise<string> {
   if (!fetchUrl) {
     return `🌐 ${ref.raw}\n(no URL fetcher configured)`;
   }
@@ -229,7 +251,9 @@ export async function preprocessContextReferences(
   }
 
   if (totalChars > MAX_INJECTED_CHARS) {
-    warnings.push(`@ references blocked: ${totalChars} chars exceeds the ${MAX_INJECTED_CHARS} char hard limit.`);
+    warnings.push(
+      `@ references blocked: ${totalChars} chars exceeds the ${MAX_INJECTED_CHARS} char hard limit.`,
+    );
     return {
       message,
       originalMessage: message,
@@ -240,7 +264,9 @@ export async function preprocessContextReferences(
   }
 
   if (totalChars > SOFT_WARNING_CHARS) {
-    warnings.push(`@ references expanded to ${totalChars} chars, which exceeds the ${SOFT_WARNING_CHARS} char soft limit.`);
+    warnings.push(
+      `@ references expanded to ${totalChars} chars, which exceeds the ${SOFT_WARNING_CHARS} char soft limit.`,
+    );
   }
 
   const stripped = removeReferenceTokens(message, refs);

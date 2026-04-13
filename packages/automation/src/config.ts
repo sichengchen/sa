@@ -62,14 +62,21 @@ export interface AutomationConfig {
 }
 
 export const CRON_DEFAULT_TOOLS = [
-  "read", "web_fetch", "web_search",
-  "memory_search", "memory_read", "memory_write",
+  "read",
+  "web_fetch",
+  "web_search",
+  "memory_search",
+  "memory_read",
+  "memory_write",
   "notify",
 ];
 
 export const WEBHOOK_DEFAULT_TOOLS = [
-  "read", "web_fetch", "web_search",
-  "memory_search", "memory_read",
+  "read",
+  "web_fetch",
+  "web_search",
+  "memory_search",
+  "memory_read",
   "notify",
 ];
 

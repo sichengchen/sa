@@ -1,28 +1,33 @@
 {
   "name": "aria",
   "version": "2026.3.4",
-  "description": "Esperta Aria \u2014 Local-first agent platform",
-  "type": "module",
-  "main": "packages/cli/src/index.ts",
+  "description": "Esperta Aria — Local-first agent platform",
+  "bin": {
+    "aria": "dist/index.mjs"
+  },
   "workspaces": [
     "packages/*",
     "apps/*",
     "services/*"
   ],
-  "bin": {
-    "aria": "dist/index.js"
-  },
+  "type": "module",
+  "main": "packages/cli/src/index.ts",
   "scripts": {
     "dev": "bun run packages/cli/src/index.ts",
-    "build": "bun scripts/copy-docs.ts && bun run scripts/embed-skills.ts && bun build packages/cli/src/index.ts --outdir dist --target bun",
-    "test": "bun test",
-    "lint": "eslint packages/ tests/ scripts/",
+    "prepare:skills": "vp run repo:prepare-skills",
+    "build": "vp run repo:build",
+    "check": "vp run repo:check",
+    "test": "vp run repo:test",
+    "test:watch": "vp run repo:test:watch",
+    "verify": "vp run repo:verify",
+    "lint": "vp lint",
+    "fmt": "vp fmt . --write",
+    "fmt:check": "vp fmt --check",
     "typecheck": "tsc --noEmit",
     "audit:history": "bun run scripts/audit-history.ts",
     "version:bump": "bun run scripts/version.ts"
   },
   "dependencies": {
-    "@sinclair/typebox": "^0.34.48",
     "@chat-adapter/discord": "^4.24.0",
     "@chat-adapter/gchat": "^4.24.0",
     "@chat-adapter/github": "^4.24.0",
@@ -33,6 +38,7 @@
     "@chat-adapter/telegram": "^4.24.0",
     "@mariozechner/pi-ai": "^0.66.1",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@sinclair/typebox": "^0.34.48",
     "@trpc/client": "^11.16.0",
     "@trpc/server": "^11.16.0",
     "chat": "^4.24.0",
@@ -46,12 +52,12 @@
   "devDependencies": {
     "@types/react": "^19.2.14",
     "@types/ws": "^8.18.1",
-    "@typescript-eslint/eslint-plugin": "^8.58.1",
-    "@typescript-eslint/parser": "^8.58.1",
     "bun-types": "^1.3.11",
-    "eslint": "^10.2.0",
-    "prettier": "^3.8.1",
     "react-devtools-core": "^7.0.1",
-    "typescript": "^6.0.2"
-  }
+    "typescript": "^6.0.2",
+    "vite": "^7.2.1",
+    "vite-plus": "^0.1.16",
+    "vitest": "^3.2.4"
+  },
+  "packageManager": "bun@1.3.9"
 }

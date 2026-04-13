@@ -49,10 +49,10 @@ end tell'
 
 ⚠️ **Exact string match required** — must match stored format exactly.
 
-| Stored | Search | Works? |
-|--------|--------|--------|
-| `+1XXXXXXXXXX` | `+1XXXXXXXXXX` | ✅ |
-| `+1XXXXXXXXXX` | `XXXXXXXXXX` | ❌ |
+| Stored         | Search         | Works? |
+| -------------- | -------------- | ------ |
+| `+1XXXXXXXXXX` | `+1XXXXXXXXXX` | ✅     |
+| `+1XXXXXXXXXX` | `XXXXXXXXXX`   | ❌     |
 
 Try with `+1` prefix first. If fails, search by name instead.
 

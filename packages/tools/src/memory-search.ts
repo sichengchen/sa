@@ -7,8 +7,7 @@ export function createMemorySearchTool(memory: MemoryManager): ToolImpl {
     name: "memory_search",
     description:
       "Search persistent memory using hybrid BM25 + semantic search. Returns ranked snippets with source attribution.",
-    summary:
-      "Search memory for relevant context — returns ranked snippets with sources.",
+    summary: "Search memory for relevant context — returns ranked snippets with sources.",
     dangerLevel: "safe",
     parameters: Type.Object({
       query: Type.String({
@@ -37,13 +36,19 @@ export function createMemorySearchTool(memory: MemoryManager): ToolImpl {
     }),
     async execute(args) {
       const query = args.query as string;
-      const sourceType = ((args.source as string | undefined) ?? "all");
+      const sourceType = (args.source as string | undefined) ?? "all";
       const limit = (args.limit as number | undefined) ?? 5;
 
       try {
         const results = await memory.searchIndex(query, {
           maxResults: limit,
-          sourceType: sourceType as "all" | "memory" | "profile" | "project" | "operational" | "journal",
+          sourceType: sourceType as
+            | "all"
+            | "memory"
+            | "profile"
+            | "project"
+            | "operational"
+            | "journal",
         });
 
         if (results.length === 0) {
@@ -51,9 +56,7 @@ export function createMemorySearchTool(memory: MemoryManager): ToolImpl {
         }
 
         const formatted = results.map((r) => {
-          const snippet = r.content.length > 500
-            ? r.content.slice(0, 500) + "..."
-            : r.content;
+          const snippet = r.content.length > 500 ? r.content.slice(0, 500) + "..." : r.content;
           const score = r.score.toFixed(2);
           return `[${r.source}:${r.lineStart}-${r.lineEnd}] (score: ${score})\n${snippet}`;
         });

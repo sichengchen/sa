@@ -1,26 +1,11 @@
-import {
-  startServer,
-  type EngineServer,
-  type EngineServerOptions,
-} from "@aria/gateway/server";
+import { startServer, type EngineServer, type EngineServerOptions } from "@aria/gateway/server";
 import { createRuntime, type EngineRuntime } from "./runtime.js";
-import {
-  CLI_NAME,
-  PRODUCT_NAME,
-  RUNTIME_NAME,
-  getRuntimeHome,
-} from "./brand.js";
-import {
-  getRuntimeDiscoveryPaths,
-  type RuntimeDiscoveryPaths,
-} from "./discovery.js";
+import { CLI_NAME, PRODUCT_NAME, RUNTIME_NAME, getRuntimeHome } from "./brand.js";
+import { getRuntimeDiscoveryPaths, type RuntimeDiscoveryPaths } from "./discovery.js";
 
 export interface AriaServerFactories {
   createRuntime?: () => Promise<EngineRuntime>;
-  startServer?: (
-    runtime: EngineRuntime,
-    options?: EngineServerOptions,
-  ) => Promise<EngineServer>;
+  startServer?: (runtime: EngineRuntime, options?: EngineServerOptions) => Promise<EngineServer>;
 }
 
 export interface StartAriaServerOptions extends EngineServerOptions {

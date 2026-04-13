@@ -27,15 +27,18 @@ export function createMemoryWriteTool(memory: MemoryManager): ToolImpl {
         }),
       ),
       layer: Type.Optional(
-        Type.Union([
-          Type.Literal("profile"),
-          Type.Literal("project"),
-          Type.Literal("operational"),
-          Type.Literal("journal"),
-        ], {
-          description:
-            'Explicit Aria memory layer: "profile", "project", "operational", or "journal".',
-        }),
+        Type.Union(
+          [
+            Type.Literal("profile"),
+            Type.Literal("project"),
+            Type.Literal("operational"),
+            Type.Literal("journal"),
+          ],
+          {
+            description:
+              'Explicit Aria memory layer: "profile", "project", "operational", or "journal".',
+          },
+        ),
       ),
     }),
     async execute(args) {
@@ -53,9 +56,10 @@ export function createMemoryWriteTool(memory: MemoryManager): ToolImpl {
         const resolvedLayer = layer ?? "project";
         await memory.saveLayer(resolvedLayer, key, content);
         return {
-          content: resolvedLayer === "project"
-            ? `Saved memory: ${key}`
-            : `Saved ${resolvedLayer} memory: ${key}`,
+          content:
+            resolvedLayer === "project"
+              ? `Saved memory: ${key}`
+              : `Saved ${resolvedLayer} memory: ${key}`,
         };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

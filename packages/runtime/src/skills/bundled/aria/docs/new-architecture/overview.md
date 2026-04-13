@@ -10,13 +10,13 @@ Everything else follows from that.
 
 ## Product Surfaces
 
-| Surface | Role |
-| --- | --- |
-| `Aria Server` | Hosts `Aria Agent`, remote project jobs, IM connectors, automations, memory, audit, and durable state |
-| `Aria Desktop` | Multi-surface client for Aria chat, remote projects, and local projects |
-| `Aria Mobile` | Thin client for Aria chat, inbox, automations, and remote projects |
-| `Aria Relay` | Secure access broker and optional hosted-runtime platform |
-| `Aria Console` | Server-local terminal UI for chatting directly with `Aria Agent` |
+| Surface        | Role                                                                                                  |
+| -------------- | ----------------------------------------------------------------------------------------------------- |
+| `Aria Server`  | Hosts `Aria Agent`, remote project jobs, IM connectors, automations, memory, audit, and durable state |
+| `Aria Desktop` | Multi-surface client for Aria chat, remote projects, and local projects                               |
+| `Aria Mobile`  | Thin client for Aria chat, inbox, automations, and remote projects                                    |
+| `Aria Relay`   | Secure access broker and optional hosted-runtime platform                                             |
+| `Aria Console` | Server-local terminal UI for chatting directly with `Aria Agent`                                      |
 
 ## Architectural Principles
 
@@ -84,11 +84,11 @@ flowchart LR
 
 The desktop product should present three distinct spaces.
 
-| Space | Hosted by | What lives there |
-| --- | --- | --- |
-| `Aria` | `Aria Server` | Aria chat, connector threads, automations, inbox, approvals |
-| `Projects` | `Aria Desktop` plus `Aria Server` | Unified project threads with environment switching between local and remote targets |
-| `Local execution plane` | `Aria Desktop` | Local folders, local worktrees, local coding agents |
+| Space                   | Hosted by                         | What lives there                                                                    |
+| ----------------------- | --------------------------------- | ----------------------------------------------------------------------------------- |
+| `Aria`                  | `Aria Server`                     | Aria chat, connector threads, automations, inbox, approvals                         |
+| `Projects`              | `Aria Desktop` plus `Aria Server` | Unified project threads with environment switching between local and remote targets |
+| `Local execution plane` | `Aria Desktop`                    | Local folders, local worktrees, local coding agents                                 |
 
 This separation is not cosmetic. It enforces the correct ownership model.
 

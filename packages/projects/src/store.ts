@@ -31,9 +31,7 @@ function asOptionalText(value: unknown): string | null {
   return value == null ? null : asText(value);
 }
 
-function normalizeProjectRow(
-  row: SqliteRow | null | undefined,
-): ProjectRecord | undefined {
+function normalizeProjectRow(row: SqliteRow | null | undefined): ProjectRecord | undefined {
   if (!row) return undefined;
   return {
     projectId: asText(row.project_id),
@@ -45,9 +43,7 @@ function normalizeProjectRow(
   };
 }
 
-function normalizeRepoRow(
-  row: SqliteRow | null | undefined,
-): RepoRecord | undefined {
+function normalizeRepoRow(row: SqliteRow | null | undefined): RepoRecord | undefined {
   if (!row) return undefined;
   return {
     repoId: asText(row.repo_id),
@@ -60,9 +56,7 @@ function normalizeRepoRow(
   };
 }
 
-function normalizeServerRow(
-  row: SqliteRow | null | undefined,
-): ServerRecord | undefined {
+function normalizeServerRow(row: SqliteRow | null | undefined): ServerRecord | undefined {
   if (!row) return undefined;
   return {
     serverId: asText(row.server_id),
@@ -74,9 +68,7 @@ function normalizeServerRow(
   };
 }
 
-function normalizeWorkspaceRow(
-  row: SqliteRow | null | undefined,
-): WorkspaceRecord | undefined {
+function normalizeWorkspaceRow(row: SqliteRow | null | undefined): WorkspaceRecord | undefined {
   if (!row) return undefined;
   return {
     workspaceId: asText(row.workspace_id),
@@ -88,9 +80,7 @@ function normalizeWorkspaceRow(
   };
 }
 
-function normalizeEnvironmentRow(
-  row: SqliteRow | null | undefined,
-): EnvironmentRecord | undefined {
+function normalizeEnvironmentRow(row: SqliteRow | null | undefined): EnvironmentRecord | undefined {
   if (!row) return undefined;
   return {
     environmentId: asText(row.environment_id),
@@ -105,9 +95,7 @@ function normalizeEnvironmentRow(
   };
 }
 
-function normalizeTaskRow(
-  row: SqliteRow | null | undefined,
-): TaskRecord | undefined {
+function normalizeTaskRow(row: SqliteRow | null | undefined): TaskRecord | undefined {
   if (!row) return undefined;
   return {
     taskId: asText(row.task_id),
@@ -121,9 +109,7 @@ function normalizeTaskRow(
   };
 }
 
-function normalizeThreadRow(
-  row: SqliteRow | null | undefined,
-): ThreadRecord | undefined {
+function normalizeThreadRow(row: SqliteRow | null | undefined): ThreadRecord | undefined {
   if (!row) return undefined;
   return {
     threadId: asText(row.thread_id),
@@ -159,11 +145,7 @@ function normalizeThreadEnvironmentBindingRow(
   };
 }
 
-function hasColumn(
-  db: Database,
-  tableName: string,
-  columnName: string,
-): boolean {
+function hasColumn(db: Database, tableName: string, columnName: string): boolean {
   const rows = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{
     name?: string;
   }>;
@@ -181,16 +163,12 @@ function ensureProjectsStoreSchema(db: Database): void {
 
   for (const [columnName, columnType] of threadColumns) {
     if (!hasColumn(db, "projects_threads", columnName)) {
-      db.exec(
-        `ALTER TABLE projects_threads ADD COLUMN ${columnName} ${columnType}`,
-      );
+      db.exec(`ALTER TABLE projects_threads ADD COLUMN ${columnName} ${columnType}`);
     }
   }
 }
 
-function normalizeJobRow(
-  row: SqliteRow | null | undefined,
-): JobRecord | undefined {
+function normalizeJobRow(row: SqliteRow | null | undefined): JobRecord | undefined {
   if (!row) return undefined;
   return {
     jobId: asText(row.job_id),
@@ -201,9 +179,7 @@ function normalizeJobRow(
   };
 }
 
-function normalizeExternalRefRow(
-  row: SqliteRow | null | undefined,
-): ExternalRefRecord | undefined {
+function normalizeExternalRefRow(row: SqliteRow | null | undefined): ExternalRefRecord | undefined {
   if (!row) return undefined;
   return {
     externalRefId: asText(row.external_ref_id),
@@ -219,9 +195,7 @@ function normalizeExternalRefRow(
   };
 }
 
-function normalizeDispatchRow(
-  row: SqliteRow | null | undefined,
-): DispatchRecord | undefined {
+function normalizeDispatchRow(row: SqliteRow | null | undefined): DispatchRecord | undefined {
   if (!row) return undefined;
   return {
     dispatchId: asText(row.dispatch_id),
@@ -243,9 +217,7 @@ function normalizeDispatchRow(
   };
 }
 
-function normalizeWorktreeRow(
-  row: SqliteRow | null | undefined,
-): WorktreeRecord | undefined {
+function normalizeWorktreeRow(row: SqliteRow | null | undefined): WorktreeRecord | undefined {
   if (!row) return undefined;
   return {
     worktreeId: asText(row.worktree_id),
@@ -262,9 +234,7 @@ function normalizeWorktreeRow(
   };
 }
 
-function normalizeReviewRow(
-  row: SqliteRow | null | undefined,
-): ReviewRecord | undefined {
+function normalizeReviewRow(row: SqliteRow | null | undefined): ReviewRecord | undefined {
   if (!row) return undefined;
   return {
     reviewId: asText(row.review_id),
@@ -279,9 +249,7 @@ function normalizeReviewRow(
   };
 }
 
-function normalizePublishRunRow(
-  row: SqliteRow | null | undefined,
-): PublishRunRecord | undefined {
+function normalizePublishRunRow(row: SqliteRow | null | undefined): PublishRunRecord | undefined {
   if (!row) return undefined;
   return {
     publishRunId: asText(row.publish_run_id),
@@ -530,10 +498,7 @@ export class ProjectsEngineStore {
     );
   }
 
-  listEnvironments(
-    projectId?: string,
-    workspaceId?: string,
-  ): EnvironmentRecord[] {
+  listEnvironments(projectId?: string, workspaceId?: string): EnvironmentRecord[] {
     let rows: SqliteRow[];
     if (projectId && workspaceId) {
       rows = this.all<SqliteRow>(
@@ -845,9 +810,7 @@ export class ProjectsEngineStore {
     );
   }
 
-  upsertThreadEnvironmentBinding(
-    binding: ThreadEnvironmentBindingRecord,
-  ): void {
+  upsertThreadEnvironmentBinding(binding: ThreadEnvironmentBindingRecord): void {
     if (binding.isActive) {
       this.run(
         `
@@ -902,9 +865,7 @@ export class ProjectsEngineStore {
     );
   }
 
-  listThreadEnvironmentBindings(
-    threadId?: string,
-  ): ThreadEnvironmentBindingRecord[] {
+  listThreadEnvironmentBindings(threadId?: string): ThreadEnvironmentBindingRecord[] {
     const rows = threadId
       ? this.all<SqliteRow>(
           `
@@ -930,9 +891,7 @@ export class ProjectsEngineStore {
       .filter((row): row is ThreadEnvironmentBindingRecord => Boolean(row));
   }
 
-  getActiveThreadEnvironmentBinding(
-    threadId: string,
-  ): ThreadEnvironmentBindingRecord | undefined {
+  getActiveThreadEnvironmentBinding(threadId: string): ThreadEnvironmentBindingRecord | undefined {
     return normalizeThreadEnvironmentBindingRow(
       this.get<SqliteRow>(
         `
@@ -987,9 +946,7 @@ export class ProjectsEngineStore {
           `,
         );
 
-    return rows
-      .map((row) => normalizeJobRow(row))
-      .filter((row): row is JobRecord => Boolean(row));
+    return rows.map((row) => normalizeJobRow(row)).filter((row): row is JobRecord => Boolean(row));
   }
 
   upsertExternalRef(externalRef: ExternalRefRecord): void {

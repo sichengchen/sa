@@ -32,7 +32,11 @@ describe("MiniMax CLI provider support", () => {
     let seenAuth = "";
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       seenUrl = String(input);
-      seenAuth = String(init?.headers instanceof Headers ? init.headers.get("authorization") : (init?.headers as Record<string, string> | undefined)?.Authorization ?? "");
+      seenAuth = String(
+        init?.headers instanceof Headers
+          ? init.headers.get("authorization")
+          : ((init?.headers as Record<string, string> | undefined)?.Authorization ?? ""),
+      );
       return new Response(
         JSON.stringify({
           data: [{ id: "MiniMax-M2.1" }, { id: "MiniMax-M2.5" }],

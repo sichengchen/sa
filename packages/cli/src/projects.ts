@@ -77,7 +77,9 @@ function formatServerSummary(server: ServerRecord): string {
   if (server.directBaseUrl) {
     metadata.push(`base-url=${server.directBaseUrl}`);
   }
-  return metadata.length > 0 ? `${server.serverId}  ${server.label}  ${metadata.join("  ")}` : `${server.serverId}  ${server.label}`;
+  return metadata.length > 0
+    ? `${server.serverId}  ${server.label}  ${metadata.join("  ")}`
+    : `${server.serverId}  ${server.label}`;
 }
 
 function formatWorkspaceSummary(workspace: WorkspaceRecord): string {
@@ -138,7 +140,12 @@ function formatBindingSummary(binding: ThreadEnvironmentBindingRecord): string {
   return `${binding.bindingId}  [${binding.isActive ? "active" : "inactive"}]  ${metadata.join("  ")}`;
 }
 
-function parseServerRecordArgs(args: string[]): { serverId: string; label: string; relayId?: string | null; directBaseUrl?: string | null } | null {
+function parseServerRecordArgs(args: string[]): {
+  serverId: string;
+  label: string;
+  relayId?: string | null;
+  directBaseUrl?: string | null;
+} | null {
   const [serverId, ...rest] = args;
   if (!serverId) {
     return null;
@@ -191,7 +198,9 @@ function parseServerRecordArgs(args: string[]): { serverId: string; label: strin
   };
 }
 
-function parseWorkspaceRecordArgs(args: string[]): { workspaceId: string; host: WorkspaceHost; label: string; serverId?: string | null } | null {
+function parseWorkspaceRecordArgs(
+  args: string[],
+): { workspaceId: string; host: WorkspaceHost; label: string; serverId?: string | null } | null {
   const [workspaceId, host, ...rest] = args;
   if (!workspaceId || !isWorkspaceHost(host)) {
     return null;
@@ -236,11 +245,24 @@ function parseWorkspaceRecordArgs(args: string[]): { workspaceId: string; host: 
   };
 }
 
-function parseEnvironmentRecordArgs(
-  args: string[],
-): { environmentId: string; workspaceId: string; projectId: string; mode: EnvironmentMode; kind: EnvironmentKind; locator: string; label: string } | null {
+function parseEnvironmentRecordArgs(args: string[]): {
+  environmentId: string;
+  workspaceId: string;
+  projectId: string;
+  mode: EnvironmentMode;
+  kind: EnvironmentKind;
+  locator: string;
+  label: string;
+} | null {
   const [environmentId, workspaceId, projectId, mode, kind, locator, ...labelParts] = args;
-  if (!environmentId || !workspaceId || !projectId || !isEnvironmentMode(mode) || !isEnvironmentKind(kind) || !locator) {
+  if (
+    !environmentId ||
+    !workspaceId ||
+    !projectId ||
+    !isEnvironmentMode(mode) ||
+    !isEnvironmentKind(kind) ||
+    !locator
+  ) {
     return null;
   }
 
@@ -374,39 +396,67 @@ function printHelp(): void {
   console.log("  projects               List tracked projects");
   console.log("  project-create <projectId> <slug> <name>  Create or update a tracked project");
   console.log("  servers                List tracked servers");
-  console.log("  server-create <serverId> <label...> [--relay <relayId>] [--base-url <directBaseUrl>]  Create or update a server");
-  console.log("  server-update <serverId> <label...> [--relay <relayId>] [--base-url <directBaseUrl>]  Create or update a server");
+  console.log(
+    "  server-create <serverId> <label...> [--relay <relayId>] [--base-url <directBaseUrl>]  Create or update a server",
+  );
+  console.log(
+    "  server-update <serverId> <label...> [--relay <relayId>] [--base-url <directBaseUrl>]  Create or update a server",
+  );
   console.log("  workspaces [serverId]  List tracked workspaces, optionally filtered by server");
-  console.log("  workspace-create <workspaceId> <host> <label...> [--server <serverId>]  Create or update a workspace");
-  console.log("  workspace-update <workspaceId> <host> <label...> [--server <serverId>]  Create or update a workspace");
-  console.log("  environments [projectId] [workspaceId]  List tracked environments, optionally filtered by project and workspace");
-  console.log("  environment-create <environmentId> <workspaceId> <projectId> <mode> <kind> <locator> <label...>  Create or update an environment");
-  console.log("  environment-update <environmentId> <workspaceId> <projectId> <mode> <kind> <locator> <label...>  Create or update an environment");
+  console.log(
+    "  workspace-create <workspaceId> <host> <label...> [--server <serverId>]  Create or update a workspace",
+  );
+  console.log(
+    "  workspace-update <workspaceId> <host> <label...> [--server <serverId>]  Create or update a workspace",
+  );
+  console.log(
+    "  environments [projectId] [workspaceId]  List tracked environments, optionally filtered by project and workspace",
+  );
+  console.log(
+    "  environment-create <environmentId> <workspaceId> <projectId> <mode> <kind> <locator> <label...>  Create or update an environment",
+  );
+  console.log(
+    "  environment-update <environmentId> <workspaceId> <projectId> <mode> <kind> <locator> <label...>  Create or update an environment",
+  );
   console.log("  repos [projectId]      List tracked repos, optionally filtered by project");
   console.log("  repo-register <repoId> <projectId> <name> <remoteUrl> [branch]  Register a repo");
   console.log("  tasks [projectId]      List tracked tasks, optionally filtered by project");
   console.log("  task-create <taskId> <projectId> <title>  Create or update a task");
   console.log("  task-status <taskId> <status>  Update a task status");
   console.log("  threads [projectId]    List tracked threads, optionally filtered by project");
-  console.log("  thread-create <threadId> <projectId> <title...> [--type <threadType>] [--status <status>] [--workspace <workspaceId>] [--environment <environmentId>] [--binding <bindingId>] [--agent <agentId>]  Create or update a thread");
-  console.log("  thread-bind <bindingId> <threadId> <projectId> <workspaceId> <environmentId> [reason]  Create or update an environment binding");
+  console.log(
+    "  thread-create <threadId> <projectId> <title...> [--type <threadType>] [--status <status>] [--workspace <workspaceId>] [--environment <environmentId>] [--binding <bindingId>] [--agent <agentId>]  Create or update a thread",
+  );
+  console.log(
+    "  thread-bind <bindingId> <threadId> <projectId> <workspaceId> <environmentId> [reason]  Create or update an environment binding",
+  );
   console.log("  thread-bindings [threadId]  List tracked thread environment bindings");
   console.log("  job-add <threadId> <author> <body>  Append a job/event to a thread");
   console.log("  dispatches [threadId]  List dispatch records, optionally filtered by thread");
-  console.log("  dispatch-create <dispatchId> <projectId> <threadId> [backend]  Create a queued dispatch");
+  console.log(
+    "  dispatch-create <dispatchId> <projectId> <threadId> [backend]  Create a queued dispatch",
+  );
   console.log("  worktrees [repoId]     List tracked worktrees, optionally filtered by repo");
-  console.log("  worktree-register <worktreeId> <repoId> <path> <branch> [threadId]  Register a worktree");
+  console.log(
+    "  worktree-register <worktreeId> <repoId> <path> <branch> [threadId]  Register a worktree",
+  );
   console.log("  worktree-retain <worktreeId> [expiresAtMs]  Mark a worktree retained");
   console.log("  worktree-prune <worktreeId>  Mark a worktree pruned");
   console.log("  reviews [threadId]     List review records, optionally filtered by thread");
   console.log("  review-create <dispatchId> <threadId> <type> [summary]  Create a review record");
   console.log("  review-resolve <reviewId> <status> [summary]  Resolve a review record");
   console.log("  publish-runs [threadId]  List publish runs, optionally filtered by thread");
-  console.log("  publish-create <dispatchId> <threadId> <repoId> <branch> [remote]  Create a publish run");
-  console.log("  publish-complete <publishRunId> <status> [commitSha] [prUrl]  Complete a publish run");
+  console.log(
+    "  publish-create <dispatchId> <threadId> <repoId> <branch> [remote]  Create a publish run",
+  );
+  console.log(
+    "  publish-complete <publishRunId> <status> [commitSha] [prUrl]  Complete a publish run",
+  );
   console.log("  refs [ownerId]         List external refs, optionally filtered by owner");
   console.log("  handoffs [projectId]   List handoff records, optionally filtered by project");
-  console.log("  handoff-process <handoffId>  Materialize a handoff into thread/job/dispatch records");
+  console.log(
+    "  handoff-process <handoffId>  Materialize a handoff into thread/job/dispatch records",
+  );
   console.log("  runnable [projectId]   Show runnable threads and dispatches");
   console.log("  queue [projectId] [n]  Queue up to n runnable dispatches");
   console.log("  backends              List runtime backend availability and capabilities");
@@ -414,7 +464,9 @@ function printHelp(): void {
   console.log("  handoff-submit <projectId> <key> <payload>  Create an idempotent handoff record");
 }
 
-async function withRepository<T>(fn: (repository: ProjectsEngineRepository) => Promise<T> | T): Promise<T> {
+async function withRepository<T>(
+  fn: (repository: ProjectsEngineRepository) => Promise<T> | T,
+): Promise<T> {
   const dbPath = join(getRuntimeHome(), "aria.db");
   const store = new ProjectsEngineStore(dbPath);
   await store.init();
@@ -704,7 +756,8 @@ export async function projectsCommand(args: string[]): Promise<void> {
     }
 
     if (action === "thread-bind") {
-      const [bindingId, threadId, projectId, workspaceId, environmentId, ...reasonParts] = args.slice(1);
+      const [bindingId, threadId, projectId, workspaceId, environmentId, ...reasonParts] =
+        args.slice(1);
       const reason = reasonParts.join(" ").trim() || null;
       if (!bindingId || !threadId || !projectId || !workspaceId || !environmentId) {
         printHelp();
@@ -781,7 +834,9 @@ export async function projectsCommand(args: string[]): Promise<void> {
         return;
       }
       for (const dispatch of dispatches) {
-        console.log(`${dispatch.dispatchId}  [${dispatch.status}]  thread=${dispatch.threadId} execution=${dispatch.executionSessionId ?? "n/a"}`);
+        console.log(
+          `${dispatch.dispatchId}  [${dispatch.status}]  thread=${dispatch.threadId} execution=${dispatch.executionSessionId ?? "n/a"}`,
+        );
       }
       return;
     }
@@ -825,7 +880,9 @@ export async function projectsCommand(args: string[]): Promise<void> {
         return;
       }
       for (const worktree of worktrees) {
-        console.log(`${worktree.worktreeId}  [${worktree.status}]  ${worktree.branchName}  ${worktree.path}`);
+        console.log(
+          `${worktree.worktreeId}  [${worktree.status}]  ${worktree.branchName}  ${worktree.path}`,
+        );
       }
       return;
     }
@@ -863,7 +920,10 @@ export async function projectsCommand(args: string[]): Promise<void> {
         process.exitCode = 1;
         return;
       }
-      new ProjectsWorktreeService(repository).markRetained(worktreeId, Number.isFinite(expiresAt) ? expiresAt : null);
+      new ProjectsWorktreeService(repository).markRetained(
+        worktreeId,
+        Number.isFinite(expiresAt) ? expiresAt : null,
+      );
       console.log(`Retained worktree ${worktreeId}.`);
       return;
     }
@@ -888,7 +948,9 @@ export async function projectsCommand(args: string[]): Promise<void> {
         return;
       }
       for (const review of reviews) {
-        console.log(`${review.reviewId}  [${review.status}]  dispatch=${review.dispatchId}  type=${review.reviewType}`);
+        console.log(
+          `${review.reviewId}  [${review.status}]  dispatch=${review.dispatchId}  type=${review.reviewType}`,
+        );
       }
       return;
     }
@@ -934,7 +996,9 @@ export async function projectsCommand(args: string[]): Promise<void> {
         return;
       }
       for (const publishRun of publishRuns) {
-        console.log(`${publishRun.publishRunId}  [${publishRun.status}]  branch=${publishRun.branchName}  pr=${publishRun.prUrl ?? "n/a"}`);
+        console.log(
+          `${publishRun.publishRunId}  [${publishRun.status}]  branch=${publishRun.branchName}  pr=${publishRun.prUrl ?? "n/a"}`,
+        );
       }
       return;
     }
@@ -982,7 +1046,9 @@ export async function projectsCommand(args: string[]): Promise<void> {
         return;
       }
       for (const ref of refs) {
-        console.log(`${ref.externalRefId}  ${ref.system}  owner=${ref.ownerType}:${ref.ownerId}  external=${ref.externalId}`);
+        console.log(
+          `${ref.externalRefId}  ${ref.system}  owner=${ref.ownerType}:${ref.ownerId}  external=${ref.externalId}`,
+        );
       }
       return;
     }
@@ -999,7 +1065,9 @@ export async function projectsCommand(args: string[]): Promise<void> {
           return;
         }
         for (const record of records) {
-          console.log(`${record.handoffId}  [${record.status}]  project=${record.projectId} dispatch=${record.createdDispatchId ?? "n/a"}`);
+          console.log(
+            `${record.handoffId}  [${record.status}]  project=${record.projectId} dispatch=${record.createdDispatchId ?? "n/a"}`,
+          );
         }
       } finally {
         store.close();
@@ -1061,7 +1129,9 @@ export async function projectsCommand(args: string[]): Promise<void> {
       console.log(`Runnable threads: ${summary.threads.length}`);
       console.log(`Runnable dispatches: ${summary.dispatches.length}`);
       for (const plan of summary.threads) {
-        console.log(`thread ${plan.thread.threadId}  [${plan.thread.status}]  ${plan.thread.title}`);
+        console.log(
+          `thread ${plan.thread.threadId}  [${plan.thread.status}]  ${plan.thread.title}`,
+        );
       }
       return;
     }
@@ -1073,7 +1143,9 @@ export async function projectsCommand(args: string[]): Promise<void> {
       const result = planning.queueNextRunnableDispatches({ projectId, limit });
       console.log(`Queued ${result.queued.length} dispatch(es).`);
       for (const dispatch of result.queued) {
-        console.log(`${dispatch.dispatchId}  thread=${dispatch.threadId}  status=${dispatch.status}`);
+        console.log(
+          `${dispatch.dispatchId}  thread=${dispatch.threadId}  status=${dispatch.status}`,
+        );
       }
       return;
     }
@@ -1106,7 +1178,9 @@ export async function projectsCommand(args: string[]): Promise<void> {
       const runtime = await createRuntime();
       try {
         const result = await runDispatchExecution(runtime, repository, dispatchId);
-        console.log(`Dispatch ${dispatchId} executed as ${result.executionSessionId} [${result.status}]`);
+        console.log(
+          `Dispatch ${dispatchId} executed as ${result.executionSessionId} [${result.status}]`,
+        );
         if (result.summary) {
           console.log(result.summary);
         }

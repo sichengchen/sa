@@ -37,29 +37,46 @@ function cloneTool(tool: ToolImpl, execute: ToolImpl["execute"]): ToolImpl {
   return { ...tool, execute };
 }
 
-export function createSessionToolEnvironment(options: SessionToolEnvironmentOptions): SessionToolEnvironment {
+export function createSessionToolEnvironment(
+  options: SessionToolEnvironmentOptions,
+): SessionToolEnvironment {
   const workingDir = options.workingDir ?? process.env.TERMINAL_CWD ?? process.cwd();
   const hintTracker = new SubdirectoryContextTracker(workingDir, options.maxContextHintChars);
   const checkpointManager = options.checkpointManager;
 
-  const wrapTool = (tool: ToolImpl) => cloneTool(tool, async (args) => {
-    const checkpointDir = checkpointManager ? checkpointWorkdirForArgs(tool.name, args, workingDir) : null;
-    if (checkpointManager && checkpointDir) await checkpointManager.ensureCheckpoint(checkpointDir, `before ${tool.name}`);
-    const result = await tool.execute(args);
-    if (result.isError) return result;
-    const hint = await hintTracker.inspectToolCall(tool.name, args);
-    return hint ? { ...result, content: `${result.content}${hint}` } : result;
-  });
+  const wrapTool = (tool: ToolImpl) =>
+    cloneTool(tool, async (args) => {
+      const checkpointDir = checkpointManager
+        ? checkpointWorkdirForArgs(tool.name, args, workingDir)
+        : null;
+      if (checkpointManager && checkpointDir)
+        await checkpointManager.ensureCheckpoint(checkpointDir, `before ${tool.name}`);
+      const result = await tool.execute(args);
+      if (result.isError) return result;
+      const hint = await hintTracker.inspectToolCall(tool.name, args);
+      return hint ? { ...result, content: `${result.content}${hint}` } : result;
+    });
 
-  const hasDelegation = Boolean(options.delegation) && options.baseTools.some((tool) => tool.name === "delegate" || tool.name === "delegate_status");
-  const nonDelegationBaseTools = hasDelegation ? options.baseTools.filter((tool) => tool.name !== "delegate" && tool.name !== "delegate_status") : options.baseTools;
+  const hasDelegation =
+    Boolean(options.delegation) &&
+    options.baseTools.some((tool) => tool.name === "delegate" || tool.name === "delegate_status");
+  const nonDelegationBaseTools = hasDelegation
+    ? options.baseTools.filter(
+        (tool) => tool.name !== "delegate" && tool.name !== "delegate_status",
+      )
+    : options.baseTools;
   const wrappedTools = nonDelegationBaseTools.map(wrapTool);
 
   let orchestrator: Orchestrator | undefined;
   const delegation = options.delegation;
   if (delegation && hasDelegation) {
     const createSessionSubAgent = (subAgentOptions: ConstructorParameters<typeof SubAgent>[2]) => {
-      const subAgentEnvironment = createSessionToolEnvironment({ baseTools: nonDelegationBaseTools, workingDir, checkpointManager, maxContextHintChars: options.maxContextHintChars });
+      const subAgentEnvironment = createSessionToolEnvironment({
+        baseTools: nonDelegationBaseTools,
+        workingDir,
+        checkpointManager,
+        maxContextHintChars: options.maxContextHintChars,
+      });
       subAgentEnvironment.newTurn();
       return new SubAgent(delegation.router, subAgentEnvironment.tools, {
         ...subAgentOptions,
@@ -81,14 +98,16 @@ export function createSessionToolEnvironment(options: SessionToolEnvironmentOpti
     });
     const sessionOrchestrator = orchestrator;
     if (options.baseTools.some((tool) => tool.name === "delegate")) {
-      wrappedTools.push(createDelegateTool({
-        router: delegation.router,
-        tools: wrappedTools,
-        defaultTimeoutMs: delegation.defaultTimeoutMs,
-        memoryWriteDefault: delegation.memoryWriteDefault,
-        getOrchestrator: () => sessionOrchestrator,
-        createSubAgent: createSessionSubAgent,
-      }));
+      wrappedTools.push(
+        createDelegateTool({
+          router: delegation.router,
+          tools: wrappedTools,
+          defaultTimeoutMs: delegation.defaultTimeoutMs,
+          memoryWriteDefault: delegation.memoryWriteDefault,
+          getOrchestrator: () => sessionOrchestrator,
+          createSubAgent: createSessionSubAgent,
+        }),
+      );
     }
     if (options.baseTools.some((tool) => tool.name === "delegate_status")) {
       wrappedTools.push(createDelegateStatusTool({ getOrchestrator: () => sessionOrchestrator }));

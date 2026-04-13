@@ -1,7 +1,12 @@
 import { Type } from "@mariozechner/pi-ai";
 import { NodeHtmlMarkdown } from "node-html-markdown";
 import type { ToolImpl } from "@aria/agent-aria";
-import { validateUrl, validateHeaders, MAX_REDIRECTS, type UrlPolicyConfig } from "@aria/policy/url-policy";
+import {
+  validateUrl,
+  validateHeaders,
+  MAX_REDIRECTS,
+  type UrlPolicyConfig,
+} from "@aria/policy/url-policy";
 import { frameAsData, sanitizeContent } from "@aria/agent-aria/content-frame";
 
 const DEFAULT_MAX_LENGTH = 50_000;
@@ -13,7 +18,8 @@ const nhm = new NodeHtmlMarkdown();
 export function createWebFetchTool(urlPolicy?: UrlPolicyConfig): ToolImpl {
   return {
     name: "web_fetch",
-    description: "Fetch a URL and return its content. HTML is converted to markdown for readability.",
+    description:
+      "Fetch a URL and return its content. HTML is converted to markdown for readability.",
     summary:
       "Fetch a URL and return content as markdown (HTML) or plain text (JSON, text, XML). Supports custom headers and max length truncation.",
     dangerLevel: "safe",
@@ -66,7 +72,10 @@ export function createWebFetchTool(urlPolicy?: UrlPolicyConfig): ToolImpl {
           if (res.status >= 300 && res.status < 400) {
             const location = res.headers.get("location");
             if (!location) {
-              return { content: `Error: Redirect ${res.status} with no Location header`, isError: true };
+              return {
+                content: `Error: Redirect ${res.status} with no Location header`,
+                isError: true,
+              };
             }
 
             // Resolve relative redirect URLs

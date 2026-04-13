@@ -6,6 +6,7 @@ This section covers local setup, testing, release flow, and migration discipline
 - [testing.md](./testing.md)
 - [release.md](./release.md)
 - [migration.md](./migration.md)
+- [new-architecture-implementation-plan.md](./new-architecture-implementation-plan.md)
 - [package-extraction-ledger.md](./package-extraction-ledger.md)
 - [phase-2-extraction-ledger.md](./phase-2-extraction-ledger.md)
 - [phase-4-server-package-seams-ledger.md](./phase-4-server-package-seams-ledger.md)
@@ -13,5 +14,4 @@ This section covers local setup, testing, release flow, and migration discipline
 - [phase-6-client-app-seams-ledger.md](./phase-6-client-app-seams-ledger.md)
 - [phase-8-client-shell-seams-ledger.md](./phase-8-client-shell-seams-ledger.md)
 - [phase-9-architecture-truth-table.md](./phase-9-architecture-truth-table.md)
-
 - [phase-13-relay-service-seam-ledger.md](./phase-13-relay-service-seam-ledger.md)

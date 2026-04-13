@@ -41,11 +41,15 @@ async function createTestRuntime(runtimeHome: string): Promise<EngineRuntime> {
         telegramBotTokenEnvVar: "TEST_BOT_TOKEN",
         memory: { enabled: true, directory: "memory" },
       },
-      providers: [
-        { id: "anthropic", type: "anthropic", apiKeyEnvVar: "TEST_API_KEY" },
-      ],
+      providers: [{ id: "anthropic", type: "anthropic", apiKeyEnvVar: "TEST_API_KEY" }],
       models: [
-        { name: "test-model", provider: "anthropic", model: "claude-sonnet-4-5-20250514", temperature: 0.7, maxTokens: 1024 },
+        {
+          name: "test-model",
+          provider: "anthropic",
+          model: "claude-sonnet-4-5-20250514",
+          temperature: 0.7,
+          maxTokens: 1024,
+        },
       ],
       defaultModel: "test-model",
     }),
@@ -58,8 +62,17 @@ async function createTestRuntime(runtimeHome: string): Promise<EngineRuntime> {
 
   const router = ModelRouter.fromConfig(
     {
-      providers: [{ id: "anthropic", type: "anthropic" as KnownProvider, apiKeyEnvVar: "TEST_API_KEY" }],
-      models: [{ name: "test-model", provider: "anthropic", model: "claude-sonnet-4-5-20250514", temperature: 0.7 }],
+      providers: [
+        { id: "anthropic", type: "anthropic" as KnownProvider, apiKeyEnvVar: "TEST_API_KEY" },
+      ],
+      models: [
+        {
+          name: "test-model",
+          provider: "anthropic",
+          model: "claude-sonnet-4-5-20250514",
+          temperature: 0.7,
+        },
+      ],
       defaultModel: "test-model",
     },
     null,
@@ -93,17 +106,20 @@ async function createTestRuntime(runtimeHome: string): Promise<EngineRuntime> {
         return ["repo"];
       },
       listJournalDates: async () => ["2026-04-08"],
-      getLayer: async (_layer: "profile" | "project" | "operational", key: string) => `${key} content`,
+      getLayer: async (_layer: "profile" | "project" | "operational", key: string) =>
+        `${key} content`,
       getJournal: async (date: string) => `journal ${date}`,
-      searchIndex: async (query: string) => [{
-        source: "project/repo.md",
-        sourceType: "project",
-        content: `match for ${query}`,
-        lineStart: 1,
-        lineEnd: 1,
-        score: 0.9,
-        updatedAt: 100,
-      }],
+      searchIndex: async (query: string) => [
+        {
+          source: "project/repo.md",
+          sourceType: "project",
+          content: `match for ${query}`,
+          lineStart: 1,
+          lineEnd: 1,
+          score: 0.9,
+          updatedAt: 100,
+        },
+      ],
       getMemoryContext: async () => "",
       persist: async () => {},
     } as any,
@@ -219,15 +235,19 @@ describe("tRPC procedures (non-live)", () => {
       });
       expect(created.session.id).toStartWith("telegram:123:");
 
-      await expect(caller.session.create({
-        connectorType: "telegram",
-        prefix: "telegram:999",
-      })).rejects.toThrow("own connector prefix");
+      await expect(
+        caller.session.create({
+          connectorType: "telegram",
+          prefix: "telegram:999",
+        }),
+      ).rejects.toThrow("own connector prefix");
 
-      await expect(caller.session.create({
-        connectorType: "tui",
-        prefix: "telegram:123",
-      })).rejects.toThrow("Connector type mismatch");
+      await expect(
+        caller.session.create({
+          connectorType: "tui",
+          prefix: "telegram:123",
+        }),
+      ).rejects.toThrow("Connector type mismatch");
     });
 
     test("session tokens cannot access sessions owned by another connector", async () => {
@@ -247,7 +267,9 @@ describe("tRPC procedures (non-live)", () => {
       expect(visibleSessions.some((session) => session.id === owned.session.id)).toBe(true);
       expect(visibleSessions.some((session) => session.id === other.session.id)).toBe(false);
 
-      await expect(ownCaller.chat.history({ sessionId: other.session.id })).rejects.toThrow("do not own this session");
+      await expect(ownCaller.chat.history({ sessionId: other.session.id })).rejects.toThrow(
+        "do not own this session",
+      );
     });
 
     test("session tokens cannot call admin-only procedures", async () => {
@@ -265,7 +287,11 @@ describe("tRPC procedures (non-live)", () => {
 
       await runtime.archive.syncSession(session, [
         { role: "user", content: "Debug the failing cron task", timestamp: 100 } as any,
-        { role: "assistant", content: "The cron task is failing because CONFIG_PATH is missing.", timestamp: 101 } as any,
+        {
+          role: "assistant",
+          content: "The cron task is failing because CONFIG_PATH is missing.",
+          timestamp: 101,
+        } as any,
       ]);
 
       const results = await caller.session.search({ query: "cron task", limit: 5 });
@@ -319,7 +345,9 @@ describe("tRPC procedures (non-live)", () => {
     test("lists checkpoints for a working directory", async () => {
       const currentRuntime = runtime;
       const currentHome = currentRuntime.config.homeDir;
-      const caller = createAppRouter(currentRuntime).createCaller(createContext({ rawToken: masterToken }));
+      const caller = createAppRouter(currentRuntime).createCaller(
+        createContext({ rawToken: masterToken }),
+      );
       const workdir = join(currentHome, "workspace");
       await mkdir(workdir, { recursive: true });
 
@@ -427,12 +455,14 @@ describe("tRPC procedures (non-live)", () => {
         enabled: true,
       });
 
-      await expect(caller.webhookTask.add({
-        name: "Deploy Notify",
-        slug: "deploy-summary",
-        prompt: "Summarize deploy: {{payload}}",
-        enabled: true,
-      })).rejects.toThrow('Webhook task "Deploy Notify" already exists');
+      await expect(
+        caller.webhookTask.add({
+          name: "Deploy Notify",
+          slug: "deploy-summary",
+          prompt: "Summarize deploy: {{payload}}",
+          enabled: true,
+        }),
+      ).rejects.toThrow('Webhook task "Deploy Notify" already exists');
     });
 
     test("rejects renaming a webhook task to an existing name", async () => {
@@ -451,10 +481,12 @@ describe("tRPC procedures (non-live)", () => {
         enabled: true,
       });
 
-      await expect(caller.webhookTask.update({
-        slug: "alert-handler",
-        name: "Deploy Notify",
-      })).rejects.toThrow('Webhook task "Deploy Notify" already exists');
+      await expect(
+        caller.webhookTask.update({
+          slug: "alert-handler",
+          name: "Deploy Notify",
+        }),
+      ).rejects.toThrow('Webhook task "Deploy Notify" already exists');
 
       const tasks = await caller.webhookTask.list();
       expect(tasks.find((task) => task.slug === "alert-handler")?.name).toBe("Alert Handler");
@@ -565,7 +597,11 @@ describe("tRPC procedures (non-live)", () => {
         summary: "pwd",
       });
 
-      const approvals = await caller.approval.list({ sessionId: session.id, status: "pending", limit: 5 });
+      const approvals = await caller.approval.list({
+        sessionId: session.id,
+        status: "pending",
+        limit: 5,
+      });
       expect(approvals).toHaveLength(1);
       expect(approvals[0]?.toolName).toBe("exec");
 

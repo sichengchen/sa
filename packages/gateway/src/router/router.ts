@@ -63,7 +63,9 @@ export class ModelRouter {
     data: ModelRouterData,
     secrets: SecretsFile | null,
     onSave: ((state: RouterState) => Promise<void>) | null,
-    runtimeConfig?: Partial<Pick<RuntimeConfig, "modelTiers" | "taskTierOverrides" | "modelAliases">>,
+    runtimeConfig?: Partial<
+      Pick<RuntimeConfig, "modelTiers" | "taskTierOverrides" | "modelAliases">
+    >,
   ) {
     this.providers = [...data.providers];
     this.models = [...data.models];
@@ -88,7 +90,9 @@ export class ModelRouter {
     data: ModelRouterData,
     secrets?: SecretsFile | null,
     onSave?: (state: RouterState) => Promise<void>,
-    runtimeConfig?: Partial<Pick<RuntimeConfig, "modelTiers" | "taskTierOverrides" | "modelAliases">>,
+    runtimeConfig?: Partial<
+      Pick<RuntimeConfig, "modelTiers" | "taskTierOverrides" | "modelAliases">
+    >,
   ): ModelRouter {
     ModelRouter.validate(data);
     const router = new ModelRouter(data, secrets ?? null, onSave ?? null, runtimeConfig);
@@ -109,9 +113,7 @@ export class ModelRouter {
     }
     const names = data.models.map((m) => m.name);
     if (!names.includes(data.defaultModel)) {
-      throw new Error(
-        `Default model "${data.defaultModel}" not found in models list`
-      );
+      throw new Error(`Default model "${data.defaultModel}" not found in models list`);
     }
     const uniqueNames = new Set(names);
     if (uniqueNames.size !== names.length) {
@@ -120,9 +122,7 @@ export class ModelRouter {
     const providerIds = new Set(data.providers.map((p) => p.id));
     for (const model of data.models) {
       if (!providerIds.has(model.provider)) {
-        throw new Error(
-          `Model "${model.name}" references unknown provider "${model.provider}"`
-        );
+        throw new Error(`Model "${model.name}" references unknown provider "${model.provider}"`);
       }
     }
   }
@@ -138,7 +138,7 @@ export class ModelRouter {
         ? ` (launchd services do not inherit shell env vars — use "aria onboard" to store in secrets.enc)`
         : "";
     throw new Error(
-      `API key not found: set environment variable "${envVar}" or run "aria onboard" to store it in secrets.enc${hint}`
+      `API key not found: set environment variable "${envVar}" or run "aria onboard" to store it in secrets.enc${hint}`,
     );
   }
 
@@ -171,10 +171,7 @@ export class ModelRouter {
         maxTokens: cfg.maxTokens ?? 4096,
       } as Model<Api>;
     }
-    return (getModel as (p: string, m: string) => Model<Api>)(
-      provider.type,
-      cfg.model
-    );
+    return (getModel as (p: string, m: string) => Model<Api>)(provider.type, cfg.model);
   }
 
   /** Get the raw ModelConfig for the active (or named) model */
@@ -292,7 +289,7 @@ export class ModelRouter {
     const referencedBy = this.models.filter((m) => m.provider === id).map((m) => m.name);
     if (referencedBy.length > 0) {
       throw new Error(
-        `Cannot remove provider "${id}" — still referenced by model(s): ${referencedBy.join(", ")}`
+        `Cannot remove provider "${id}" — still referenced by model(s): ${referencedBy.join(", ")}`,
       );
     }
     this.providers.splice(idx, 1);
@@ -369,7 +366,7 @@ export class ModelRouter {
       if (!model.fallback) continue;
       if (!modelNames.has(model.fallback)) {
         throw new Error(
-          `Model "${model.name}" has fallback "${model.fallback}" which does not exist`
+          `Model "${model.name}" has fallback "${model.fallback}" which does not exist`,
         );
       }
       // Detect circular chains
@@ -377,9 +374,7 @@ export class ModelRouter {
       let current: string | undefined = model.name;
       while (current) {
         if (visited.has(current)) {
-          throw new Error(
-            `Circular fallback chain detected involving model "${current}"`
-          );
+          throw new Error(`Circular fallback chain detected involving model "${current}"`);
         }
         visited.add(current);
         const cfg = this.models.find((m) => m.name === current);
@@ -389,7 +384,11 @@ export class ModelRouter {
   }
 
   /** Get model with fallback — tries the primary model, falls back on provider error */
-  getModelWithFallback(name?: string): { model: Model<Api>; options: { temperature?: number; maxTokens?: number; apiKey: string }; fallbackName?: string } {
+  getModelWithFallback(name?: string): {
+    model: Model<Api>;
+    options: { temperature?: number; maxTokens?: number; apiKey: string };
+    fallbackName?: string;
+  } {
     const target = name ?? this.activeModelName;
     try {
       return {

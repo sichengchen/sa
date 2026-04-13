@@ -9,7 +9,12 @@
 
 import type { Chat, Thread, SentMessage, Adapter, Message as ChatMessage } from "chat";
 import { createStreamHandler, type StreamOps } from "../shared/stream-handler.js";
-import { formatToolResult, splitMessage, getMaxLength, formatSenderAttribution } from "./formatter.js";
+import {
+  formatToolResult,
+  splitMessage,
+  getMaxLength,
+  formatSenderAttribution,
+} from "./formatter.js";
 import type { ConnectorType } from "@aria/protocol";
 import { createChatSDKClient } from "./client.js";
 
@@ -23,9 +28,16 @@ export interface ChatSDKAdapterConfig {
   /** Whether to attribute messages with sender names in group chats */
   attributeSender?: boolean;
   /** Hook: handle tool approval request with platform-native UI. Return true if handled. */
-  onToolApprovalRequest?: (thread: Thread, toolName: string, toolCallId: string) => Promise<boolean>;
+  onToolApprovalRequest?: (
+    thread: Thread,
+    toolName: string,
+    toolCallId: string,
+  ) => Promise<boolean>;
   /** Hook: handle user question with platform-native UI. Return true if handled. */
-  onUserQuestion?: (thread: Thread, event: { id: string; question: string; options?: string[] }) => Promise<boolean>;
+  onUserQuestion?: (
+    thread: Thread,
+    event: { id: string; question: string; options?: string[] },
+  ) => Promise<boolean>;
   /** Hook: handle reaction with platform-native API. Return true if handled. */
   onReaction?: (thread: Thread, emoji: string) => Promise<boolean>;
 }
@@ -72,7 +84,10 @@ export class ChatSDKAdapter {
       const thread = event.thread;
       if (!event.value || !thread) return;
       try {
-        await this.client.tool.approve.mutate({ toolCallId: event.value, approved: true });
+        await this.client.tool.approve.mutate({
+          toolCallId: event.value,
+          approved: true,
+        });
         await thread.post("Tool approved.");
       } catch {
         await thread.post("Failed to process approval.");
@@ -83,7 +98,10 @@ export class ChatSDKAdapter {
       const thread = event.thread;
       if (!event.value || !thread) return;
       try {
-        await this.client.tool.approve.mutate({ toolCallId: event.value, approved: false });
+        await this.client.tool.approve.mutate({
+          toolCallId: event.value,
+          approved: false,
+        });
         await thread.post("Tool rejected.");
       } catch {
         await thread.post("Failed to process rejection.");
@@ -94,7 +112,9 @@ export class ChatSDKAdapter {
       const thread = event.thread;
       if (!event.value || !thread) return;
       try {
-        await this.client.tool.acceptForSession.mutate({ toolCallId: event.value });
+        await this.client.tool.acceptForSession.mutate({
+          toolCallId: event.value,
+        });
         await thread.post("Tool always allowed for this session.");
       } catch {
         await thread.post("Failed to process.");
@@ -169,9 +189,10 @@ export class ChatSDKAdapter {
 
       // Sender attribution for group chats
       const isDM = thread.isDM;
-      const messageForEngine = !isDM && this.config.attributeSender !== false
-        ? formatSenderAttribution(message.author.fullName ?? "User", text)
-        : text;
+      const messageForEngine =
+        !isDM && this.config.attributeSender !== false
+          ? formatSenderAttribution(message.author.fullName ?? "User", text)
+          : text;
 
       // Create stream handler adapted for Chat SDK's Thread API
       const ops: StreamOps<SentMessage> = {
@@ -220,10 +241,12 @@ export class ChatSDKAdapter {
                 if (!qHandled) {
                   if (event.options && event.options.length > 0) {
                     // Multiple-choice: post question with option buttons
-                    const optionsText = event.options.map((o, i) => `${i + 1}. ${o}`).join("\n");
+                    const optionsText = event.options
+                      .map((o: string, i: number) => `${i + 1}. ${o}`)
+                      .join("\n");
                     await thread.post(
                       `**Question:** ${event.question}\n\n${optionsText}\n\n` +
-                      `Reply with: \`answer <number>\` or \`answer <text>\``,
+                        `Reply with: \`answer <number>\` or \`answer <text>\``,
                     );
                     // Store for text-based answer matching
                     this.pendingFreeTextQuestions.set(thread.id, event.id);
@@ -275,14 +298,18 @@ export class ChatSDKAdapter {
   }
 
   /** Send a tool approval card with Approve/Reject/Always buttons */
-  private async sendToolApprovalCard(thread: Thread, toolName: string, toolCallId: string): Promise<void> {
+  private async sendToolApprovalCard(
+    thread: Thread,
+    toolName: string,
+    toolCallId: string,
+  ): Promise<void> {
     // Use markdown with button action IDs — Chat SDK's Card/Button JSX
     // requires @jsxImportSource chat which we avoid for pure TS.
     // Instead, post a text message with tool info.
     // Individual platform connectors can override with native cards.
     await thread.post(
       `**Tool: ${toolName}** — Approve execution?\n` +
-      `Reply with: \`approve ${toolCallId.slice(0, 8)}\` / \`reject ${toolCallId.slice(0, 8)}\``,
+        `Reply with: \`approve ${toolCallId.slice(0, 8)}\` / \`reject ${toolCallId.slice(0, 8)}\``,
     );
 
     // Store the full tool call ID for text-based approval matching
@@ -335,7 +362,10 @@ export class ChatSDKAdapter {
       const optionsMap = (this as any)._questionOptions as Map<string, string[]> | undefined;
       if (optionsMap) optionsMap.delete(pendingQId);
       try {
-        await this.client.question.answer.mutate({ id: pendingQId, answer: text });
+        await this.client.question.answer.mutate({
+          id: pendingQId,
+          answer: text,
+        });
         await thread.post(`Answer: ${text.slice(0, 200)}`);
       } catch {
         await thread.post("Failed to submit answer.");
@@ -349,7 +379,10 @@ export class ChatSDKAdapter {
       const fullId = this.pendingApprovals.get(approveMatch[1]!);
       if (fullId) {
         this.pendingApprovals.delete(approveMatch[1]!);
-        await this.client.tool.approve.mutate({ toolCallId: fullId, approved: true });
+        await this.client.tool.approve.mutate({
+          toolCallId: fullId,
+          approved: true,
+        });
         await thread.post("Tool approved.");
         return true;
       }
@@ -360,7 +393,10 @@ export class ChatSDKAdapter {
       const fullId = this.pendingApprovals.get(rejectMatch[1]!);
       if (fullId) {
         this.pendingApprovals.delete(rejectMatch[1]!);
-        await this.client.tool.approve.mutate({ toolCallId: fullId, approved: false });
+        await this.client.tool.approve.mutate({
+          toolCallId: fullId,
+          approved: false,
+        });
         await thread.post("Tool rejected.");
         return true;
       }
@@ -397,9 +433,11 @@ export class ChatSDKAdapter {
         } else {
           // No active session — try stopAll as fallback
           const result = await this.client.chat.stopAll.mutate();
-          await thread.post(result.cancelled > 0
-            ? `Stopped ${result.cancelled} running agent(s).`
-            : "Nothing running.");
+          await thread.post(
+            result.cancelled > 0
+              ? `Stopped ${result.cancelled} running agent(s).`
+              : "Nothing running.",
+          );
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -465,8 +503,9 @@ export class ChatSDKAdapter {
     if (text === "/provider") {
       try {
         const providers = await this.client.provider.list.query();
-        const lines = providers.map((p: { id: string; type: string; apiKeyEnvVar: string }) =>
-          `• **${p.id}** (${p.type}) — \`${p.apiKeyEnvVar}\``,
+        const lines = providers.map(
+          (p: { id: string; type: string; apiKeyEnvVar: string }) =>
+            `• **${p.id}** (${p.type}) — \`${p.apiKeyEnvVar}\``,
         );
         await thread.post(`Providers:\n${lines.join("\n")}`);
       } catch {

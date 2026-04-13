@@ -113,12 +113,12 @@ function normalizeMessage(message: Message): ArchivedMessage {
   const role = message.role === "toolResult" ? "tool" : message.role;
   const raw = extractContent((message as { content?: unknown }).content);
   const content = raw.trim();
-  const toolName = message.role === "toolResult"
-    ? ((message as { toolName?: string }).toolName ?? undefined)
-    : undefined;
-  const isError = message.role === "toolResult"
-    ? Boolean((message as { isError?: boolean }).isError)
-    : false;
+  const toolName =
+    message.role === "toolResult"
+      ? ((message as { toolName?: string }).toolName ?? undefined)
+      : undefined;
+  const isError =
+    message.role === "toolResult" ? Boolean((message as { isError?: boolean }).isError) : false;
 
   return {
     role,
@@ -137,12 +137,14 @@ function buildPreview(messages: ArchivedMessage[]): string {
 
 function buildSummary(messages: ArchivedMessage[]): string {
   const userMessages = messages.filter((message) => message.role === "user" && message.content);
-  const assistantMessages = messages.filter((message) => message.role === "assistant" && message.content);
-  const toolNames = Array.from(new Set(
-    messages
-      .map((message) => message.toolName)
-      .filter((name): name is string => Boolean(name)),
-  ));
+  const assistantMessages = messages.filter(
+    (message) => message.role === "assistant" && message.content,
+  );
+  const toolNames = Array.from(
+    new Set(
+      messages.map((message) => message.toolName).filter((name): name is string => Boolean(name)),
+    ),
+  );
 
   const parts: string[] = [];
   if (userMessages[0]?.content) {
@@ -163,7 +165,11 @@ function buildSummary(messages: ArchivedMessage[]): string {
   return truncate(parts.join("\n"), MAX_SUMMARY_CHARS);
 }
 
-function buildSearchDocument(summary: string, preview: string, messages: ArchivedMessage[]): string {
+function buildSearchDocument(
+  summary: string,
+  preview: string,
+  messages: ArchivedMessage[],
+): string {
   const chunks: string[] = [];
   if (summary) chunks.push(summary);
   if (preview) chunks.push(preview);
@@ -235,7 +241,9 @@ export class SessionArchiveManager {
       ) VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
     const deleteSearch = this.db.prepare("DELETE FROM session_search WHERE session_id = ?");
-    const insertSearch = this.db.prepare("INSERT INTO session_search (session_id, content) VALUES (?, ?)");
+    const insertSearch = this.db.prepare(
+      "INSERT INTO session_search (session_id, content) VALUES (?, ?)",
+    );
 
     const tx = this.db.transaction(() => {
       upsertSession.run(
@@ -273,12 +281,14 @@ export class SessionArchiveManager {
   async getHistory(sessionId: string): Promise<ArchivedMessage[]> {
     if (!this.db) return [];
 
-    const rows = this.db.prepare(`
+    const rows = this.db
+      .prepare(`
       SELECT role, tool_name, is_error, content, timestamp
       FROM messages
       WHERE session_id = ?
       ORDER BY message_index ASC
-    `).all(sessionId) as Array<{
+    `)
+      .all(sessionId) as Array<{
       role: string;
       tool_name: string | null;
       is_error: number;
@@ -298,13 +308,15 @@ export class SessionArchiveManager {
   async getSessionRecord(sessionId: string): Promise<ArchivedSessionRecord | null> {
     if (!this.db) return null;
 
-    const row = this.db.prepare(`
+    const row = this.db
+      .prepare(`
       SELECT session_id, connector_type, connector_id, created_at, last_active_at,
              message_count, preview, summary
       FROM sessions
       WHERE session_id = ?
       LIMIT 1
-    `).get(sessionId) as {
+    `)
+      .get(sessionId) as {
       session_id: string;
       connector_type: string;
       connector_id: string;
@@ -332,13 +344,15 @@ export class SessionArchiveManager {
   async listRecent(limit = 20): Promise<ArchivedSessionRecord[]> {
     if (!this.db) return [];
 
-    const rows = this.db.prepare(`
+    const rows = this.db
+      .prepare(`
       SELECT session_id, connector_type, connector_id, created_at, last_active_at,
              message_count, preview, summary
       FROM sessions
       ORDER BY last_active_at DESC
       LIMIT ?
-    `).all(limit) as Array<{
+    `)
+      .all(limit) as Array<{
       session_id: string;
       connector_type: string;
       connector_id: string;
@@ -368,7 +382,8 @@ export class SessionArchiveManager {
     if (!sanitized) return [];
 
     try {
-      const rows = this.db.prepare(`
+      const rows = this.db
+        .prepare(`
         SELECT
           s.session_id,
           s.connector_type,
@@ -385,7 +400,8 @@ export class SessionArchiveManager {
         WHERE session_search MATCH ?
         ORDER BY rank
         LIMIT ?
-      `).all(sanitized, limit) as Array<{
+      `)
+        .all(sanitized, limit) as Array<{
         session_id: string;
         connector_type: string;
         connector_id: string;

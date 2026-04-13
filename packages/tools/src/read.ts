@@ -11,11 +11,9 @@ export const readTool: ToolImpl = {
   parameters: Type.Object({
     file_path: Type.String({ description: "Absolute path to the file to read" }),
     offset: Type.Optional(
-      Type.Number({ description: "Line number to start reading from (1-based)" })
+      Type.Number({ description: "Line number to start reading from (1-based)" }),
     ),
-    limit: Type.Optional(
-      Type.Number({ description: "Maximum number of lines to read" })
-    ),
+    limit: Type.Optional(Type.Number({ description: "Maximum number of lines to read" })),
   }),
   async execute(args) {
     const filePath = args.file_path as string;

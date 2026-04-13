@@ -14,9 +14,9 @@ CI runs:
 
 Before merge/finalization on long-running migration branches:
 
-- `bun run typecheck`
-- `bun test`
-- `bun run build`
+- `vp run repo:check`
+- `vp run repo:test`
+- `vp run repo:build`
 - `bun run audit:history -- origin/new-aria..HEAD`
 
 The history audit checks that the pending branch-range commits do not contain

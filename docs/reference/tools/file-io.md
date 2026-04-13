@@ -10,11 +10,11 @@ Read file contents. Danger level: **safe**.
 
 ### Parameters
 
-| Parameter | Type   | Required | Default | Description                        |
-|-----------|--------|----------|---------|------------------------------------|
-| file_path | string | yes      | —       | Absolute path to file              |
-| offset    | number | no       | 1       | Starting line number (1-based)     |
-| limit     | number | no       | —       | Number of lines to read            |
+| Parameter | Type   | Required | Default | Description                    |
+| --------- | ------ | -------- | ------- | ------------------------------ |
+| file_path | string | yes      | —       | Absolute path to file          |
+| offset    | number | no       | 1       | Starting line number (1-based) |
+| limit     | number | no       | —       | Number of lines to read        |
 
 ### Behavior
 
@@ -36,10 +36,10 @@ Create or overwrite a file. Danger level: **moderate**.
 
 ### Parameters
 
-| Parameter | Type   | Required | Default | Description                        |
-|-----------|--------|----------|---------|------------------------------------|
-| file_path | string | yes      | —       | Absolute path to file              |
-| content   | string | yes      | —       | File content to write              |
+| Parameter | Type   | Required | Default | Description           |
+| --------- | ------ | -------- | ------- | --------------------- |
+| file_path | string | yes      | —       | Absolute path to file |
+| content   | string | yes      | —       | File content to write |
 
 ### Behavior
 
@@ -62,11 +62,11 @@ Exact string replacement in a file. Danger level: **moderate**.
 
 ### Parameters
 
-| Parameter  | Type   | Required | Description                                    |
-|------------|--------|----------|------------------------------------------------|
-| file_path  | string | yes      | Absolute path to file                          |
-| old_string | string | yes      | Text to find (must appear exactly once)        |
-| new_string | string | yes      | Replacement text                               |
+| Parameter  | Type   | Required | Description                             |
+| ---------- | ------ | -------- | --------------------------------------- |
+| file_path  | string | yes      | Absolute path to file                   |
+| old_string | string | yes      | Text to find (must appear exactly once) |
+| new_string | string | yes      | Replacement text                        |
 
 ### Behavior
 

@@ -29,9 +29,7 @@ afterEach(async () => {
   }
 });
 
-async function createRepository(
-  prefix: string,
-): Promise<ProjectsEngineRepository> {
+async function createRepository(prefix: string): Promise<ProjectsEngineRepository> {
   const dir = await mkdtemp(join(tmpdir(), prefix));
   tempDirs.push(dir);
   const store = new ProjectsEngineStore(join(dir, "aria.db"));
@@ -113,9 +111,7 @@ describe("project package surfaces", () => {
     expect(runnableThreads[0]?.thread.threadId).toBe("thread-1");
     expect(runnableThreads[0]?.thread.workspaceId).toBe("workspace-active");
     expect(runnableThreads[0]?.thread.environmentId).toBe("env-active");
-    expect(runnableThreads[0]?.thread.environmentBindingId).toBe(
-      "binding-active",
-    );
+    expect(runnableThreads[0]?.thread.environmentBindingId).toBe("binding-active");
     repository.close();
   });
 
@@ -171,9 +167,7 @@ describe("project package surfaces", () => {
 
     expect(repos.getRepo("repo-1")?.name).toBe("aria");
     expect(sanitizeWorktreeSegment("thread/one")).toBe("thread_one");
-    expect(repository.getWorktree("worktree-1")?.branchName).toBe(
-      "aria/thread/thread_one",
-    );
+    expect(repository.getWorktree("worktree-1")?.branchName).toBe("aria/thread/thread_one");
     expect(repository.getWorktree("worktree-1")?.status).toBe("retained");
     repository.close();
   });
@@ -277,9 +271,7 @@ describe("project package surfaces", () => {
       completedAt: null,
     });
 
-    const launch = new ProjectsDispatchService(repository).buildLaunchRequest(
-      "dispatch-1",
-    );
+    const launch = new ProjectsDispatchService(repository).buildLaunchRequest("dispatch-1");
 
     expect(launch).toMatchObject({
       dispatchId: "dispatch-1",

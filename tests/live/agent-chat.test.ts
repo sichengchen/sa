@@ -10,10 +10,7 @@ import {
 import { echoTool } from "../helpers/test-tools.js";
 
 /** Collect all events from an agent chat turn */
-async function collectEvents(
-  agent: Agent,
-  message: string,
-): Promise<AgentEvent[]> {
+async function collectEvents(agent: Agent, message: string): Promise<AgentEvent[]> {
   const events: AgentEvent[] = [];
   for await (const event of agent.chat(message)) {
     events.push(event);
@@ -50,14 +47,10 @@ describeLive("Agent chat — live LLM tests", () => {
     const agent = new Agent({
       router: makeLiveRouter(),
       tools: [echoTool],
-      systemPrompt:
-        "When asked to echo, use the echo tool. Do not explain — just call the tool.",
+      systemPrompt: "When asked to echo, use the echo tool. Do not explain — just call the tool.",
     });
 
-    const events = await collectEvents(
-      agent,
-      'Use the echo tool with message "test123"',
-    );
+    const events = await collectEvents(agent, 'Use the echo tool with message "test123"');
     const types = events.map((e) => e.type);
 
     expect(types).toContain("tool_start");

@@ -9,7 +9,9 @@ export interface ParsedSchedule {
   oneShot?: boolean;
 }
 
-function inferScheduleKind(task: Pick<CronTask, "scheduleKind" | "intervalMinutes" | "runAt">): "cron" | "interval" | "once" {
+function inferScheduleKind(
+  task: Pick<CronTask, "scheduleKind" | "intervalMinutes" | "runAt">,
+): "cron" | "interval" | "once" {
   if (task.scheduleKind) {
     return task.scheduleKind;
   }
@@ -23,7 +25,10 @@ function inferScheduleKind(task: Pick<CronTask, "scheduleKind" | "intervalMinute
 }
 
 function parseDurationToMinutes(input: string): number | null {
-  const match = input.trim().toLowerCase().match(/^(\d+)\s*(m|min|mins|minute|minutes|h|hr|hrs|hour|hours|d|day|days)$/);
+  const match = input
+    .trim()
+    .toLowerCase()
+    .match(/^(\d+)\s*(m|min|mins|minute|minutes|h|hr|hrs|hour|hours|d|day|days)$/);
   if (!match) return null;
 
   const value = Number(match[1]);
@@ -86,7 +91,13 @@ export function parseScheduleInput(input: string, now = new Date()): ParsedSched
   );
 }
 
-export function computeNextRunAt(task: Pick<CronTask, "schedule" | "scheduleKind" | "intervalMinutes" | "runAt" | "lastRunAt" | "oneShot">, now = new Date()): string | null {
+export function computeNextRunAt(
+  task: Pick<
+    CronTask,
+    "schedule" | "scheduleKind" | "intervalMinutes" | "runAt" | "lastRunAt" | "oneShot"
+  >,
+  now = new Date(),
+): string | null {
   const scheduleKind = inferScheduleKind(task);
 
   if (scheduleKind === "once") {
@@ -114,7 +125,13 @@ export function computeNextRunAt(task: Pick<CronTask, "schedule" | "scheduleKind
   return null;
 }
 
-export function isTaskDue(task: Pick<CronTask, "schedule" | "scheduleKind" | "intervalMinutes" | "runAt" | "lastRunAt" | "paused" | "nextRunAt"> & { enabled?: boolean }, now = new Date()): boolean {
+export function isTaskDue(
+  task: Pick<
+    CronTask,
+    "schedule" | "scheduleKind" | "intervalMinutes" | "runAt" | "lastRunAt" | "paused" | "nextRunAt"
+  > & { enabled?: boolean },
+  now = new Date(),
+): boolean {
   if (task.enabled === false || task.paused) {
     return false;
   }

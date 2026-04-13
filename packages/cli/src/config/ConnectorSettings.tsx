@@ -5,12 +5,20 @@ import { loadSecrets, saveSecrets } from "@aria/engine/config/secrets.js";
 import type { SecretsFile } from "@aria/engine/config/types.js";
 import type { ToolApprovalMode, ConnectorType } from "@aria/protocol";
 
-type Substep = "menu" | "edit-telegram-token" | "edit-discord-token" | "edit-discord-guild"
-  | "edit-slack-token" | "edit-slack-secret"
-  | "edit-teams-id" | "edit-teams-password"
+type Substep =
+  | "menu"
+  | "edit-telegram-token"
+  | "edit-discord-token"
+  | "edit-discord-guild"
+  | "edit-slack-token"
+  | "edit-slack-secret"
+  | "edit-teams-id"
+  | "edit-teams-password"
   | "edit-gchat-key"
-  | "edit-github-token" | "edit-github-secret"
-  | "edit-linear-key" | "edit-linear-secret"
+  | "edit-github-token"
+  | "edit-github-secret"
+  | "edit-linear-key"
+  | "edit-linear-secret"
   | "wechat-accounts";
 
 interface ConnectorSettingsProps {
@@ -88,7 +96,7 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
   const rawLinearSecret = secrets?.apiKeys?.LINEAR_WEBHOOK_SECRET;
   const wechatAccounts = secrets?.wechatAccounts ?? [];
 
-  const mask = (v: string | undefined) => v ? "●●●●" + v.slice(-4) : "(not set)";
+  const mask = (v: string | undefined) => (v ? "●●●●" + v.slice(-4) : "(not set)");
   const telegramToken = mask(rawTelegram);
   const discordToken = mask(rawDiscord);
   const discordGuild = rawGuild || "(not set)";
@@ -98,9 +106,18 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
 
     // --- MENU ---
     if (substep === "menu") {
-      if (key.escape) { onBack(); return; }
-      if (key.upArrow) { setSelected((s) => Math.max(0, s - 1)); return; }
-      if (key.downArrow) { setSelected((s) => Math.min(MENU_ITEMS.length - 1, s + 1)); return; }
+      if (key.escape) {
+        onBack();
+        return;
+      }
+      if (key.upArrow) {
+        setSelected((s) => Math.max(0, s - 1));
+        return;
+      }
+      if (key.downArrow) {
+        setSelected((s) => Math.min(MENU_ITEMS.length - 1, s + 1));
+        return;
+      }
       if (key.return) {
         const item = MENU_ITEMS[selected];
         if (item.key === "telegram-token") {
@@ -177,7 +194,10 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
     }
 
     // --- EDIT FIELDS ---
-    if (key.escape) { setSubstep("menu"); return; }
+    if (key.escape) {
+      setSubstep("menu");
+      return;
+    }
     if (substep === "wechat-accounts") {
       return;
     }
@@ -185,43 +205,91 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
       const updated: SecretsFile = { ...secrets!, apiKeys: { ...secrets!.apiKeys } };
       if (substep === "edit-telegram-token") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.TELEGRAM_BOT_TOKEN = val; } else { delete updated.apiKeys.TELEGRAM_BOT_TOKEN; }
+        if (val) {
+          updated.apiKeys.TELEGRAM_BOT_TOKEN = val;
+        } else {
+          delete updated.apiKeys.TELEGRAM_BOT_TOKEN;
+        }
         delete updated.botToken; // migrate away from legacy field
       } else if (substep === "edit-discord-token") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.DISCORD_TOKEN = val; } else { delete updated.apiKeys.DISCORD_TOKEN; }
+        if (val) {
+          updated.apiKeys.DISCORD_TOKEN = val;
+        } else {
+          delete updated.apiKeys.DISCORD_TOKEN;
+        }
         delete updated.discordToken;
       } else if (substep === "edit-discord-guild") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.DISCORD_GUILD_ID = val; } else { delete updated.apiKeys.DISCORD_GUILD_ID; }
+        if (val) {
+          updated.apiKeys.DISCORD_GUILD_ID = val;
+        } else {
+          delete updated.apiKeys.DISCORD_GUILD_ID;
+        }
         delete updated.discordGuildId;
       } else if (substep === "edit-slack-token") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.SLACK_BOT_TOKEN = val; } else { delete updated.apiKeys.SLACK_BOT_TOKEN; }
+        if (val) {
+          updated.apiKeys.SLACK_BOT_TOKEN = val;
+        } else {
+          delete updated.apiKeys.SLACK_BOT_TOKEN;
+        }
       } else if (substep === "edit-slack-secret") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.SLACK_SIGNING_SECRET = val; } else { delete updated.apiKeys.SLACK_SIGNING_SECRET; }
+        if (val) {
+          updated.apiKeys.SLACK_SIGNING_SECRET = val;
+        } else {
+          delete updated.apiKeys.SLACK_SIGNING_SECRET;
+        }
       } else if (substep === "edit-teams-id") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.TEAMS_BOT_ID = val; } else { delete updated.apiKeys.TEAMS_BOT_ID; }
+        if (val) {
+          updated.apiKeys.TEAMS_BOT_ID = val;
+        } else {
+          delete updated.apiKeys.TEAMS_BOT_ID;
+        }
       } else if (substep === "edit-teams-password") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.TEAMS_BOT_PASSWORD = val; } else { delete updated.apiKeys.TEAMS_BOT_PASSWORD; }
+        if (val) {
+          updated.apiKeys.TEAMS_BOT_PASSWORD = val;
+        } else {
+          delete updated.apiKeys.TEAMS_BOT_PASSWORD;
+        }
       } else if (substep === "edit-gchat-key") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.GOOGLE_CHAT_SERVICE_ACCOUNT_KEY = val; } else { delete updated.apiKeys.GOOGLE_CHAT_SERVICE_ACCOUNT_KEY; }
+        if (val) {
+          updated.apiKeys.GOOGLE_CHAT_SERVICE_ACCOUNT_KEY = val;
+        } else {
+          delete updated.apiKeys.GOOGLE_CHAT_SERVICE_ACCOUNT_KEY;
+        }
       } else if (substep === "edit-github-token") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.GITHUB_TOKEN = val; } else { delete updated.apiKeys.GITHUB_TOKEN; }
+        if (val) {
+          updated.apiKeys.GITHUB_TOKEN = val;
+        } else {
+          delete updated.apiKeys.GITHUB_TOKEN;
+        }
       } else if (substep === "edit-github-secret") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.GITHUB_WEBHOOK_SECRET = val; } else { delete updated.apiKeys.GITHUB_WEBHOOK_SECRET; }
+        if (val) {
+          updated.apiKeys.GITHUB_WEBHOOK_SECRET = val;
+        } else {
+          delete updated.apiKeys.GITHUB_WEBHOOK_SECRET;
+        }
       } else if (substep === "edit-linear-key") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.LINEAR_API_KEY = val; } else { delete updated.apiKeys.LINEAR_API_KEY; }
+        if (val) {
+          updated.apiKeys.LINEAR_API_KEY = val;
+        } else {
+          delete updated.apiKeys.LINEAR_API_KEY;
+        }
       } else if (substep === "edit-linear-secret") {
         const val = editValue.trim();
-        if (val) { updated.apiKeys.LINEAR_WEBHOOK_SECRET = val; } else { delete updated.apiKeys.LINEAR_WEBHOOK_SECRET; }
+        if (val) {
+          updated.apiKeys.LINEAR_WEBHOOK_SECRET = val;
+        } else {
+          delete updated.apiKeys.LINEAR_WEBHOOK_SECRET;
+        }
       }
       setSaved(true);
       saveSecrets(homeDir, updated).then(() => {
@@ -250,7 +318,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">Connectors</Text>
+      <Text bold color="cyan">
+        Connectors
+      </Text>
       <Text />
 
       {substep === "menu" && (
@@ -269,12 +339,13 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
             else if (item.key === "github-secret") detail = ` ${mask(rawGithubSecret)}`;
             else if (item.key === "linear-key") detail = ` ${mask(rawLinearKey)}`;
             else if (item.key === "linear-secret") detail = ` ${mask(rawLinearSecret)}`;
-            else if (item.key === "wechat-accounts") detail = ` ${wechatAccounts.length === 0 ? "(none linked)" : `${wechatAccounts.length} linked`}`;
+            else if (item.key === "wechat-accounts")
+              detail = ` ${wechatAccounts.length === 0 ? "(none linked)" : `${wechatAccounts.length} linked`}`;
             else if (item.key.endsWith("-approval")) {
               const connector = item.key.replace("-approval", "") as ConnectorType;
               detail = ` ${APPROVAL_LABELS[getApprovalMode(config, connector)]}`;
-            }
-            else if (item.key === "webhook-enabled") detail = ` ${config.runtime.webhook?.enabled ? "enabled" : "disabled"}`;
+            } else if (item.key === "webhook-enabled")
+              detail = ` ${config.runtime.webhook?.enabled ? "enabled" : "disabled"}`;
             return (
               <Text key={item.key}>
                 {i === selected ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}
@@ -291,7 +362,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
       {substep === "wechat-accounts" && (
         <>
           <Text bold>WeChat Linked Accounts</Text>
-          <Text dimColor>Use `aria wechat login` in your shell to add or refresh a linked WeChat account.</Text>
+          <Text dimColor>
+            Use `aria wechat login` in your shell to add or refresh a linked WeChat account.
+          </Text>
           <Text />
           {wechatAccounts.length === 0 ? (
             <Text dimColor>No accounts saved in secrets.enc.</Text>
@@ -302,7 +375,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
                   {account.accountId}
                   <Text dimColor>
                     {`  ${account.apiBaseUrl ?? "(default base URL)"}`}
-                    {account.allowedUserIds?.length ? `  allow: ${account.allowedUserIds.join(", ")}` : ""}
+                    {account.allowedUserIds?.length
+                      ? `  allow: ${account.allowedUserIds.join(", ")}`
+                      : ""}
                   </Text>
                 </Text>
               ))}
@@ -319,7 +394,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           <Text dimColor>Leave empty to clear. Obtain from @BotFather.</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Token: </Text>
+            <Text color="blue" bold>
+              Token:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -334,7 +411,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           <Text dimColor>Leave empty to clear. Obtain from Discord Developer Portal.</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Token: </Text>
+            <Text color="blue" bold>
+              Token:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -349,7 +428,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           <Text dimColor>Leave empty to clear. Right-click server → Copy Server ID.</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Guild ID: </Text>
+            <Text color="blue" bold>
+              Guild ID:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -361,10 +442,14 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
       {substep === "edit-slack-token" && (
         <>
           <Text bold>Slack Bot Token</Text>
-          <Text dimColor>Leave empty to clear. Obtain from Slack App settings → OAuth & Permissions.</Text>
+          <Text dimColor>
+            Leave empty to clear. Obtain from Slack App settings → OAuth & Permissions.
+          </Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Token: </Text>
+            <Text color="blue" bold>
+              Token:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -376,10 +461,14 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
       {substep === "edit-slack-secret" && (
         <>
           <Text bold>Slack Signing Secret</Text>
-          <Text dimColor>Leave empty to clear. Found in Slack App settings → Basic Information.</Text>
+          <Text dimColor>
+            Leave empty to clear. Found in Slack App settings → Basic Information.
+          </Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Secret: </Text>
+            <Text color="blue" bold>
+              Secret:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -394,7 +483,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           <Text dimColor>Leave empty to clear. Found in Azure Bot registration.</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Bot ID: </Text>
+            <Text color="blue" bold>
+              Bot ID:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -406,10 +497,14 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
       {substep === "edit-teams-password" && (
         <>
           <Text bold>Teams Bot Password</Text>
-          <Text dimColor>Leave empty to clear. Found in Azure Bot registration → Certificates & secrets.</Text>
+          <Text dimColor>
+            Leave empty to clear. Found in Azure Bot registration → Certificates & secrets.
+          </Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Password: </Text>
+            <Text color="blue" bold>
+              Password:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -424,7 +519,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           <Text dimColor>Leave empty to clear. Paste the JSON key from Google Cloud Console.</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Key: </Text>
+            <Text color="blue" bold>
+              Key:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -439,7 +536,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           <Text dimColor>Leave empty to clear. Create a PAT or GitHub App token.</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Token: </Text>
+            <Text color="blue" bold>
+              Token:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -454,7 +553,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           <Text dimColor>Leave empty to clear. Set in your GitHub webhook configuration.</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Secret: </Text>
+            <Text color="blue" bold>
+              Secret:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -469,7 +570,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           <Text dimColor>Leave empty to clear. Generate at linear.app/settings/api.</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>API Key: </Text>
+            <Text color="blue" bold>
+              API Key:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>
@@ -484,7 +587,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           <Text dimColor>Leave empty to clear. Set in your Linear webhook configuration.</Text>
           <Text />
           <Box>
-            <Text color="blue" bold>Secret: </Text>
+            <Text color="blue" bold>
+              Secret:{" "}
+            </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>
           </Box>

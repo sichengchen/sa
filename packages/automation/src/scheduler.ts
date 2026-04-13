@@ -1,11 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Agent } from "@aria/agent-aria";
-import type {
-  DeliveryTarget,
-  HeartbeatConfig,
-  RetryPolicy,
-} from "./config.js";
+import type { DeliveryTarget, HeartbeatConfig, RetryPolicy } from "./config.js";
 import { DEFAULT_HEARTBEAT } from "./config.js";
 import { computeNextRunAt, isTaskDue } from "./automation-schedule.js";
 
@@ -23,7 +19,10 @@ export interface ScheduledTask {
   /** Whether scheduling is paused without deleting the task */
   paused?: boolean;
   /** Handler to execute */
-  handler: () => Promise<{ status?: "success" | "error"; summary?: string } | void> | { status?: "success" | "error"; summary?: string } | void;
+  handler: () =>
+    | Promise<{ status?: "success" | "error"; summary?: string } | void>
+    | { status?: "success" | "error"; summary?: string }
+    | void;
   /** Whether this is a built-in task (cannot be removed via API) */
   builtin?: boolean;
   /** Optional prompt to send to agent (for user-defined tasks) */
@@ -322,9 +321,10 @@ export function createHeartbeatTask(
   mainAgent: Agent | null = null,
   config?: Partial<HeartbeatConfig>,
 ): ScheduledTask {
-  const options = typeof optionsOrSaHome === "string"
-    ? { runtimeHome: optionsOrSaHome, mainAgent }
-    : optionsOrSaHome;
+  const options =
+    typeof optionsOrSaHome === "string"
+      ? { runtimeHome: optionsOrSaHome, mainAgent }
+      : optionsOrSaHome;
   const hbConfig: HeartbeatConfig = { ...DEFAULT_HEARTBEAT, ...config };
   heartbeatState.config = hbConfig;
 

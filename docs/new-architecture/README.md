@@ -26,16 +26,16 @@ It is intentionally forward-looking. It does not describe the current repo as-is
 
 ## Canonical Names
 
-| Surface | Canonical Name |
-| --- | --- |
-| Product | `Esperta Aria` |
-| Server product | `Aria Server` |
-| Personal assistant | `Aria Agent` |
-| Desktop client | `Aria Desktop` |
-| Mobile client | `Aria Mobile` |
-| Secure access layer | `Aria Relay` |
+| Surface                  | Canonical Name |
+| ------------------------ | -------------- |
+| Product                  | `Esperta Aria` |
+| Server product           | `Aria Server`  |
+| Personal assistant       | `Aria Agent`   |
+| Desktop client           | `Aria Desktop` |
+| Mobile client            | `Aria Mobile`  |
+| Secure access layer      | `Aria Relay`   |
 | Server-local terminal UI | `Aria Console` |
-| CLI binary | `aria` |
+| CLI binary               | `aria`         |
 
 ## Core Boundary
 

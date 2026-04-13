@@ -1,6 +1,4 @@
-import {
-  ProjectsDispatchService,
-} from "@aria/jobs";
+import { ProjectsDispatchService } from "@aria/jobs";
 import type { ProjectsEngineRepository } from "@aria/projects";
 import type { HandoffRecord, HandoffSubmission } from "./types.js";
 import { HandoffStore } from "./store.js";
@@ -34,7 +32,8 @@ function parsePayload(payloadJson?: string | null): ParsedHandoffPayload {
       workspaceId: typeof parsed.workspaceId === "string" ? parsed.workspaceId : null,
       environmentId: typeof parsed.environmentId === "string" ? parsed.environmentId : null,
       agentId: typeof parsed.agentId === "string" ? parsed.agentId : null,
-      requestedBackend: typeof parsed.requestedBackend === "string" ? parsed.requestedBackend : null,
+      requestedBackend:
+        typeof parsed.requestedBackend === "string" ? parsed.requestedBackend : null,
       requestedModel: typeof parsed.requestedModel === "string" ? parsed.requestedModel : null,
     };
   } catch {
@@ -42,7 +41,9 @@ function parsePayload(payloadJson?: string | null): ParsedHandoffPayload {
   }
 }
 
-function resolveProjectThreadType(sourceKind: HandoffSubmission["sourceKind"]): "local_project" | "remote_project" {
+function resolveProjectThreadType(
+  sourceKind: HandoffSubmission["sourceKind"],
+): "local_project" | "remote_project" {
   return sourceKind === "local_session" ? "local_project" : "remote_project";
 }
 
@@ -208,13 +209,19 @@ export class HandoffService {
         agentId: payload.agentId ?? payload.requestedBackend ?? null,
         createdAt: now,
       }),
-      title: repository.getThread(threadId)?.title ?? payload.title ?? `Handoff ${handoff.handoffId}`,
+      title:
+        repository.getThread(threadId)?.title ?? payload.title ?? `Handoff ${handoff.handoffId}`,
       status: "queued",
-      threadType: repository.getThread(threadId)?.threadType ?? resolveProjectThreadType(handoff.sourceKind),
+      threadType:
+        repository.getThread(threadId)?.threadType ?? resolveProjectThreadType(handoff.sourceKind),
       workspaceId: repository.getThread(threadId)?.workspaceId ?? payload.workspaceId ?? null,
       environmentId: repository.getThread(threadId)?.environmentId ?? payload.environmentId ?? null,
       environmentBindingId: repository.getThread(threadId)?.environmentBindingId ?? null,
-      agentId: repository.getThread(threadId)?.agentId ?? payload.agentId ?? payload.requestedBackend ?? null,
+      agentId:
+        repository.getThread(threadId)?.agentId ??
+        payload.agentId ??
+        payload.requestedBackend ??
+        null,
       updatedAt: now,
     });
 

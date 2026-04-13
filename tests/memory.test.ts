@@ -310,10 +310,16 @@ describe("MemoryManager — Reindex behavior", () => {
     await mgr.init();
 
     await mgr.saveLayer("profile", "user-style", "Prefers terse answers.");
-    await mgr.saveLayer("operational", "approval-mode", "Trusted mode enabled for repo maintenance.");
+    await mgr.saveLayer(
+      "operational",
+      "approval-mode",
+      "Trusted mode enabled for repo maintenance.",
+    );
 
     expect(await mgr.getLayer("profile", "user-style")).toBe("Prefers terse answers.");
-    expect(await mgr.getLayer("operational", "approval-mode")).toBe("Trusted mode enabled for repo maintenance.");
+    expect(await mgr.getLayer("operational", "approval-mode")).toBe(
+      "Trusted mode enabled for repo maintenance.",
+    );
 
     const promptContext = await mgr.loadLayeredContext();
     expect(promptContext).toContain("## Profile Memory");

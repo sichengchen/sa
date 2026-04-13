@@ -38,12 +38,7 @@ export function ToolApproval({
   });
 
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="single"
-      borderColor="yellow"
-      paddingX={1}
-    >
+    <Box flexDirection="column" borderStyle="single" borderColor="yellow" paddingX={1}>
       <Text bold color="yellow">
         Tool approval required
       </Text>
@@ -53,11 +48,17 @@ export function ToolApproval({
         <Text dimColor>{summarizeArgs(toolName, args)}</Text>
       </Text>
       <Text>
-        <Text color="green" bold>y</Text>
+        <Text color="green" bold>
+          y
+        </Text>
         {" approve  "}
-        <Text color="red" bold>n</Text>
+        <Text color="red" bold>
+          n
+        </Text>
         {" reject  "}
-        <Text color="cyan" bold>a</Text>
+        <Text color="cyan" bold>
+          a
+        </Text>
         {" allow for session"}
       </Text>
     </Box>

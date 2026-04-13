@@ -26,7 +26,10 @@ export function SessionPicker({
   onCancel,
 }: SessionPickerProps) {
   const [selectedIndex, setSelectedIndex] = useState(
-    Math.max(0, sessions.findIndex((s) => s.id === activeSessionId)),
+    Math.max(
+      0,
+      sessions.findIndex((s) => s.id === activeSessionId),
+    ),
   );
 
   useInput((_input, key) => {
@@ -47,23 +50,15 @@ export function SessionPicker({
   });
 
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="single"
-      borderColor="cyan"
-      paddingX={1}
-    >
+    <Box flexDirection="column" borderStyle="single" borderColor="cyan" paddingX={1}>
       <Text bold color="cyan">
         Sessions (↑↓ navigate, Enter switch, Esc cancel)
       </Text>
-      {sessions.length === 0 && (
-        <Text color="yellow">No active sessions.</Text>
-      )}
+      {sessions.length === 0 && <Text color="yellow">No active sessions.</Text>}
       {sessions.map((s, i) => (
         <Box key={s.id}>
           <Text color={i === selectedIndex ? "cyan" : undefined}>
-            {i === selectedIndex ? "● " : "○ "}
-            [{s.connectorType}] {s.id.slice(0, 8)}
+            {i === selectedIndex ? "● " : "○ "}[{s.connectorType}] {s.id.slice(0, 8)}
             {s.id === activeSessionId ? " (current)" : ""}
             <Text dimColor> — {formatTime(s.lastActiveAt)}</Text>
           </Text>

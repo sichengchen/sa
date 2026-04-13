@@ -2,7 +2,13 @@ import { readFile, writeFile, readdir, unlink, mkdir, stat, appendFile } from "n
 import { join, basename } from "node:path";
 import { existsSync } from "node:fs";
 import { Database } from "bun:sqlite";
-import type { MemoryEntry, MemoryLayer, SearchResult, SearchOptions, EmbeddingConfig } from "./types.js";
+import type {
+  MemoryEntry,
+  MemoryLayer,
+  SearchResult,
+  SearchOptions,
+  EmbeddingConfig,
+} from "./types.js";
 import { chunkMarkdown } from "./chunker.js";
 
 const MAX_MEMORY_LINES = 200;
@@ -68,7 +74,9 @@ CREATE TABLE IF NOT EXISTS embeddings (
 
 /** Compute cosine similarity between two vectors */
 function cosineSimilarity(a: Float32Array, b: Float32Array): number {
-  let dot = 0, normA = 0, normB = 0;
+  let dot = 0,
+    normA = 0,
+    normB = 0;
   for (let i = 0; i < a.length; i++) {
     dot += a[i] * b[i];
     normA += a[i] * a[i];
@@ -179,8 +187,10 @@ export class MemoryManager {
   }): void {
     if (opts.vectorWeight !== undefined) this.vectorWeight = opts.vectorWeight;
     if (opts.textWeight !== undefined) this.textWeight = opts.textWeight;
-    if (opts.temporalDecay?.enabled !== undefined) this.temporalDecayEnabled = opts.temporalDecay.enabled;
-    if (opts.temporalDecay?.halfLifeDays !== undefined) this.halfLifeDays = opts.temporalDecay.halfLifeDays;
+    if (opts.temporalDecay?.enabled !== undefined)
+      this.temporalDecayEnabled = opts.temporalDecay.enabled;
+    if (opts.temporalDecay?.halfLifeDays !== undefined)
+      this.halfLifeDays = opts.temporalDecay.halfLifeDays;
   }
 
   /** Load MEMORY.md content for system prompt injection (truncated to MAX_MEMORY_LINES) */
@@ -222,7 +232,11 @@ export class MemoryManager {
   }
 
   /** Save or update a specific memory layer entry. */
-  async saveLayer(layer: Exclude<MemoryLayer, "journal">, key: string, content: string): Promise<void> {
+  async saveLayer(
+    layer: Exclude<MemoryLayer, "journal">,
+    key: string,
+    content: string,
+  ): Promise<void> {
     const safeName = this.sanitizeKey(key);
     const layerDir = this.getLayerDir(layer);
     const filePath = join(layerDir, `${safeName}.md`);
@@ -239,12 +253,21 @@ export class MemoryManager {
       let key: string;
       if (r.sourceType === "memory") {
         key = "MEMORY";
-      } else if (r.sourceType === "project" || r.sourceType === "profile" || r.sourceType === "operational") {
+      } else if (
+        r.sourceType === "project" ||
+        r.sourceType === "profile" ||
+        r.sourceType === "operational"
+      ) {
         key = basename(r.source, ".md");
       } else {
         key = r.source.replace(/\.md$/, "");
       }
-      return { key, content: r.content, updatedAt: r.updatedAt, layer: this.sourceTypeToLayer(r.sourceType) };
+      return {
+        key,
+        content: r.content,
+        updatedAt: r.updatedAt,
+        layer: this.sourceTypeToLayer(r.sourceType),
+      };
     });
   }
 
@@ -397,9 +420,10 @@ export class MemoryManager {
       if (results.length > 0) {
         const grouped = new Map<SearchResult["sourceType"], string[]>();
         for (const result of results) {
-          const snippet = result.content.length > MAX_RETRIEVAL_SNIPPET_CHARS
-            ? result.content.slice(0, MAX_RETRIEVAL_SNIPPET_CHARS) + "..."
-            : result.content;
+          const snippet =
+            result.content.length > MAX_RETRIEVAL_SNIPPET_CHARS
+              ? result.content.slice(0, MAX_RETRIEVAL_SNIPPET_CHARS) + "..."
+              : result.content;
           const current = grouped.get(result.sourceType) ?? [];
           current.push(`[${result.source}] ${snippet}`);
           grouped.set(result.sourceType, current);
@@ -470,7 +494,9 @@ export class MemoryManager {
     }
 
     // layer-backed memory files
-    for (const [layer, dirName] of Object.entries(LAYER_DIRECTORY_MAP) as Array<[Exclude<MemoryLayer, "journal">, string]>) {
+    for (const [layer, dirName] of Object.entries(LAYER_DIRECTORY_MAP) as Array<
+      [Exclude<MemoryLayer, "journal">, string]
+    >) {
       const fullDir = join(this.memoryDir, dirName);
       if (!existsSync(fullDir)) continue;
       const files = await readdir(fullDir);
@@ -493,9 +519,9 @@ export class MemoryManager {
 
     // Get indexed sources and their timestamps
     const indexed = new Map<string, number>();
-    const rows = this.db.prepare(
-      "SELECT DISTINCT source, MAX(updated_at) as updated_at FROM chunks GROUP BY source"
-    ).all() as Array<{ source: string; updated_at: number }>;
+    const rows = this.db
+      .prepare("SELECT DISTINCT source, MAX(updated_at) as updated_at FROM chunks GROUP BY source")
+      .all() as Array<{ source: string; updated_at: number }>;
     for (const row of rows) {
       indexed.set(row.source, row.updated_at);
     }
@@ -531,7 +557,11 @@ export class MemoryManager {
   // --- Private helpers ---
 
   /** Chunk and index a file's content, optionally embedding the chunks */
-  private async indexFile(source: string, sourceType: SearchResult["sourceType"], content: string): Promise<void> {
+  private async indexFile(
+    source: string,
+    sourceType: SearchResult["sourceType"],
+    content: string,
+  ): Promise<void> {
     if (!this.db) return;
 
     const now = Date.now();
@@ -544,13 +574,21 @@ export class MemoryManager {
 
     const insert = this.db.prepare(
       `INSERT INTO chunks (source, source_type, chunk_index, content, line_start, line_end, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
     );
 
     const insertedIds: number[] = [];
     const tx = this.db.transaction(() => {
       for (let i = 0; i < chunks.length; i++) {
-        const info = insert.run(source, sourceType, i, chunks[i].content, chunks[i].lineStart, chunks[i].lineEnd, now);
+        const info = insert.run(
+          source,
+          sourceType,
+          i,
+          chunks[i].content,
+          chunks[i].lineStart,
+          chunks[i].lineEnd,
+          now,
+        );
         insertedIds.push(Number(info.lastInsertRowid));
       }
     });
@@ -559,7 +597,10 @@ export class MemoryManager {
     // Embed chunks if embedding is configured
     if (this.embeddingConfig && insertedIds.length > 0) {
       try {
-        await this.embedChunks(insertedIds, chunks.map((c) => c.content));
+        await this.embedChunks(
+          insertedIds,
+          chunks.map((c) => c.content),
+        );
       } catch (err) {
         // Embedding failed — BM25 still works
         console.warn("Embedding failed for", source, ":", err);
@@ -647,7 +688,11 @@ export class MemoryManager {
   }
 
   /** Vector similarity search — loads embeddings and computes cosine similarity */
-  private vectorSearchByChunk(queryVector: Float32Array, sourceFilter: string, limit: number): Map<number, number> {
+  private vectorSearchByChunk(
+    queryVector: Float32Array,
+    sourceFilter: string,
+    limit: number,
+  ): Map<number, number> {
     if (!this.db) return new Map();
 
     let sql: string;
@@ -665,7 +710,10 @@ export class MemoryManager {
       params.push(sourceFilter);
     }
 
-    const rows = this.db.prepare(sql).all(...params) as Array<{ chunk_id: number; vector: Uint8Array }>;
+    const rows = this.db.prepare(sql).all(...params) as Array<{
+      chunk_id: number;
+      vector: Uint8Array;
+    }>;
 
     const scores: Array<{ chunkId: number; score: number }> = [];
     for (const row of rows) {
@@ -688,17 +736,21 @@ export class MemoryManager {
   private getChunkById(id: number): SearchCandidate | null {
     if (!this.db) return null;
 
-    const row = this.db.prepare(
-      "SELECT id, source, source_type, content, line_start, line_end, updated_at FROM chunks WHERE id = ?"
-    ).get(id) as {
-      id: number;
-      source: string;
-      source_type: string;
-      content: string;
-      line_start: number;
-      line_end: number;
-      updated_at: number;
-    } | undefined;
+    const row = this.db
+      .prepare(
+        "SELECT id, source, source_type, content, line_start, line_end, updated_at FROM chunks WHERE id = ?",
+      )
+      .get(id) as
+      | {
+          id: number;
+          source: string;
+          source_type: string;
+          content: string;
+          line_start: number;
+          line_end: number;
+          updated_at: number;
+        }
+      | undefined;
 
     if (!row) return null;
 
@@ -717,7 +769,9 @@ export class MemoryManager {
   /** Check if any embeddings exist in the database */
   private hasEmbeddings(): boolean {
     if (!this.db) return false;
-    const row = this.db.prepare("SELECT COUNT(*) as count FROM embeddings").get() as { count: number };
+    const row = this.db.prepare("SELECT COUNT(*) as count FROM embeddings").get() as {
+      count: number;
+    };
     return row.count > 0;
   }
 
@@ -728,7 +782,7 @@ export class MemoryManager {
     const { vectors, dimensions } = await this.embeddingConfig.embed(texts);
 
     const insert = this.db.prepare(
-      "INSERT OR REPLACE INTO embeddings (chunk_id, vector, provider, model, dimensions) VALUES (?, ?, ?, ?, ?)"
+      "INSERT OR REPLACE INTO embeddings (chunk_id, vector, provider, model, dimensions) VALUES (?, ?, ?, ?, ?)",
     );
 
     const provider = this.embeddingConfig.provider;
@@ -746,9 +800,9 @@ export class MemoryManager {
   private async embedMissingChunks(): Promise<void> {
     if (!this.db || !this.embeddingConfig) return;
 
-    const missing = this.db.prepare(
-      "SELECT id, content FROM chunks WHERE id NOT IN (SELECT chunk_id FROM embeddings)"
-    ).all() as Array<{ id: number; content: string }>;
+    const missing = this.db
+      .prepare("SELECT id, content FROM chunks WHERE id NOT IN (SELECT chunk_id FROM embeddings)")
+      .all() as Array<{ id: number; content: string }>;
 
     if (missing.length === 0) return;
 
@@ -776,7 +830,13 @@ export class MemoryManager {
 
     const decayed = results.map((r) => {
       // Evergreen files never decay
-      if (r.sourceType === "memory" || r.sourceType === "profile" || r.sourceType === "project" || r.sourceType === "operational") return r;
+      if (
+        r.sourceType === "memory" ||
+        r.sourceType === "profile" ||
+        r.sourceType === "project" ||
+        r.sourceType === "operational"
+      )
+        return r;
 
       // Journal files: extract date from source filename
       const dateMatch = r.source.match(/(\d{4}-\d{2}-\d{2})\.md$/);
@@ -797,7 +857,9 @@ export class MemoryManager {
   /** Read a value from the meta table */
   private getMeta(key: string): string | null {
     if (!this.db) return null;
-    const row = this.db.prepare("SELECT value FROM meta WHERE key = ?").get(key) as { value: string } | undefined;
+    const row = this.db.prepare("SELECT value FROM meta WHERE key = ?").get(key) as
+      | { value: string }
+      | undefined;
     return row?.value ?? null;
   }
 
@@ -834,7 +896,10 @@ export class MemoryManager {
     }
   }
 
-  private async formatLayerContext(layer: Exclude<MemoryLayer, "journal">, title: string): Promise<string> {
+  private async formatLayerContext(
+    layer: Exclude<MemoryLayer, "journal">,
+    title: string,
+  ): Promise<string> {
     const entries = await this.listLayer(layer);
     if (entries.length === 0) return "";
 
@@ -842,9 +907,10 @@ export class MemoryManager {
     for (const key of entries.slice(0, MAX_LAYER_ENTRIES)) {
       const content = await this.getLayer(layer, key);
       if (!content) continue;
-      const snippet = content.length > MAX_LAYER_ENTRY_CHARS
-        ? `${content.slice(0, MAX_LAYER_ENTRY_CHARS)}...`
-        : content;
+      const snippet =
+        content.length > MAX_LAYER_ENTRY_CHARS
+          ? `${content.slice(0, MAX_LAYER_ENTRY_CHARS)}...`
+          : content;
       snippets.push(`- ${key}: ${snippet}`);
     }
 

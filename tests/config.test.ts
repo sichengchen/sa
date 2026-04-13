@@ -39,7 +39,7 @@ describe("ConfigManager", () => {
     test("loads existing IDENTITY.md", async () => {
       await writeFile(
         join(testHome, "IDENTITY.md"),
-        `# MyBot\n\n## Personality\nSnarky and witty.\n\n## System Prompt\nYou are MyBot.\n`
+        `# MyBot\n\n## Personality\nSnarky and witty.\n\n## System Prompt\nYou are MyBot.\n`,
       );
       const mgr = new ConfigManager(testHome);
       const config = await mgr.load();

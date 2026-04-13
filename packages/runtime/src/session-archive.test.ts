@@ -28,8 +28,16 @@ describe("SessionArchiveManager", () => {
       lastActiveAt: 200,
     };
     const messages: Message[] = [
-      { role: "user", content: "Find the latest deployment issue", timestamp: 101 } as unknown as Message,
-      { role: "assistant", content: "Checking the deployment logs now.", timestamp: 102 } as unknown as Message,
+      {
+        role: "user",
+        content: "Find the latest deployment issue",
+        timestamp: 101,
+      } as unknown as Message,
+      {
+        role: "assistant",
+        content: "Checking the deployment logs now.",
+        timestamp: 102,
+      } as unknown as Message,
       {
         role: "toolResult",
         toolCallId: "tool-1",
@@ -45,7 +53,11 @@ describe("SessionArchiveManager", () => {
     const history = await archive.getHistory(session.id);
     expect(history).toHaveLength(3);
     expect(history[0]).toMatchObject({ role: "user", content: "Find the latest deployment issue" });
-    expect(history[2]).toMatchObject({ role: "tool", toolName: "web_search", content: "Search results..." });
+    expect(history[2]).toMatchObject({
+      role: "tool",
+      toolName: "web_search",
+      content: "Search results...",
+    });
   });
 
   it("strips injected memory context from archived user messages", async () => {
@@ -79,8 +91,16 @@ describe("SessionArchiveManager", () => {
       lastActiveAt: 200,
     };
     const messages: Message[] = [
-      { role: "user", content: "Investigate the cron failure in production", timestamp: 101 } as unknown as Message,
-      { role: "assistant", content: "The cron failure was caused by a missing env var.", timestamp: 102 } as unknown as Message,
+      {
+        role: "user",
+        content: "Investigate the cron failure in production",
+        timestamp: 101,
+      } as unknown as Message,
+      {
+        role: "assistant",
+        content: "The cron failure was caused by a missing env var.",
+        timestamp: 102,
+      } as unknown as Message,
     ];
 
     await archive.syncSession(session, messages);

@@ -57,7 +57,7 @@ describe("relayCommand", () => {
       "Home",
       "Server",
       "--metadata",
-      "{\"tier\":\"prod\"}",
+      '{"tier":"prod"}',
     ]);
     await relayCommand(["register", "device-1", "My", "Phone"]);
     await relayCommand([
@@ -81,7 +81,7 @@ describe("relayCommand", () => {
       "--ttl",
       "60000",
       "--metadata",
-      "{\"scope\":\"mobile\"}",
+      '{"scope":"mobile"}',
     ]);
 
     const state = await new RelayStore(join(runtimeHome, "relay-state.json")).load();
@@ -125,7 +125,10 @@ describe("relayCommand", () => {
     expect(state.devices).toHaveLength(1);
     expect(state.attachments).toHaveLength(1);
     expect(state.events).toHaveLength(2);
-    expect(state.events.map((event) => event.type).sort()).toEqual(["approval_response", "follow_up"]);
+    expect(state.events.map((event) => event.type).sort()).toEqual([
+      "approval_response",
+      "follow_up",
+    ]);
 
     const logs = await captureLogs(async () => {
       await relayCommand(["list"]);

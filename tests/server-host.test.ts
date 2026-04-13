@@ -13,6 +13,7 @@ import type { EngineRuntime } from "@aria/server/runtime";
 import {
   ariaServerHost,
   createAriaServerHostBootstrap,
+  runAriaServerHost,
 } from "../apps/aria-server/src/index.js";
 
 describe("server host surface", () => {
@@ -71,9 +72,7 @@ describe("server host surface", () => {
       "@aria/runtime",
       "@aria/gateway",
     ]);
-    expect(bootstrap.discoveryPaths).toEqual(
-      getRuntimeDiscoveryPaths("/tmp/aria-server-app"),
-    );
+    expect(bootstrap.discoveryPaths).toEqual(getRuntimeDiscoveryPaths("/tmp/aria-server-app"));
 
     const runtime = { close: async () => {} } as EngineRuntime;
     const server = { port: 7420, stop: async () => {} } satisfies EngineServer;
@@ -97,5 +96,28 @@ describe("server host surface", () => {
     expect(typeof engineCommand).toBe("function");
     expect(CLI_NAME).toBe("aria");
     expect(PRODUCT_NAME).toBe("Esperta Aria");
+  });
+
+  test("runs the thin app wrapper through the host bootstrap", async () => {
+    const runtime = { close: async () => {} } as EngineRuntime;
+    const server = { port: 8123, stop: async () => {} } satisfies EngineServer;
+
+    const app = await runAriaServerHost({
+      runtimeHome: "/tmp/aria-server-app",
+      port: 8123,
+      factories: {
+        async createRuntime() {
+          return runtime;
+        },
+        async startServer(receivedRuntime, options) {
+          expect(receivedRuntime).toBe(runtime);
+          expect(options?.port).toBe(8123);
+          return server;
+        },
+      },
+    });
+
+    expect(app.runtime).toBe(runtime);
+    expect(app.server).toBe(server);
   });
 });

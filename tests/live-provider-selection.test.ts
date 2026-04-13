@@ -32,9 +32,7 @@ describe("live provider selection", () => {
       providerId: "anthropic",
       modelId: "claude-sonnet-4-5-20250514",
     });
-    expect(getLiveTestLabel(selection)).toBe(
-      "anthropic:claude-sonnet-4-5-20250514",
-    );
+    expect(getLiveTestLabel(selection)).toBe("anthropic:claude-sonnet-4-5-20250514");
   });
 
   test("lists every available live provider and ignores blank env values", () => {

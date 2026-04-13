@@ -9,7 +9,11 @@ describe("ToolLoopDetector", () => {
   });
 
   it("emits warning after warnThreshold identical calls with same result", () => {
-    const detector = new ToolLoopDetector({ warnThreshold: 3, blockThreshold: 6, circuitBreakerThreshold: 9 });
+    const detector = new ToolLoopDetector({
+      warnThreshold: 3,
+      blockThreshold: 6,
+      circuitBreakerThreshold: 9,
+    });
     const args = { file_path: "/tmp/foo" };
 
     for (let i = 0; i < 3; i++) {
@@ -25,7 +29,12 @@ describe("ToolLoopDetector", () => {
   });
 
   it("blocks after blockThreshold identical calls", () => {
-    const detector = new ToolLoopDetector({ warnThreshold: 2, blockThreshold: 4, circuitBreakerThreshold: 6, windowSize: 50 });
+    const detector = new ToolLoopDetector({
+      warnThreshold: 2,
+      blockThreshold: 4,
+      circuitBreakerThreshold: 6,
+      windowSize: 50,
+    });
     const args = { command: "ls" };
 
     for (let i = 0; i < 4; i++) {
@@ -40,7 +49,12 @@ describe("ToolLoopDetector", () => {
   });
 
   it("triggers circuit breaker after circuitBreakerThreshold", () => {
-    const detector = new ToolLoopDetector({ warnThreshold: 2, blockThreshold: 3, circuitBreakerThreshold: 5, windowSize: 50 });
+    const detector = new ToolLoopDetector({
+      warnThreshold: 2,
+      blockThreshold: 3,
+      circuitBreakerThreshold: 5,
+      windowSize: 50,
+    });
     const args = { file_path: "/tmp/bar" };
 
     for (let i = 0; i < 5; i++) {
@@ -54,7 +68,11 @@ describe("ToolLoopDetector", () => {
   });
 
   it("does not trigger for different args", () => {
-    const detector = new ToolLoopDetector({ warnThreshold: 2, blockThreshold: 4, circuitBreakerThreshold: 6 });
+    const detector = new ToolLoopDetector({
+      warnThreshold: 2,
+      blockThreshold: 4,
+      circuitBreakerThreshold: 6,
+    });
 
     for (let i = 0; i < 5; i++) {
       const args = { file_path: `/tmp/file-${i}` };
@@ -66,7 +84,11 @@ describe("ToolLoopDetector", () => {
   });
 
   it("does not warn when same args produce different results (progress)", () => {
-    const detector = new ToolLoopDetector({ warnThreshold: 3, blockThreshold: 6, circuitBreakerThreshold: 9 });
+    const detector = new ToolLoopDetector({
+      warnThreshold: 3,
+      blockThreshold: 6,
+      circuitBreakerThreshold: 9,
+    });
     const args = { command: "date" };
 
     for (let i = 0; i < 5; i++) {
@@ -77,7 +99,12 @@ describe("ToolLoopDetector", () => {
   });
 
   it("trims history to windowSize", () => {
-    const detector = new ToolLoopDetector({ windowSize: 5, warnThreshold: 3, blockThreshold: 6, circuitBreakerThreshold: 9 });
+    const detector = new ToolLoopDetector({
+      windowSize: 5,
+      warnThreshold: 3,
+      blockThreshold: 6,
+      circuitBreakerThreshold: 9,
+    });
 
     for (let i = 0; i < 10; i++) {
       detector.checkBeforeExecution("read", { file_path: `/tmp/file-${i}` });

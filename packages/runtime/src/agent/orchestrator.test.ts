@@ -20,7 +20,9 @@ function createMockTools(): ToolImpl[] {
       description: "Read a file",
       dangerLevel: "safe",
       parameters: Type.Object({}),
-      async execute() { return { content: "ok" }; },
+      async execute() {
+        return { content: "ok" };
+      },
     },
   ];
 }

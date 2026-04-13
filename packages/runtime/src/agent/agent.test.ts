@@ -124,9 +124,7 @@ describe("Agent — retry context rebuild", () => {
       { role: "user", content: "first turn", timestamp: 1 },
       {
         role: "assistant",
-        content: [
-          { type: "toolCall", id: "tc-ok", name: "read", arguments: {} },
-        ],
+        content: [{ type: "toolCall", id: "tc-ok", name: "read", arguments: {} }],
         timestamp: 2,
       },
       {
@@ -139,9 +137,7 @@ describe("Agent — retry context rebuild", () => {
       },
       {
         role: "assistant",
-        content: [
-          { type: "toolCall", id: "tc-orphan", name: "write", arguments: {} },
-        ],
+        content: [{ type: "toolCall", id: "tc-orphan", name: "write", arguments: {} }],
         errorMessage: "500 server blew up",
         timestamp: 4,
       },

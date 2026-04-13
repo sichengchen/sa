@@ -24,7 +24,10 @@ function shouldEmbed(filename: string): boolean {
 }
 
 /** Recursively collect embeddable files under a directory */
-async function collectFiles(dir: string, baseDir: string): Promise<{ path: string; content: string }[]> {
+async function collectFiles(
+  dir: string,
+  baseDir: string,
+): Promise<{ path: string; content: string }[]> {
   const results: { path: string; content: string }[] = [];
   const entries = await readdir(dir);
 
@@ -45,7 +48,10 @@ async function collectFiles(dir: string, baseDir: string): Promise<{ path: strin
   return results;
 }
 
-async function collectSkillFiles(_skillName: string, skillDir: string): Promise<{ path: string; content: string }[]> {
+async function collectSkillFiles(
+  _skillName: string,
+  skillDir: string,
+): Promise<{ path: string; content: string }[]> {
   return collectFiles(skillDir, skillDir);
 }
 
@@ -89,4 +95,6 @@ for (const output of OUTPUTS) {
 }
 
 const totalFiles = skills.reduce((sum, s) => sum + s.files.length, 0);
-console.log(`Embedded ${totalFiles} files across ${skills.length} skills into ${OUTPUTS.join(", ")}`);
+console.log(
+  `Embedded ${totalFiles} files across ${skills.length} skills into ${OUTPUTS.join(", ")}`,
+);

@@ -46,18 +46,27 @@ async function transcribeWithWhisperCpp(audio: Buffer, format: string): Promise<
   try {
     const cmd = (await commandExists("whisper-cli")) ? "whisper-cli" : "whisper-cpp";
     const result = await new Promise<string>((resolve, reject) => {
-      const proc = spawn(cmd, [
-        "-m", process.env.WHISPER_CPP_MODEL || "",
-        "-f", inputPath,
-        "--output-txt",
-        "--output-file", join(dir, "input"),
-      ].filter(Boolean), {
-        stdio: ["ignore", "pipe", "pipe"],
-        timeout: 120_000,
-      });
+      const proc = spawn(
+        cmd,
+        [
+          "-m",
+          process.env.WHISPER_CPP_MODEL || "",
+          "-f",
+          inputPath,
+          "--output-txt",
+          "--output-file",
+          join(dir, "input"),
+        ].filter(Boolean),
+        {
+          stdio: ["ignore", "pipe", "pipe"],
+          timeout: 120_000,
+        },
+      );
 
       let stderr = "";
-      proc.stderr?.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+      proc.stderr?.on("data", (chunk: Buffer) => {
+        stderr += chunk.toString();
+      });
       proc.on("error", (err) => reject(err));
       proc.on("close", async (code) => {
         if (code !== 0) {
@@ -74,7 +83,9 @@ async function transcribeWithWhisperCpp(audio: Buffer, format: string): Promise<
     });
     return result;
   } finally {
-    try { await rm(dir, { recursive: true, force: true }); } catch {}
+    try {
+      await rm(dir, { recursive: true, force: true });
+    } catch {}
   }
 }
 
@@ -87,18 +98,19 @@ async function transcribeWithWhisperPython(audio: Buffer, format: string): Promi
 
   try {
     const result = await new Promise<string>((resolve, reject) => {
-      const proc = spawn("whisper", [
-        inputPath,
-        "--model", "small",
-        "--output_format", "txt",
-        "--output_dir", dir,
-      ], {
-        stdio: ["ignore", "pipe", "pipe"],
-        timeout: 120_000,
-      });
+      const proc = spawn(
+        "whisper",
+        [inputPath, "--model", "small", "--output_format", "txt", "--output_dir", dir],
+        {
+          stdio: ["ignore", "pipe", "pipe"],
+          timeout: 120_000,
+        },
+      );
 
       let stderr = "";
-      proc.stderr?.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+      proc.stderr?.on("data", (chunk: Buffer) => {
+        stderr += chunk.toString();
+      });
       proc.on("error", (err) => reject(err));
       proc.on("close", async (code) => {
         if (code !== 0) {
@@ -115,7 +127,9 @@ async function transcribeWithWhisperPython(audio: Buffer, format: string): Promi
     });
     return result;
   } finally {
-    try { await rm(dir, { recursive: true, force: true }); } catch {}
+    try {
+      await rm(dir, { recursive: true, force: true });
+    } catch {}
   }
 }
 
@@ -140,7 +154,7 @@ async function transcribeWithOpenAI(audio: Buffer, format: string): Promise<stri
     throw new Error(`OpenAI Whisper API error (${res.status}): ${text}`);
   }
 
-  const data = await res.json() as { text: string };
+  const data = (await res.json()) as { text: string };
   return data.text.trim();
 }
 

@@ -5,12 +5,7 @@ import {
   type RelayTransportPreference,
 } from "@aria/relay";
 
-export type {
-  EngineEvent,
-  Session,
-  SkillInfo,
-  ToolApprovalRequest,
-} from "@aria/protocol";
+export type { EngineEvent, Session, SkillInfo, ToolApprovalRequest } from "@aria/protocol";
 
 export type { ClientOptions } from "./client.js";
 
@@ -58,9 +53,7 @@ function stripTrailingSlash(value: string): string {
   return value.endsWith("/") ? value.slice(0, -1) : value;
 }
 
-export function resolveAccessClientRoute(
-  target: AccessClientTarget,
-): AccessClientRoute {
+export function resolveAccessClientRoute(target: AccessClientTarget): AccessClientRoute {
   const route = selectRelayRoute({
     serverId: target.serverId,
     directBaseUrl: target.directBaseUrl ?? target.baseUrl,
@@ -85,9 +78,7 @@ export function resolveAccessClientRoute(
   };
 }
 
-export function buildAccessClientConfig(
-  target: AccessClientTarget,
-): AccessClientConfig {
+export function buildAccessClientConfig(target: AccessClientTarget): AccessClientConfig {
   const route = resolveAccessClientRoute(target);
   return {
     serverId: route.serverId,
@@ -101,10 +92,7 @@ function resolveSelectedServerId(
   targets: ReadonlyArray<AccessClientTarget>,
   selectedServerId?: string | null,
 ): string | null {
-  if (
-    selectedServerId &&
-    targets.some((target) => target.serverId === selectedServerId)
-  ) {
+  if (selectedServerId && targets.some((target) => target.serverId === selectedServerId)) {
     return selectedServerId;
   }
 
@@ -133,28 +121,17 @@ export function buildAccessClientTargetSummaries(
   targets: ReadonlyArray<AccessClientTarget>,
   selectedServerId?: string | null,
 ): AccessClientTargetSummary[] {
-  const resolvedSelectedServerId = resolveSelectedServerId(
-    targets,
-    selectedServerId,
-  );
+  const resolvedSelectedServerId = resolveSelectedServerId(targets, selectedServerId);
 
-  return targets.map((target) =>
-    buildAccessClientTargetSummary(target, resolvedSelectedServerId),
-  );
+  return targets.map((target) => buildAccessClientTargetSummary(target, resolvedSelectedServerId));
 }
 
 export function buildAccessClientTargetRoster(
   targets: ReadonlyArray<AccessClientTarget>,
   selectedServerId?: string | null,
 ): AccessClientTargetRoster {
-  const resolvedSelectedServerId = resolveSelectedServerId(
-    targets,
-    selectedServerId,
-  );
-  const summaries = buildAccessClientTargetSummaries(
-    targets,
-    resolvedSelectedServerId,
-  );
+  const resolvedSelectedServerId = resolveSelectedServerId(targets, selectedServerId);
+  const summaries = buildAccessClientTargetSummaries(targets, resolvedSelectedServerId);
 
   return {
     selectedServerId: resolvedSelectedServerId,
@@ -163,9 +140,7 @@ export function buildAccessClientTargetRoster(
   };
 }
 
-export function createAccessClient(
-  target: AccessClientTarget,
-): AccessClientHandle {
+export function createAccessClient(target: AccessClientTarget): AccessClientHandle {
   const { serverId, ...clientOptions } = buildAccessClientConfig(target);
   return {
     serverId,

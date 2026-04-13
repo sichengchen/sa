@@ -18,10 +18,10 @@ During this phase:
 
 ## Current-To-Target Ownership Map
 
-| Target surface | Current source owner | Seeded seam should own | Compatibility surface kept at |
-| --- | --- | --- | --- |
-| `@aria/server` | `packages/server/src/{app,brand,daemon,discovery,engine}.ts` plus `packages/gateway/src/server.ts` and `@aria/runtime` composition | Server bootstrap helpers, runtime + gateway composition root, runtime-home/brand helpers, discovery-file lifecycle coordination, and a package-owned Aria Server entry surface | `@aria/runtime`, `@aria/gateway`, and the current `aria` CLI boot path |
-| `apps/aria-server` | Root `package.json` scripts plus the current CLI/daemon launch flow in `packages/cli/src/index.ts` and `packages/runtime/src/engine.ts` | Thin deployable app wrapper for local dev/build/start flows that runs `@aria/server` without re-owning runtime internals | Root repo scripts, `dist/index.js`, and the current `aria` binary |
+| Target surface     | Current source owner                                                                                                                    | Seeded seam should own                                                                                                                                                         | Compatibility surface kept at                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `@aria/server`     | `packages/server/src/{app,brand,daemon,discovery,engine}.ts` plus `packages/gateway/src/server.ts` and `@aria/runtime` composition      | Server bootstrap helpers, runtime + gateway composition root, runtime-home/brand helpers, discovery-file lifecycle coordination, and a package-owned Aria Server entry surface | `@aria/runtime`, `@aria/gateway`, and the current `aria` CLI boot path |
+| `apps/aria-server` | Root `package.json` scripts plus the current CLI/daemon launch flow in `packages/cli/src/index.ts` and `packages/runtime/src/engine.ts` | Thin deployable app wrapper for local dev/build/start flows that runs `@aria/server` without re-owning runtime internals                                                       | Root repo scripts, `dist/index.mjs`, and the current `aria` binary     |
 
 ## Review Notes And Hotspots
 

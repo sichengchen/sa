@@ -27,13 +27,12 @@ export function createTelegramConnector(options: TelegramConnectorOptions = {}) 
     const missing = getMissingCredentials();
     throw new Error(
       `Telegram connector requires: ${missing.join(", ")}. ` +
-      "Store them via `aria config` or use the set_env_secret tool.",
+        "Store them via `aria config` or use the set_env_secret tool.",
     );
   }
 
   let allowedChatId = options.allowedChatId;
-  const pairingCode = options.pairingCode
-    ?? process.env.ARIA_TELEGRAM_PAIRING_CODE;
+  const pairingCode = options.pairingCode ?? process.env.ARIA_TELEGRAM_PAIRING_CODE;
 
   const chat = new Chat({
     userName: "aria",
@@ -132,7 +131,9 @@ export async function startTelegramConnector(port = 3426): Promise<void> {
     },
   });
 
-  console.log(`Telegram connector listening on http://localhost:${server.port}/api/webhooks/telegram`);
+  console.log(
+    `Telegram connector listening on http://localhost:${server.port}/api/webhooks/telegram`,
+  );
 
   const shutdown = async () => {
     console.log("\nShutting down Telegram connector...");

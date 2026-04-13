@@ -115,10 +115,15 @@ const BUILTIN_TOOLSET_DEFINITIONS: ToolsetDefinition[] = [
 ];
 
 function sanitizeToolsetName(name: string): string {
-  return name.trim().toLowerCase().replace(/[^a-z0-9:_-]+/g, "-");
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9:_-]+/g, "-");
 }
 
-function buildDefinitionMap(extraDefinitions: ToolsetDefinition[] = []): Map<string, ToolsetDefinition> {
+function buildDefinitionMap(
+  extraDefinitions: ToolsetDefinition[] = [],
+): Map<string, ToolsetDefinition> {
   const map = new Map<string, ToolsetDefinition>();
   for (const def of [...BUILTIN_TOOLSET_DEFINITIONS, ...extraDefinitions]) {
     map.set(def.name, def);
@@ -166,14 +171,14 @@ export function listToolsets(tools: ToolImpl[]): ToolsetDefinition[] {
   return [...getBuiltinToolsets(), ...buildDynamicToolsets(tools)];
 }
 
-export function getPrimaryToolset(toolName: string, tools: ToolImpl[]): ToolsetDefinition | undefined {
+export function getPrimaryToolset(
+  toolName: string,
+  tools: ToolImpl[],
+): ToolsetDefinition | undefined {
   return listToolsets(tools).find((toolset) => toolset.tools.includes(toolName));
 }
 
-export function resolveToolsets(
-  toolsetNames: string[] | undefined,
-  tools: ToolImpl[],
-): string[] {
+export function resolveToolsets(toolsetNames: string[] | undefined, tools: ToolImpl[]): string[] {
   if (!toolsetNames || toolsetNames.length === 0) {
     return [];
   }

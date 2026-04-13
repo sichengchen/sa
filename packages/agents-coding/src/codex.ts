@@ -43,9 +43,7 @@ export class CodexRuntimeBackendAdapter extends SubprocessRuntimeBackendAdapter 
       authState: auth.exitCode === 0 ? "configured" : "missing",
       detectedVersion: version.detectedVersion,
       reason:
-        auth.exitCode === 0
-          ? null
-          : "Codex auth is not configured and OPENAI_API_KEY is missing.",
+        auth.exitCode === 0 ? null : "Codex auth is not configured and OPENAI_API_KEY is missing.",
     };
   }
 

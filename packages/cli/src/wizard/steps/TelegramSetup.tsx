@@ -19,13 +19,16 @@ interface TelegramSetupProps {
 export function TelegramSetup({ onNext, onBack, currentValues }: TelegramSetupProps) {
   const [token, setToken] = useState(currentValues?.botToken ?? "");
   const [phase, setPhase] = useState<"keep-or-change" | "token" | "code">(
-    currentValues ? "keep-or-change" : "token"
+    currentValues ? "keep-or-change" : "token",
   );
   const [pairingCode, setPairingCode] = useState(currentValues?.pairingCode ?? "");
 
   useInput((input, key) => {
     if (phase === "keep-or-change") {
-      if (key.escape) { onBack(); return; }
+      if (key.escape) {
+        onBack();
+        return;
+      }
       if (input?.toLowerCase() === "k" && currentValues) {
         onNext(currentValues);
         return;
@@ -39,7 +42,10 @@ export function TelegramSetup({ onNext, onBack, currentValues }: TelegramSetupPr
 
     if (phase === "token") {
       if (key.escape) {
-        if (currentValues) { setPhase("keep-or-change"); return; }
+        if (currentValues) {
+          setPhase("keep-or-change");
+          return;
+        }
         onBack();
         return;
       }
@@ -86,8 +92,14 @@ export function TelegramSetup({ onNext, onBack, currentValues }: TelegramSetupPr
         </Text>
         <Text />
         <Text>
-          <Text color="yellow" bold>[K]</Text> Keep current{"  "}
-          <Text color="yellow" bold>[C]</Text> Change{"    "}
+          <Text color="yellow" bold>
+            [K]
+          </Text>{" "}
+          Keep current{"  "}
+          <Text color="yellow" bold>
+            [C]
+          </Text>{" "}
+          Change{"    "}
           <Text dimColor>Esc to go back</Text>
         </Text>
       </Box>
@@ -101,9 +113,7 @@ export function TelegramSetup({ onNext, onBack, currentValues }: TelegramSetupPr
           Authorize Your Telegram Account
         </Text>
         <Text />
-        <Text>
-          Send the following message to your bot to pair your account:
-        </Text>
+        <Text>Send the following message to your bot to pair your account:</Text>
         <Text />
         <Box>
           <Text color="yellow" bold>
@@ -113,8 +123,8 @@ export function TelegramSetup({ onNext, onBack, currentValues }: TelegramSetupPr
         </Box>
         <Text />
         <Text dimColor>
-          The bot will only respond to you after pairing. You can re-pair at any
-          time by sending /pair with the same code.
+          The bot will only respond to you after pairing. You can re-pair at any time by sending
+          /pair with the same code.
         </Text>
         <Text />
         <Text dimColor>Press Enter to continue</Text>

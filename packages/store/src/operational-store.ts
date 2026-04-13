@@ -5,31 +5,11 @@ import type { Message } from "@mariozechner/pi-ai";
 import type { Session } from "@aria/protocol";
 import { ensureAriaDomainModelSchema } from "./domain-model.js";
 
-export type RunStatus =
-  | "running"
-  | "completed"
-  | "failed"
-  | "cancelled"
-  | "interrupted";
-export type ToolCallStatus =
-  | "running"
-  | "completed"
-  | "failed"
-  | "cancelled"
-  | "interrupted";
-export type ApprovalStatus =
-  | "pending"
-  | "approved"
-  | "denied"
-  | "allow_session"
-  | "interrupted";
+export type RunStatus = "running" | "completed" | "failed" | "cancelled" | "interrupted";
+export type ToolCallStatus = "running" | "completed" | "failed" | "cancelled" | "interrupted";
+export type ApprovalStatus = "pending" | "approved" | "denied" | "allow_session" | "interrupted";
 export type AutomationTaskType = "heartbeat" | "cron" | "webhook";
-export type AutomationRunStatus =
-  | "running"
-  | "success"
-  | "error"
-  | "cancelled"
-  | "interrupted";
+export type AutomationRunStatus = "running" | "success" | "error" | "cancelled" | "interrupted";
 export type AutomationDeliveryStatus = "not_requested" | "delivered" | "failed";
 
 export interface RunRecord {
@@ -279,9 +259,7 @@ function ensureTimestamp(value: unknown): number {
   return typeof value === "number" ? value : Date.now();
 }
 
-function normalizeSessionRow(
-  row: Record<string, unknown> | null | undefined,
-): Session | undefined {
+function normalizeSessionRow(row: Record<string, unknown> | null | undefined): Session | undefined {
   if (!row) return undefined;
   return {
     id: String(row.session_id),
@@ -308,16 +286,8 @@ export class OperationalStore {
     this.db.exec(SCHEMA_SQL);
     ensureAriaDomainModelSchema(this.db);
     this.ensureColumn("sessions", "destroyed_at", "INTEGER");
-    this.ensureColumn(
-      "automation_runs",
-      "attempt_number",
-      "INTEGER NOT NULL DEFAULT 1",
-    );
-    this.ensureColumn(
-      "automation_runs",
-      "max_attempts",
-      "INTEGER NOT NULL DEFAULT 1",
-    );
+    this.ensureColumn("automation_runs", "attempt_number", "INTEGER NOT NULL DEFAULT 1");
+    this.ensureColumn("automation_runs", "max_attempts", "INTEGER NOT NULL DEFAULT 1");
     this.ensureColumn(
       "automation_runs",
       "delivery_status",
@@ -411,20 +381,14 @@ export class OperationalStore {
     ).run(now);
   }
 
-  private ensureColumn(
-    tableName: string,
-    columnName: string,
-    columnDefinition: string,
-  ): void {
-    const columns = this.getDb()
-      .prepare(`PRAGMA table_info(${tableName})`)
-      .all() as Array<{ name: string }>;
+  private ensureColumn(tableName: string, columnName: string, columnDefinition: string): void {
+    const columns = this.getDb().prepare(`PRAGMA table_info(${tableName})`).all() as Array<{
+      name: string;
+    }>;
     if (columns.some((column) => column.name === columnName)) {
       return;
     }
-    this.getDb().exec(
-      `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`,
-    );
+    this.getDb().exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`);
   }
 
   upsertSession(session: Session): void {
@@ -529,9 +493,7 @@ export class OperationalStore {
 
   syncSessionMessages(sessionId: string, messages: readonly Message[]): void {
     const db = this.getDb();
-    const deleteMessages = db.prepare(
-      "DELETE FROM messages WHERE session_id = ?",
-    );
+    const deleteMessages = db.prepare("DELETE FROM messages WHERE session_id = ?");
     const insertMessage = db.prepare(`
       INSERT INTO messages (
         session_id, message_index, role, timestamp, payload_json
@@ -760,8 +722,7 @@ export class OperationalStore {
       params.push(input.status);
     }
 
-    const whereClause =
-      filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+    const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
     const rows = this.getDb()
       .prepare(
         `
@@ -789,10 +750,7 @@ export class OperationalStore {
     }));
   }
 
-  getSessionSummary(
-    sessionId: string,
-    summaryKind: string,
-  ): SessionSummaryRecord | undefined {
+  getSessionSummary(sessionId: string, summaryKind: string): SessionSummaryRecord | undefined {
     const row = this.getDb()
       .prepare(
         `
@@ -923,10 +881,7 @@ export class OperationalStore {
       );
   }
 
-  getAuthSessionToken(
-    tokenHash: string,
-    now = Date.now(),
-  ): AuthSessionTokenRecord | undefined {
+  getAuthSessionToken(tokenHash: string, now = Date.now()): AuthSessionTokenRecord | undefined {
     const row = this.getDb()
       .prepare(
         `
@@ -962,11 +917,7 @@ export class OperationalStore {
     return result.changes > 0;
   }
 
-  replacePairingCode(input: {
-    codeHash: string;
-    createdAt?: number;
-    expiresAt: number;
-  }): void {
+  replacePairingCode(input: { codeHash: string; createdAt?: number; expiresAt: number }): void {
     const createdAt = input.createdAt ?? Date.now();
     const db = this.getDb();
     const tx = db.transaction(() => {
@@ -982,10 +933,7 @@ export class OperationalStore {
     tx();
   }
 
-  consumePairingCode(
-    codeHash: string,
-    now = Date.now(),
-  ): "ok" | "expired" | "missing" {
+  consumePairingCode(codeHash: string, now = Date.now()): "ok" | "expired" | "missing" {
     const row = this.getDb()
       .prepare(
         `
@@ -1001,16 +949,12 @@ export class OperationalStore {
     }
 
     if (row.consumed_at != null) {
-      this.getDb()
-        .prepare("DELETE FROM auth_pairing_codes WHERE code_hash = ?")
-        .run(codeHash);
+      this.getDb().prepare("DELETE FROM auth_pairing_codes WHERE code_hash = ?").run(codeHash);
       return "missing";
     }
 
     if (Number(row.expires_at) <= now) {
-      this.getDb()
-        .prepare("DELETE FROM auth_pairing_codes WHERE code_hash = ?")
-        .run(codeHash);
+      this.getDb().prepare("DELETE FROM auth_pairing_codes WHERE code_hash = ?").run(codeHash);
       return "expired";
     }
 
@@ -1028,10 +972,7 @@ export class OperationalStore {
     return "ok";
   }
 
-  getSessionMcpServerEnabled(
-    sessionId: string,
-    serverName: string,
-  ): boolean | undefined {
+  getSessionMcpServerEnabled(sessionId: string, serverName: string): boolean | undefined {
     const row = this.getDb()
       .prepare(
         `
@@ -1178,10 +1119,7 @@ export class OperationalStore {
       updatedAt: Number(row.updated_at),
       lastRunAt: row.last_run_at != null ? String(row.last_run_at) : null,
       nextRunAt: row.next_run_at != null ? String(row.next_run_at) : null,
-      lastStatus:
-        row.last_status != null
-          ? (String(row.last_status) as AutomationRunStatus)
-          : null,
+      lastStatus: row.last_status != null ? (String(row.last_status) as AutomationRunStatus) : null,
       lastSummary: row.last_summary != null ? String(row.last_summary) : null,
     }));
   }
@@ -1190,15 +1128,11 @@ export class OperationalStore {
     taskType: AutomationTaskType,
     name: string,
   ): AutomationTaskRecord | undefined {
-    return this.listAutomationTasks(taskType).find(
-      (task) => task.name === name,
-    );
+    return this.listAutomationTasks(taskType).find((task) => task.name === name);
   }
 
   getAutomationTaskBySlug(slug: string): AutomationTaskRecord | undefined {
-    return this.listAutomationTasks("webhook").find(
-      (task) => task.slug === slug,
-    );
+    return this.listAutomationTasks("webhook").find((task) => task.slug === slug);
   }
 
   deleteAutomationTask(taskId: string): boolean {
@@ -1346,8 +1280,7 @@ export class OperationalStore {
       trigger: String(row.trigger),
       status: String(row.status) as AutomationRunStatus,
       promptText: String(row.prompt_text),
-      responseText:
-        row.response_text != null ? String(row.response_text) : null,
+      responseText: row.response_text != null ? String(row.response_text) : null,
       summary: row.summary != null ? String(row.summary) : null,
       attemptNumber: Number(row.attempt_number ?? 1),
       maxAttempts: Number(row.max_attempts ?? 1),
@@ -1355,22 +1288,13 @@ export class OperationalStore {
       completedAt: row.completed_at != null ? Number(row.completed_at) : null,
       deliveryTarget:
         row.delivery_target_json != null
-          ? (JSON.parse(String(row.delivery_target_json)) as Record<
-              string,
-              unknown
-            >)
+          ? (JSON.parse(String(row.delivery_target_json)) as Record<string, unknown>)
           : null,
-      deliveryStatus: String(
-        row.delivery_status ?? "not_requested",
-      ) as AutomationDeliveryStatus,
+      deliveryStatus: String(row.delivery_status ?? "not_requested") as AutomationDeliveryStatus,
       deliveryAttemptedAt:
-        row.delivery_attempted_at != null
-          ? Number(row.delivery_attempted_at)
-          : null,
-      deliveryError:
-        row.delivery_error != null ? String(row.delivery_error) : null,
-      errorMessage:
-        row.error_message != null ? String(row.error_message) : null,
+        row.delivery_attempted_at != null ? Number(row.delivery_attempted_at) : null,
+      deliveryError: row.delivery_error != null ? String(row.delivery_error) : null,
+      errorMessage: row.error_message != null ? String(row.error_message) : null,
     }));
   }
 }

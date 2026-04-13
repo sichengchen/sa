@@ -22,7 +22,21 @@ import { EMBEDDED_SKILLS } from "@aria/engine/skills/embedded-skills.generated.j
 import type { ModelConfig, ProviderConfig } from "@aria/engine/router/types.js";
 import type { ModelTier } from "@aria/engine/router/task-types.js";
 
-type Step = "welcome" | "identity" | "profile" | "model" | "telegram" | "discord" | "slack" | "teams" | "gchat" | "github" | "linear" | "skills" | "confirm" | "done";
+type Step =
+  | "welcome"
+  | "identity"
+  | "profile"
+  | "model"
+  | "telegram"
+  | "discord"
+  | "slack"
+  | "teams"
+  | "gchat"
+  | "github"
+  | "linear"
+  | "skills"
+  | "confirm"
+  | "done";
 
 interface WizardProps {
   homeDir: string;
@@ -62,7 +76,7 @@ export function Wizard({ homeDir, onComplete, existingConfig }: WizardProps) {
           linearApiKey: "",
           linearWebhookSecret: "",
           selectedSkills: [],
-        }
+        },
   );
 
   const handleConfirm = useCallback(async () => {
@@ -176,10 +190,7 @@ ${recurringContext}
         models,
         defaultModel: "default",
       };
-      await writeFile(
-        join(homeDir, "config.json"),
-        JSON.stringify(config, null, 2) + "\n"
-      );
+      await writeFile(join(homeDir, "config.json"), JSON.stringify(config, null, 2) + "\n");
 
       // Write empty MEMORY.md
       await writeFile(join(homeDir, "memory", "MEMORY.md"), "");
@@ -188,7 +199,8 @@ ${recurringContext}
       const apiKeys: Record<string, string> = {};
       if (data.apiKey) apiKeys[data.apiKeyEnvVar] = data.apiKey;
       if (data.ecoModel?.apiKey) apiKeys[data.ecoModel.apiKeyEnvVar] = data.ecoModel.apiKey;
-      if (data.embeddingModel?.apiKey) apiKeys[data.embeddingModel.apiKeyEnvVar] = data.embeddingModel.apiKey;
+      if (data.embeddingModel?.apiKey)
+        apiKeys[data.embeddingModel.apiKeyEnvVar] = data.embeddingModel.apiKey;
       if (data.botToken) apiKeys.TELEGRAM_BOT_TOKEN = data.botToken;
       if (data.discordToken) apiKeys.DISCORD_TOKEN = data.discordToken;
       if (data.discordGuildId) apiKeys.DISCORD_GUILD_ID = data.discordGuildId;
@@ -196,7 +208,8 @@ ${recurringContext}
       if (data.slackSigningSecret) apiKeys.SLACK_SIGNING_SECRET = data.slackSigningSecret;
       if (data.teamsBotId) apiKeys.TEAMS_BOT_ID = data.teamsBotId;
       if (data.teamsBotPassword) apiKeys.TEAMS_BOT_PASSWORD = data.teamsBotPassword;
-      if (data.gchatServiceAccountKey) apiKeys.GOOGLE_CHAT_SERVICE_ACCOUNT_KEY = data.gchatServiceAccountKey;
+      if (data.gchatServiceAccountKey)
+        apiKeys.GOOGLE_CHAT_SERVICE_ACCOUNT_KEY = data.gchatServiceAccountKey;
       if (data.githubToken) apiKeys.GITHUB_TOKEN = data.githubToken;
       if (data.githubWebhookSecret) apiKeys.GITHUB_WEBHOOK_SECRET = data.githubWebhookSecret;
       if (data.linearApiKey) apiKeys.LINEAR_API_KEY = data.linearApiKey;
@@ -224,7 +237,10 @@ ${recurringContext}
             const skillFiles = EMBEDDED_SKILLS[name]!;
             for (const [relPath, content] of Object.entries(skillFiles)) {
               const fileDest = join(dest, relPath);
-              const fileDir = join(dest, relPath.includes("/") ? relPath.slice(0, relPath.lastIndexOf("/")) : "");
+              const fileDir = join(
+                dest,
+                relPath.includes("/") ? relPath.slice(0, relPath.lastIndexOf("/")) : "",
+              );
               if (fileDir !== dest) await mkdir(fileDir, { recursive: true });
               await writeFile(fileDest, content);
             }
@@ -247,9 +263,7 @@ ${recurringContext}
       return (
         <Identity
           currentValues={
-            existingConfig
-              ? { name: data.name, personality: data.personality }
-              : undefined
+            existingConfig ? { name: data.name, personality: data.personality } : undefined
           }
           onNext={({ name, personality }) => {
             setData((d) => ({ ...d, name, personality }));
@@ -307,9 +321,7 @@ ${recurringContext}
       return (
         <TelegramSetup
           currentValues={
-            existingConfig
-              ? { botToken: data.botToken, pairingCode: data.pairingCode }
-              : undefined
+            existingConfig ? { botToken: data.botToken, pairingCode: data.pairingCode } : undefined
           }
           onNext={({ botToken, pairingCode }) => {
             setData((d) => ({ ...d, botToken, pairingCode }));
@@ -338,7 +350,10 @@ ${recurringContext}
         <SlackSetup
           currentValues={
             existingConfig
-              ? { slackToken: data.slackToken ?? "", slackSigningSecret: data.slackSigningSecret ?? "" }
+              ? {
+                  slackToken: data.slackToken ?? "",
+                  slackSigningSecret: data.slackSigningSecret ?? "",
+                }
               : undefined
           }
           onNext={(slackData: SlackSetupData) => {
@@ -383,7 +398,10 @@ ${recurringContext}
         <GitHubSetup
           currentValues={
             existingConfig
-              ? { githubToken: data.githubToken ?? "", githubWebhookSecret: data.githubWebhookSecret ?? "" }
+              ? {
+                  githubToken: data.githubToken ?? "",
+                  githubWebhookSecret: data.githubWebhookSecret ?? "",
+                }
               : undefined
           }
           onNext={(githubData: GitHubSetupData) => {
@@ -398,7 +416,10 @@ ${recurringContext}
         <LinearSetup
           currentValues={
             existingConfig
-              ? { linearApiKey: data.linearApiKey ?? "", linearWebhookSecret: data.linearWebhookSecret ?? "" }
+              ? {
+                  linearApiKey: data.linearApiKey ?? "",
+                  linearWebhookSecret: data.linearWebhookSecret ?? "",
+                }
               : undefined
           }
           onNext={(linearData: LinearSetupData) => {
@@ -424,13 +445,7 @@ ${recurringContext}
         />
       );
     case "confirm":
-      return (
-        <Confirm
-          data={data}
-          onConfirm={handleConfirm}
-          onBack={() => setStep("skills")}
-        />
-      );
+      return <Confirm data={data} onConfirm={handleConfirm} onBack={() => setStep("skills")} />;
     case "done":
       return (
         <Box padding={1}>

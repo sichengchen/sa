@@ -10,9 +10,7 @@ export interface AriaDesktopApplicationRootProps {
   model: AriaDesktopAppShellModel;
 }
 
-export function AriaDesktopApplicationRoot(
-  props: AriaDesktopApplicationRootProps,
-): ReactElement {
+export function AriaDesktopApplicationRoot(props: AriaDesktopApplicationRootProps): ReactElement {
   return <AriaDesktopAppShell model={props.model} />;
 }
 

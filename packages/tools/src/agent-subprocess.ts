@@ -71,7 +71,8 @@ export async function probeAuth(cli: string): Promise<AgentAuthStatus> {
       if (exitCode === 0) {
         result.authenticated = true;
         if (stdout.includes("oauth")) result.authMethod = "oauth";
-        else if (stdout.includes("api_key") || stdout.includes("API key")) result.authMethod = "api_key";
+        else if (stdout.includes("api_key") || stdout.includes("API key"))
+          result.authMethod = "api_key";
         else result.authMethod = "oauth";
       } else {
         result.authMethod = "none";
@@ -95,11 +96,13 @@ export async function probeAuth(cli: string): Promise<AgentAuthStatus> {
  * Run a coding agent CLI subprocess.
  */
 export async function runSubprocess(config: AgentSubprocessConfig): Promise<AgentSubprocessResult> {
-  const timeout = config.timeout ?? (config.background ? DEFAULT_BACKGROUND_TIMEOUT_MS : DEFAULT_FOREGROUND_TIMEOUT_MS);
+  const timeout =
+    config.timeout ??
+    (config.background ? DEFAULT_BACKGROUND_TIMEOUT_MS : DEFAULT_FOREGROUND_TIMEOUT_MS);
   const startedAt = Date.now();
   const abortController = new AbortController();
 
-  const env: Record<string, string> = { ...process.env as Record<string, string> };
+  const env: Record<string, string> = { ...(process.env as Record<string, string>) };
   if (config.env) {
     Object.assign(env, config.env);
   }
@@ -190,19 +193,21 @@ export function runBackground(config: AgentSubprocessConfig): AgentSubprocessHan
   backgroundHandles.set(id, handle);
 
   const promise = runSubprocess({ ...config, background: true });
-  promise.then((result) => {
-    handle.running = false;
-    handle.result = result;
-  }).catch((err) => {
-    handle.running = false;
-    handle.result = {
-      status: "error",
-      exitCode: -1,
-      stdout: "",
-      stderr: err instanceof Error ? err.message : String(err),
-      duration: Date.now() - startedAt,
-    };
-  });
+  promise
+    .then((result) => {
+      handle.running = false;
+      handle.result = result;
+    })
+    .catch((err) => {
+      handle.running = false;
+      handle.result = {
+        status: "error",
+        exitCode: -1,
+        stdout: "",
+        stderr: err instanceof Error ? err.message : String(err),
+        duration: Date.now() - startedAt,
+      };
+    });
 
   return handle;
 }

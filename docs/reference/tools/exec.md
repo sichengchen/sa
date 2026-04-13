@@ -5,15 +5,15 @@ sanitization, and resource limits.
 
 ## Parameters
 
-| Parameter  | Type     | Required | Default | Description                          |
-|------------|----------|----------|---------|--------------------------------------|
-| command    | string   | yes      | —       | Shell command to execute             |
-| danger     | string   | no       | "safe"  | Agent's declared danger level        |
-| workdir    | string   | no       | cwd     | Working directory                    |
-| env        | object   | no       | {}      | Additional environment variables     |
-| background | boolean  | no       | false   | Run in background, return handle     |
-| yieldMs    | number   | no       | —       | Yield after N ms (streaming)         |
-| timeout    | number   | no       | 300000  | Timeout in ms (foreground)           |
+| Parameter  | Type    | Required | Default | Description                      |
+| ---------- | ------- | -------- | ------- | -------------------------------- |
+| command    | string  | yes      | —       | Shell command to execute         |
+| danger     | string  | no       | "safe"  | Agent's declared danger level    |
+| workdir    | string  | no       | cwd     | Working directory                |
+| env        | object  | no       | {}      | Additional environment variables |
+| background | boolean | no       | false   | Run in background, return handle |
+| yieldMs    | number  | no       | —       | Yield after N ms (streaming)     |
+| timeout    | number  | no       | 300000  | Timeout in ms (foreground)       |
 
 ---
 
@@ -32,16 +32,16 @@ when the classifier overrides.
 
 ### Always-Dangerous Patterns
 
-| Category              | Examples                                          |
-|-----------------------|---------------------------------------------------|
-| Destructive file ops  | `rm -rf`, `shred`, `mkfs`                         |
-| Privilege escalation  | `sudo`, `su`, `doas`, `pkexec`                    |
-| System control        | `shutdown`, `reboot`, `systemctl`                 |
-| Process killing       | `kill`, `killall`, `pkill`                        |
-| Permission changes    | `chmod`, `chown`, `chgrp`                         |
-| Pipe-to-shell RCE     | `curl ... \| sh`, `wget ... \| bash`              |
-| Disk operations       | `dd`, `fdisk`, `parted`, `mount`                  |
-| Network               | `iptables`, `ufw`, `nc -l`                        |
+| Category             | Examples                             |
+| -------------------- | ------------------------------------ |
+| Destructive file ops | `rm -rf`, `shred`, `mkfs`            |
+| Privilege escalation | `sudo`, `su`, `doas`, `pkexec`       |
+| System control       | `shutdown`, `reboot`, `systemctl`    |
+| Process killing      | `kill`, `killall`, `pkill`           |
+| Permission changes   | `chmod`, `chown`, `chgrp`            |
+| Pipe-to-shell RCE    | `curl ... \| sh`, `wget ... \| bash` |
+| Disk operations      | `dd`, `fdisk`, `parted`, `mount`     |
+| Network              | `iptables`, `ufw`, `nc -l`           |
 
 ### Always-Safe Commands
 
@@ -60,14 +60,14 @@ git ls-files, git ls-tree, git cat-file, git name-rev, git stash list
 
 ### Examples
 
-| Command               | Agent declares | Effective | Reason                     |
-|-----------------------|----------------|-----------|----------------------------|
-| `ls -la`             | safe           | safe      | Always-safe command        |
-| `git status`         | safe           | safe      | Safe git subcommand        |
-| `npm install`        | safe           | safe      | Trusted agent declaration  |
-| `rm -rf /tmp/build`  | safe           | dangerous | Always-dangerous pattern   |
-| `sudo apt update`    | moderate       | dangerous | Privilege escalation       |
-| `curl url \| sh`     | safe           | dangerous | Pipe-to-shell RCE          |
+| Command             | Agent declares | Effective | Reason                    |
+| ------------------- | -------------- | --------- | ------------------------- |
+| `ls -la`            | safe           | safe      | Always-safe command       |
+| `git status`        | safe           | safe      | Safe git subcommand       |
+| `npm install`       | safe           | safe      | Trusted agent declaration |
+| `rm -rf /tmp/build` | safe           | dangerous | Always-dangerous pattern  |
+| `sudo apt update`   | moderate       | dangerous | Privilege escalation      |
+| `curl url \| sh`    | safe           | dangerous | Pipe-to-shell RCE         |
 
 ---
 
@@ -89,12 +89,12 @@ env values in the tool call are preserved.
 
 ## Resource Limits
 
-| Resource            | Limit     |
-|---------------------|-----------|
-| Foreground timeout  | 300s      |
-| Background timeout  | 1800s     |
-| Output cap          | 1 MB      |
-| Yield threshold     | 10s       |
+| Resource           | Limit |
+| ------------------ | ----- |
+| Foreground timeout | 300s  |
+| Background timeout | 1800s |
+| Output cap         | 1 MB  |
+| Yield threshold    | 10s   |
 
 ---
 

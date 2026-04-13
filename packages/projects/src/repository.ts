@@ -135,11 +135,18 @@ export class ProjectsEngineRepository {
     this.store.upsertExternalRef(externalRef);
   }
 
-  listExternalRefs(ownerType?: ExternalRefRecord["ownerType"], ownerId?: string): ExternalRefRecord[] {
+  listExternalRefs(
+    ownerType?: ExternalRefRecord["ownerType"],
+    ownerId?: string,
+  ): ExternalRefRecord[] {
     return this.store.listExternalRefs(ownerType, ownerId);
   }
 
-  findExternalRefsByExternal(system: ExternalRefRecord["system"], externalId: string, externalKey?: string): ExternalRefRecord[] {
+  findExternalRefsByExternal(
+    system: ExternalRefRecord["system"],
+    externalId: string,
+    externalKey?: string,
+  ): ExternalRefRecord[] {
     return this.store.findExternalRefsByExternal(system, externalId, externalKey);
   }
 

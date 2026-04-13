@@ -8,9 +8,7 @@ import { join } from "node:path";
 
 const ROOT = join(import.meta.dir, "..");
 const SRC = join(ROOT, "docs");
-const DESTS = [
-  join(ROOT, "packages", "runtime", "src", "skills", "bundled", "aria", "docs"),
-];
+const DESTS = [join(ROOT, "packages", "runtime", "src", "skills", "bundled", "aria", "docs")];
 
 if (!existsSync(SRC)) {
   console.log("docs/ not found — skipping copy-docs");

@@ -62,11 +62,11 @@ const formula = `class Aria < Formula
   service do
     run [opt_bin/"aria", "engine", "start"]
     working_dir Dir.home
-    environment_variables ARIA_HOME: "\#{Dir.home}/.aria", PATH: "\#{HOMEBREW_PREFIX}/bin:\#{HOMEBREW_PREFIX}/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+    environment_variables ARIA_HOME: "#{Dir.home}/.aria", PATH: "#{HOMEBREW_PREFIX}/bin:#{HOMEBREW_PREFIX}/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
   end
 
   test do
-    assert_match "Usage: aria", shell_output("\#{bin}/aria --help")
+    assert_match "Usage: aria", shell_output("#{bin}/aria --help")
   end
 end
 `;

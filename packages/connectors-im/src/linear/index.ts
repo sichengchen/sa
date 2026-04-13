@@ -20,7 +20,7 @@ export function createLinearConnector(options: LinearConnectorOptions = {}) {
     const missing = getMissingCredentials();
     throw new Error(
       `Linear connector requires: ${missing.join(", ")}. ` +
-      "Store them via `aria config` or use the set_env_secret tool.",
+        "Store them via `aria config` or use the set_env_secret tool.",
     );
   }
 

@@ -19,6 +19,7 @@ You have access to `apple-calendar-cli`, a command-line tool for managing Apple 
 ## Date Format
 
 All dates use ISO 8601 format:
+
 - Date only: `YYYY-MM-DD` (interpreted as start of day in local timezone)
 - Date and time: `YYYY-MM-DDTHH:MM:SS` (local timezone)
 - Full ISO 8601: `YYYY-MM-DDTHH:MM:SSZ` or with offset
@@ -42,6 +43,7 @@ apple-calendar-cli list-calendars --json
 ```
 
 **JSON output** — array of objects:
+
 ```json
 [
   {
@@ -68,11 +70,13 @@ apple-calendar-cli list-events --from 2026-02-22 --to 2026-02-28 --calendar CALE
 ```
 
 **Options:**
+
 - `--from` — Start date (default: today)
 - `--to` — End date (default: 7 days from start)
 - `--calendar` — Filter by calendar identifier
 
 **JSON output** — array of event objects:
+
 ```json
 [
   {
@@ -125,11 +129,13 @@ apple-calendar-cli create-event \
 ```
 
 **Required options:**
+
 - `--title` — Event title
 - `--start` — Start date/time
 - `--end` — End date/time (must be after start)
 
 **Optional options:**
+
 - `--calendar` — Calendar identifier (default: system default calendar)
 - `--notes` — Event notes
 - `--location` — Event location
@@ -157,9 +163,11 @@ apple-calendar-cli update-event EVENT-ID \
 ```
 
 **Required argument:**
+
 - `<id>` — Event identifier
 
 **Optional options:**
+
 - `--title` — New title
 - `--start` — New start date/time
 - `--end` — New end date/time
@@ -179,6 +187,7 @@ apple-calendar-cli delete-event EVENT-ID --json
 ```
 
 **JSON output:**
+
 ```json
 {
   "deleted": true,

@@ -12,13 +12,11 @@ export const bashTool: ToolImpl = {
   dangerLevel: "dangerous",
   parameters: Type.Object({
     command: Type.String({ description: "The shell command to execute" }),
-    cwd: Type.Optional(
-      Type.String({ description: "Working directory for the command" })
-    ),
+    cwd: Type.Optional(Type.String({ description: "Working directory for the command" })),
     timeout: Type.Optional(
       Type.Number({
         description: "Timeout in milliseconds (default 30000)",
-      })
+      }),
     ),
   }),
   async execute(args) {
@@ -47,10 +45,7 @@ export const bashTool: ToolImpl = {
         return { stdout, stderr, exitCode };
       })();
 
-      const { stdout, stderr, exitCode } = await Promise.race([
-        resultPromise,
-        timeoutPromise,
-      ]);
+      const { stdout, stderr, exitCode } = await Promise.race([resultPromise, timeoutPromise]);
 
       let output = "";
       if (stdout) output += stdout;

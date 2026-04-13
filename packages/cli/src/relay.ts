@@ -13,10 +13,14 @@ function printHelp(): void {
   console.log("  register <deviceId> <label>");
   console.log("  revoke <deviceId>");
   console.log("  servers [serverId]");
-  console.log("  server-register <serverId> <label> [--enrollment-token <token>] [--metadata <json>]");
+  console.log(
+    "  server-register <serverId> <label> [--enrollment-token <token>] [--metadata <json>]",
+  );
   console.log("  server-revoke <serverId>");
   console.log("  grants [serverId]");
-  console.log("  grant <serverId> <deviceId> [--workspace <workspaceId>] [--thread <threadId>] [--kind <aria_thread|remote_project_thread|remote_job_stream>] [--transport <direct|relay_assisted|relay_tunnel>] [--send <yes|no>] [--respond <yes|no>] [--issued-at <ms>] [--expires-at <ms>] [--ttl <ms>] [--metadata <json>]");
+  console.log(
+    "  grant <serverId> <deviceId> [--workspace <workspaceId>] [--thread <threadId>] [--kind <aria_thread|remote_project_thread|remote_job_stream>] [--transport <direct|relay_assisted|relay_tunnel>] [--send <yes|no>] [--respond <yes|no>] [--issued-at <ms>] [--expires-at <ms>] [--ttl <ms>] [--metadata <json>]",
+  );
   console.log("  grant-revoke <grantId>");
   console.log("  attach <deviceId> <sessionId>");
   console.log("  detach <deviceId> <sessionId>");
@@ -53,7 +57,9 @@ function parseNumberishFlag(value: string | undefined): number | null {
 }
 
 function isAttachmentKind(value: string | undefined): value is RelayAttachmentKind {
-  return value === "aria_thread" || value === "remote_project_thread" || value === "remote_job_stream";
+  return (
+    value === "aria_thread" || value === "remote_project_thread" || value === "remote_job_stream"
+  );
 }
 
 function isTransportMode(value: string | undefined): value is RelayTransportMode {
@@ -238,7 +244,8 @@ function parseGrantIssueArgs(args: string[]): {
   }
 
   const issuedAt = options.issuedAt ?? Date.now();
-  const expiresAt = options.expiresAt ?? (options.ttl !== undefined ? issuedAt + options.ttl : undefined);
+  const expiresAt =
+    options.expiresAt ?? (options.ttl !== undefined ? issuedAt + options.ttl : undefined);
 
   return {
     serverId,
@@ -255,7 +262,9 @@ function parseGrantIssueArgs(args: string[]): {
   };
 }
 
-function formatServerSummary(server: Awaited<ReturnType<RelayService["listServers"]>>[number]): string {
+function formatServerSummary(
+  server: Awaited<ReturnType<RelayService["listServers"]>>[number],
+): string {
   const metadata = [
     `registered=${new Date(server.registeredAt).toISOString()}`,
     `revoked=${formatIso(server.revokedAt)}`,
@@ -267,7 +276,9 @@ function formatServerSummary(server: Awaited<ReturnType<RelayService["listServer
   return `${server.serverId}  ${server.label}  ${metadata.join("  ")}`;
 }
 
-function formatGrantSummary(grant: Awaited<ReturnType<RelayService["listAccessGrants"]>>[number]): string {
+function formatGrantSummary(
+  grant: Awaited<ReturnType<RelayService["listAccessGrants"]>>[number],
+): string {
   const metadata = [
     `server=${grant.serverId}`,
     `device=${grant.deviceId}`,
@@ -302,7 +313,9 @@ export async function relayCommand(args: string[]): Promise<void> {
       return;
     }
     for (const device of devices) {
-      console.log(`${device.deviceId}  ${device.label}  paired=${new Date(device.pairedAt).toISOString()}  revoked=${device.revokedAt ? new Date(device.revokedAt).toISOString() : "no"}  token=${device.pairingToken ?? "n/a"}`);
+      console.log(
+        `${device.deviceId}  ${device.label}  paired=${new Date(device.pairedAt).toISOString()}  revoked=${device.revokedAt ? new Date(device.revokedAt).toISOString() : "no"}  token=${device.pairingToken ?? "n/a"}`,
+      );
     }
     return;
   }
@@ -467,7 +480,9 @@ export async function relayCommand(args: string[]): Promise<void> {
       return;
     }
     for (const attachment of attachments) {
-      console.log(`${attachment.attachmentId}  device=${attachment.deviceId}  session=${attachment.sessionId}  detached=${attachment.detachedAt ? "yes" : "no"}  send=${attachment.canSendMessages ? "yes" : "no"}  approve=${attachment.canRespondToApprovals ? "yes" : "no"}`);
+      console.log(
+        `${attachment.attachmentId}  device=${attachment.deviceId}  session=${attachment.sessionId}  detached=${attachment.detachedAt ? "yes" : "no"}  send=${attachment.canSendMessages ? "yes" : "no"}  approve=${attachment.canRespondToApprovals ? "yes" : "no"}`,
+      );
     }
     return;
   }
@@ -505,7 +520,9 @@ export async function relayCommand(args: string[]): Promise<void> {
       return;
     }
     for (const event of events) {
-      console.log(`${event.eventId}  ${event.type}  device=${event.deviceId}  session=${event.sessionId}  delivered=${event.deliveredAt ? "yes" : "no"}`);
+      console.log(
+        `${event.eventId}  ${event.type}  device=${event.deviceId}  session=${event.sessionId}  delivered=${event.deliveredAt ? "yes" : "no"}`,
+      );
     }
     return;
   }

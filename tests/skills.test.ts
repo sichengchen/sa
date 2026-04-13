@@ -3,7 +3,13 @@ import { mkdir, rm, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
-import { SkillRegistry, scanSkillDirectory, formatSkillsDiscovery, formatActiveSkills } from "@aria/engine/skills/index.js";
+import { fileURLToPath } from "node:url";
+import {
+  SkillRegistry,
+  scanSkillDirectory,
+  formatSkillsDiscovery,
+  formatActiveSkills,
+} from "@aria/engine/skills/index.js";
 import { parseFrontmatter } from "@aria/engine/skills/loader.js";
 
 const testHome = join(tmpdir(), "aria-test-skills-" + Date.now());
@@ -42,8 +48,14 @@ describe("parseFrontmatter", () => {
 
 describe("scanSkillDirectory", () => {
   test("discovers skills with SKILL.md", async () => {
-    await createSkill("code-review", "---\nname: code-review\ndescription: Reviews code\n---\n# Review code");
-    await createSkill("summarize", "---\nname: summarize\ndescription: Summarizes text\n---\n# Summarize");
+    await createSkill(
+      "code-review",
+      "---\nname: code-review\ndescription: Reviews code\n---\n# Review code",
+    );
+    await createSkill(
+      "summarize",
+      "---\nname: summarize\ndescription: Summarizes text\n---\n# Summarize",
+    );
 
     const skills = await scanSkillDirectory(skillsDir);
     expect(skills).toHaveLength(2);
@@ -135,7 +147,13 @@ describe("formatSkillsDiscovery", () => {
 describe("formatActiveSkills", () => {
   test("generates active skills section", () => {
     const result = formatActiveSkills([
-      { name: "review", description: "Review code", filePath: "/p", content: "Review instructions", active: true },
+      {
+        name: "review",
+        description: "Review code",
+        filePath: "/p",
+        content: "Review instructions",
+        active: true,
+      },
     ]);
     expect(result).toContain("## Skill: review");
     expect(result).toContain("Review instructions");
@@ -147,10 +165,16 @@ describe("formatActiveSkills", () => {
 });
 
 describe("bundled orchestration skills", () => {
-  const bundledDir = join(import.meta.dir, "..", "packages", "runtime", "src", "skills", "bundled");
+  const bundledDir = fileURLToPath(
+    new URL("../packages/runtime/src/skills/bundled", import.meta.url),
+  );
 
   const orchestrationSkills = [
-    { dir: "coding-agents", expectedName: "coding-agents", mustMention: ["claude_code", "codex", "esperkit", "ask_user", "background"] },
+    {
+      dir: "coding-agents",
+      expectedName: "coding-agents",
+      mustMention: ["claude_code", "codex", "esperkit", "ask_user", "background"],
+    },
   ];
 
   for (const { dir, expectedName, mustMention } of orchestrationSkills) {

@@ -4,7 +4,10 @@ import type { ToolImpl } from "./types.js";
 import type { ModelRouter } from "../router/index.js";
 
 /** A mock tool that returns its args as content */
-function createMockTool(name: string, danger: "safe" | "moderate" | "dangerous" = "safe"): ToolImpl {
+function createMockTool(
+  name: string,
+  danger: "safe" | "moderate" | "dangerous" = "safe",
+): ToolImpl {
   return {
     name,
     description: `Mock ${name} tool`,

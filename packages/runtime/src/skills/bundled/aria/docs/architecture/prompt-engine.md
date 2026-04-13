@@ -35,13 +35,13 @@ Project context is attached with source metadata and is eligible for summarizati
 
 Aria maintains explicit memory layers:
 
-| Layer | Purpose |
-| --- | --- |
-| Profile memory | Stable user preferences and identity facts |
-| Project memory | Durable project-specific context, decisions, conventions |
+| Layer              | Purpose                                                                      |
+| ------------------ | ---------------------------------------------------------------------------- |
+| Profile memory     | Stable user preferences and identity facts                                   |
+| Project memory     | Durable project-specific context, decisions, conventions                     |
 | Operational memory | Runtime facts such as approvals, capabilities, current execution constraints |
-| Journal memory | Chronological summaries of prior work and outcomes |
-| Semantic retrieval | Indexed snippets retrieved by meaning and text relevance |
+| Journal memory     | Chronological summaries of prior work and outcomes                           |
+| Semantic retrieval | Indexed snippets retrieved by meaning and text relevance                     |
 
 Each layer has distinct retention, summarization, and policy rules.
 

@@ -2,23 +2,27 @@
   "name": "@aria/server",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "description": "Aria Server composition root, daemon lifecycle shell, and runtime bootstrap surface",
+  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "scripts": {
-    "dev": "bun ./src/engine.ts"
-  },
   "exports": {
     ".": "./src/index.ts",
     "./app": "./src/app.ts",
     "./checkpoints": "./src/checkpoints.ts",
     "./config": "./src/config.ts",
+    "./config/defaults": "./src/config/defaults.ts",
+    "./config/manager": "./src/config/manager.ts",
+    "./config/secrets": "./src/config/secrets.ts",
+    "./config/types": "./src/config/types.ts",
     "./brand": "./src/brand.ts",
     "./runtime": "./src/runtime.ts",
     "./session-coordinator": "./src/session-coordinator.ts",
     "./daemon": "./src/daemon.ts",
     "./discovery": "./src/discovery.ts",
     "./engine": "./src/engine.ts"
+  },
+  "scripts": {
+    "dev": "bun ./src/engine.ts"
   }
 }

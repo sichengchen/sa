@@ -42,9 +42,8 @@ export function splitMessage(text: string, maxLength: number): string[] {
       breakAt = maxLength;
     }
     chunks.push(remaining.slice(0, breakAt));
-    remaining = remaining[breakAt] === "\n"
-      ? remaining.slice(breakAt + 1)
-      : remaining.slice(breakAt);
+    remaining =
+      remaining[breakAt] === "\n" ? remaining.slice(breakAt + 1) : remaining.slice(breakAt);
   }
   return chunks;
 }

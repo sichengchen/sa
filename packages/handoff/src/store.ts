@@ -59,7 +59,8 @@ export class HandoffStore {
   }
 
   upsert(record: HandoffRecord): void {
-    this.getDb().prepare(`
+    this.getDb()
+      .prepare(`
       INSERT INTO projects_handoffs (
         handoff_id, idempotency_key, source_kind, source_session_id, project_id, task_id, thread_id,
         created_dispatch_id, status, payload_json, created_at, updated_at
@@ -76,55 +77,68 @@ export class HandoffStore {
         payload_json = excluded.payload_json,
         created_at = excluded.created_at,
         updated_at = excluded.updated_at
-    `).run(
-      record.handoffId,
-      record.idempotencyKey,
-      record.sourceKind,
-      record.sourceSessionId ?? null,
-      record.projectId,
-      record.taskId ?? null,
-      record.threadId ?? null,
-      record.createdDispatchId ?? null,
-      record.status,
-      record.payloadJson ?? null,
-      record.createdAt,
-      record.updatedAt,
-    );
+    `)
+      .run(
+        record.handoffId,
+        record.idempotencyKey,
+        record.sourceKind,
+        record.sourceSessionId ?? null,
+        record.projectId,
+        record.taskId ?? null,
+        record.threadId ?? null,
+        record.createdDispatchId ?? null,
+        record.status,
+        record.payloadJson ?? null,
+        record.createdAt,
+        record.updatedAt,
+      );
   }
 
   getByIdempotencyKey(idempotencyKey: string): HandoffRecord | undefined {
-    return normalize(this.getDb().prepare(`
+    return normalize(
+      this.getDb()
+        .prepare(`
       SELECT handoff_id, idempotency_key, source_kind, source_session_id, project_id, task_id, thread_id,
              created_dispatch_id, status, payload_json, created_at, updated_at
       FROM projects_handoffs
       WHERE idempotency_key = ?
-    `).get(idempotencyKey) as Row | undefined);
+    `)
+        .get(idempotencyKey) as Row | undefined,
+    );
   }
 
   getById(handoffId: string): HandoffRecord | undefined {
-    return normalize(this.getDb().prepare(`
+    return normalize(
+      this.getDb()
+        .prepare(`
       SELECT handoff_id, idempotency_key, source_kind, source_session_id, project_id, task_id, thread_id,
              created_dispatch_id, status, payload_json, created_at, updated_at
       FROM projects_handoffs
       WHERE handoff_id = ?
-    `).get(handoffId) as Row | undefined);
+    `)
+        .get(handoffId) as Row | undefined,
+    );
   }
 
   list(projectId?: string): HandoffRecord[] {
     const rows = projectId
-      ? this.getDb().prepare(`
+      ? (this.getDb()
+          .prepare(`
           SELECT handoff_id, idempotency_key, source_kind, source_session_id, project_id, task_id, thread_id,
                  created_dispatch_id, status, payload_json, created_at, updated_at
           FROM projects_handoffs
           WHERE project_id = ?
           ORDER BY created_at DESC
-        `).all(projectId) as Row[]
-      : this.getDb().prepare(`
+        `)
+          .all(projectId) as Row[])
+      : (this.getDb()
+          .prepare(`
           SELECT handoff_id, idempotency_key, source_kind, source_session_id, project_id, task_id, thread_id,
                  created_dispatch_id, status, payload_json, created_at, updated_at
           FROM projects_handoffs
           ORDER BY created_at DESC
-        `).all() as Row[];
+        `)
+          .all() as Row[]);
 
     return rows.map((row) => normalize(row)).filter((row): row is HandoffRecord => Boolean(row));
   }

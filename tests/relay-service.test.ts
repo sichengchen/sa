@@ -9,9 +9,7 @@ describe("relay service surface", () => {
   test("exposes a thin relay wrapper over @aria/relay", async () => {
     const dir = await mkdtemp(join(tmpdir(), "aria-relay-service-"));
     try {
-      const bootstrap = createAriaRelayServiceBootstrap(
-        join(dir, "relay-state.json"),
-      );
+      const bootstrap = createAriaRelayServiceBootstrap(join(dir, "relay-state.json"));
       expect(bootstrap.service).toMatchObject({
         id: "aria-relay",
         displayName: "Aria Relay",
@@ -19,9 +17,7 @@ describe("relay service surface", () => {
         sharedPackages: ["@aria/relay", "@aria/protocol"],
         planes: ["control", "data", "push"],
       });
-      expect(bootstrap.service.capabilities).toContain(
-        "direct-or-relayed-routing",
-      );
+      expect(bootstrap.service.capabilities).toContain("direct-or-relayed-routing");
 
       const device = await bootstrap.relay.registerDevice({
         deviceId: "device-1",

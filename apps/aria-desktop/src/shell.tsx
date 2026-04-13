@@ -81,7 +81,10 @@ export function createAriaDesktopAppShellModel(
     environments: options.environments,
     activeThreadContext:
       options.activeThreadContext ??
-      deriveActiveThreadFromInitialThread(options.initialThread, bootstrap.bootstrap.activeServerLabel),
+      deriveActiveThreadFromInitialThread(
+        options.initialThread,
+        bootstrap.bootstrap.activeServerLabel,
+      ),
   });
 
   return {
@@ -124,7 +127,10 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
         <small>
           Access: {model.activeServerLabel} ({model.bootstrap.bootstrap.access.httpUrl})
         </small>
-        <label data-slot="server-switcher" data-placement={model.application.frame.serverSwitcher.placement}>
+        <label
+          data-slot="server-switcher"
+          data-placement={model.application.frame.serverSwitcher.placement}
+        >
           {model.application.frame.serverSwitcher.label}
           <select aria-label="Server switcher" defaultValue={model.activeServerId}>
             {model.shell.serverSwitcher.availableServers.map((server) => (
@@ -184,7 +190,8 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
               <p>{activeThreadScreen?.header.projectLabel ?? "Select a project thread"}</p>
               {activeThreadScreen ? (
                 <p>
-                  {activeThreadScreen.header.threadTypeLabel} - {activeThreadScreen.header.statusLabel}
+                  {activeThreadScreen.header.threadTypeLabel} -{" "}
+                  {activeThreadScreen.header.statusLabel}
                 </p>
               ) : null}
               <label>
@@ -193,8 +200,10 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
                   aria-label="Environment switcher"
                   defaultValue={activeThreadScreen?.environmentSwitcher.activeEnvironmentLabel}
                 >
-                  {(activeThreadScreen?.environmentSwitcher.availableEnvironments ??
-                    model.shell.environments).map((environment) => (
+                  {(
+                    activeThreadScreen?.environmentSwitcher.availableEnvironments ??
+                    model.shell.environments
+                  ).map((environment) => (
                     <option key={environment.id} value={environment.label}>
                       {environment.label}
                     </option>
@@ -207,7 +216,10 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
             "stream",
             "Stream",
             <p>
-              {activeThreadScreen ? activeThreadScreen.stream.tracks.join(" + ") : "messages + runs"} (live)
+              {activeThreadScreen
+                ? activeThreadScreen.stream.tracks.join(" + ")
+                : "messages + runs"}{" "}
+              (live)
             </p>,
           )}
         </section>
@@ -244,9 +256,10 @@ export function createAriaDesktopApplicationShell(
   return createAriaDesktopAppShellModel(options);
 }
 
-export function createAriaDesktopAppShell(
-  options: CreateAriaDesktopAppShellOptions,
-): { model: AriaDesktopAppShellModel; element: ReactElement } {
+export function createAriaDesktopAppShell(options: CreateAriaDesktopAppShellOptions): {
+  model: AriaDesktopAppShellModel;
+  element: ReactElement;
+} {
   const model = createAriaDesktopAppShellModel(options);
   return {
     model,

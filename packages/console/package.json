@@ -2,8 +2,8 @@
   "name": "@aria/console",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "description": "Aria server-local terminal UI and transport client",
+  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

@@ -88,7 +88,12 @@ describe("Scheduler", () => {
   });
 
   test("cannot unregister built-in tasks", () => {
-    scheduler.register({ name: "builtin-task", schedule: "* * * * *", handler: () => {}, builtin: true });
+    scheduler.register({
+      name: "builtin-task",
+      schedule: "* * * * *",
+      handler: () => {},
+      builtin: true,
+    });
 
     const removed = scheduler.unregister("builtin-task");
     expect(removed).toBe(false);
@@ -104,7 +109,9 @@ describe("Scheduler", () => {
     scheduler.register({
       name: "always",
       schedule: "* * * * *",
-      handler: () => { ran = true; },
+      handler: () => {
+        ran = true;
+      },
     });
 
     await scheduler.tick();
@@ -116,7 +123,9 @@ describe("Scheduler", () => {
     scheduler.register({
       name: "counter",
       schedule: "* * * * *",
-      handler: () => { count++; },
+      handler: () => {
+        count++;
+      },
     });
 
     await scheduler.tick();
@@ -128,7 +137,9 @@ describe("Scheduler", () => {
     scheduler.register({
       name: "failing",
       schedule: "* * * * *",
-      handler: () => { throw new Error("boom"); },
+      handler: () => {
+        throw new Error("boom");
+      },
     });
 
     // Should not throw
@@ -154,13 +165,17 @@ describe("Scheduler", () => {
     scheduler.register({
       name: "heartbeat",
       schedule: "* * * * *",
-      handler: () => { heartbeatRan = true; },
+      handler: () => {
+        heartbeatRan = true;
+      },
       builtin: true,
     });
     scheduler.register({
       name: "user-cron",
       schedule: "* * * * *",
-      handler: () => { cronRan = true; },
+      handler: () => {
+        cronRan = true;
+      },
     });
 
     await scheduler.runTask("heartbeat");
@@ -178,7 +193,9 @@ describe("Scheduler", () => {
     scheduler.register({
       name: "failing",
       schedule: "* * * * *",
-      handler: () => { throw new Error("boom"); },
+      handler: () => {
+        throw new Error("boom");
+      },
     });
 
     const result = await scheduler.runTask("failing");
@@ -192,7 +209,9 @@ describe("Scheduler", () => {
       schedule: "* * * * *",
       handler: () => {},
       oneShot: true,
-      onComplete: () => { completed = true; },
+      onComplete: () => {
+        completed = true;
+      },
     });
 
     expect(scheduler.size).toBe(1);
@@ -208,7 +227,9 @@ describe("Scheduler", () => {
       schedule: "* * * * *",
       handler: () => {},
       oneShot: true,
-      onComplete: (name) => { removedName = name; },
+      onComplete: (name) => {
+        removedName = name;
+      },
     });
 
     expect(scheduler.size).toBe(1);
@@ -244,7 +265,9 @@ describe("Scheduler", () => {
       name: "heartbeat",
       schedule: "@every 120m",
       intervalMinutes: 120,
-      handler: () => { runs++; },
+      handler: () => {
+        runs++;
+      },
       builtin: true,
     });
 
@@ -279,7 +302,9 @@ describe("Scheduler", () => {
     scheduler.register({
       name: "test",
       schedule: "* * * * *",
-      handler: () => { ran = true; },
+      handler: () => {
+        ran = true;
+      },
     });
 
     // First tick runs it

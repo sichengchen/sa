@@ -52,10 +52,7 @@ describe("ToolPolicyManager", () => {
     });
 
     it("user config overrides defaults", () => {
-      const pm = new ToolPolicyManager(
-        { verbosity: { telegram: "verbose" } },
-        builtinLevels,
-      );
+      const pm = new ToolPolicyManager({ verbosity: { telegram: "verbose" } }, builtinLevels);
       expect(pm.getVerbosity("telegram")).toBe("verbose");
       // Others remain default
       expect(pm.getVerbosity("tui")).toBe("minimal");
@@ -64,10 +61,7 @@ describe("ToolPolicyManager", () => {
 
   describe("shouldEmitToolStart", () => {
     describe("verbose mode", () => {
-      const pm = new ToolPolicyManager(
-        { verbosity: { tui: "verbose" } },
-        builtinLevels,
-      );
+      const pm = new ToolPolicyManager({ verbosity: { tui: "verbose" } }, builtinLevels);
 
       it("emits for safe tools", () => {
         expect(pm.shouldEmitToolStart("tui", ctx("read", "safe"))).toBe(true);
@@ -147,10 +141,7 @@ describe("ToolPolicyManager", () => {
 
   describe("shouldEmitToolEnd", () => {
     describe("verbose mode", () => {
-      const pm = new ToolPolicyManager(
-        { verbosity: { tui: "verbose" } },
-        builtinLevels,
-      );
+      const pm = new ToolPolicyManager({ verbosity: { tui: "verbose" } }, builtinLevels);
 
       it("emits for all tools", () => {
         expect(pm.shouldEmitToolEnd("tui", ctx("read", "safe"))).toBe(true);
@@ -195,7 +186,9 @@ describe("ToolPolicyManager", () => {
 
       it("emits errors", () => {
         expect(pm.shouldEmitToolEnd("telegram", ctx("read", "safe", { isError: true }))).toBe(true);
-        expect(pm.shouldEmitToolEnd("telegram", ctx("exec", "dangerous", { isError: true }))).toBe(true);
+        expect(pm.shouldEmitToolEnd("telegram", ctx("exec", "dangerous", { isError: true }))).toBe(
+          true,
+        );
       });
     });
 

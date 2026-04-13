@@ -45,10 +45,7 @@ writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
 
 // Stage and tag
 execSync(`git add ${pkgPath}`, { stdio: "inherit" });
-execSync(
-  `git commit -m "chore: bump version to ${nextVersion}"`,
-  { stdio: "inherit" },
-);
+execSync(`git commit -m "chore: bump version to ${nextVersion}"`, { stdio: "inherit" });
 execSync(`git tag v${nextVersion}`, { stdio: "inherit" });
 
 console.log(`\nVersion bumped: ${current} → ${nextVersion}`);

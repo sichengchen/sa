@@ -1,5 +1,9 @@
 import { describe, it, expect } from "bun:test";
-import { capToolResultSize, HARD_MAX_TOOL_RESULT_CHARS, MIN_KEEP_CHARS } from "./tool-result-guard.js";
+import {
+  capToolResultSize,
+  HARD_MAX_TOOL_RESULT_CHARS,
+  MIN_KEEP_CHARS,
+} from "./tool-result-guard.js";
 
 describe("capToolResultSize", () => {
   it("passes through content under the limit unchanged", () => {

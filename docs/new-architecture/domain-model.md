@@ -29,66 +29,66 @@ flowchart TD
 
 ## Canonical Entities
 
-| Entity | Meaning |
-| --- | --- |
-| `server` | An `Aria Server` deployment boundary |
-| `workspace` | An execution boundary inside a server or desktop-local project plane |
-| `project` | A repo, folder, or logical work unit inside a workspace |
-| `environment` | A concrete execution target such as `main`, worktree, or sandbox |
-| `thread` | A user-visible conversation or job surface |
+| Entity                       | Meaning                                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------------------------ |
+| `server`                     | An `Aria Server` deployment boundary                                                       |
+| `workspace`                  | An execution boundary inside a server or desktop-local project plane                       |
+| `project`                    | A repo, folder, or logical work unit inside a workspace                                    |
+| `environment`                | A concrete execution target such as `main`, worktree, or sandbox                           |
+| `thread`                     | A user-visible conversation or job surface                                                 |
 | `thread_environment_binding` | The current or historical attachment between a project thread and an execution environment |
-| `session` | Runtime continuity object backing a thread |
-| `run` | One model/tool execution inside a session |
-| `job` | A durable long-running execution owned by a thread |
-| `agent_adapter` | The agent implementation assigned to a thread |
-| `automation` | A server-owned recurring or event-triggered job spec |
-| `memory_record` | Durable assistant memory owned by `Aria Agent` |
-| `connector_account` | A bound IM integration account |
-| `approval` | Pending operator approval item |
-| `audit_event` | Durable security and action trail record |
+| `session`                    | Runtime continuity object backing a thread                                                 |
+| `run`                        | One model/tool execution inside a session                                                  |
+| `job`                        | A durable long-running execution owned by a thread                                         |
+| `agent_adapter`              | The agent implementation assigned to a thread                                              |
+| `automation`                 | A server-owned recurring or event-triggered job spec                                       |
+| `memory_record`              | Durable assistant memory owned by `Aria Agent`                                             |
+| `connector_account`          | A bound IM integration account                                                             |
+| `approval`                   | Pending operator approval item                                                             |
+| `audit_event`                | Durable security and action trail record                                                   |
 
 ## User-Facing vs Runtime Terms
 
-| User-facing term | Runtime term | Notes |
-| --- | --- | --- |
-| Thread | `thread` + `session` | The user sees a thread, the runtime still needs session continuity |
-| Active environment | `thread_environment_binding` | The UI can show an environment switch without making environments the primary sidebar object |
-| Remote job | `job` + `run` | Jobs may span many runs |
-| Project environment | `environment` | Includes main branch, worktree, or sandbox |
-| Aria chat | `thread` bound to `Aria Agent` | Server-hosted only |
+| User-facing term    | Runtime term                   | Notes                                                                                        |
+| ------------------- | ------------------------------ | -------------------------------------------------------------------------------------------- |
+| Thread              | `thread` + `session`           | The user sees a thread, the runtime still needs session continuity                           |
+| Active environment  | `thread_environment_binding`   | The UI can show an environment switch without making environments the primary sidebar object |
+| Remote job          | `job` + `run`                  | Jobs may span many runs                                                                      |
+| Project environment | `environment`                  | Includes main branch, worktree, or sandbox                                                   |
+| Aria chat           | `thread` bound to `Aria Agent` | Server-hosted only                                                                           |
 
 The UI should prefer `thread` over `session`.
 
 ## Ownership Matrix
 
-| Entity | Desktop local | Aria Server | Notes |
-| --- | --- | --- | --- |
-| `server` | no | yes | Server boundary exists only for actual server deployments |
-| `workspace` | yes | yes | Local project workspaces and server workspaces both exist |
-| `project` | yes | yes | Project may be local or remote |
-| `environment` | yes | yes | Local worktree or remote worktree |
-| `thread` | yes | yes | Local project threads on desktop, Aria/remote threads on server |
-| `thread_environment_binding` | yes | yes | Needed to support explicit environment switching |
-| `session` | yes | yes | Runtime-internal continuity object |
-| `run` | yes | yes | Execution record |
-| `job` | local optional | yes | Remote jobs must live on server |
-| `automation` | no | yes | Server-only |
-| `memory_record` | no | yes | Aria-managed memory is server-only |
-| `connector_account` | no | yes | Server-only |
-| `approval` | yes, as cache | yes | Canonical state for server-hosted work lives on server |
-| `audit_event` | local local-only | yes | Local project mode may keep local audit; server owns canonical Aria audit |
+| Entity                       | Desktop local    | Aria Server | Notes                                                                     |
+| ---------------------------- | ---------------- | ----------- | ------------------------------------------------------------------------- |
+| `server`                     | no               | yes         | Server boundary exists only for actual server deployments                 |
+| `workspace`                  | yes              | yes         | Local project workspaces and server workspaces both exist                 |
+| `project`                    | yes              | yes         | Project may be local or remote                                            |
+| `environment`                | yes              | yes         | Local worktree or remote worktree                                         |
+| `thread`                     | yes              | yes         | Local project threads on desktop, Aria/remote threads on server           |
+| `thread_environment_binding` | yes              | yes         | Needed to support explicit environment switching                          |
+| `session`                    | yes              | yes         | Runtime-internal continuity object                                        |
+| `run`                        | yes              | yes         | Execution record                                                          |
+| `job`                        | local optional   | yes         | Remote jobs must live on server                                           |
+| `automation`                 | no               | yes         | Server-only                                                               |
+| `memory_record`              | no               | yes         | Aria-managed memory is server-only                                        |
+| `connector_account`          | no               | yes         | Server-only                                                               |
+| `approval`                   | yes, as cache    | yes         | Canonical state for server-hosted work lives on server                    |
+| `audit_event`                | local local-only | yes         | Local project mode may keep local audit; server owns canonical Aria audit |
 
 ## Thread Types
 
 The system should model thread type explicitly.
 
-| Thread type | Agent | Host |
-| --- | --- | --- |
-| `aria` | `Aria Agent` | `Aria Server` |
-| `connector` | `Aria Agent` | `Aria Server` |
-| `automation` | `Aria Agent` | `Aria Server` |
-| `remote_project` | coding agent adapter | `Aria Server` |
-| `local_project` | coding agent adapter | `Aria Desktop` |
+| Thread type      | Agent                | Host           |
+| ---------------- | -------------------- | -------------- |
+| `aria`           | `Aria Agent`         | `Aria Server`  |
+| `connector`      | `Aria Agent`         | `Aria Server`  |
+| `automation`     | `Aria Agent`         | `Aria Server`  |
+| `remote_project` | coding agent adapter | `Aria Server`  |
+| `local_project`  | coding agent adapter | `Aria Desktop` |
 
 ## Agent Assignment
 
@@ -160,6 +160,8 @@ For local project work:
 - `environmentId`
 - `runId`
 - `agentId`
+
+`@aria/protocol` should own the normalization and assembly of these streamed event envelopes so gateway/runtime code only supplies event payloads plus correlation metadata.
 
 ## Storage Recommendations
 

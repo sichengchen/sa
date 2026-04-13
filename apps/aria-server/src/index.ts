@@ -38,3 +38,12 @@ export function createAriaServerHostBootstrap(runtimeHome?: string): AriaServerH
     },
   };
 }
+
+export interface RunAriaServerHostOptions extends StartAriaServerOptions {
+  runtimeHome?: string;
+}
+
+export function runAriaServerHost(options: RunAriaServerHostOptions = {}): Promise<AriaServerApp> {
+  const { runtimeHome, ...serverOptions } = options;
+  return createAriaServerHostBootstrap(runtimeHome).start(serverOptions);
+}

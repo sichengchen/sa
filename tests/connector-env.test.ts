@@ -21,20 +21,23 @@ afterEach(async () => {
 
 describe("loadConnectorRuntimeEnv", () => {
   test("hydrates runtime env, secrets, and pairing code from the runtime home", async () => {
-    await writeFile(join(testHome, "config.json"), JSON.stringify({
-      version: 3,
-      runtime: {
-        activeModel: "default",
-        telegramBotTokenEnvVar: "TELEGRAM_BOT_TOKEN",
-        memory: { enabled: true, directory: "memory" },
-        env: {
-          ARIA_LOG_LEVEL: "debug",
+    await writeFile(
+      join(testHome, "config.json"),
+      JSON.stringify({
+        version: 3,
+        runtime: {
+          activeModel: "default",
+          telegramBotTokenEnvVar: "TELEGRAM_BOT_TOKEN",
+          memory: { enabled: true, directory: "memory" },
+          env: {
+            ARIA_LOG_LEVEL: "debug",
+          },
         },
-      },
-      providers: [],
-      models: [],
-      defaultModel: "default",
-    }));
+        providers: [],
+        models: [],
+        defaultModel: "default",
+      }),
+    );
 
     await saveSecrets(testHome, {
       apiKeys: {
@@ -57,20 +60,23 @@ describe("loadConnectorRuntimeEnv", () => {
     process.env.TELEGRAM_BOT_TOKEN = "from-shell";
     process.env.ARIA_TELEGRAM_PAIRING_CODE = "FROMENV99";
 
-    await writeFile(join(testHome, "config.json"), JSON.stringify({
-      version: 3,
-      runtime: {
-        activeModel: "default",
-        telegramBotTokenEnvVar: "TELEGRAM_BOT_TOKEN",
-        memory: { enabled: true, directory: "memory" },
-        env: {
-          ARIA_LOG_LEVEL: "debug",
+    await writeFile(
+      join(testHome, "config.json"),
+      JSON.stringify({
+        version: 3,
+        runtime: {
+          activeModel: "default",
+          telegramBotTokenEnvVar: "TELEGRAM_BOT_TOKEN",
+          memory: { enabled: true, directory: "memory" },
+          env: {
+            ARIA_LOG_LEVEL: "debug",
+          },
         },
-      },
-      providers: [],
-      models: [],
-      defaultModel: "default",
-    }));
+        providers: [],
+        models: [],
+        defaultModel: "default",
+      }),
+    );
 
     await saveSecrets(testHome, {
       apiKeys: {

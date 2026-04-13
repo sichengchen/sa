@@ -121,11 +121,7 @@ describe("Aria mobile app surface", () => {
         headerPlacement: "top",
         streamPlacement: "center",
         composerPlacement: "bottom",
-        detailPresentations: [
-          "bottom-sheet",
-          "push-screen",
-          "segmented-detail-view",
-        ],
+        detailPresentations: ["bottom-sheet", "push-screen", "segmented-detail-view"],
       },
     });
     expect(appShell.initialThread).toMatchObject({

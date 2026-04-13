@@ -25,9 +25,9 @@ Use `ARIA_HOME=/tmp/aria-dev` when you want an isolated runtime home.
 ## Main Commands
 
 ```bash
-bun run typecheck
-bun test
-bun run build
+vp run repo:check
+vp run repo:test
+vp run repo:build
 ```
 
 ## Repo Shape

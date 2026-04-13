@@ -11,7 +11,7 @@ export async function runConfig(homeDir: string): Promise<void> {
           instance.unmount();
           resolve();
         },
-      })
+      }),
     );
   });
 }

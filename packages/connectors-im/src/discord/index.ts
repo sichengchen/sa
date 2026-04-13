@@ -24,7 +24,7 @@ export function createDiscordConnector(options: DiscordConnectorOptions = {}) {
     const missing = getMissingCredentials();
     throw new Error(
       `Discord connector requires: ${missing.join(", ")}. ` +
-      "Store them via `aria config` or use the set_env_secret tool.",
+        "Store them via `aria config` or use the set_env_secret tool.",
     );
   }
 
@@ -64,7 +64,9 @@ export async function startDiscordConnector(port = 3423): Promise<void> {
     },
   });
 
-  console.log(`Discord connector listening on http://localhost:${server.port}/api/webhooks/discord`);
+  console.log(
+    `Discord connector listening on http://localhost:${server.port}/api/webhooks/discord`,
+  );
 
   const shutdown = async () => {
     console.log("\nShutting down Discord connector...");

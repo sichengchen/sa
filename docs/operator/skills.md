@@ -6,7 +6,7 @@ Esperta Aria uses markdown skills to extend agent behavior at the prompt layer. 
 
 Aria discovers skills from:
 
-1. bundled runtime skills in `packages/runtime/src/skills/bundled/`
+1. bundled skill assets in `packages/runtime/src/skills/bundled/`
 2. user-installed skills in `~/.aria/skills/`
 3. embedded bundled-skill content generated at build time
 
@@ -14,7 +14,7 @@ User-installed skills override bundled skills when names collide.
 
 ## Build and Embedding
 
-The build now treats the package-owned runtime skill tree as canonical.
+The build currently embeds the bundled skill asset tree from `packages/runtime/src/skills/bundled/` while the public skills API is owned by `@aria/memory`.
 
 - `scripts/copy-docs.ts` mirrors `docs/` into the bundled Aria skill docs tree
 - `scripts/embed-skills.ts` reads `packages/runtime/src/skills/bundled/*/`
@@ -22,7 +22,7 @@ The build now treats the package-owned runtime skill tree as canonical.
 
 ## Runtime Model
 
-`SkillRegistry` is package-owned under `packages/runtime/src/skills/`.
+`SkillRegistry` is exposed through `@aria/memory`, while the remaining bundled-skill asset bridge still lives under `packages/runtime/src/skills/`.
 
 Discovery flow:
 
@@ -62,4 +62,4 @@ Bundled skills cover:
 
 ## Migration Note
 
-Bundled skills are package-owned under `packages/runtime/src/skills/`.
+Bundled skill assets are currently stored under `packages/runtime/src/skills/` while the public memory/skills surface is package-owned under `@aria/memory`.

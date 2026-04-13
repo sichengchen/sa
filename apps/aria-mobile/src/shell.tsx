@@ -74,9 +74,7 @@ function renderThreadSignals(shell: AriaMobileShell): ReactElement {
   );
 }
 
-export function AriaMobileApplicationShell(
-  props: AriaMobileApplicationShellProps,
-): ReactElement {
+export function AriaMobileApplicationShell(props: AriaMobileApplicationShellProps): ReactElement {
   const navigation = props.navigation ?? ariaMobileNavigation;
   const activeThread = props.shell.activeThreadContext;
 
@@ -109,18 +107,22 @@ export function AriaMobileApplicationShell(
           <h2>Aria</h2>
           <p>Server chat, inbox, automations, and connectors stay in the remote control plane.</p>
           <ul>
-            {navigation.spaces.find((space) => space.id === "aria")?.screens.map((screen) => (
-              <li key={screen.id} data-screen-id={screen.id}>
-                {screen.label}
-              </li>
-            ))}
+            {navigation.spaces
+              .find((space) => space.id === "aria")
+              ?.screens.map((screen) => (
+                <li key={screen.id} data-screen-id={screen.id}>
+                  {screen.label}
+                </li>
+              ))}
           </ul>
         </section>
 
         <section data-space-id="projects">
           <h2>Projects</h2>
           <p>{props.shell.projectThreads.length} project groups in the stacked thread queue.</p>
-          <div data-thread-list-mode={props.shell.projectThreads.length ? "project-first" : "empty"}>
+          <div
+            data-thread-list-mode={props.shell.projectThreads.length ? "project-first" : "empty"}
+          >
             {props.shell.projectThreads.map((project) => (
               <article key={project.projectLabel} data-project-label={project.projectLabel}>
                 <h3>{project.projectLabel}</h3>

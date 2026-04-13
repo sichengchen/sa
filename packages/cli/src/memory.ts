@@ -1,4 +1,4 @@
-import { ensureEngine } from "./engine.js";
+import { ensureEngine } from "@aria/server/daemon";
 import { createTuiClient } from "@aria/console/client.js";
 import { CLI_NAME } from "@aria/server/brand";
 
@@ -8,13 +8,17 @@ function printHelp(): void {
   console.log(`Usage: ${CLI_NAME} memory [list|read|search] ...\n`);
   console.log("Commands:");
   console.log("  list                    Show memory layers and recent journal entries");
-  console.log("  list <layer>            Show keys for one layer (profile|project|operational|journal)");
+  console.log(
+    "  list <layer>            Show keys for one layer (profile|project|operational|journal)",
+  );
   console.log("  read <layer> <key>      Read a memory entry (use 'curated' without a key)");
   console.log("  search <query>          Search memory across layers");
 }
 
 function isLayer(value: string): value is Exclude<InspectLayer, "curated"> {
-  return value === "profile" || value === "project" || value === "operational" || value === "journal";
+  return (
+    value === "profile" || value === "project" || value === "operational" || value === "journal"
+  );
 }
 
 export async function memoryCommand(args: string[]): Promise<void> {
@@ -33,9 +37,15 @@ export async function memoryCommand(args: string[]): Promise<void> {
 
     if (!target) {
       console.log(`Curated memory: ${overview.curatedLength} chars`);
-      console.log(`Profile keys (${overview.layers.profile.length}): ${overview.layers.profile.join(", ") || "none"}`);
-      console.log(`Project keys (${overview.layers.project.length}): ${overview.layers.project.join(", ") || "none"}`);
-      console.log(`Operational keys (${overview.layers.operational.length}): ${overview.layers.operational.join(", ") || "none"}`);
+      console.log(
+        `Profile keys (${overview.layers.profile.length}): ${overview.layers.profile.join(", ") || "none"}`,
+      );
+      console.log(
+        `Project keys (${overview.layers.project.length}): ${overview.layers.project.join(", ") || "none"}`,
+      );
+      console.log(
+        `Operational keys (${overview.layers.operational.length}): ${overview.layers.operational.join(", ") || "none"}`,
+      );
       console.log(`Recent journals: ${overview.journals.join(", ") || "none"}`);
       return;
     }

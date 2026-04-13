@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = join(import.meta.dir, "..");
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const TARGET_ENTRYPOINT_PACKAGE_DIRS = [
   "packages/access-client/src",
   "packages/agents-coding/src",
@@ -37,16 +38,18 @@ const SIBLING_PACKAGE_SRC_IMPORT = /\.\.\/\.\.\/[^/]+\/src\//;
 async function listFiles(relativeDir: string): Promise<string[]> {
   const absoluteDir = join(ROOT, relativeDir);
   const entries = await readdir(absoluteDir, { withFileTypes: true });
-  const files = await Promise.all(entries.map(async (entry) => {
-    const relativePath = `${relativeDir}/${entry.name}`;
-    if (entry.isDirectory()) {
-      return listFiles(relativePath);
-    }
-    if (!SOURCE_EXTENSIONS.has(extname(entry.name))) {
-      return [];
-    }
-    return [relativePath];
-  }));
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const relativePath = `${relativeDir}/${entry.name}`;
+      if (entry.isDirectory()) {
+        return listFiles(relativePath);
+      }
+      if (!SOURCE_EXTENSIONS.has(extname(entry.name))) {
+        return [];
+      }
+      return [relativePath];
+    }),
+  );
   return files.flat();
 }
 

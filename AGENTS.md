@@ -32,7 +32,7 @@ Use this file to bootstrap any coding agent into the current Esperta Aria workfl
 
 ## Verification
 
-- Run `bun run typecheck` before closing substantial changes.
-- Run `bun test` before closing substantial changes.
+- Run `bun run check` before closing substantial changes.
+- Run `bun run test` before closing substantial changes.
 - Run `bun run build` before closing substantial changes.
 - If a task is docs-only or otherwise exempt, state that explicitly in the handoff.

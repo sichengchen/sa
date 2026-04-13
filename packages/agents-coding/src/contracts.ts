@@ -1,17 +1,8 @@
-export type RuntimeBackendId =
-  | "aria"
-  | "codex"
-  | "claude-code"
-  | "opencode"
-  | (string & {});
+export type RuntimeBackendId = "aria" | "codex" | "claude-code" | "opencode" | (string & {});
 
 export type RuntimeBackendApprovalMode = "auto" | "gated" | "suggest";
 
-export type RuntimeBackendExecutionStatus =
-  | "succeeded"
-  | "failed"
-  | "timed_out"
-  | "cancelled";
+export type RuntimeBackendExecutionStatus = "succeeded" | "failed" | "timed_out" | "cancelled";
 
 export type RuntimeBackendEventType =
   | "execution.started"
@@ -92,7 +83,7 @@ export interface RuntimeBackendAdapter {
   probeAvailability(): Promise<RuntimeBackendAvailability>;
   execute(
     request: RuntimeBackendExecutionRequest,
-    observer?: RuntimeBackendExecutionObserver
+    observer?: RuntimeBackendExecutionObserver,
   ): Promise<RuntimeBackendExecutionResult>;
   cancel(executionId: string): Promise<void>;
 }

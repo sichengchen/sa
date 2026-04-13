@@ -38,9 +38,7 @@ export async function fetchModelList(
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = (await res.json()) as { models: { name: string }[] };
-    return json.models
-      .map((m) => m.name.replace(/^models\//, ""))
-      .sort();
+    return json.models.map((m) => m.name.replace(/^models\//, "")).sort();
   }
   if (providerType === "openrouter") {
     const res = await fetch("https://openrouter.ai/api/v1/models", {
@@ -59,9 +57,8 @@ export async function fetchModelList(
     return json.data.map((m) => m.id).sort();
   }
   // openai-compat
-  const resolvedBaseUrl = providerId === MINIMAX_PROVIDER_ID && !baseUrl
-    ? MINIMAX_BASE_URL
-    : baseUrl;
+  const resolvedBaseUrl =
+    providerId === MINIMAX_PROVIDER_ID && !baseUrl ? MINIMAX_BASE_URL : baseUrl;
   const url = resolvedBaseUrl.replace(/\/$/, "");
   const res = await fetch(`${url}/models`, {
     headers: { Authorization: `Bearer ${apiKey}` },
@@ -82,9 +79,7 @@ export function lookupModelMeta(
     return { maxTokens: MINIMAX_MODEL_CONTEXT_TOKENS };
   }
   try {
-    const models = (getModels as (p: string) => { id: string; maxTokens: number }[])(
-      providerType,
-    );
+    const models = (getModels as (p: string) => { id: string; maxTokens: number }[])(providerType);
     const match = models.find((m) => m.id === modelId);
     if (match) {
       return { maxTokens: match.maxTokens };

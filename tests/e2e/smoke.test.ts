@@ -29,9 +29,7 @@ describe("E2E smoke test", () => {
     testHome = await mkdtemp(join(tmpdir(), "aria-e2e-smoke-"));
 
     const serverHost = createAriaServerHostBootstrap(testHome);
-    const relay = createAriaRelayServiceBootstrap(
-      join(testHome, "relay-state.json"),
-    );
+    const relay = createAriaRelayServiceBootstrap(join(testHome, "relay-state.json"));
     await relay.relay.registerServer({
       serverId: "home",
       label: "Home Server",
@@ -134,9 +132,7 @@ describe("E2E smoke test", () => {
     expect(relay.service.planes).toEqual(["control", "data", "push"]);
     expect(attachment.transportMode).toBe("relay_tunnel");
     expect(desktop.bootstrap.access.httpUrl).toBe("http://127.0.0.1:7420");
-    expect(mobile.bootstrap.access.httpUrl).toBe(
-      "https://relay.example.test/home",
-    );
+    expect(mobile.bootstrap.access.httpUrl).toBe("https://relay.example.test/home");
     expect(desktopRoot.type).toBe(AriaDesktopAppShell);
     expect(mobileRoot.type).toBe(AriaMobileApplicationShell);
   });

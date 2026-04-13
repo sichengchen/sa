@@ -1,8 +1,11 @@
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
+
+const REPO_DIR = fileURLToPath(new URL("..", import.meta.url));
 
 describe("legacy Esperta Code migration script", () => {
   test("supports dry-run reporting with dispatch and worktree counts", async () => {
@@ -41,14 +44,18 @@ describe("legacy Esperta Code migration script", () => {
       );
     `);
 
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO projects (id, name, repo_url, base_branch, created_at)
       VALUES (?, ?, ?, ?, ?)
-    `).run("project-1", "Aria", "git@github.com:test/aria.git", "main", "2026-04-01T00:00:00.000Z");
-    db.prepare(`
+    `,
+    ).run("project-1", "Aria", "git@github.com:test/aria.git", "main", "2026-04-01T00:00:00.000Z");
+    db.prepare(
+      `
       INSERT INTO threads (id, project_id, linear_issue_id, linear_identifier, linear_session_id, title, status, worktree_path, branch_name, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `,
+    ).run(
       "thread-1",
       "project-1",
       "issue-1",
@@ -61,24 +68,29 @@ describe("legacy Esperta Code migration script", () => {
       "2026-04-01T00:00:00.000Z",
       "2026-04-02T00:00:00.000Z",
     );
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO jobs (id, thread_id, author, body, created_at)
       VALUES (?, ?, ?, ?, ?)
-    `).run("job-1", "thread-1", "agent", "finished the work", "2026-04-01T01:00:00.000Z");
+    `,
+    ).run("job-1", "thread-1", "agent", "finished the work", "2026-04-01T01:00:00.000Z");
     db.close();
 
-    const proc = Bun.spawn([
-      process.execPath,
-      "run",
-      "scripts/migrate-legacy-esperta-code.ts",
-      legacyDbPath,
-      ariaDbPath,
-      "--dry-run",
-    ], {
-      cwd: join(import.meta.dir, ".."),
-      stdout: "pipe",
-      stderr: "pipe",
-    });
+    const proc = Bun.spawn(
+      [
+        process.execPath,
+        "run",
+        "scripts/migrate-legacy-esperta-code.ts",
+        legacyDbPath,
+        ariaDbPath,
+        "--dry-run",
+      ],
+      {
+        cwd: REPO_DIR,
+        stdout: "pipe",
+        stderr: "pipe",
+      },
+    );
 
     const exitCode = await proc.exited;
     const stdout = await new Response(proc.stdout).text();
@@ -103,7 +115,9 @@ describe("legacy Esperta Code migration script", () => {
 
     expect(report.dryRun).toBe(true);
     expect(report.writeMode).toBe(false);
-    expect(report.rollbackHint).toBe("Dry-run mode does not mutate the target database and does not generate backup artifacts.");
+    expect(report.rollbackHint).toBe(
+      "Dry-run mode does not mutate the target database and does not generate backup artifacts.",
+    );
     expect(report.backupDirectory).toBeNull();
     expect(report.manifestPath).toBeNull();
     expect(report.importedProjects).toBe(1);
@@ -153,14 +167,18 @@ describe("legacy Esperta Code migration script", () => {
       );
     `);
 
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO projects (id, name, repo_url, base_branch, created_at)
       VALUES (?, ?, ?, ?, ?)
-    `).run("project-1", "Aria", "git@github.com:test/aria.git", "main", "2026-04-01T00:00:00.000Z");
-    db.prepare(`
+    `,
+    ).run("project-1", "Aria", "git@github.com:test/aria.git", "main", "2026-04-01T00:00:00.000Z");
+    db.prepare(
+      `
       INSERT INTO threads (id, project_id, linear_issue_id, linear_identifier, linear_session_id, title, status, worktree_path, branch_name, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `,
+    ).run(
       "thread-1",
       "project-1",
       "issue-1",
@@ -173,23 +191,22 @@ describe("legacy Esperta Code migration script", () => {
       "2026-04-01T00:00:00.000Z",
       "2026-04-02T00:00:00.000Z",
     );
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO jobs (id, thread_id, author, body, created_at)
       VALUES (?, ?, ?, ?, ?)
-    `).run("job-1", "thread-1", "agent", "finished the work", "2026-04-01T01:00:00.000Z");
+    `,
+    ).run("job-1", "thread-1", "agent", "finished the work", "2026-04-01T01:00:00.000Z");
     db.close();
 
-    const proc = Bun.spawn([
-      process.execPath,
-      "run",
-      "scripts/migrate-legacy-esperta-code.ts",
-      legacyDbPath,
-      ariaDbPath,
-    ], {
-      cwd: join(import.meta.dir, ".."),
-      stdout: "pipe",
-      stderr: "pipe",
-    });
+    const proc = Bun.spawn(
+      [process.execPath, "run", "scripts/migrate-legacy-esperta-code.ts", legacyDbPath, ariaDbPath],
+      {
+        cwd: REPO_DIR,
+        stdout: "pipe",
+        stderr: "pipe",
+      },
+    );
 
     const exitCode = await proc.exited;
     const stdout = await new Response(proc.stdout).text();
@@ -231,9 +248,9 @@ describe("legacy Esperta Code migration script", () => {
     expect(report.rollbackHint).toContain("Restore");
 
     const backup = new Database(report.backupMainDbPath!);
-    const backupSentinel = backup.prepare(
-      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'sentinel'`,
-    ).get() as { name?: string } | undefined;
+    const backupSentinel = backup
+      .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'sentinel'`)
+      .get() as { name?: string } | undefined;
     expect(backupSentinel?.name).toBe("sentinel");
     backup.close();
 
@@ -271,7 +288,9 @@ describe("legacy Esperta Code migration script", () => {
         "projects_worktrees",
         "projects_external_refs",
       ].map((table) => {
-        const row = migrated.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get() as { count: number };
+        const row = migrated.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get() as {
+          count: number;
+        };
         return [table, row.count];
       }),
     ) as Record<string, number>;

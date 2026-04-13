@@ -10,9 +10,7 @@ function normalizeBaseUrl(value: string | undefined): string {
 }
 
 function normalizeUserIds(userIds: string[] | undefined): string[] | undefined {
-  const normalized = (userIds ?? [])
-    .map((value) => value.trim())
-    .filter(Boolean);
+  const normalized = (userIds ?? []).map((value) => value.trim()).filter(Boolean);
   return normalized.length > 0 ? Array.from(new Set(normalized)) : undefined;
 }
 
@@ -30,8 +28,7 @@ function parseEnvAccount(): WeChatAccountSecret | null {
   const botToken = process.env.WECHAT_BOT_TOKEN?.trim();
   if (!accountId || !botToken) return null;
 
-  const allowedUserIds = process.env.WECHAT_ALLOWED_USER_IDS
-    ?.split(",")
+  const allowedUserIds = process.env.WECHAT_ALLOWED_USER_IDS?.split(",")
     .map((value) => value.trim())
     .filter(Boolean);
 
@@ -49,7 +46,9 @@ function sanitizeAccounts(accounts: WeChatAccountSecret[] | undefined): WeChatAc
     .map(normalizeWeChatAccount);
 }
 
-export async function loadWeChatAccounts(homeDir = getRuntimeHome()): Promise<WeChatAccountSecret[]> {
+export async function loadWeChatAccounts(
+  homeDir = getRuntimeHome(),
+): Promise<WeChatAccountSecret[]> {
   const secrets = await loadSecrets(homeDir);
   const merged = new Map<string, WeChatAccountSecret>();
 
@@ -74,7 +73,9 @@ export async function upsertWeChatAccount(
   const existing = sanitizeAccounts(secrets.wechatAccounts).filter(
     (entry) => entry.accountId !== normalized.accountId,
   );
-  const nextAccounts = [...existing, normalized].sort((a, b) => a.accountId.localeCompare(b.accountId));
+  const nextAccounts = [...existing, normalized].sort((a, b) =>
+    a.accountId.localeCompare(b.accountId),
+  );
 
   await saveSecrets(homeDir, {
     ...secrets,

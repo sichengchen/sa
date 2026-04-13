@@ -14,12 +14,14 @@ Control smart home devices via the Home Assistant REST API.
 ## Setup
 
 Set environment variables:
+
 - `HA_URL` — Your Home Assistant URL (e.g., `http://10.0.0.10:8123`)
 - `HA_TOKEN` — Long-lived access token (create in HA → Profile → Long-Lived Access Tokens)
 
 ## Safety Rules
 
 **Always confirm with the user before performing these actions:**
+
 - **Locks** — locking or unlocking any lock
 - **Alarm panels** — arming or disarming
 - **Garage doors** — opening or closing (`cover.*` with `device_class: garage`)
@@ -489,14 +491,14 @@ HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
 
 ### HTTP status codes
 
-| Code | Meaning |
-|------|---------|
-| 200 | Success |
-| 400 | Bad request (malformed JSON or invalid service data) |
-| 401 | Unauthorized (bad or missing token) |
-| 404 | Entity or endpoint not found |
-| 405 | Method not allowed (wrong HTTP method) |
-| 503 | Home Assistant is starting up or unavailable |
+| Code | Meaning                                              |
+| ---- | ---------------------------------------------------- |
+| 200  | Success                                              |
+| 400  | Bad request (malformed JSON or invalid service data) |
+| 401  | Unauthorized (bad or missing token)                  |
+| 404  | Entity or endpoint not found                         |
+| 405  | Method not allowed (wrong HTTP method)               |
+| 503  | Home Assistant is starting up or unavailable         |
 
 ## Response Format
 
@@ -606,33 +608,33 @@ curl -s "$HA_URL/api/states" -H "Authorization: Bearer $HA_TOKEN" \
 
 ## Entity Domains
 
-| Domain | Examples |
-|--------|----------|
-| `switch.*` | Smart plugs, generic switches |
-| `light.*` | Lights (Hue, LIFX, etc.) |
-| `scene.*` | Pre-configured scenes |
-| `script.*` | Reusable action sequences |
-| `automation.*` | Automations |
-| `climate.*` | Thermostats, AC units |
-| `cover.*` | Blinds, garage doors, gates |
-| `lock.*` | Smart locks |
-| `fan.*` | Fans, ventilation |
-| `media_player.*` | TVs, speakers, streaming devices |
-| `vacuum.*` | Robot vacuums |
-| `alarm_control_panel.*` | Security systems |
-| `notify.*` | Notification targets |
-| `person.*` | People / presence tracking |
-| `device_tracker.*` | Device locations |
-| `weather.*` | Weather conditions and forecasts |
-| `calendar.*` | Calendar events |
-| `tts.*` | Text-to-speech engines |
-| `sensor.*` | Temperature, humidity, power, etc. |
-| `binary_sensor.*` | Motion, door/window, presence |
-| `input_boolean.*` | Virtual toggles |
-| `input_number.*` | Numeric sliders |
-| `input_select.*` | Dropdown selectors |
-| `input_text.*` | Text inputs |
-| `input_datetime.*` | Date/time inputs |
+| Domain                  | Examples                           |
+| ----------------------- | ---------------------------------- |
+| `switch.*`              | Smart plugs, generic switches      |
+| `light.*`               | Lights (Hue, LIFX, etc.)           |
+| `scene.*`               | Pre-configured scenes              |
+| `script.*`              | Reusable action sequences          |
+| `automation.*`          | Automations                        |
+| `climate.*`             | Thermostats, AC units              |
+| `cover.*`               | Blinds, garage doors, gates        |
+| `lock.*`                | Smart locks                        |
+| `fan.*`                 | Fans, ventilation                  |
+| `media_player.*`        | TVs, speakers, streaming devices   |
+| `vacuum.*`              | Robot vacuums                      |
+| `alarm_control_panel.*` | Security systems                   |
+| `notify.*`              | Notification targets               |
+| `person.*`              | People / presence tracking         |
+| `device_tracker.*`      | Device locations                   |
+| `weather.*`             | Weather conditions and forecasts   |
+| `calendar.*`            | Calendar events                    |
+| `tts.*`                 | Text-to-speech engines             |
+| `sensor.*`              | Temperature, humidity, power, etc. |
+| `binary_sensor.*`       | Motion, door/window, presence      |
+| `input_boolean.*`       | Virtual toggles                    |
+| `input_number.*`        | Numeric sliders                    |
+| `input_select.*`        | Dropdown selectors                 |
+| `input_text.*`          | Text inputs                        |
+| `input_datetime.*`      | Date/time inputs                   |
 
 ## Notes
 

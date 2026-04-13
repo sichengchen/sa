@@ -1,18 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import {
-  ariaDesktopApp,
-  ariaDesktopHost,
-} from "../apps/aria-desktop/src/index.js";
-import {
-  ariaMobileApp,
-  ariaMobileHost,
-} from "../apps/aria-mobile/src/index.js";
+import { ariaDesktopApp, ariaDesktopHost } from "../apps/aria-desktop/src/index.js";
+import { ariaMobileApp, ariaMobileHost } from "../apps/aria-mobile/src/index.js";
+
+const REPO_DIR = fileURLToPath(new URL("..", import.meta.url));
 
 function readRepoFile(relativePath: string): string {
-  return readFileSync(join(import.meta.dir, "..", relativePath), "utf-8");
+  return readFileSync(join(REPO_DIR, relativePath), "utf-8");
 }
 
 function readRepoJson<T>(relativePath: string): T {
@@ -111,25 +108,21 @@ describe("cli and runtime stability", () => {
     expect(cliEngine).toContain('from "@aria/server/daemon";');
     expect(runtimeEngine).toContain('export * from "@aria/server/engine";');
     expect(runtimeDiscovery).toContain('from "@aria/server/discovery";');
-    expect(serverEngine).toContain(
-      'import { startAriaServer } from "./app.js";',
-    );
-    expect(serverEngine).toContain(
-      'import { getRuntimeDiscoveryPaths } from "./discovery.js";',
-    );
+    expect(serverEngine).toContain('import { startAriaServer } from "./app.js";');
+    expect(serverEngine).toContain('import { getRuntimeDiscoveryPaths } from "./discovery.js";');
     expect(appIndex).toContain('from "@aria/server"');
-    expect(appMain.trim()).toBe('import "@aria/server/engine";');
+    expect(appMain).toContain('import { RUNTIME_NAME } from "@aria/server";');
+    expect(appMain).toContain('import { runAriaServerHost } from "./index.js";');
+    expect(appMain).toContain("runAriaServerHost().catch");
   });
 
   test("preserves the CLI-owned root entrypoints while client package shells evolve", () => {
     const rootPackage = readRepoJson<RootPackageJson>("package.json");
 
     expect(rootPackage.main).toBe("packages/cli/src/index.ts");
-    expect(rootPackage.bin?.aria).toBe("dist/index.js");
+    expect(rootPackage.bin?.aria).toBe("dist/index.mjs");
     expect(rootPackage.scripts?.dev).toBe("bun run packages/cli/src/index.ts");
-    expect(rootPackage.scripts?.build).toContain(
-      "bun build packages/cli/src/index.ts",
-    );
+    expect(rootPackage.scripts?.build).toBe("vp run repo:build");
   });
 
   test("keeps desktop and mobile app seams client-facing", () => {
@@ -142,12 +135,8 @@ describe("cli and runtime stability", () => {
     expect(ariaMobileApp.sharedPackages).not.toContain("@aria/server");
     expect(ariaDesktopHost.shellPackage).toBe("@aria/desktop");
     expect(ariaMobileHost.shellPackage).toBe("@aria/mobile");
-    expect(ariaDesktopHost.contextPanels.map((panel) => panel.id)).toContain(
-      "environment",
-    );
-    expect(
-      ariaMobileHost.actionSections.map((section) => section.id),
-    ).toContain("remote-review");
+    expect(ariaDesktopHost.contextPanels.map((panel) => panel.id)).toContain("environment");
+    expect(ariaMobileHost.actionSections.map((section) => section.id)).toContain("remote-review");
 
     for (const disallowedImport of [
       "@aria/runtime",
@@ -162,29 +151,15 @@ describe("cli and runtime stability", () => {
 
   test("keeps client package shells client-facing when they exist", () => {
     for (const candidate of futureClientPackages) {
-      const packageJsonPath = join(
-        import.meta.dir,
-        "..",
-        candidate.packageJsonPath,
-      );
-      const sourcePath = join(import.meta.dir, "..", candidate.sourcePath);
-      const appWrapperPath = join(
-        import.meta.dir,
-        "..",
-        candidate.appWrapperPath,
-      );
+      const packageJsonPath = join(REPO_DIR, candidate.packageJsonPath);
+      const sourcePath = join(REPO_DIR, candidate.sourcePath);
+      const appWrapperPath = join(REPO_DIR, candidate.appWrapperPath);
 
-      if (
-        !existsSync(packageJsonPath) ||
-        !existsSync(sourcePath) ||
-        !existsSync(appWrapperPath)
-      ) {
+      if (!existsSync(packageJsonPath) || !existsSync(sourcePath) || !existsSync(appWrapperPath)) {
         continue;
       }
 
-      const manifest = readRepoJson<WorkspacePackageJson>(
-        candidate.packageJsonPath,
-      );
+      const manifest = readRepoJson<WorkspacePackageJson>(candidate.packageJsonPath);
       const source = readRepoFile(candidate.sourcePath);
       const appWrapperSource = readRepoFile(candidate.appWrapperPath).trim();
 
@@ -198,21 +173,13 @@ describe("cli and runtime stability", () => {
         const appHostSource = readRepoFile(candidate.appHostPath);
         const appAssemblySource = readRepoFile(candidate.appAssemblyPath);
 
-        expect(appWrapperSource).toContain(
-          `export * from "${candidate.expectedShellPackage}";`,
-        );
+        expect(appWrapperSource).toContain(`export * from "${candidate.expectedShellPackage}";`);
         expect(appWrapperSource).toContain('export * from "./host.js";');
         expect(appWrapperSource).toContain('export * from "./app.js";');
         expect(appHostSource).toContain(`id: "${candidate.expectedHostId}"`);
-        expect(appHostSource).toContain(
-          `shellPackage: "${candidate.expectedShellPackage}"`,
-        );
-        expect(appAssemblySource).toContain(
-          `id: "${candidate.expectedHostId}"`,
-        );
-        expect(appAssemblySource).toContain(
-          `shellPackage: "${candidate.expectedShellPackage}"`,
-        );
+        expect(appHostSource).toContain(`shellPackage: "${candidate.expectedShellPackage}"`);
+        expect(appAssemblySource).toContain(`id: "${candidate.expectedHostId}"`);
+        expect(appAssemblySource).toContain(`shellPackage: "${candidate.expectedShellPackage}"`);
       }
 
       for (const disallowedImport of [

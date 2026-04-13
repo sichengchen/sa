@@ -97,10 +97,7 @@ describe("sanitizeEnv", () => {
   });
 
   it("user overrides can re-add stripped vars if explicitly set", () => {
-    const env = sanitizeEnv(
-      { ANTHROPIC_API_KEY: "original" },
-      { ANTHROPIC_API_KEY: "overridden" },
-    );
+    const env = sanitizeEnv({ ANTHROPIC_API_KEY: "original" }, { ANTHROPIC_API_KEY: "overridden" });
     // User override takes precedence — if they explicitly set it, allow it
     expect(env.ANTHROPIC_API_KEY).toBe("overridden");
   });

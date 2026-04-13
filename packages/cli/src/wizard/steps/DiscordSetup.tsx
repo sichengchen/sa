@@ -16,12 +16,15 @@ export function DiscordSetup({ onNext, onBack, currentValues }: DiscordSetupProp
   const [token, setToken] = useState(currentValues?.discordToken ?? "");
   const [guildId, setGuildId] = useState(currentValues?.discordGuildId ?? "");
   const [phase, setPhase] = useState<"keep-or-change" | "token" | "guild">(
-    currentValues ? "keep-or-change" : "token"
+    currentValues ? "keep-or-change" : "token",
   );
 
   useInput((input, key) => {
     if (phase === "keep-or-change") {
-      if (key.escape) { onBack(); return; }
+      if (key.escape) {
+        onBack();
+        return;
+      }
       if (input?.toLowerCase() === "k" && currentValues) {
         onNext(currentValues);
         return;
@@ -35,7 +38,10 @@ export function DiscordSetup({ onNext, onBack, currentValues }: DiscordSetupProp
 
     if (phase === "token") {
       if (key.escape) {
-        if (currentValues) { setPhase("keep-or-change"); return; }
+        if (currentValues) {
+          setPhase("keep-or-change");
+          return;
+        }
         onBack();
         return;
       }
@@ -55,7 +61,10 @@ export function DiscordSetup({ onNext, onBack, currentValues }: DiscordSetupProp
         setToken((v) => v + input);
       }
     } else if (phase === "guild") {
-      if (key.escape) { setPhase("token"); return; }
+      if (key.escape) {
+        setPhase("token");
+        return;
+      }
       if (key.return) {
         onNext({ discordToken: token, discordGuildId: guildId });
         return;
@@ -86,8 +95,14 @@ export function DiscordSetup({ onNext, onBack, currentValues }: DiscordSetupProp
         </Text>
         <Text />
         <Text>
-          <Text color="yellow" bold>[K]</Text> Keep current{"  "}
-          <Text color="yellow" bold>[C]</Text> Change{"    "}
+          <Text color="yellow" bold>
+            [K]
+          </Text>{" "}
+          Keep current{"  "}
+          <Text color="yellow" bold>
+            [C]
+          </Text>{" "}
+          Change{"    "}
           <Text dimColor>Esc to go back</Text>
         </Text>
       </Box>
@@ -101,9 +116,7 @@ export function DiscordSetup({ onNext, onBack, currentValues }: DiscordSetupProp
           Discord Guild (Server) ID
         </Text>
         <Text />
-        <Text>
-          Enter the Discord server (guild) ID where the bot will operate.
-        </Text>
+        <Text>Enter the Discord server (guild) ID where the bot will operate.</Text>
         <Text dimColor>Leave empty to allow all servers.</Text>
         <Text />
         <Box>

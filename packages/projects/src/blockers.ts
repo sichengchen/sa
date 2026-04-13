@@ -1,9 +1,4 @@
-import type {
-  TaskRecord,
-  TaskStatus,
-  ThreadRecord,
-  ThreadStatus,
-} from "./types.js";
+import type { TaskRecord, TaskStatus, ThreadRecord, ThreadStatus } from "./types.js";
 import type { DispatchRecord, DispatchStatus } from "@aria/jobs/types";
 
 export type ProjectBlockerKind =
@@ -46,7 +41,12 @@ export function isRunnableThreadStatus(status: ThreadStatus): boolean {
 }
 
 export function isActiveDispatchStatus(status: DispatchStatus): boolean {
-  return status === "queued" || status === "accepted" || status === "running" || status === "waiting_approval";
+  return (
+    status === "queued" ||
+    status === "accepted" ||
+    status === "running" ||
+    status === "waiting_approval"
+  );
 }
 
 export function isTerminalDispatchStatus(status: DispatchStatus): boolean {
@@ -57,7 +57,10 @@ export function hasActiveDispatch(dispatches: ReadonlyArray<DispatchRecord>): bo
   return dispatches.some((dispatch) => isActiveDispatchStatus(dispatch.status));
 }
 
-export function getTaskBlockers(task: TaskRecord, dispatches: ReadonlyArray<DispatchRecord> = []): ProjectBlocker[] {
+export function getTaskBlockers(
+  task: TaskRecord,
+  dispatches: ReadonlyArray<DispatchRecord> = [],
+): ProjectBlocker[] {
   const blockers: ProjectBlocker[] = [];
 
   if (task.status === "blocked") {
@@ -72,7 +75,10 @@ export function getTaskBlockers(task: TaskRecord, dispatches: ReadonlyArray<Disp
       kind: isTerminalTaskStatus(task.status) ? "task_terminal" : "task_not_ready",
       entityType: "task",
       entityId: task.taskId,
-      message: task.status === "in_progress" ? "Task is already in progress." : "Task is not ready to run.",
+      message:
+        task.status === "in_progress"
+          ? "Task is already in progress."
+          : "Task is not ready to run.",
     });
   }
 
@@ -107,9 +113,10 @@ export function getThreadBlockers(
       kind: "thread_terminal",
       entityType: "thread",
       entityId: thread.threadId,
-      message: thread.status === "running" || thread.status === "queued"
-        ? "Thread is already active."
-        : "Thread is finished and cannot be scheduled.",
+      message:
+        thread.status === "running" || thread.status === "queued"
+          ? "Thread is already active."
+          : "Thread is finished and cannot be scheduled.",
     });
   }
 
@@ -151,7 +158,11 @@ export function getDispatchBlockers(
     });
   }
 
-  if (dispatch.status === "completed" || dispatch.status === "failed" || dispatch.status === "cancelled") {
+  if (
+    dispatch.status === "completed" ||
+    dispatch.status === "failed" ||
+    dispatch.status === "cancelled"
+  ) {
     blockers.push({
       kind: "dispatch_terminal",
       entityType: "dispatch",
@@ -174,7 +185,12 @@ export function getDispatchBlockers(
       entityId: dispatch.dispatchId,
       message: "Thread is finished.",
     });
-  } else if (thread && !isRunnableThreadStatus(thread.status) && thread.status !== "queued" && thread.status !== "running") {
+  } else if (
+    thread &&
+    !isRunnableThreadStatus(thread.status) &&
+    thread.status !== "queued" &&
+    thread.status !== "running"
+  ) {
     blockers.push({
       kind: "dispatch_thread_has_active_dispatch",
       entityType: "dispatch",
@@ -192,7 +208,11 @@ export function getDispatchBlockers(
     });
   }
 
-  if (siblingDispatches.some((item) => item.dispatchId !== dispatch.dispatchId && isActiveDispatchStatus(item.status))) {
+  if (
+    siblingDispatches.some(
+      (item) => item.dispatchId !== dispatch.dispatchId && isActiveDispatchStatus(item.status),
+    )
+  ) {
     blockers.push({
       kind: "dispatch_thread_has_active_dispatch",
       entityType: "dispatch",

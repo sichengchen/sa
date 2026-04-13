@@ -1,7 +1,7 @@
 {
   "name": "aria-relay",
   "private": true,
-  "type": "module",
   "description": "Thin Aria Relay service seam over @aria/relay",
+  "type": "module",
   "main": "./src/index.ts"
 }
