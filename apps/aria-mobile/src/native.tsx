@@ -63,6 +63,62 @@ export function AriaMobileNativeHost() {
       <Text>Latest message: {model.latestMessage}</Text>
       <Text>Pending approval: {model.pendingApproval}</Text>
       <Text>Pending question: {model.pendingQuestion}</Text>
+      {shell.ariaThread.state.pendingApproval ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Approval</Text>
+          <Pressable
+            onPress={() => {
+              void controller.approveToolCall(
+                shell.ariaThread.state.pendingApproval!.toolCallId,
+                true,
+              );
+            }}
+            style={styles.button}
+          >
+            <Text>Approve</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              void controller.acceptToolCallForSession(
+                shell.ariaThread.state.pendingApproval!.toolCallId,
+              );
+            }}
+            style={styles.button}
+          >
+            <Text>Allow for session</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              void controller.approveToolCall(
+                shell.ariaThread.state.pendingApproval!.toolCallId,
+                false,
+              );
+            }}
+            style={styles.button}
+          >
+            <Text>Deny</Text>
+          </Pressable>
+        </View>
+      ) : null}
+      {shell.ariaThread.state.pendingQuestion ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Question</Text>
+          {(shell.ariaThread.state.pendingQuestion.options ?? []).map((option) => (
+            <Pressable
+              key={option}
+              onPress={() => {
+                void controller.answerQuestion(
+                  shell.ariaThread.state.pendingQuestion!.questionId,
+                  option,
+                );
+              }}
+              style={styles.button}
+            >
+              <Text>{option}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Actions</Text>
         <Pressable

@@ -6,6 +6,9 @@ import {
 } from "@aria/access-client";
 import { createAriaMobileNativeHostModel, type AriaMobileNativeHostModel } from "./native-model.js";
 import {
+  acceptAriaMobileAppShellToolCallForSession,
+  answerAriaMobileAppShellQuestion,
+  approveAriaMobileAppShellToolCall,
   createAriaMobileAppShell,
   openAriaMobileAppShellSession,
   sendAriaMobileAppShellMessage,
@@ -39,6 +42,9 @@ export interface AriaMobileNativeHostController {
   openSession(sessionId: string): Promise<AriaMobileNativeHostBootstrap>;
   sendMessage(message: string): Promise<AriaMobileNativeHostBootstrap>;
   stop(): Promise<AriaMobileNativeHostBootstrap>;
+  approveToolCall(toolCallId: string, approved: boolean): Promise<AriaMobileNativeHostBootstrap>;
+  acceptToolCallForSession(toolCallId: string): Promise<AriaMobileNativeHostBootstrap>;
+  answerQuestion(questionId: string, answer: string): Promise<AriaMobileNativeHostBootstrap>;
 }
 
 export interface AriaMobileNativeHostBootstrapOptions extends Partial<AccessClientTarget> {
@@ -156,6 +162,21 @@ export function createAriaMobileNativeHostController(
     },
     stop() {
       return update(stopAriaMobileAppShell(bootstrap.shell).then(mapShell));
+    },
+    approveToolCall(toolCallId: string, approved: boolean) {
+      return update(
+        approveAriaMobileAppShellToolCall(bootstrap.shell, toolCallId, approved).then(mapShell),
+      );
+    },
+    acceptToolCallForSession(toolCallId: string) {
+      return update(
+        acceptAriaMobileAppShellToolCallForSession(bootstrap.shell, toolCallId).then(mapShell),
+      );
+    },
+    answerQuestion(questionId: string, answer: string) {
+      return update(
+        answerAriaMobileAppShellQuestion(bootstrap.shell, questionId, answer).then(mapShell),
+      );
     },
   };
 }
