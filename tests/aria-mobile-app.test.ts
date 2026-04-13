@@ -18,7 +18,9 @@ import {
   createConnectedAriaMobileAppShell,
   createAriaMobileAppShell,
   createAriaMobileHostBootstrap,
+  loadAriaMobileAppShellRecentSessions,
   openAriaMobileAppShellSession,
+  searchAriaMobileAppShellSessions,
   sendAriaMobileAppShellMessage,
   stopAriaMobileAppShell,
 } from "../apps/aria-mobile/src/index.js";
@@ -540,5 +542,82 @@ describe("Aria mobile app surface", () => {
       content: "Answer: Yes",
       toolName: "ask_user",
     });
+  });
+
+  test("can load and search recent aria sessions through the mobile shell", async () => {
+    const controller = {
+      getState: () => ({
+        connected: true,
+        sessionId: "mobile:session-1",
+        sessionStatus: "resumed" as const,
+        modelName: "sonnet",
+        agentName: "Esperta Aria",
+        messages: [],
+        streamingText: "",
+        isStreaming: false,
+        pendingApproval: null,
+        pendingQuestion: null,
+        lastError: null,
+      }),
+      connect: async () => null,
+      sendMessage: async () => null,
+      stop: async () => null,
+      openSession: async () => null,
+      approveToolCall: async () => null,
+      acceptToolCallForSession: async () => null,
+      answerQuestion: async () => null,
+      listSessions: async () => [
+        {
+          sessionId: "mobile:live-1",
+          connectorType: "tui",
+          connectorId: "mobile",
+          archived: false,
+        },
+      ],
+      listArchivedSessions: async () => [
+        {
+          sessionId: "mobile:archived-1",
+          connectorType: "tui",
+          connectorId: "mobile",
+          archived: true,
+          preview: "Archived",
+          summary: "Archived summary",
+        },
+      ],
+      searchSessions: async () => [
+        {
+          sessionId: "mobile:search-1",
+          connectorType: "tui",
+          connectorId: "mobile",
+          archived: true,
+          preview: "Search preview",
+          summary: "Search summary",
+        },
+      ],
+    };
+
+    const shell = createAriaMobileAppShell({
+      target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
+      ariaThreadController: controller as any,
+    });
+
+    const loaded = await loadAriaMobileAppShellRecentSessions(shell);
+    expect(loaded.ariaRecentSessions.map((session) => session.sessionId)).toEqual([
+      "mobile:live-1",
+      "mobile:archived-1",
+    ]);
+
+    const searched = await searchAriaMobileAppShellSessions(shell, "archived");
+    expect(searched.ariaRecentSessions.map((session) => session.sessionId)).toEqual([
+      "mobile:search-1",
+    ]);
+
+    const serialized = JSON.stringify(AriaMobileApplicationShell({ shell: loaded }).props).replace(
+      /\s+/g,
+      " ",
+    );
+    expect(serialized).toContain("Recent Aria sessions:");
+    expect(serialized).toContain("mobile:live-1");
+    expect(serialized).toContain("mobile:archived-1");
   });
 });

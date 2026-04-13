@@ -5,7 +5,12 @@ import {
   createAriaDesktopShell,
   type CreateAriaDesktopShellOptions,
 } from "@aria/desktop";
-import type { AccessClientTarget, AriaChatController, AriaChatState } from "@aria/access-client";
+import type {
+  AccessClientTarget,
+  AriaChatController,
+  AriaChatSessionSummary,
+  AriaChatState,
+} from "@aria/access-client";
 import type { ReactElement, ReactNode } from "react";
 import { createAriaDesktopApplicationBootstrap, createAriaDesktopAriaThread } from "./app.js";
 
@@ -32,6 +37,7 @@ export interface AriaDesktopAppShellModel {
   activeSpaceId: (typeof ariaDesktopSpaces)[number]["id"];
   activeContextPanelId: (typeof ariaDesktopContextPanels)[number]["id"];
   ariaThread: ReturnType<typeof createAriaDesktopAriaThread>;
+  ariaRecentSessions: AriaChatSessionSummary[];
 }
 
 function deriveProjectsFromInitialThread(
@@ -103,6 +109,7 @@ export function createAriaDesktopAppShellModel(
       controller: options.ariaThreadController,
       state: options.ariaThreadState,
     }),
+    ariaRecentSessions: [],
   };
 }
 
@@ -249,6 +256,16 @@ export function AriaDesktopAppShell(props: AriaDesktopAppShellProps): ReactEleme
                 Pending approval: {model.ariaThread.state.pendingApproval?.toolName ?? "none"} |
                 Pending question: {model.ariaThread.state.pendingQuestion?.question ?? "none"}
               </p>
+              <p>Recent Aria sessions: {model.ariaRecentSessions.length}</p>
+              {model.ariaRecentSessions.length > 0 ? (
+                <ul>
+                  {model.ariaRecentSessions.map((session) => (
+                    <li key={session.sessionId}>
+                      {session.sessionId} - {session.archived ? "archived" : "live"}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
               {model.ariaThread.state.streamingText ? (
                 <p>Streaming text: {model.ariaThread.state.streamingText}</p>
               ) : null}
@@ -421,5 +438,29 @@ export async function answerAriaDesktopAppShellQuestion(
       ...model.ariaThread,
       state: model.ariaThread.controller.getState(),
     },
+  };
+}
+
+export async function loadAriaDesktopAppShellRecentSessions(
+  model: AriaDesktopAppShellModel,
+): Promise<AriaDesktopAppShellModel> {
+  const [live, archived] = await Promise.all([
+    model.ariaThread.controller.listSessions(),
+    model.ariaThread.controller.listArchivedSessions(),
+  ]);
+
+  return {
+    ...model,
+    ariaRecentSessions: [...live, ...archived],
+  };
+}
+
+export async function searchAriaDesktopAppShellSessions(
+  model: AriaDesktopAppShellModel,
+  query: string,
+): Promise<AriaDesktopAppShellModel> {
+  return {
+    ...model,
+    ariaRecentSessions: await model.ariaThread.controller.searchSessions(query),
   };
 }

@@ -15,7 +15,9 @@ import {
   createAriaDesktopAppShellModel,
   createAriaDesktopApplicationRoot,
   createAriaDesktopApplicationBootstrap,
+  loadAriaDesktopAppShellRecentSessions,
   openAriaDesktopAppShellSession,
+  searchAriaDesktopAppShellSessions,
   sendAriaDesktopAppShellMessage,
   stopAriaDesktopAppShell,
   type AriaDesktopAppShellModel,
@@ -546,5 +548,81 @@ describe("aria-desktop app assembly", () => {
       content: "Answer: Yes",
       toolName: "ask_user",
     });
+  });
+
+  test("can load and search recent aria sessions through the desktop shell model", async () => {
+    const controller = {
+      getState: () => ({
+        connected: true,
+        sessionId: "desktop:session-1",
+        sessionStatus: "resumed" as const,
+        modelName: "sonnet",
+        agentName: "Esperta Aria",
+        messages: [],
+        streamingText: "",
+        isStreaming: false,
+        pendingApproval: null,
+        pendingQuestion: null,
+        lastError: null,
+      }),
+      connect: async () => null,
+      sendMessage: async () => null,
+      stop: async () => null,
+      openSession: async () => null,
+      approveToolCall: async () => null,
+      acceptToolCallForSession: async () => null,
+      answerQuestion: async () => null,
+      listSessions: async () => [
+        {
+          sessionId: "desktop:live-1",
+          connectorType: "tui",
+          connectorId: "desktop",
+          archived: false,
+        },
+      ],
+      listArchivedSessions: async () => [
+        {
+          sessionId: "desktop:archived-1",
+          connectorType: "tui",
+          connectorId: "desktop",
+          archived: true,
+          preview: "Archived",
+          summary: "Archived summary",
+        },
+      ],
+      searchSessions: async () => [
+        {
+          sessionId: "desktop:search-1",
+          connectorType: "tui",
+          connectorId: "desktop",
+          archived: true,
+          preview: "Search preview",
+          summary: "Search summary",
+        },
+      ],
+    };
+
+    const model = createAriaDesktopAppShellModel({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      ariaThreadController: controller as any,
+    });
+
+    const loaded = await loadAriaDesktopAppShellRecentSessions(model);
+    expect(loaded.ariaRecentSessions.map((session) => session.sessionId)).toEqual([
+      "desktop:live-1",
+      "desktop:archived-1",
+    ]);
+
+    const searched = await searchAriaDesktopAppShellSessions(model, "archived");
+    expect(searched.ariaRecentSessions.map((session) => session.sessionId)).toEqual([
+      "desktop:search-1",
+    ]);
+
+    const text = collectTextContent(AriaDesktopAppShell({ model: loaded }))
+      .join(" ")
+      .replace(/\s+/g, " ");
+    expect(text).toContain("Recent Aria sessions: 2");
+    expect(text).toContain("desktop:live-1 - live");
+    expect(text).toContain("desktop:archived-1 - archived");
   });
 });

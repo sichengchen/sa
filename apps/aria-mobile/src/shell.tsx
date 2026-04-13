@@ -128,6 +128,16 @@ export function AriaMobileApplicationShell(props: AriaMobileApplicationShellProp
             Pending approval: {props.shell.ariaThread.state.pendingApproval?.toolName ?? "none"} |
             Pending question: {props.shell.ariaThread.state.pendingQuestion?.question ?? "none"}
           </p>
+          <p>Recent Aria sessions: {props.shell.ariaRecentSessions.length}</p>
+          {props.shell.ariaRecentSessions.length > 0 ? (
+            <ul>
+              {props.shell.ariaRecentSessions.map((session) => (
+                <li key={session.sessionId} data-session-id={session.sessionId}>
+                  {session.sessionId} - {session.archived ? "archived" : "live"}
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {props.shell.ariaThread.state.streamingText ? (
             <p>Streaming text: {props.shell.ariaThread.state.streamingText}</p>
           ) : null}

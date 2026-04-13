@@ -14,6 +14,7 @@ import {
   createTargetAriaChatController,
   type AccessClientTarget,
   type AriaChatController,
+  type AriaChatSessionSummary,
   type AriaChatState,
 } from "@aria/access-client";
 
@@ -71,6 +72,7 @@ export interface AriaMobileAppShell extends AriaMobileShell {
     controller: AriaChatController;
     state: AriaChatState;
   };
+  ariaRecentSessions: AriaChatSessionSummary[];
   layout: {
     threadListScreen: {
       placement: "stacked";
@@ -124,6 +126,7 @@ export function createAriaMobileAppShell(
       controller: options.ariaThreadController,
       state: options.ariaThreadState,
     }),
+    ariaRecentSessions: [],
     layout: {
       threadListScreen: {
         placement: "stacked",
@@ -250,6 +253,30 @@ export async function answerAriaMobileAppShellQuestion(
       ...shell.ariaThread,
       state: shell.ariaThread.controller.getState(),
     },
+  };
+}
+
+export async function loadAriaMobileAppShellRecentSessions(
+  shell: AriaMobileAppShell,
+): Promise<AriaMobileAppShell> {
+  const [live, archived] = await Promise.all([
+    shell.ariaThread.controller.listSessions(),
+    shell.ariaThread.controller.listArchivedSessions(),
+  ]);
+
+  return {
+    ...shell,
+    ariaRecentSessions: [...live, ...archived],
+  };
+}
+
+export async function searchAriaMobileAppShellSessions(
+  shell: AriaMobileAppShell,
+  query: string,
+): Promise<AriaMobileAppShell> {
+  return {
+    ...shell,
+    ariaRecentSessions: await shell.ariaThread.controller.searchSessions(query),
   };
 }
 
