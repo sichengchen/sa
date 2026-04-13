@@ -206,6 +206,53 @@ export async function openAriaMobileAppShellSession(
   };
 }
 
+export async function approveAriaMobileAppShellToolCall(
+  shell: AriaMobileAppShell,
+  toolCallId: string,
+  approved: boolean,
+): Promise<AriaMobileAppShell> {
+  await shell.ariaThread.controller.approveToolCall(toolCallId, approved);
+
+  return {
+    ...shell,
+    ariaThread: {
+      ...shell.ariaThread,
+      state: shell.ariaThread.controller.getState(),
+    },
+  };
+}
+
+export async function acceptAriaMobileAppShellToolCallForSession(
+  shell: AriaMobileAppShell,
+  toolCallId: string,
+): Promise<AriaMobileAppShell> {
+  await shell.ariaThread.controller.acceptToolCallForSession(toolCallId);
+
+  return {
+    ...shell,
+    ariaThread: {
+      ...shell.ariaThread,
+      state: shell.ariaThread.controller.getState(),
+    },
+  };
+}
+
+export async function answerAriaMobileAppShellQuestion(
+  shell: AriaMobileAppShell,
+  questionId: string,
+  answer: string,
+): Promise<AriaMobileAppShell> {
+  await shell.ariaThread.controller.answerQuestion(questionId, answer);
+
+  return {
+    ...shell,
+    ariaThread: {
+      ...shell.ariaThread,
+      state: shell.ariaThread.controller.getState(),
+    },
+  };
+}
+
 export const ariaMobileAppModel = {
   app: ariaMobileApp,
   navigation: ariaMobileNavigation,

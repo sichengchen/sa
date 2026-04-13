@@ -6,6 +6,9 @@ import {
   AriaDesktopApplicationRoot,
   ariaDesktopApplication,
   ariaDesktopHost,
+  acceptAriaDesktopAppShellToolCallForSession,
+  answerAriaDesktopAppShellQuestion,
+  approveAriaDesktopAppShellToolCall,
   createConnectedAriaDesktopAppShell,
   createConnectedAriaDesktopAppShellModel,
   createAriaDesktopAppShell,
@@ -493,6 +496,55 @@ describe("aria-desktop app assembly", () => {
     expect(opened.ariaThread.state.messages.at(-1)).toEqual({
       role: "assistant",
       content: "Recovered history",
+    });
+  });
+
+  test("can resolve pending aria interactions through desktop shell helpers", async () => {
+    const resolvedState = {
+      connected: true,
+      sessionId: "desktop:session-1",
+      sessionStatus: "resumed" as const,
+      modelName: "sonnet",
+      agentName: "Esperta Aria",
+      messages: [{ role: "tool" as const, content: "Answer: Yes", toolName: "ask_user" }],
+      streamingText: "",
+      isStreaming: false,
+      pendingApproval: null,
+      pendingQuestion: null,
+      lastError: null,
+    };
+    const controller = {
+      getState: () => resolvedState,
+      connect: async () => resolvedState,
+      sendMessage: async () => resolvedState,
+      stop: async () => resolvedState,
+      openSession: async () => resolvedState,
+      approveToolCall: async () => resolvedState,
+      acceptToolCallForSession: async () => resolvedState,
+      answerQuestion: async () => resolvedState,
+    };
+
+    const model = createAriaDesktopAppShellModel({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      ariaThreadController: controller as any,
+    });
+
+    expect(
+      (await approveAriaDesktopAppShellToolCall(model, "tool-1", true)).ariaThread.state
+        .pendingApproval,
+    ).toBeNull();
+    expect(
+      (await acceptAriaDesktopAppShellToolCallForSession(model, "tool-1")).ariaThread.state
+        .pendingApproval,
+    ).toBeNull();
+    expect(
+      (
+        await answerAriaDesktopAppShellQuestion(model, "question-1", "Yes")
+      ).ariaThread.state.messages.at(-1),
+    ).toEqual({
+      role: "tool",
+      content: "Answer: Yes",
+      toolName: "ask_user",
     });
   });
 });

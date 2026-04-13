@@ -376,3 +376,50 @@ export async function openAriaDesktopAppShellSession(
     },
   };
 }
+
+export async function approveAriaDesktopAppShellToolCall(
+  model: AriaDesktopAppShellModel,
+  toolCallId: string,
+  approved: boolean,
+): Promise<AriaDesktopAppShellModel> {
+  await model.ariaThread.controller.approveToolCall(toolCallId, approved);
+
+  return {
+    ...model,
+    ariaThread: {
+      ...model.ariaThread,
+      state: model.ariaThread.controller.getState(),
+    },
+  };
+}
+
+export async function acceptAriaDesktopAppShellToolCallForSession(
+  model: AriaDesktopAppShellModel,
+  toolCallId: string,
+): Promise<AriaDesktopAppShellModel> {
+  await model.ariaThread.controller.acceptToolCallForSession(toolCallId);
+
+  return {
+    ...model,
+    ariaThread: {
+      ...model.ariaThread,
+      state: model.ariaThread.controller.getState(),
+    },
+  };
+}
+
+export async function answerAriaDesktopAppShellQuestion(
+  model: AriaDesktopAppShellModel,
+  questionId: string,
+  answer: string,
+): Promise<AriaDesktopAppShellModel> {
+  await model.ariaThread.controller.answerQuestion(questionId, answer);
+
+  return {
+    ...model,
+    ariaThread: {
+      ...model.ariaThread,
+      state: model.ariaThread.controller.getState(),
+    },
+  };
+}
