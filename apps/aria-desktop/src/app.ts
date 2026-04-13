@@ -73,6 +73,7 @@ export interface AriaDesktopAriaThread {
 
 export interface AriaDesktopAriaThreadOptions {
   controller?: AriaChatController;
+  controllerFactory?: (target: AccessClientTarget) => AriaChatController;
   state?: AriaChatState;
   connectorType?: string;
   prefix?: string;
@@ -84,6 +85,7 @@ export function createAriaDesktopAriaThread(
 ): AriaDesktopAriaThread {
   const controller =
     options.controller ??
+    options.controllerFactory?.(target) ??
     createTargetAriaChatController(target, {
       connectorType: options.connectorType ?? "tui",
       prefix: options.prefix ?? "desktop",

@@ -7,6 +7,7 @@ import {
 import {
   resolveAriaDesktopRendererTarget,
   startAriaDesktopRendererModel,
+  switchAriaDesktopRendererModel,
 } from "../apps/aria-desktop/src/renderer.js";
 
 describe("aria-desktop host scaffold", () => {
@@ -174,5 +175,97 @@ describe("aria-desktop host scaffold", () => {
       "desktop:live-1",
       "desktop:archived-1",
     ]);
+  });
+
+  test("switches a desktop renderer model to another server", async () => {
+    const relayState = {
+      connected: true,
+      sessionId: "relay:session-1",
+      sessionStatus: "resumed" as const,
+      approvalMode: "ask" as const,
+      securityMode: "default" as const,
+      securityModeRemainingTTL: null,
+      modelName: "sonnet",
+      agentName: "Esperta Aria",
+      messages: [],
+      streamingText: "",
+      isStreaming: false,
+      pendingApproval: null,
+      pendingQuestion: null,
+      lastError: null,
+    };
+    const desktopState = {
+      ...relayState,
+      sessionId: "desktop:session-1",
+    };
+    const controllers = new Map([
+      [
+        "desktop",
+        {
+          state: desktopState,
+          recent: [
+            {
+              sessionId: "desktop:live",
+              connectorType: "tui",
+              connectorId: "desktop",
+              archived: false,
+            },
+          ],
+        },
+      ],
+      [
+        "relay",
+        {
+          state: relayState,
+          recent: [
+            {
+              sessionId: "relay:live",
+              connectorType: "tui",
+              connectorId: "relay",
+              archived: true,
+              preview: "Relay",
+              summary: "Relay",
+            },
+          ],
+        },
+      ],
+    ]);
+    const factory = (target: { serverId: string }) => {
+      const entry = controllers.get(target.serverId)!;
+      return {
+        getState: () => entry.state,
+        connect: async () => entry.state,
+        sendMessage: async () => entry.state,
+        stop: async () => entry.state,
+        openSession: async () => entry.state,
+        approveToolCall: async () => entry.state,
+        acceptToolCallForSession: async () => entry.state,
+        answerQuestion: async () => entry.state,
+        listSessions: async () => entry.recent as any,
+        listArchivedSessions: async () => [],
+        searchSessions: async () => [],
+      };
+    };
+
+    const model = await startAriaDesktopRendererModel({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      servers: [
+        {
+          label: "Home Server",
+          target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+        },
+        {
+          label: "Relay Mirror",
+          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        },
+      ],
+      createAriaThreadController: factory as any,
+    });
+
+    const switched = await switchAriaDesktopRendererModel(model, "relay");
+    expect(switched.activeServerId).toBe("relay");
+    expect(switched.activeServerLabel).toBe("Relay Mirror");
+    expect(switched.ariaThread.state.sessionId).toBe("relay:session-1");
+    expect(switched.ariaRecentSessions.map((session) => session.sessionId)).toEqual(["relay:live"]);
   });
 });
