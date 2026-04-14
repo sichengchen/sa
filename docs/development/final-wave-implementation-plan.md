@@ -45,17 +45,18 @@ This plan continues `docs/development/new-architecture-implementation-plan.md` a
 - `@aria/projects` now exposes a dedicated thread-environment switch service, `@aria/desktop-bridge` exposes it at the desktop-local boundary, and the CLI plus desktop shell can route environment changes through that durable mutation path.
 - `apps/aria-mobile` now includes Expo app identifiers plus EAS build and submit profiles for preview and production release flows.
 - `apps/aria-server` now owns the daemon process-spec and spawn helper used by both runtime startup and restart, while the CLI hidden host command remains only as a packaged fallback path.
+- Relay resumed attachments now preserve `jobId` correlation into queued follow-up and approval events after reconnect.
+- Protocol and gateway tests now prove durable identity on normal streamed chat events, not only streamed errors.
+- Connector runtime coverage now includes the shared stream handler plus Chat SDK adapter question, approval, and session-command fallbacks.
+- The pack build now externalizes Bun-native modules explicitly, removing the prior `bun` and `bun:sqlite` unresolved-import warning noise from the green build.
+- The platform-complete gate currently runs green end-to-end through `bun run verify`.
 
 ### Not Completed
 
-- The platform-complete gate has not yet been run green end-to-end:
-  - `vp run -r typecheck`
-  - `vp run -r test`
-  - `vp run -r build`
 - Legacy boot surfaces are still on the critical path.
 - Protocol/gateway/runtime ownership is still partially split in places.
 - Server/relay reconnect, recovery, and e2e proof are not yet complete enough.
-- Console and connector runtime workflows still need stronger integration coverage.
+- Console workflows still need stronger integration coverage, and connector runtime proof still needs deeper end-to-end coverage beyond the current focused adapter tests.
 - Desktop host wiring still needs to attach the shell to a real `Projects Control` instance by default; the in-memory shell fallback remains when no durable switch callback is provided.
 - Desktop and mobile exist, but they are not yet complete as real product apps.
 
