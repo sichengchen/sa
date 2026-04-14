@@ -1,9 +1,4 @@
-import {
-  Children,
-  isValidElement,
-  type ReactElement,
-  type ReactNode,
-} from "react";
+import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -102,22 +97,22 @@ describe("aria-desktop React shell", () => {
     expect(rail.props["data-slot"]).toBe("right-rail");
 
     const sidebarSections = childElements(sidebar);
-    expect(
-      sidebarSections.map((section) => section.props["data-slot"]),
-    ).toEqual(["project-sidebar", "thread-list"]);
+    expect(sidebarSections.map((section) => section.props["data-slot"])).toEqual([
+      "project-sidebar",
+      "thread-list",
+    ]);
     expect(sidebarSections[0].props.children).toBeTruthy();
 
     const centerSections = childElements(center);
-    expect(centerSections.map((section) => section.props["data-slot"])).toEqual(
-      ["active-thread-header", "stream"],
-    );
+    expect(centerSections.map((section) => section.props["data-slot"])).toEqual([
+      "active-thread-header",
+      "stream",
+    ]);
     expect(centerSections[0].props.children).toBeTruthy();
     expect(centerSections[1].props.children).toBeTruthy();
 
     const railSections = childElements(rail);
-    expect(railSections.map((section) => section.props["data-slot"])).toEqual([
-      "context-panels",
-    ]);
+    expect(railSections.map((section) => section.props["data-slot"])).toEqual(["context-panels"]);
     expect(railSections[0].props.children).toBeTruthy();
   });
 
@@ -140,17 +135,13 @@ describe("aria-desktop React shell", () => {
     expect(root.type).toBe(AriaDesktopAppShell);
     const rootProps = asElementWithProps(root);
     const model = rootProps.props.model as AriaDesktopAppShellModel;
-    expect(model.shell.projectThreadListScreen.title).toBe(
-      "Unified project threads",
-    );
+    expect(model.shell.projectThreadListScreen.title).toBe("Unified project threads");
 
     const rendered = AriaDesktopApplicationRoot({
       model,
     });
     expect(rendered.type).toBe(AriaDesktopAppShell);
     const shellRendered = AriaDesktopAppShell({ model });
-    expect(asElementWithProps(shellRendered).props["data-app-shell"]).toBe(
-      "aria-desktop",
-    );
+    expect(asElementWithProps(shellRendered).props["data-app-shell"]).toBe("aria-desktop");
   });
 });
