@@ -131,6 +131,9 @@ export default defineConfig({
     outDir: "dist",
     format: ["esm"],
     platform: "node",
+    deps: {
+      neverBundle: ["bun", "bun:sqlite"],
+    },
     target: "es2022",
     clean: true,
     dts: false,
