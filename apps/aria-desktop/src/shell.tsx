@@ -12,7 +12,8 @@ import type {
   AriaChatSessionSummary,
   AriaChatState,
 } from "@aria/access-client";
-import type { ThreadRecord } from "@aria/projects";
+import type { DesktopBridge } from "@aria/desktop-bridge";
+import type { ProjectsEngineRepository, ThreadRecord } from "@aria/projects";
 import type { ReactElement, ReactNode } from "react";
 import { createAriaDesktopApplicationBootstrap, createAriaDesktopAriaThread } from "./app.js";
 
@@ -35,6 +36,8 @@ export interface CreateAriaDesktopAppShellModelOptions {
   ariaThreadController?: AriaChatController;
   createAriaThreadController?: (target: AccessClientTarget) => AriaChatController;
   ariaThreadState?: AriaChatState;
+  desktopBridge?: DesktopBridge;
+  projectsRepository?: ProjectsEngineRepository;
   switchThreadEnvironment?: (
     threadId: string,
     environmentId: string,
@@ -282,7 +285,11 @@ export function createAriaDesktopAppShellModel(
     initialThread: options.initialThread,
     servers: options.servers,
     activeServerId: options.activeServerId,
+    desktopBridge: options.desktopBridge,
+    projectsRepository: options.projectsRepository,
   });
+  const switchThreadEnvironment =
+    options.switchThreadEnvironment ?? bootstrap.projectsControl?.switchThreadEnvironment;
   const shell = createAriaDesktopShell({
     target: options.target,
     initialThread: options.initialThread,
@@ -325,7 +332,9 @@ export function createAriaDesktopAppShellModel(
       activeSpaceId: options.activeSpaceId,
       activeContextPanelId: options.activeContextPanelId,
       createAriaThreadController: options.createAriaThreadController,
-      switchThreadEnvironment: options.switchThreadEnvironment,
+      desktopBridge: options.desktopBridge,
+      projectsRepository: options.projectsRepository,
+      switchThreadEnvironment,
     },
   };
 }

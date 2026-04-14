@@ -1,13 +1,118 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { resolveHostAccessClientTarget } from "@aria/access-client";
+import { createDesktopBridge } from "@aria/desktop-bridge";
+import { ProjectsEngineRepository, ProjectsEngineStore } from "@aria/projects";
 import {
   createAriaDesktopElectronHostBootstrap,
+  createAriaDesktopHostBootstrap,
   createAriaDesktopRendererController,
   resolveAriaDesktopRendererTarget,
   runAriaDesktopElectronHost,
   startAriaDesktopRendererModel,
   switchAriaDesktopRendererModel,
 } from "aria-desktop";
+
+const tempDirs: string[] = [];
+
+afterEach(async () => {
+  while (tempDirs.length > 0) {
+    await rm(tempDirs.pop()!, { recursive: true, force: true });
+  }
+});
+
+async function createRepository(prefix: string): Promise<ProjectsEngineRepository> {
+  const dir = await mkdtemp(join(tmpdir(), prefix));
+  tempDirs.push(dir);
+  const store = new ProjectsEngineStore(join(dir, "aria.db"));
+  await store.init();
+  return new ProjectsEngineRepository(store);
+}
+
+async function seedProjectThread(repository: ProjectsEngineRepository, now: number): Promise<void> {
+  repository.upsertProject({
+    projectId: "project-1",
+    slug: "aria",
+    name: "Aria",
+    description: null,
+    createdAt: now,
+    updatedAt: now,
+  });
+  repository.upsertServer({
+    serverId: "server-1",
+    label: "Home Server",
+    relayId: null,
+    directBaseUrl: "https://aria.example.test",
+    createdAt: now,
+    updatedAt: now,
+  });
+  repository.upsertWorkspace({
+    workspaceId: "workspace-local",
+    host: "desktop_local",
+    serverId: null,
+    label: "This Device",
+    createdAt: now,
+    updatedAt: now,
+  });
+  repository.upsertWorkspace({
+    workspaceId: "workspace-remote",
+    host: "aria_server",
+    serverId: "server-1",
+    label: "Home Server",
+    createdAt: now,
+    updatedAt: now,
+  });
+  repository.upsertEnvironment({
+    environmentId: "env-local",
+    workspaceId: "workspace-local",
+    projectId: "project-1",
+    label: "This Device / wt/main",
+    mode: "local",
+    kind: "worktree",
+    locator: "/tmp/aria-main",
+    createdAt: now,
+    updatedAt: now,
+  });
+  repository.upsertEnvironment({
+    environmentId: "env-remote",
+    workspaceId: "workspace-remote",
+    projectId: "project-1",
+    label: "Home Server / wt/review",
+    mode: "remote",
+    kind: "worktree",
+    locator: "ssh://aria/review",
+    createdAt: now,
+    updatedAt: now,
+  });
+  repository.upsertThread({
+    threadId: "thread-1",
+    projectId: "project-1",
+    taskId: null,
+    repoId: null,
+    title: "Tracked thread",
+    status: "running",
+    threadType: "local_project",
+    workspaceId: "workspace-local",
+    environmentId: "env-local",
+    environmentBindingId: "binding-local",
+    agentId: "codex",
+    createdAt: now,
+    updatedAt: now,
+  });
+  repository.upsertThreadEnvironmentBinding({
+    bindingId: "binding-local",
+    threadId: "thread-1",
+    projectId: "project-1",
+    workspaceId: "workspace-local",
+    environmentId: "env-local",
+    attachedAt: now,
+    detachedAt: null,
+    isActive: true,
+    reason: "Initial local binding",
+  });
+}
 
 describe("aria-desktop host scaffold", () => {
   test("resolves renderer targets with desktop defaults", () => {
@@ -115,6 +220,32 @@ describe("aria-desktop host scaffold", () => {
     closeHandler?.();
     expect(quitCalled).toBe(true);
     expect(files).toEqual([]);
+  });
+
+  test("creates bridge-backed projects control in the desktop host bootstrap", async () => {
+    const repository = await createRepository("aria-desktop-host-");
+    const now = Date.now();
+    await seedProjectThread(repository, now);
+
+    const bridge = createDesktopBridge({ repository });
+    const bootstrap = createAriaDesktopHostBootstrap({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      desktopBridge: bridge,
+    });
+    const switched = bootstrap.projectsControl?.switchThreadEnvironment("thread-1", "env-remote");
+
+    expect(bootstrap.projectsControl?.bridge).toBe(bridge);
+    expect(switched).toMatchObject({
+      threadId: "thread-1",
+      threadType: "remote_project",
+      workspaceId: "workspace-remote",
+      environmentId: "env-remote",
+    });
+    expect(repository.getActiveThreadEnvironmentBinding("thread-1")?.environmentId).toBe(
+      "env-remote",
+    );
+
+    repository.close();
   });
 
   test("starts a desktop renderer model with recent sessions loaded", async () => {
@@ -438,5 +569,119 @@ describe("aria-desktop host scaffold", () => {
     const answered = await controller.answerQuestion("question-1", "Yes");
     expect(answered.ariaThread.state.pendingQuestion).toBeNull();
     expect(answered.ariaThread.state.messages.at(-1)?.content).toBe("Answer: Yes");
+  });
+
+  test("uses a desktop bridge to switch thread environments by default", async () => {
+    const repository = await createRepository("aria-desktop-renderer-");
+    const now = Date.now();
+    await seedProjectThread(repository, now);
+
+    const state = {
+      connected: true,
+      sessionId: "desktop:session-1",
+      sessionStatus: "resumed" as const,
+      approvalMode: "ask" as const,
+      securityMode: "default" as const,
+      securityModeRemainingTTL: null,
+      modelName: "sonnet",
+      agentName: "Esperta Aria",
+      messages: [],
+      streamingText: "",
+      isStreaming: false,
+      pendingApproval: null,
+      pendingQuestion: null,
+      lastError: null,
+    };
+    const bridge = createDesktopBridge({ repository });
+    const ariaThreadController = {
+      getState: () => state,
+      connect: async () => state,
+      sendMessage: async () => state,
+      stop: async () => state,
+      openSession: async () => state,
+      approveToolCall: async () => state,
+      acceptToolCallForSession: async () => state,
+      answerQuestion: async () => state,
+      listSessions: async () => [],
+      listArchivedSessions: async () => [],
+      searchSessions: async () => [],
+    };
+    const controller = createAriaDesktopRendererController({
+      target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
+      desktopBridge: bridge,
+      environments: [
+        {
+          environmentId: "env-local",
+          hostLabel: "This Device",
+          environmentLabel: "wt/main",
+          mode: "local",
+          target: {
+            serverId: "desktop-local",
+            baseUrl: "http://127.0.0.1:8123/",
+          },
+        },
+        {
+          environmentId: "env-remote",
+          hostLabel: "Home Server",
+          environmentLabel: "wt/review",
+          mode: "remote",
+          target: {
+            serverId: "home",
+            baseUrl: "https://aria.example.test/",
+          },
+        },
+      ],
+      projects: [
+        {
+          project: { name: "Aria" },
+          threads: [
+            {
+              threadId: "thread-1",
+              title: "Tracked thread",
+              status: "running",
+              threadType: "local_project",
+              environmentId: "env-local",
+              agentId: "codex",
+            },
+          ],
+        },
+      ],
+      initialThread: {
+        project: { name: "Aria" },
+        thread: {
+          threadId: "thread-1",
+          title: "Tracked thread",
+          status: "running",
+          threadType: "local_project",
+          environmentId: "env-local",
+          agentId: "codex",
+        },
+      },
+      createAriaThreadController: (() => ariaThreadController) as any,
+    });
+
+    await controller.start();
+    expect(typeof controller.getModel().sourceOptions.switchThreadEnvironment).toBe("function");
+
+    const switched = await controller.selectEnvironment("env-remote");
+
+    expect(switched.shell.activeThreadScreen?.environmentSwitcher.activeEnvironmentId).toBe(
+      "env-remote",
+    );
+    expect(switched.shell.activeThreadScreen?.header.threadType).toBe("remote_project");
+    expect(switched.sourceOptions.projects?.[0]?.threads[0]).toMatchObject({
+      threadId: "thread-1",
+      threadType: "remote_project",
+      workspaceId: "workspace-remote",
+      environmentId: "env-remote",
+    });
+    expect(repository.getThread("thread-1")).toMatchObject({
+      threadId: "thread-1",
+      threadType: "remote_project",
+      workspaceId: "workspace-remote",
+      environmentId: "env-remote",
+    });
+
+    repository.close();
   });
 });

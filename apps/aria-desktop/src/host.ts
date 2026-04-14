@@ -7,8 +7,9 @@ import {
   type AriaDesktopServerInput,
   type AriaDesktopBootstrap,
 } from "@aria/desktop";
+import { createDesktopBridge, type DesktopBridge } from "@aria/desktop-bridge";
 import type { AccessClientTarget } from "@aria/access-client";
-import type { ProjectRecord, ThreadRecord } from "@aria/projects";
+import type { ProjectRecord, ProjectsEngineRepository, ThreadRecord } from "@aria/projects";
 
 export const ariaDesktopHost = {
   id: "aria-desktop",
@@ -28,9 +29,15 @@ export interface AriaDesktopHostBootstrap {
   host: typeof ariaDesktopHost;
   shell: typeof ariaDesktopApp;
   bootstrap: AriaDesktopBootstrap;
+  projectsControl?: AriaDesktopProjectsControl;
 }
 
-export function createAriaDesktopHostBootstrap(options: {
+export interface AriaDesktopProjectsControl {
+  readonly bridge: DesktopBridge;
+  switchThreadEnvironment(threadId: string, environmentId: string): ThreadRecord;
+}
+
+export interface CreateAriaDesktopHostBootstrapOptions {
   target: AccessClientTarget;
   initialThread?: {
     project: Pick<ProjectRecord, "name">;
@@ -41,7 +48,40 @@ export function createAriaDesktopHostBootstrap(options: {
   };
   servers?: AriaDesktopServerInput[];
   activeServerId?: string;
-}): AriaDesktopHostBootstrap {
+  desktopBridge?: DesktopBridge;
+  projectsRepository?: ProjectsEngineRepository;
+}
+
+export function createAriaDesktopProjectsControl(options: {
+  desktopBridge?: DesktopBridge;
+  projectsRepository?: ProjectsEngineRepository;
+}): AriaDesktopProjectsControl | undefined {
+  const bridge =
+    options.desktopBridge ??
+    (options.projectsRepository
+      ? createDesktopBridge({ repository: options.projectsRepository })
+      : undefined);
+
+  if (!bridge) {
+    return undefined;
+  }
+
+  return {
+    bridge,
+    switchThreadEnvironment(threadId, environmentId) {
+      return bridge.threadEnvironments.switchThreadEnvironment({
+        threadId,
+        environmentId,
+      }).thread;
+    },
+  };
+}
+
+export function createAriaDesktopHostBootstrap(
+  options: CreateAriaDesktopHostBootstrapOptions,
+): AriaDesktopHostBootstrap {
+  const projectsControl = createAriaDesktopProjectsControl(options);
+
   return {
     host: ariaDesktopHost,
     shell: ariaDesktopApp,
@@ -51,5 +91,6 @@ export function createAriaDesktopHostBootstrap(options: {
       options.servers,
       options.activeServerId,
     ),
+    projectsControl,
   };
 }

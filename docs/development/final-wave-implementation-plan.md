@@ -50,6 +50,7 @@ This plan continues `docs/development/new-architecture-implementation-plan.md` a
 - Connector runtime coverage now includes the shared stream handler plus Chat SDK adapter question, approval, and session-command fallbacks.
 - The pack build now externalizes Bun-native modules explicitly, removing the prior `bun` and `bun:sqlite` unresolved-import warning noise from the green build.
 - The platform-complete gate currently runs green end-to-end through `bun run verify`.
+- Desktop host composition now injects a real bridge-backed project environment-switch callback by default when a desktop bridge or projects repository is supplied, instead of relying on the shell's in-memory fallback path.
 
 ### Not Completed
 
@@ -57,7 +58,6 @@ This plan continues `docs/development/new-architecture-implementation-plan.md` a
 - Protocol/gateway/runtime ownership is still partially split in places.
 - Server/relay reconnect, recovery, and e2e proof are not yet complete enough.
 - Console workflows still need stronger integration coverage, and connector runtime proof still needs deeper end-to-end coverage beyond the current focused adapter tests.
-- Desktop host wiring still needs to attach the shell to a real `Projects Control` instance by default; the in-memory shell fallback remains when no durable switch callback is provided.
 - Desktop and mobile exist, but they are not yet complete as real product apps.
 
 ## Final Wave Goals
@@ -174,10 +174,6 @@ Finish the project execution plane as defined by the new architecture.
 - prove job lifecycle and recovery
 - keep coding-agent contracts in `@aria/agents-coding`
 - keep local execution behind `@aria/desktop-bridge` and `@aria/desktop-git`
-
-#### Highest-value missing piece
-
-Desktop host composition still needs to supply a real `Projects Control` environment-switch callback by default so the shell no longer relies on its in-memory fallback path.
 
 #### Likely areas
 

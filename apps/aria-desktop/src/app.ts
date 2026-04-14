@@ -13,7 +13,13 @@ import {
   type AriaChatController,
   type AriaChatState,
 } from "@aria/access-client";
-import { ariaDesktopHost, createAriaDesktopHostBootstrap } from "./host.js";
+import type { DesktopBridge } from "@aria/desktop-bridge";
+import type { ProjectsEngineRepository } from "@aria/projects";
+import {
+  ariaDesktopHost,
+  createAriaDesktopHostBootstrap,
+  type AriaDesktopProjectsControl,
+} from "./host.js";
 import { ariaDesktopAppFrame } from "./frame.js";
 
 export { ariaDesktopAppFrame } from "./frame.js";
@@ -64,6 +70,7 @@ export interface AriaDesktopApplicationBootstrap {
   host: typeof ariaDesktopHost;
   shell: typeof ariaDesktopShell;
   bootstrap: AriaDesktopBootstrap;
+  projectsControl?: AriaDesktopProjectsControl;
 }
 
 export interface AriaDesktopAriaThread {
@@ -102,6 +109,8 @@ export function createAriaDesktopApplicationBootstrap(options: {
   initialThread?: Parameters<typeof createAriaDesktopBootstrap>[1];
   servers?: AriaDesktopServerInput[];
   activeServerId?: string;
+  desktopBridge?: DesktopBridge;
+  projectsRepository?: ProjectsEngineRepository;
 }): AriaDesktopApplicationBootstrap {
   const hostBootstrap = createAriaDesktopHostBootstrap(options);
 
@@ -110,5 +119,6 @@ export function createAriaDesktopApplicationBootstrap(options: {
     host: hostBootstrap.host,
     shell: hostBootstrap.shell,
     bootstrap: hostBootstrap.bootstrap,
+    projectsControl: hostBootstrap.projectsControl,
   };
 }
