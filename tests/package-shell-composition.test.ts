@@ -27,10 +27,7 @@ describe("package shell composition", () => {
       connectors: "server-only",
       projectLocalExecution: "desktop-only",
     });
-    expect(ariaServerApp.sharedPackages).toEqual([
-      "@aria/runtime",
-      "@aria/gateway",
-    ]);
+    expect(ariaServerApp.sharedPackages).toEqual(["@aria/runtime", "@aria/gateway"]);
     expect(bootstrap).toMatchObject({
       app: ariaServerApp,
       runtimeHome: "/tmp/aria-shell-test",

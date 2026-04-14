@@ -20,9 +20,7 @@ export interface AriaDesktopApplicationRootProps {
   onAnswerQuestion?(questionId: string, answer: string): void;
 }
 
-export function AriaDesktopApplicationRoot(
-  props: AriaDesktopApplicationRootProps,
-): ReactElement {
+export function AriaDesktopApplicationRoot(props: AriaDesktopApplicationRootProps): ReactElement {
   return (
     <AriaDesktopAppShell
       model={props.model}
