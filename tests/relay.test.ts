@@ -288,9 +288,23 @@ describe("RelayService", () => {
     expect(followUp).toMatchObject({
       serverId: "server-3",
       threadId: "thread-3",
-      jobId: null,
+      jobId: "job-3",
       accessGrantId: resumedGrant.grantId,
       type: "follow_up",
+    });
+
+    const approval = await relay.queueApprovalResponse({
+      deviceId: "device-3",
+      sessionId: "session-3",
+      toolCallId: "tool-3",
+      approved: true,
+    });
+    expect(approval).toMatchObject({
+      serverId: "server-3",
+      threadId: "thread-3",
+      jobId: "job-3",
+      accessGrantId: resumedGrant.grantId,
+      type: "approval_response",
     });
   });
 

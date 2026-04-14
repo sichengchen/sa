@@ -22,7 +22,9 @@ export class RelayService {
   constructor(private readonly store: RelayStore) {}
 
   async registerServer(
-    record: Omit<RelayServerRecord, "enrollmentToken"> & { enrollmentToken?: string | null },
+    record: Omit<RelayServerRecord, "enrollmentToken"> & {
+      enrollmentToken?: string | null;
+    },
   ): Promise<RelayServerRecord> {
     const state = await this.store.load();
     const next: RelayServerRecord = {
@@ -59,7 +61,9 @@ export class RelayService {
   }
 
   async registerDevice(
-    record: Omit<RelayDeviceRecord, "pairingToken"> & { pairingToken?: string | null },
+    record: Omit<RelayDeviceRecord, "pairingToken"> & {
+      pairingToken?: string | null;
+    },
   ): Promise<RelayDeviceRecord> {
     const state = await this.store.load();
     const next: RelayDeviceRecord = {
@@ -198,7 +202,10 @@ export class RelayService {
 
   async attachSession(
     request: RelayAttachmentRequest,
-    options: { canSendMessages?: boolean; canRespondToApprovals?: boolean } = {},
+    options: {
+      canSendMessages?: boolean;
+      canRespondToApprovals?: boolean;
+    } = {},
     attachedAt = Date.now(),
   ): Promise<RelaySessionAttachmentRecord> {
     const state = await this.store.load();
@@ -348,7 +355,7 @@ export class RelayService {
       sessionId: message.sessionId,
       serverId: message.serverId ?? attachment?.serverId ?? grant?.serverId ?? null,
       threadId: message.threadId ?? attachment?.threadId ?? grant?.threadId ?? null,
-      jobId: message.jobId ?? null,
+      jobId: message.jobId ?? attachment?.jobId ?? null,
       accessGrantId: grant?.grantId ?? attachment?.accessGrantId ?? null,
       type: "follow_up",
       payloadJson: JSON.stringify({ message: message.message }),
@@ -393,7 +400,7 @@ export class RelayService {
       sessionId: response.sessionId,
       serverId: response.serverId ?? attachment?.serverId ?? grant?.serverId ?? null,
       threadId: response.threadId ?? attachment?.threadId ?? grant?.threadId ?? null,
-      jobId: response.jobId ?? null,
+      jobId: response.jobId ?? attachment?.jobId ?? null,
       accessGrantId: grant?.grantId ?? attachment?.accessGrantId ?? null,
       type: "approval_response",
       payloadJson: JSON.stringify({
@@ -488,7 +495,11 @@ export class RelayService {
     state: RelayState,
     attachment: RelaySessionAttachmentRecord | undefined,
     token: string | null | undefined,
-    scope: { deviceId: string; serverId?: string | null; threadId?: string | null },
+    scope: {
+      deviceId: string;
+      serverId?: string | null;
+      threadId?: string | null;
+    },
   ): Promise<RelayAccessGrantRecord | undefined> {
     if (token) {
       const grant = await this.resolveAccessGrantToken(token, scope);
