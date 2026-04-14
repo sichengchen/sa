@@ -7,6 +7,7 @@ This section covers local setup, testing, release flow, and migration discipline
 - [release.md](./release.md)
 - [migration.md](./migration.md)
 - [new-architecture-implementation-plan.md](./new-architecture-implementation-plan.md)
+- [final-wave-implementation-plan.md](./final-wave-implementation-plan.md)
 - [package-extraction-ledger.md](./package-extraction-ledger.md)
 - [phase-2-extraction-ledger.md](./phase-2-extraction-ledger.md)
 - [phase-4-server-package-seams-ledger.md](./phase-4-server-package-seams-ledger.md)

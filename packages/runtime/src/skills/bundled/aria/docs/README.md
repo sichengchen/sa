@@ -17,8 +17,13 @@ This tree is organized by reader intent, not by the old code layout.
 - [new-architecture/README.md](./new-architecture/README.md)
 - [new-architecture/overview.md](./new-architecture/overview.md)
 - [new-architecture/deployment.md](./new-architecture/deployment.md)
+- [new-architecture/runtime.md](./new-architecture/runtime.md)
 - [new-architecture/prompt-engine.md](./new-architecture/prompt-engine.md)
+- [new-architecture/tool-runtime.md](./new-architecture/tool-runtime.md)
+- [new-architecture/automation.md](./new-architecture/automation.md)
+- [new-architecture/interaction-protocol.md](./new-architecture/interaction-protocol.md)
 - [new-architecture/relay.md](./new-architecture/relay.md)
+- [new-architecture/handoff.md](./new-architecture/handoff.md)
 - [new-architecture/server.md](./new-architecture/server.md)
 - [new-architecture/desktop-and-mobile.md](./new-architecture/desktop-and-mobile.md)
 - [new-architecture/tech-decisions.md](./new-architecture/tech-decisions.md)
@@ -28,19 +33,10 @@ This tree is organized by reader intent, not by the old code layout.
 ### Product
 
 - [product/README.md](./product/README.md)
+- [product/aria-platform.md](./product/aria-platform.md)
 - [product/overview.md](./product/overview.md)
 - [product/areas.md](./product/areas.md)
 - [product/glossary.md](./product/glossary.md)
-
-### Architecture
-
-- Remaining current-state notes while the old architecture docs are retired in favor of `new-architecture/*`.
-- [architecture/README.md](./architecture/README.md)
-- [architecture/runtime.md](./architecture/runtime.md)
-- [architecture/storage-and-recovery.md](./architecture/storage-and-recovery.md)
-- [architecture/tool-runtime.md](./architecture/tool-runtime.md)
-- [architecture/handoff.md](./architecture/handoff.md)
-- [architecture/interaction-protocol.md](./architecture/interaction-protocol.md)
 
 ### Operator Guides
 
@@ -81,6 +77,7 @@ This tree is organized by reader intent, not by the old code layout.
 - [development/testing.md](./development/testing.md)
 - [development/release.md](./development/release.md)
 - [development/migration.md](./development/migration.md)
+- [development/final-wave-implementation-plan.md](./development/final-wave-implementation-plan.md)
 - [development/phase-13-relay-service-seam-ledger.md](./development/phase-13-relay-service-seam-ledger.md)
 - [development/package-extraction-ledger.md](./development/package-extraction-ledger.md)
 - [development/phase-2-extraction-ledger.md](./development/phase-2-extraction-ledger.md)

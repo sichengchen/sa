@@ -2,7 +2,7 @@
 
 This folder defines the target-state architecture for the new Aria product shape.
 
-It is intentionally forward-looking. It does not describe the current repo as-is. It describes the architecture the repo should move toward on the `new-aria` line:
+It is intentionally forward-looking. It does not describe the current repo as-is. It describes the architecture the repo should keep moving toward:
 
 - `Aria Server` hosts `Aria Agent`
 - `Aria Agent` is the only component that owns Aria-managed memory, context, IM connectors, and automation
@@ -17,8 +17,13 @@ It is intentionally forward-looking. It does not describe the current repo as-is
 
 - [overview.md](./overview.md)
 - [deployment.md](./deployment.md)
+- [runtime.md](./runtime.md)
 - [prompt-engine.md](./prompt-engine.md)
+- [tool-runtime.md](./tool-runtime.md)
+- [automation.md](./automation.md)
+- [interaction-protocol.md](./interaction-protocol.md)
 - [relay.md](./relay.md)
+- [handoff.md](./handoff.md)
 - [server.md](./server.md)
 - [desktop-and-mobile.md](./desktop-and-mobile.md)
 - [tech-decisions.md](./tech-decisions.md)
@@ -54,8 +59,13 @@ That implies:
 
 - Start with [overview.md](./overview.md) for the system map
 - Read [deployment.md](./deployment.md) for where each component runs
+- Read [runtime.md](./runtime.md) for the runtime kernel and recovery model
 - Read [prompt-engine.md](./prompt-engine.md) for the target-state prompt assembly contract
+- Read [tool-runtime.md](./tool-runtime.md) for toolsets, policy, and MCP execution
+- Read [automation.md](./automation.md) for the server-owned automation model
+- Read [interaction-protocol.md](./interaction-protocol.md) for shared request and event contracts
 - Read [relay.md](./relay.md) for the secure access and transport model
+- Read [handoff.md](./handoff.md) for the durable Aria-to-project-work submission boundary
 - Read [server.md](./server.md) for the server-side ownership model
 - Read [desktop-and-mobile.md](./desktop-and-mobile.md) for the client model
 - Read [tech-decisions.md](./tech-decisions.md) for concrete stack choices

@@ -9,18 +9,18 @@ You are Esperta Aria, a local-first agent platform. This skill is a minimal inde
 
 ## Canonical Docs
 
-| Topic                | Doc file                                  | Covers                                                         |
-| -------------------- | ----------------------------------------- | -------------------------------------------------------------- |
-| Product model        | `docs/product/aria-platform.md`           | Naming, commitments, compatibility stance, north-star criteria |
-| Runtime model        | `docs/system/runtime-model.md`            | Durable runtime, SQLite store, session and run model           |
-| Prompt engine        | `docs/system/prompt-engine.md`            | Context assembly, memory layers, compression, caching          |
-| Tool runtime         | `docs/system/tool-runtime.md`             | Toolsets, capability policy, MCP integration                   |
-| Automation           | `docs/system/automation.md`               | Scheduled and event-driven task execution                      |
-| Interaction protocol | `docs/interfaces/interaction-protocol.md` | Shared event contract across every frontend                    |
+| Topic                | Doc file                                        | Covers                                                         |
+| -------------------- | ----------------------------------------------- | -------------------------------------------------------------- |
+| Product model        | `docs/product/aria-platform.md`                 | Naming, commitments, compatibility stance, north-star criteria |
+| Runtime model        | `docs/new-architecture/runtime.md`              | Durable runtime, execution graph, recovery, operational state  |
+| Prompt engine        | `docs/new-architecture/prompt-engine.md`        | Context assembly, memory layers, compression, caching          |
+| Tool runtime         | `docs/new-architecture/tool-runtime.md`         | Toolsets, capability policy, MCP integration                   |
+| Automation           | `docs/new-architecture/automation.md`           | Server-owned scheduled and event-driven task execution         |
+| Interaction protocol | `docs/new-architecture/interaction-protocol.md` | Shared event contract across every frontend                    |
 
 ## Accessing Docs
 
-- **Read a doc**: `read_skill(name: "aria", path: "docs/system/runtime-model.md")`
+- **Read a doc**: `read_skill(name: "aria", path: "docs/new-architecture/runtime.md")`
 - **List all files**: `read_skill(name: "aria", path: "__index__")`
 - **Read this index**: `read_skill(name: "aria")`
 

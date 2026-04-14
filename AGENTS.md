@@ -9,11 +9,13 @@ Use this file to bootstrap any coding agent into the current Esperta Aria workfl
 3. Read the canonical Aria docs in `docs/` that match the area you are changing.
 4. Start with these platform docs unless the task is narrowly scoped elsewhere:
    - `docs/product/aria-platform.md`
-   - `docs/system/runtime-model.md`
-   - `docs/system/prompt-engine.md`
-   - `docs/system/tool-runtime.md`
-   - `docs/system/automation.md`
-   - `docs/interfaces/interaction-protocol.md`
+   - `docs/new-architecture/overview.md`
+   - `docs/new-architecture/runtime.md`
+   - `docs/new-architecture/prompt-engine.md`
+   - `docs/new-architecture/tool-runtime.md`
+   - `docs/new-architecture/automation.md`
+   - `docs/new-architecture/interaction-protocol.md`
+   - `docs/new-architecture/server.md`
 
 ## Source Of Truth
 
