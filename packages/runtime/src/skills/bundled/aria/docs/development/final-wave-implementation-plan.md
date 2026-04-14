@@ -43,6 +43,7 @@ This plan continues `docs/development/new-architecture-implementation-plan.md` a
 - Contributor and bundled-skill doc entrypoints now point at the current canonical docs tree.
 - The remaining `docs/architecture/*` pages have been retired after their target-state content was moved into `docs/new-architecture/*` and current development docs.
 - `@aria/projects` now exposes a dedicated thread-environment switch service, `@aria/desktop-bridge` exposes it at the desktop-local boundary, and the CLI plus desktop shell can route environment changes through that durable mutation path.
+- `apps/aria-mobile` now includes Expo app identifiers plus EAS build and submit profiles for preview and production release flows.
 
 ### Not Completed
 

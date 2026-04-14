@@ -3,8 +3,23 @@
     "name": "Aria Mobile",
     "slug": "aria-mobile",
     "version": "0.0.0",
+    "scheme": "aria-mobile",
     "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
     "platforms": ["ios", "android"],
-    "assetBundlePatterns": ["**/*"]
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.esperta.ariamobile"
+    },
+    "android": {
+      "package": "dev.esperta.ariamobile"
+    }
   }
 }
