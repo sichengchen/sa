@@ -10,6 +10,10 @@ export * from "./sessions.js";
 export * from "./session-coordinator.js";
 export { getRuntimeDiscoveryPaths, type RuntimeDiscoveryPaths } from "./discovery.js";
 export {
+  createEngineDaemonController,
+  type CreateEngineDaemonControllerOptions,
+  type EngineDaemonController,
+  type EngineDaemonDependencies,
   engineCommand,
   ensureEngine,
   logsEngine,

@@ -54,6 +54,7 @@ This plan continues `docs/development/new-architecture-implementation-plan.md` a
 - Desktop host composition now injects a real bridge-backed project environment-switch callback by default when a desktop bridge or projects repository is supplied, instead of relying on the shell's in-memory fallback path.
 - Desktop shell models can now derive and display tracked repo/worktree state for the active local project thread through the desktop-local boundary.
 - Relay host tests now prove persisted server, device, grant, attachment, and queued-event state reloads across service restarts.
+- Server daemon restart, stale-discovery cleanup, and health-status behavior now run through an injectable controller with direct restart/recovery tests.
 
 ### Not Completed
 

@@ -1,17 +1,48 @@
-import { readFile, writeFile, unlink } from "node:fs/promises";
+import { readFile, unlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { spawnAriaServerDaemonHost } from "aria-server/process";
 import { CLI_NAME, HOME_ENV_VAR, RUNTIME_NAME } from "@aria/server/brand";
-import { getRuntimeDiscoveryPaths } from "./discovery.js";
+import { getRuntimeDiscoveryPaths, type RuntimeDiscoveryPaths } from "./discovery.js";
 
-const {
-  runtimeHome,
-  pidFile: PID_FILE,
-  urlFile: URL_FILE,
-  logFile: LOG_FILE,
-} = getRuntimeDiscoveryPaths();
+export interface EngineDaemonChildProcess {
+  pid?: number | null;
+}
 
-function isProcessAlive(pid: number): boolean {
+export interface EngineDaemonDependencies {
+  existsSync(path: string): boolean;
+  readFile(path: string, encoding: "utf-8"): Promise<string>;
+  unlink(path: string): Promise<void>;
+  sleep(ms: number): Promise<void>;
+  spawnDaemonHost(options: {
+    runtimeHome: string;
+    logFile: string;
+    env?: NodeJS.ProcessEnv;
+  }): EngineDaemonChildProcess;
+  isProcessAlive(pid: number): boolean;
+  kill(pid: number, signal?: NodeJS.Signals | 0): void;
+  fetch(url: string): Promise<{ ok: boolean; json(): Promise<unknown> }>;
+  log(message: string): void;
+  error(message: string): void;
+  exit(code: number): never | void;
+}
+
+export interface EngineDaemonController {
+  startEngine(): Promise<void>;
+  stopEngine(): Promise<void>;
+  statusEngine(): Promise<void>;
+  logsEngine(): Promise<void>;
+  restartEngine(): Promise<void>;
+  ensureEngine(): Promise<void>;
+  engineCommand(args: string[]): Promise<void>;
+}
+
+export interface CreateEngineDaemonControllerOptions {
+  discoveryPaths?: RuntimeDiscoveryPaths;
+  env?: NodeJS.ProcessEnv;
+  dependencies?: Partial<EngineDaemonDependencies>;
+}
+
+function defaultIsProcessAlive(pid: number): boolean {
   try {
     process.kill(pid, 0);
     return true;
@@ -20,155 +51,212 @@ function isProcessAlive(pid: number): boolean {
   }
 }
 
-async function readPid(): Promise<number | null> {
-  if (!existsSync(PID_FILE)) return null;
-  const raw = await readFile(PID_FILE, "utf-8");
-  const pid = parseInt(raw.trim(), 10);
-  if (isNaN(pid)) return null;
-  return pid;
+function createDefaultDependencies(): EngineDaemonDependencies {
+  return {
+    existsSync,
+    readFile,
+    unlink,
+    sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    spawnDaemonHost: spawnAriaServerDaemonHost,
+    isProcessAlive: defaultIsProcessAlive,
+    kill: (pid, signal) => process.kill(pid, signal),
+    fetch: (url) =>
+      globalThis.fetch(url) as Promise<{
+        ok: boolean;
+        json(): Promise<unknown>;
+      }>,
+    log: (message) => console.log(message),
+    error: (message) => console.error(message),
+    exit: (code) => process.exit(code),
+  };
 }
 
-async function cleanStaleFiles(): Promise<void> {
-  if (existsSync(PID_FILE)) await unlink(PID_FILE);
-  if (existsSync(URL_FILE)) await unlink(URL_FILE);
-}
+export function createEngineDaemonController(
+  options: CreateEngineDaemonControllerOptions = {},
+): EngineDaemonController {
+  const discoveryPaths = options.discoveryPaths ?? getRuntimeDiscoveryPaths();
+  const env = options.env ?? process.env;
+  const deps = {
+    ...createDefaultDependencies(),
+    ...options.dependencies,
+  } satisfies EngineDaemonDependencies;
 
-export async function startEngine(): Promise<void> {
-  const existingPid = await readPid();
-  if (existingPid && isProcessAlive(existingPid)) {
-    console.log(`${RUNTIME_NAME} is already running (PID ${existingPid}).`);
-    return;
+  const { runtimeHome, pidFile, urlFile, logFile } = discoveryPaths;
+
+  async function readPid(): Promise<number | null> {
+    if (!deps.existsSync(pidFile)) return null;
+    const raw = await deps.readFile(pidFile, "utf-8");
+    const pid = parseInt(raw.trim(), 10);
+    if (Number.isNaN(pid)) return null;
+    return pid;
   }
 
-  await cleanStaleFiles();
-
-  const child = spawnAriaServerDaemonHost({
-    runtimeHome,
-    logFile: LOG_FILE,
-    env: { ...process.env, [HOME_ENV_VAR]: runtimeHome },
-  });
-
-  if (!child.pid) {
-    console.error(`Failed to start ${RUNTIME_NAME}.`);
-    process.exit(1);
+  async function cleanStaleFiles(): Promise<void> {
+    if (deps.existsSync(pidFile)) await deps.unlink(pidFile);
+    if (deps.existsSync(urlFile)) await deps.unlink(urlFile);
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  async function startEngine(): Promise<void> {
+    const existingPid = await readPid();
+    if (existingPid && deps.isProcessAlive(existingPid)) {
+      deps.log(`${RUNTIME_NAME} is already running (PID ${existingPid}).`);
+      return;
+    }
 
-  if (!isProcessAlive(child.pid)) {
-    console.error(`${RUNTIME_NAME} failed to start. Check logs: ${CLI_NAME} engine logs`);
     await cleanStaleFiles();
-    process.exit(1);
-  }
 
-  console.log(`${RUNTIME_NAME} started (PID ${child.pid}).`);
+    const child = deps.spawnDaemonHost({
+      runtimeHome,
+      logFile,
+      env: { ...env, [HOME_ENV_VAR]: runtimeHome },
+    });
 
-  if (existsSync(URL_FILE)) {
-    const url = await readFile(URL_FILE, "utf-8");
-    console.log(`Listening on ${url.trim()}`);
-  }
-}
+    if (!child.pid) {
+      deps.error(`Failed to start ${RUNTIME_NAME}.`);
+      deps.exit(1);
+      return;
+    }
 
-export async function stopEngine(): Promise<void> {
-  const pid = await readPid();
-  if (!pid || !isProcessAlive(pid)) {
-    console.log(`${RUNTIME_NAME} is not running.`);
-    await cleanStaleFiles();
-    return;
-  }
+    await deps.sleep(1500);
 
-  process.kill(pid, "SIGTERM");
+    if (!deps.isProcessAlive(child.pid)) {
+      deps.error(`${RUNTIME_NAME} failed to start. Check logs: ${CLI_NAME} engine logs`);
+      await cleanStaleFiles();
+      deps.exit(1);
+      return;
+    }
 
-  for (let index = 0; index < 50; index += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    if (!isProcessAlive(pid)) break;
-  }
+    deps.log(`${RUNTIME_NAME} started (PID ${child.pid}).`);
 
-  if (isProcessAlive(pid)) {
-    process.kill(pid, "SIGKILL");
-  }
-
-  await cleanStaleFiles();
-  console.log(`${RUNTIME_NAME} stopped.`);
-}
-
-export async function statusEngine(): Promise<void> {
-  const pid = await readPid();
-
-  if (!pid || !isProcessAlive(pid)) {
-    console.log(`${RUNTIME_NAME}: stopped`);
-    if (pid) await cleanStaleFiles();
-    return;
-  }
-
-  console.log(`${RUNTIME_NAME}: running (PID ${pid})`);
-
-  if (existsSync(URL_FILE)) {
-    const url = (await readFile(URL_FILE, "utf-8")).trim();
-    console.log(`URL: ${url}`);
-
-    try {
-      const response = await fetch(`${url}/health`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`Status: ${(data as { status: string }).status}`);
-      }
-    } catch {
-      console.log("Status: unreachable (may still be starting)");
+    if (deps.existsSync(urlFile)) {
+      const url = await deps.readFile(urlFile, "utf-8");
+      deps.log(`Listening on ${url.trim()}`);
     }
   }
-}
 
-export async function logsEngine(): Promise<void> {
-  if (!existsSync(LOG_FILE)) {
-    console.log("No log file found.");
-    return;
-  }
-  const content = await readFile(LOG_FILE, "utf-8");
-  const lines = content.split("\n");
-  const tail = lines.slice(-50).join("\n");
-  console.log(tail);
-}
+  async function stopEngine(): Promise<void> {
+    const pid = await readPid();
+    if (!pid || !deps.isProcessAlive(pid)) {
+      deps.log(`${RUNTIME_NAME} is not running.`);
+      await cleanStaleFiles();
+      return;
+    }
 
-export async function restartEngine(): Promise<void> {
-  await stopEngine();
-  await startEngine();
-}
+    deps.kill(pid, "SIGTERM");
 
-export async function ensureEngine(): Promise<void> {
-  const existingPid = await readPid();
-  if (existingPid && isProcessAlive(existingPid)) return;
-  await startEngine();
-}
+    for (let index = 0; index < 50; index += 1) {
+      await deps.sleep(100);
+      if (!deps.isProcessAlive(pid)) break;
+    }
 
-export async function engineCommand(args: string[]): Promise<void> {
-  const action = args[0];
+    if (deps.isProcessAlive(pid)) {
+      deps.kill(pid, "SIGKILL");
+    }
 
-  if (!action || action === "--help" || action === "-h") {
-    console.log(`${RUNTIME_NAME} — daemon management\n`);
-    console.log(`Usage: ${CLI_NAME} engine <action>\n`);
-    console.log("Actions:");
-    console.log("  start     Start the runtime as a background daemon");
-    console.log("  stop      Stop the running runtime");
-    console.log("  status    Show runtime status");
-    console.log("  logs      Show recent runtime logs");
-    console.log("  restart   Restart the runtime");
-    return;
+    await cleanStaleFiles();
+    deps.log(`${RUNTIME_NAME} stopped.`);
   }
 
-  const actions: Record<string, () => Promise<void>> = {
-    start: startEngine,
-    stop: stopEngine,
-    status: statusEngine,
-    logs: logsEngine,
-    restart: restartEngine,
+  async function statusEngine(): Promise<void> {
+    const pid = await readPid();
+
+    if (!pid || !deps.isProcessAlive(pid)) {
+      deps.log(`${RUNTIME_NAME}: stopped`);
+      if (pid) await cleanStaleFiles();
+      return;
+    }
+
+    deps.log(`${RUNTIME_NAME}: running (PID ${pid})`);
+
+    if (deps.existsSync(urlFile)) {
+      const url = (await deps.readFile(urlFile, "utf-8")).trim();
+      deps.log(`URL: ${url}`);
+
+      try {
+        const response = await deps.fetch(`${url}/health`);
+        if (response.ok) {
+          const data = (await response.json()) as { status: string };
+          deps.log(`Status: ${data.status}`);
+        }
+      } catch {
+        deps.log("Status: unreachable (may still be starting)");
+      }
+    }
+  }
+
+  async function logsEngine(): Promise<void> {
+    if (!deps.existsSync(logFile)) {
+      deps.log("No log file found.");
+      return;
+    }
+    const content = await deps.readFile(logFile, "utf-8");
+    const lines = content.split("\n");
+    deps.log(lines.slice(-50).join("\n"));
+  }
+
+  async function restartEngine(): Promise<void> {
+    await stopEngine();
+    await startEngine();
+  }
+
+  async function ensureEngine(): Promise<void> {
+    const existingPid = await readPid();
+    if (existingPid && deps.isProcessAlive(existingPid)) {
+      return;
+    }
+    await startEngine();
+  }
+
+  async function engineCommand(args: string[]): Promise<void> {
+    const action = args[0];
+
+    if (!action || action === "--help" || action === "-h") {
+      deps.log(`${RUNTIME_NAME} — daemon management\n`);
+      deps.log(`Usage: ${CLI_NAME} engine <action>\n`);
+      deps.log("Actions:");
+      deps.log("  start     Start the runtime as a background daemon");
+      deps.log("  stop      Stop the running runtime");
+      deps.log("  status    Show runtime status");
+      deps.log("  logs      Show recent runtime logs");
+      deps.log("  restart   Restart the runtime");
+      return;
+    }
+
+    const actions: Record<string, () => Promise<void>> = {
+      start: startEngine,
+      stop: stopEngine,
+      status: statusEngine,
+      logs: logsEngine,
+      restart: restartEngine,
+    };
+
+    const handler = actions[action];
+    if (!handler) {
+      deps.error(`Unknown engine action: ${action}`);
+      deps.exit(1);
+      return;
+    }
+
+    await handler();
+  }
+
+  return {
+    startEngine,
+    stopEngine,
+    statusEngine,
+    logsEngine,
+    restartEngine,
+    ensureEngine,
+    engineCommand,
   };
-
-  const handler = actions[action];
-  if (!handler) {
-    console.error(`Unknown engine action: ${action}`);
-    process.exit(1);
-  }
-
-  await handler();
 }
+
+const engineDaemonController = createEngineDaemonController();
+
+export const startEngine = engineDaemonController.startEngine;
+export const stopEngine = engineDaemonController.stopEngine;
+export const statusEngine = engineDaemonController.statusEngine;
+export const logsEngine = engineDaemonController.logsEngine;
+export const restartEngine = engineDaemonController.restartEngine;
+export const ensureEngine = engineDaemonController.ensureEngine;
+export const engineCommand = engineDaemonController.engineCommand;
