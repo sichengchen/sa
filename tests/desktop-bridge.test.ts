@@ -37,8 +37,8 @@ describe("desktop bridge", () => {
     repository.upsertServer({
       serverId: "server-1",
       label: "Home Server",
-      relayId: null,
-      directBaseUrl: "https://aria.example.test",
+      primaryBaseUrl: "https://aria.example.test",
+      secondaryBaseUrl: null,
       createdAt: now,
       updatedAt: now,
     });

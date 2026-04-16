@@ -31,22 +31,14 @@ Current commands include:
 
 This command surface now covers real tracked-work mutation, not just inspection.
 
-## Relay Commands
+## Gateway Commands
 
-`aria relay` is the paired-device management surface over `packages/relay`.
+`aria gateway` is the operator surface for secure gateway access.
 
 Current commands include:
 
-- `list`
-- `register <deviceId> <label>`
-- `revoke <deviceId>`
-- `attach <deviceId> <sessionId>`
-- `detach <deviceId> <sessionId>`
-- `attachments [deviceId]`
-- `send <deviceId> <sessionId> <message>`
-- `approve <deviceId> <sessionId> <toolCallId> <approve|deny>`
-- `events [deviceId]`
-- `deliver <eventId>`
+- `status`
+- `pair-code`
 
 ## Connector Commands
 
@@ -85,4 +77,4 @@ Important slash commands remain:
 
 ## Runtime Pairing
 
-CLI and connectors pair with the runtime using the runtime auth flow rather than owning separate execution state. The CLI remains an operator surface, not a second runtime.
+CLI and connectors pair with the runtime using the gateway auth flow rather than owning separate execution state. Pairing code issuance should happen from a local/admin surface such as `aria gateway pair-code`, not from a public unauthenticated API. The CLI remains an operator surface, not a second runtime.

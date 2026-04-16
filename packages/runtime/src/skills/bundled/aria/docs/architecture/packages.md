@@ -10,7 +10,6 @@ This page defines the package names, top-level repo layout, and naming rules for
 - `Aria Agent`
 - `Aria Desktop`
 - `Aria Mobile`
-- `Aria Relay`
 - `Aria Console`
 
 ### Internal package scope
@@ -19,15 +18,15 @@ Use `@aria/*`.
 
 ### Reserved terms
 
-| Term        | Use it for                                    | Do not use it for                   |
-| ----------- | --------------------------------------------- | ----------------------------------- |
-| `agent`     | LLM-based assistants or coding-agent adapters | generic services or daemons         |
-| `runtime`   | the shared runtime kernel                     | the deployed server product         |
-| `server`    | the deployable server app                     | the runtime kernel                  |
-| `relay`     | secure access and hosted-runtime layer        | direct assistant behavior           |
-| `connector` | IM/chat integrations                          | generic client integrations         |
-| `bridge`    | desktop-local execution integration           | server-side services                |
-| `workspace` | execution boundary                            | a casual synonym for repo or folder |
+| Term        | Use it for                                         | Do not use it for                   |
+| ----------- | -------------------------------------------------- | ----------------------------------- |
+| `agent`     | LLM-based assistants or coding-agent adapters      | generic services or daemons         |
+| `runtime`   | the shared runtime kernel                          | the deployed server product         |
+| `server`    | the deployable server app                          | the runtime kernel                  |
+| `gateway`   | built-in authenticated API and realtime entrypoint | generic reverse proxies or tunnels  |
+| `connector` | IM/chat integrations                               | generic client integrations         |
+| `bridge`    | desktop-local execution integration                | server-side services                |
+| `workspace` | execution boundary                                 | a casual synonym for repo or folder |
 
 ### Renames from older language
 
@@ -68,9 +67,6 @@ packages/
   desktop-bridge/
   desktop-git/
   ui/
-
-services/
-  aria-relay/
 ```
 
 ## System Model
@@ -85,9 +81,9 @@ Projects / Workspaces / Jobs
   -> repo/worktree behavior
   -> dispatch records and execution routing
 
-Relay
-  -> paired-device trust
-  -> attachment and envelope transport
+Gateway access
+  -> gateway authentication and session attachment
+  -> operator-managed LAN/VPN/tunnel publication
 
 Handoff
   -> local/runtime work submission into Projects
@@ -140,7 +136,6 @@ For the concrete app-shell decisions and Bun-runtime clarification, see [tech-de
 | `@aria/desktop-bridge` | Local desktop execution bridge for local project mode                                                          |
 | `@aria/desktop-git`    | Local git and worktree integration helpers                                                                     |
 | `@aria/ui`             | Shared UI primitives and cross-app presentation components                                                     |
-| `@aria/relay`          | Secure access broker and optional hosted runtime service                                                       |
 
 ## Current Repo State
 
@@ -203,7 +198,6 @@ The package graph should stay layered.
 - `@aria/desktop`
 - `@aria/mobile`
 - `@aria/console`
-- `@aria/relay`
 
 ### Desktop-only local layers
 
@@ -246,7 +240,6 @@ This package should be desktop-only. It should not be reused for server-hosted r
 | `aria-server`  | runtime, gateway, projects, agent-aria, memory, automation, connectors-im, jobs, workspaces, store, audit, prompt, tools, policy |
 | `aria-desktop` | access-client, projects, desktop-bridge, agents-coding, ui, protocol                                                             |
 | `aria-mobile`  | access-client, ui, protocol                                                                                                      |
-| `aria-relay`   | protocol, gateway-compatible contracts, relay-specific transport/auth logic                                                      |
 | `aria` console | console, access-client or a server-local transport shim, protocol                                                                |
 
 ## Official References
@@ -269,6 +262,6 @@ The key design rule is this:
 
 - `Aria Server` packages own the assistant platform
 - `Aria Desktop` packages own local developer tooling and client UX
-- `Aria Relay` packages own secure transport and access
+- `Aria Server Gateway` owns secure transport and access semantics
 
 That separation should stay visible in the repo layout.

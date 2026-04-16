@@ -208,6 +208,19 @@ describe("tRPC procedures (non-live)", () => {
     });
   });
 
+  describe("auth.code", () => {
+    test("requires the master token", async () => {
+      const caller = createCaller();
+      const result = await caller.auth.code();
+      expect(result.code).toHaveLength(8);
+    });
+
+    test("rejects session-scoped tokens", async () => {
+      const caller = createSessionCaller();
+      await expect(caller.auth.code()).rejects.toThrow("master token");
+    });
+  });
+
   describe("session.create", () => {
     test("creates a session with structured ID", async () => {
       const caller = createCaller();

@@ -1,6 +1,6 @@
 # Security
 
-Aria enforces trust boundaries across runtime execution, connectors, relay access, automation, and tracked work.
+Aria enforces trust boundaries across runtime execution, gateway access, connectors, automation, and tracked work.
 
 ## Security Topics
 
@@ -21,4 +21,4 @@ Aria enforces trust boundaries across runtime execution, connectors, relay acces
 - dangerous actions are policy-gated
 - secrets are encrypted at rest
 - audit is always on
-- relay trust is explicit and scoped
+- gateway authentication is explicit, scoped, and auditable

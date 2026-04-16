@@ -20,7 +20,6 @@ Illustrative layout:
   memory/
   skills/
   automation/
-  relay-state.json
   engine.url
   engine.pid
   engine.token
@@ -31,7 +30,7 @@ Illustrative layout:
 Notes:
 
 - runtime, projects, workspaces, jobs, and handoff durable records currently share `aria.db`
-- relay persists paired-device state separately in `relay-state.json`
+- `engine.url` is the local discovery pointer for the built-in gateway
 - bundled skill assets currently live under `packages/runtime/src/skills/bundled/`, while the public skills API is owned by `@aria/memory`
 
 ## Environment Variables

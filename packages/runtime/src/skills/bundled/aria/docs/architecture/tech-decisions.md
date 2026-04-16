@@ -103,7 +103,7 @@ Use `bun` as the selected package manager and runtime, with `Vite+` as the monor
 “Use bun” should be interpreted precisely:
 
 - yes for package management and runtime in Aria repo workflows
-- yes for `Aria Server`, relay services, CLI utilities, shared scripts, and many packages
+- yes for `Aria Server`, CLI utilities, shared scripts, and many packages
 - no as the literal embedded runtime of Electron
 - no as the literal embedded runtime of React Native / Expo
 
@@ -203,7 +203,7 @@ The workspace graph should still come from the monorepo’s actual package relat
 - Expo-managed React Native shell
 - shared client packages with desktop where practical
 
-### Server and Relay
+### Server
 
 - bun runtime
 - bun-driven scripts where appropriate

@@ -65,20 +65,20 @@ flowchart LR
 
 ## Component Responsibilities
 
-| Component                      | Responsibility                                                                                               |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `Gateway API + Realtime`       | Authenticates clients, exposes request APIs, streams live thread/run events                                  |
-| `Aria Runtime`                 | Shared runtime kernel for routing, persistence, policy, execution, and orchestration                         |
-| `Aria Agent`                   | Personal assistant agent and sole owner of Aria-managed memory, connectors, and automation                   |
-| `Projects Control`             | Project registry, project-thread coordination, environment switching, and Aria-to-coding-agent orchestration |
-| `Aria Memory`                  | Memory layers, context assembly inputs, skills, and durable assistant knowledge                              |
-| `Aria Automation`              | Heartbeat, cron, and webhook automation owned by Aria                                                        |
-| `IM Connector Runtime`         | Slack/Telegram/Discord/Teams style connector processes and adapter logic                                     |
-| `Inbox + Approvals`            | Pending approvals, notifications, operator action items, and result surfacing                                |
-| `Remote Job Orchestrator`      | Launches, tracks, and resumes remote project jobs                                                            |
-| `Workspace Manager`            | Remote repos, worktrees, sandbox lifecycle, and environment selection                                        |
-| `Remote Coding Agent Adapters` | Codex, Claude Code, OpenCode adapters for remote project execution                                           |
-| `Operational Store`            | Durable threads, runs, approvals, automation state, audit, checkpoints, summaries                            |
+| Component                      | Responsibility                                                                                                               |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `Gateway API + Realtime`       | Authenticates clients, issues pairing codes for local/admin enrollment, exposes request APIs, streams live thread/run events |
+| `Aria Runtime`                 | Shared runtime kernel for routing, persistence, policy, execution, and orchestration                                         |
+| `Aria Agent`                   | Personal assistant agent and sole owner of Aria-managed memory, connectors, and automation                                   |
+| `Projects Control`             | Project registry, project-thread coordination, environment switching, and Aria-to-coding-agent orchestration                 |
+| `Aria Memory`                  | Memory layers, context assembly inputs, skills, and durable assistant knowledge                                              |
+| `Aria Automation`              | Heartbeat, cron, and webhook automation owned by Aria                                                                        |
+| `IM Connector Runtime`         | Slack/Telegram/Discord/Teams style connector processes and adapter logic                                                     |
+| `Inbox + Approvals`            | Pending approvals, notifications, operator action items, and result surfacing                                                |
+| `Remote Job Orchestrator`      | Launches, tracks, and resumes remote project jobs                                                                            |
+| `Workspace Manager`            | Remote repos, worktrees, sandbox lifecycle, and environment selection                                                        |
+| `Remote Coding Agent Adapters` | Codex, Claude Code, OpenCode adapters for remote project execution                                                           |
+| `Operational Store`            | Durable threads, runs, approvals, automation state, audit, checkpoints, summaries                                            |
 
 ## Ownership Rules
 
@@ -192,6 +192,17 @@ Recommended behavior:
 - it opens or resumes Aria threads only
 - it exposes inbox and automation inspection appropriate for Aria use
 - it does not become a separate local-project environment
+
+## Gateway Access Rule
+
+`Aria Server` must be safe to reach through its built-in gateway without depending on an Aria-operated network broker.
+
+That implies:
+
+- default bind should stay loopback-first unless the operator explicitly chooses LAN/public reachability
+- pairing code generation is a local/admin action, not a public unauthenticated network action
+- external tunnels, reverse proxies, and private overlays only publish the gateway; they do not take over authorization semantics
+- the gateway remains the only authenticated API + realtime entrypoint
 
 ## Current Repo Note
 

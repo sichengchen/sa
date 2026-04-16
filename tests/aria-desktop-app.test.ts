@@ -108,8 +108,8 @@ describe("aria-desktop app assembly", () => {
           target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "desktop",
@@ -131,7 +131,7 @@ describe("aria-desktop app assembly", () => {
     expect(bootstrap.shell.sharedPackages).toContain("@aria/ui");
     expect(bootstrap.bootstrap.servers.map((server) => server.label)).toEqual([
       "Home Server",
-      "Relay Mirror",
+      "Published Gateway",
     ]);
     expect(bootstrap.bootstrap.activeServerId).toBe("desktop");
     expect(bootstrap.bootstrap.activeServerLabel).toBe("Home Server");
@@ -156,8 +156,8 @@ describe("aria-desktop app assembly", () => {
           target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "desktop",
@@ -220,7 +220,7 @@ describe("aria-desktop app assembly", () => {
     ]);
     expect(model.shell.serverSwitcher.availableServers.map((server) => server.label)).toEqual([
       "Home Server",
-      "Relay Mirror",
+      "Published Gateway",
     ]);
   });
 
@@ -233,8 +233,8 @@ describe("aria-desktop app assembly", () => {
           target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "desktop",
@@ -258,6 +258,7 @@ describe("aria-desktop app assembly", () => {
           target: { serverId: "home", baseUrl: "https://aria.example.test/" },
         },
       ],
+      activeContextPanelId: "environment",
       resolveLocalProjectState(threadId) {
         return {
           threadId,
@@ -300,12 +301,12 @@ describe("aria-desktop app assembly", () => {
 
     expect(text).toContain("Aria Desktop");
     expect(text).toContain("Home Server");
-    expect(text).toContain("Relay Mirror");
+    expect(text).toContain("Published Gateway");
     expect(text).toContain("Projects");
     expect(text).toContain("Desktop thread");
     expect(text).toContain("Environment");
     expect(text).toContain("messages + runs");
-    expect(text).toContain("Context Panels");
+    expect(text).toContain("Inspector");
     expect(text).toContain("Home Server / main");
     expect(text).toContain("Repo:");
     expect(text).toContain("git@github.com:test/aria.git");
@@ -317,7 +318,7 @@ describe("aria-desktop app assembly", () => {
     expect(text.replace(/\s+/g, " ")).toContain("Aria chat messages: 0");
     expect(text).toContain("Send");
     expect(text).toContain("Stop");
-    expect(text.replace(/\s+/g, " ")).toContain("Placement: bottom-docked");
+    expect(text.replace(/\s+/g, " ")).toContain("bottom-docked");
   });
 
   test("exposes a desktop application root over the app shell", () => {
@@ -700,7 +701,9 @@ describe("aria-desktop app assembly", () => {
       .replace(/\s+/g, " ");
     expect(text).toContain("Recent Aria sessions: 2");
     expect(text).toContain("desktop:live-1 - live");
-    expect(text).toContain("desktop:archived-1 - archived - Archived - Archived summary");
+    expect(text).toContain("desktop:archived-1 - archived");
+    expect(text).toContain("Archived");
+    expect(text).toContain("Archived summary");
   });
 
   test("wires desktop shell callbacks for switching servers, threads, environments, and sessions", () => {
@@ -712,8 +715,8 @@ describe("aria-desktop app assembly", () => {
           target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "desktop",
@@ -827,7 +830,7 @@ describe("aria-desktop app assembly", () => {
   test("can switch the desktop app shell to another server", async () => {
     const relayState = {
       connected: true,
-      sessionId: "relay:session-1",
+      sessionId: "published:session-1",
       sessionStatus: "resumed" as const,
       approvalMode: "ask" as const,
       securityMode: "default" as const,
@@ -861,17 +864,17 @@ describe("aria-desktop app assembly", () => {
         },
       ],
       [
-        "relay",
+        "published",
         {
           state: relayState,
           recent: [
             {
-              sessionId: "relay:live",
+              sessionId: "published:live",
               connectorType: "tui",
-              connectorId: "relay",
+              connectorId: "published",
               archived: true,
-              preview: "Relay",
-              summary: "Relay",
+              preview: "Gateway",
+              summary: "Gateway",
             },
           ],
         },
@@ -902,19 +905,21 @@ describe("aria-desktop app assembly", () => {
           target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "desktop",
       createAriaThreadController: factory as any,
     });
 
-    const switched = await switchAriaDesktopAppShellServer(model, "relay");
-    expect(switched.activeServerId).toBe("relay");
-    expect(switched.activeServerLabel).toBe("Relay Mirror");
-    expect(switched.ariaThread.state.sessionId).toBe("relay:session-1");
-    expect(switched.ariaRecentSessions.map((session) => session.sessionId)).toEqual(["relay:live"]);
+    const switched = await switchAriaDesktopAppShellServer(model, "published");
+    expect(switched.activeServerId).toBe("published");
+    expect(switched.activeServerLabel).toBe("Published Gateway");
+    expect(switched.ariaThread.state.sessionId).toBe("published:session-1");
+    expect(switched.ariaRecentSessions.map((session) => session.sessionId)).toEqual([
+      "published:live",
+    ]);
   });
 
   test("can select a desktop project thread locally", () => {

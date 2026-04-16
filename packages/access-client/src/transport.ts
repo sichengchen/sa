@@ -1,22 +1,20 @@
 import { createEngineClient, type ClientOptions } from "./client.js";
-import {
-  selectRelayRoute,
-  type RelayTransportPreference,
-} from "@aria/relay/routing";
-import type { RelayTransportMode } from "@aria/relay/types";
 
 export type { EngineEvent, Session, SkillInfo, ToolApprovalRequest } from "@aria/protocol";
 
 export type { ClientOptions } from "./client.js";
 
+export type AccessPathPreference = "primary" | "secondary" | "auto";
+export type AccessRouteMode = "primary" | "secondary";
+
 export interface AccessClientTarget {
   serverId: string;
   baseUrl: string;
   token?: string;
-  directBaseUrl?: string;
-  relayBaseUrl?: string;
-  directReachable?: boolean;
-  preferredTransportMode?: RelayTransportPreference;
+  primaryBaseUrl?: string;
+  secondaryBaseUrl?: string;
+  primaryReachable?: boolean;
+  preferredAccessMode?: AccessPathPreference;
 }
 
 export interface AccessClientConfig extends ClientOptions {
@@ -25,8 +23,8 @@ export interface AccessClientConfig extends ClientOptions {
 
 export interface AccessClientRoute extends AccessClientConfig {
   baseUrl: string;
-  transportMode: RelayTransportMode;
-  usesRelay: boolean;
+  accessMode: AccessRouteMode;
+  usesSecondary: boolean;
 }
 
 export interface AccessClientHandle {
@@ -54,8 +52,95 @@ export interface HostAccessClientTargetDefaults {
   baseUrl: string;
 }
 
+interface AccessRouteTarget {
+  serverId: string;
+  primaryBaseUrl?: string | null;
+  secondaryBaseUrl?: string | null;
+  primaryReachable?: boolean | null;
+  preferredAccessMode?: AccessPathPreference;
+}
+
+function normalizeBaseUrl(value?: string | null): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 function stripTrailingSlash(value: string): string {
   return value.endsWith("/") ? value.slice(0, -1) : value;
+}
+
+function requireBaseUrl(
+  value: string | undefined,
+  serverId: string,
+  mode: AccessRouteMode,
+): string {
+  if (value) {
+    return value;
+  }
+  throw new Error(`No ${mode} access URL is configured for server ${serverId}`);
+}
+
+function selectAccessRoute(target: AccessRouteTarget): {
+  serverId: string;
+  baseUrl: string;
+  accessMode: AccessRouteMode;
+  usesSecondary: boolean;
+} {
+  const primaryBaseUrl = normalizeBaseUrl(target.primaryBaseUrl);
+  const secondaryBaseUrl = normalizeBaseUrl(target.secondaryBaseUrl);
+  const preferredAccessMode = target.preferredAccessMode ?? "auto";
+  const primaryReachable = target.primaryReachable ?? true;
+
+  if (preferredAccessMode === "primary") {
+    return {
+      serverId: target.serverId,
+      baseUrl: requireBaseUrl(primaryBaseUrl, target.serverId, "primary"),
+      accessMode: "primary",
+      usesSecondary: false,
+    };
+  }
+
+  if (preferredAccessMode === "secondary") {
+    return {
+      serverId: target.serverId,
+      baseUrl: requireBaseUrl(secondaryBaseUrl, target.serverId, "secondary"),
+      accessMode: "secondary",
+      usesSecondary: true,
+    };
+  }
+
+  if (primaryBaseUrl && primaryReachable) {
+    return {
+      serverId: target.serverId,
+      baseUrl: primaryBaseUrl,
+      accessMode: "primary",
+      usesSecondary: false,
+    };
+  }
+
+  if (secondaryBaseUrl) {
+    return {
+      serverId: target.serverId,
+      baseUrl: secondaryBaseUrl,
+      accessMode: "secondary",
+      usesSecondary: true,
+    };
+  }
+
+  if (primaryBaseUrl) {
+    return {
+      serverId: target.serverId,
+      baseUrl: primaryBaseUrl,
+      accessMode: "primary",
+      usesSecondary: false,
+    };
+  }
+
+  throw new Error(`No gateway access URL is configured for server ${target.serverId}`);
 }
 
 export function resolveHostAccessClientTarget(
@@ -66,20 +151,20 @@ export function resolveHostAccessClientTarget(
     serverId: config?.serverId ?? defaults.serverId,
     baseUrl: config?.baseUrl ?? defaults.baseUrl,
     token: config?.token,
-    directBaseUrl: config?.directBaseUrl,
-    relayBaseUrl: config?.relayBaseUrl,
-    directReachable: config?.directReachable,
-    preferredTransportMode: config?.preferredTransportMode,
+    primaryBaseUrl: config?.primaryBaseUrl,
+    secondaryBaseUrl: config?.secondaryBaseUrl,
+    primaryReachable: config?.primaryReachable,
+    preferredAccessMode: config?.preferredAccessMode,
   };
 }
 
 export function resolveAccessClientRoute(target: AccessClientTarget): AccessClientRoute {
-  const route = selectRelayRoute({
+  const route = selectAccessRoute({
     serverId: target.serverId,
-    directBaseUrl: target.directBaseUrl ?? target.baseUrl,
-    relayBaseUrl: target.relayBaseUrl,
-    directReachable: target.directReachable,
-    preferredTransportMode: target.preferredTransportMode,
+    primaryBaseUrl: target.primaryBaseUrl ?? target.baseUrl,
+    secondaryBaseUrl: target.secondaryBaseUrl,
+    primaryReachable: target.primaryReachable,
+    preferredAccessMode: target.preferredAccessMode,
   });
   const httpUrl = new URL(route.baseUrl);
   httpUrl.search = "";
@@ -93,8 +178,8 @@ export function resolveAccessClientRoute(target: AccessClientTarget): AccessClie
     httpUrl: stripTrailingSlash(httpUrl.toString()),
     wsUrl: stripTrailingSlash(wsUrl.toString()),
     token: target.token,
-    transportMode: route.transportMode,
-    usesRelay: route.usesRelay,
+    accessMode: route.accessMode,
+    usesSecondary: route.usesSecondary,
   };
 }
 

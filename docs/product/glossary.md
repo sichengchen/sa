@@ -24,6 +24,6 @@ A durable record for a repo execution context used by tracked work.
 
 An idempotent submission from local or runtime-originated work into Aria Projects.
 
-## Relay Attachment
+## Session Attachment
 
 A paired-device binding to a live runtime session with scoped permissions.

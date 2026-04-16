@@ -120,8 +120,8 @@ describe("projects workflow services", () => {
     repository.upsertServer({
       serverId: "server-home",
       label: "Home Server",
-      relayId: null,
-      directBaseUrl: "https://aria.example.test",
+      primaryBaseUrl: "https://aria.example.test",
+      secondaryBaseUrl: null,
       createdAt: now,
       updatedAt: now,
     });
@@ -594,8 +594,8 @@ describe("projects workflow services", () => {
     repository.upsertServer({
       serverId: "server-home",
       label: "Home Server",
-      relayId: "relay-home",
-      directBaseUrl: "https://aria.example.test",
+      primaryBaseUrl: "https://aria.example.test",
+      secondaryBaseUrl: "https://gateway.example.test/home",
       createdAt: now,
       updatedAt: now,
     });
@@ -621,7 +621,7 @@ describe("projects workflow services", () => {
 
     expect(repository.getServer("server-home")).toMatchObject({
       label: "Home Server",
-      relayId: "relay-home",
+      secondaryBaseUrl: "https://gateway.example.test/home",
     });
     expect(repository.listWorkspaces("server-home")).toEqual([
       expect.objectContaining({

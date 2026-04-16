@@ -24,7 +24,7 @@ flowchart LR
     end
 
     Mobile["Aria Mobile"]
-    Access["Secure Access / Aria Relay"]
+    Access["Gateway Access / Loopback / LAN / VPN / Tunnel"]
 
     subgraph Server["Aria Server"]
         direction TB
@@ -113,19 +113,19 @@ This mode is intentionally narrower than server mode.
 
 ## Placement Matrix
 
-| Capability                                 | Desktop local  | Aria Server      | Mobile         | Relay |
-| ------------------------------------------ | -------------- | ---------------- | -------------- | ----- |
-| `Aria Agent`                               | no             | yes              | no             | no    |
-| Aria-managed memory/context                | no             | yes              | no             | no    |
-| IM connectors                              | no             | yes              | no             | no    |
-| heartbeat / cron / webhook                 | no             | yes              | no             | no    |
-| project control for Aria-managed workflows | no             | yes              | no             | no    |
-| remote coding jobs                         | no             | yes              | no             | no    |
-| local coding jobs                          | yes            | no               | no             | no    |
-| local repo/worktree access                 | yes            | no               | no             | no    |
-| Aria chat UI                               | yes, as client | yes, via console | yes, as client | no    |
-| remote project UI                          | yes            | not primary      | yes            | no    |
-| access brokering                           | no             | no               | no             | yes   |
+| Capability                                 | Desktop local  | Aria Server      | Mobile         | External network infra |
+| ------------------------------------------ | -------------- | ---------------- | -------------- | ---------------------- |
+| `Aria Agent`                               | no             | yes              | no             | no                     |
+| Aria-managed memory/context                | no             | yes              | no             | no                     |
+| IM connectors                              | no             | yes              | no             | no                     |
+| heartbeat / cron / webhook                 | no             | yes              | no             | no                     |
+| project control for Aria-managed workflows | no             | yes              | no             | no                     |
+| remote coding jobs                         | no             | yes              | no             | no                     |
+| local coding jobs                          | yes            | no               | no             | no                     |
+| local repo/worktree access                 | yes            | no               | no             | no                     |
+| Aria chat UI                               | yes, as client | yes, via console | yes, as client | no                     |
+| remote project UI                          | yes            | not primary      | yes            | no                     |
+| reachability / publishing                  | no             | no               | no             | yes                    |
 
 ## Connectivity Modes
 
@@ -140,17 +140,17 @@ Typical examples:
 - Tailscale
 - direct public endpoint with server auth
 
-### Relay-assisted connection
+### Published gateway connection
 
-The client reaches `Aria Server` through `Aria Relay`.
+The client reaches `Aria Server` through an operator-managed network path that still terminates at the built-in gateway.
 
-Use this when:
+Typical examples:
 
-- the server is behind NAT
-- the operator does not want to expose the server directly
-- mobile access needs stable brokered connectivity
+- Cloudflare Tunnel
+- Caddy / Nginx / Traefik reverse proxy
+- a cloud load balancer in front of the server
 
-See [relay.md](./relay.md) for the detailed Relay design.
+See [gateway-access.md](./gateway-access.md) for the detailed security model.
 
 ## Failure and Disconnect Model
 
@@ -190,9 +190,9 @@ If `Aria Agent` is allowed to manage a local project, it must do so through an e
 - remote job execution
 - canonical server-hosted thread and run records
 
-### Relay boundary
+### External network boundary
 
-`Aria Relay` carries access and transport. It must not become the owner of Aria memory, automations, or assistant semantics.
+VPNs, tunnels, reverse proxies, and load balancers may publish `Aria Server Gateway`, but they must not become the owner of Aria memory, automations, approvals, or assistant semantics.
 
 ## Naming Guidance
 
@@ -202,4 +202,5 @@ Deployment language should stay precise:
 - say `Aria Runtime` when you mean the internal runtime kernel
 - say `Aria Console` when you mean the server-local `aria` terminal UI
 - say `Aria Desktop` when you mean the desktop client
-- say `Aria Relay` when you mean the secure access broker
+- say `Aria Server Gateway` when you mean the authenticated API + realtime entrypoint
+- say `external network path` when you mean Tailscale, Cloudflare Tunnel, reverse proxy, or another operator-managed reachability layer

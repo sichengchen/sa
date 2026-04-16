@@ -375,10 +375,10 @@ export const ariaMobileLaunchModes = [
       "Open Aria chat, inbox, automations, and project threads against a live Aria Server.",
   },
   {
-    id: "relay-attached",
-    label: "Relay-attached",
+    id: "published-gateway",
+    label: "Published gateway",
     description:
-      "Stay connected through Aria Relay for approvals, notifications, attachment handoff, remote review, and reconnect-safe thread handoff.",
+      "Stay connected through a published Aria Server gateway for approvals, notifications, attachment handoff, remote review, and reconnect-safe thread handoff.",
   },
 ] as const;
 

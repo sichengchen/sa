@@ -68,8 +68,8 @@ Important session utilities remain:
 - `destroySession(id)`
 - `transferSession(id, connectorId, connectorType?)`
 
-## Approval and Relay Interaction
+## Approval and Session Attachment Interaction
 
 - approval state is durable per run and per session
-- relay attachments target runtime sessions, not separate remote session objects
+- session attachments target runtime sessions, not separate remote session objects
 - projects dispatch execution now correlates durable dispatches to runtime session IDs

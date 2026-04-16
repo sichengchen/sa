@@ -11,7 +11,7 @@ It is the architecture the repo should keep aligned to:
   - server-hosted `Aria`
   - unified `Projects` with local and remote environments
 - `Aria Mobile` is a thin client for server-hosted Aria and remote project work
-- `Aria Relay` is the secure access and optional hosted-runtime layer
+- `Aria Server Gateway` is the built-in secure entrypoint, while LAN/VPN/tunnel reachability stays outside Aria's product boundary
 
 ## Document Set
 
@@ -22,7 +22,7 @@ It is the architecture the repo should keep aligned to:
 - [tool-runtime.md](./tool-runtime.md)
 - [automation.md](./automation.md)
 - [interaction-protocol.md](./interaction-protocol.md)
-- [relay.md](./relay.md)
+- [gateway-access.md](./gateway-access.md)
 - [handoff.md](./handoff.md)
 - [server.md](./server.md)
 - [desktop-and-mobile.md](./desktop-and-mobile.md)
@@ -32,16 +32,16 @@ It is the architecture the repo should keep aligned to:
 
 ## Canonical Names
 
-| Surface                  | Canonical Name |
-| ------------------------ | -------------- |
-| Product                  | `Esperta Aria` |
-| Server product           | `Aria Server`  |
-| Personal assistant       | `Aria Agent`   |
-| Desktop client           | `Aria Desktop` |
-| Mobile client            | `Aria Mobile`  |
-| Secure access layer      | `Aria Relay`   |
-| Server-local terminal UI | `Aria Console` |
-| CLI binary               | `aria`         |
+| Surface                  | Canonical Name        |
+| ------------------------ | --------------------- |
+| Product                  | `Esperta Aria`        |
+| Server product           | `Aria Server`         |
+| Personal assistant       | `Aria Agent`          |
+| Desktop client           | `Aria Desktop`        |
+| Mobile client            | `Aria Mobile`         |
+| Secure access layer      | `Aria Server Gateway` |
+| Server-local terminal UI | `Aria Console`        |
+| CLI binary               | `aria`                |
 
 ## Core Boundary
 
@@ -64,7 +64,7 @@ That implies:
 - Read [tool-runtime.md](./tool-runtime.md) for toolsets, policy, and MCP execution
 - Read [automation.md](./automation.md) for the server-owned automation model
 - Read [interaction-protocol.md](./interaction-protocol.md) for shared request and event contracts
-- Read [relay.md](./relay.md) for the secure access and transport model
+- Read [gateway-access.md](./gateway-access.md) for the secure access and transport model
 - Read [handoff.md](./handoff.md) for the durable Aria-to-project-work submission boundary
 - Read [server.md](./server.md) for the server-side ownership model
 - Read [desktop-and-mobile.md](./desktop-and-mobile.md) for the client model

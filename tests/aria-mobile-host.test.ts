@@ -55,18 +55,18 @@ describe("aria-mobile native host scaffold", () => {
       serverId: "mobile",
       baseUrl: "http://127.0.0.1:7420/",
       token: undefined,
-      directBaseUrl: undefined,
-      relayBaseUrl: undefined,
-      directReachable: undefined,
-      preferredTransportMode: undefined,
+      primaryBaseUrl: undefined,
+      secondaryBaseUrl: undefined,
+      primaryReachable: undefined,
+      preferredAccessMode: undefined,
     });
 
     const bootstrap = createAriaMobileNativeHostBootstrap({
-      serverId: "relay",
-      baseUrl: "https://relay.example.test/",
+      serverId: "published",
+      baseUrl: "https://gateway.example.test/",
     });
-    expect(bootstrap.target.serverId).toBe("relay");
-    expect(bootstrap.model.serverLabel).toBe("relay");
+    expect(bootstrap.target.serverId).toBe("published");
+    expect(bootstrap.model.serverLabel).toBe("published");
   });
 
   test("starts a mobile native host shell with recent sessions loaded", async () => {
@@ -147,8 +147,8 @@ describe("aria-mobile native host scaffold", () => {
           target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "mobile",
@@ -176,7 +176,7 @@ describe("aria-mobile native host scaffold", () => {
   test("switches a mobile native host bootstrap to another server", async () => {
     const relayState = {
       connected: true,
-      sessionId: "relay:session-1",
+      sessionId: "published:session-1",
       sessionStatus: "resumed" as const,
       approvalMode: "ask" as const,
       securityMode: "trusted" as const,
@@ -210,17 +210,17 @@ describe("aria-mobile native host scaffold", () => {
         },
       ],
       [
-        "relay",
+        "published",
         {
           state: relayState,
           recent: [
             {
-              sessionId: "relay:live",
+              sessionId: "published:live",
               connectorType: "tui",
-              connectorId: "relay",
+              connectorId: "published",
               archived: true,
-              preview: "Relay",
-              summary: "Relay",
+              preview: "Gateway",
+              summary: "Gateway",
             },
           ],
         },
@@ -252,8 +252,8 @@ describe("aria-mobile native host scaffold", () => {
           target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "mobile",
@@ -261,10 +261,10 @@ describe("aria-mobile native host scaffold", () => {
       createAriaThreadController: factory as any,
     });
 
-    const switched = await switchAriaMobileNativeHostBootstrapServer(bootstrap, "relay");
-    expect(switched.target.serverId).toBe("relay");
-    expect(switched.shell.activeServerId).toBe("relay");
-    expect(switched.model.sessionId).toBe("relay:session-1");
+    const switched = await switchAriaMobileNativeHostBootstrapServer(bootstrap, "published");
+    expect(switched.target.serverId).toBe("published");
+    expect(switched.shell.activeServerId).toBe("published");
+    expect(switched.model.sessionId).toBe("published:session-1");
   });
 
   test("exposes a pure mobile native host controller", async () => {

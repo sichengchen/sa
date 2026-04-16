@@ -123,22 +123,29 @@ describe("projectsCommand", () => {
       "server-1",
       "Aria",
       "Server",
-      "--relay",
-      "relay-1",
-      "--base-url",
+      "--primary-url",
       "https://aria.example",
+      "--secondary-url",
+      "https://gateway.example/server-1",
     ]);
-    await projectsCommand(["server-create", "server-2", "Relay", "Server", "--relay", "relay-2"]);
+    await projectsCommand([
+      "server-create",
+      "server-2",
+      "Published",
+      "Gateway",
+      "--secondary-url",
+      "https://gateway.example/server-2",
+    ]);
     await projectsCommand([
       "server-update",
       "server-1",
       "Aria",
       "Server",
       "Primary",
-      "--relay",
-      "relay-3",
-      "--base-url",
+      "--primary-url",
       "https://aria.example/v2",
+      "--secondary-url",
+      "https://gateway.example/server-1/v2",
     ]);
 
     await projectsCommand([
@@ -219,8 +226,8 @@ describe("projectsCommand", () => {
 
     expect(serverLogs.join("\n")).toContain("server-1");
     expect(serverLogs.join("\n")).toContain("Aria Server Primary");
-    expect(serverLogs.join("\n")).toContain("relay=relay-3");
-    expect(serverLogs.join("\n")).toContain("base-url=https://aria.example/v2");
+    expect(serverLogs.join("\n")).toContain("primary-url=https://aria.example/v2");
+    expect(serverLogs.join("\n")).toContain("secondary-url=https://gateway.example/server-1/v2");
     expect(serverLogs.join("\n")).toContain("server-2");
 
     expect(workspaceLogs).toHaveLength(1);
@@ -236,8 +243,10 @@ describe("projectsCommand", () => {
 
     await withRepository((repository) => {
       expect(repository.getServer("server-1")?.label).toBe("Aria Server Primary");
-      expect(repository.getServer("server-1")?.relayId).toBe("relay-3");
-      expect(repository.getServer("server-1")?.directBaseUrl).toBe("https://aria.example/v2");
+      expect(repository.getServer("server-1")?.primaryBaseUrl).toBe("https://aria.example/v2");
+      expect(repository.getServer("server-1")?.secondaryBaseUrl).toBe(
+        "https://gateway.example/server-1/v2",
+      );
       expect(repository.getWorkspace("workspace-1")?.serverId).toBe("server-2");
       expect(repository.getWorkspace("workspace-1")?.label).toBe("Aria Workspace Primary");
       expect(repository.getEnvironment("environment-1")?.projectId).toBe("project-2");

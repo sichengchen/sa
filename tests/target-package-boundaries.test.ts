@@ -21,7 +21,6 @@ const TARGET_ENTRYPOINT_PACKAGE_DIRS = [
   "packages/prompt/src",
   "packages/projects/src",
   "packages/protocol/src",
-  "packages/relay/src",
   "packages/server/src",
   "packages/ui/src",
   "packages/workspaces/src",
@@ -30,7 +29,6 @@ const THIN_SHELL_DIRS = [
   "apps/aria-desktop/src",
   "apps/aria-mobile/src",
   "apps/aria-server/src",
-  "services/aria-relay/src",
 ] as const;
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs", ".cjs"]);
 const SIBLING_PACKAGE_SRC_IMPORT = /\.\.\/\.\.\/[^/]+\/src\//;

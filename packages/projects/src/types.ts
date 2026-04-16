@@ -20,8 +20,8 @@ export type WorkspaceHost = "desktop_local" | "aria_server";
 export interface ServerRecord {
   serverId: string;
   label: string;
-  relayId?: string | null;
-  directBaseUrl?: string | null;
+  primaryBaseUrl?: string | null;
+  secondaryBaseUrl?: string | null;
   createdAt: number;
   updatedAt: number;
 }

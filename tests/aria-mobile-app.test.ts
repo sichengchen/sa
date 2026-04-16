@@ -36,8 +36,8 @@ describe("Aria mobile app surface", () => {
           target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "mobile",
@@ -53,7 +53,7 @@ describe("Aria mobile app surface", () => {
               agentId: "codex",
               approvalLabel: "2 approvals pending",
               automationLabel: "Automation queued",
-              notificationLabel: "Push ready via relay",
+              notificationLabel: "Push ready via gateway",
               attachmentLabel: "2 attachments ready",
               remoteReviewLabel: "Ready for remote review",
               connectionLabel: "Connected to Home Server",
@@ -72,7 +72,7 @@ describe("Aria mobile app surface", () => {
           agentId: "codex",
           approvalLabel: "2 approvals pending",
           automationLabel: "Automation queued",
-          notificationLabel: "Push ready via relay",
+          notificationLabel: "Push ready via gateway",
           attachmentLabel: "2 attachments ready",
           remoteReviewLabel: "Ready for remote review",
           connectionLabel: "Connected to Home Server",
@@ -85,7 +85,7 @@ describe("Aria mobile app surface", () => {
           threadType: "remote_project",
           approvalLabel: "2 approvals pending",
           automationLabel: "Automation queued",
-          notificationLabel: "Push ready via relay",
+          notificationLabel: "Push ready via gateway",
           attachmentLabel: "2 attachments ready",
           remoteReviewLabel: "Ready for remote review",
           connectionLabel: "Connected to Home Server",
@@ -159,7 +159,7 @@ describe("Aria mobile app surface", () => {
     });
     expect(appShell.serverSwitcher.availableServers.map((server) => server.label)).toEqual([
       "Home Server",
-      "Relay Mirror",
+      "Published Gateway",
     ]);
     expect(appShell.activeThreadContext).toMatchObject({
       threadId: "thread-2",
@@ -170,7 +170,7 @@ describe("Aria mobile app surface", () => {
       connectionLabel: "Connected to Home Server",
       approvalLabel: "2 approvals pending",
       automationLabel: "Automation queued",
-      notificationLabel: "Push ready via relay",
+      notificationLabel: "Push ready via gateway",
       attachmentLabel: "2 attachments ready",
       remoteReviewLabel: "Ready for remote review",
       reconnectLabel: "Reconnect after sleep",
@@ -187,10 +187,10 @@ describe("Aria mobile app surface", () => {
             },
           },
           {
-            label: "Relay Mirror",
+            label: "Published Gateway",
             target: {
-              serverId: "relay",
-              baseUrl: "https://relay.example.test/",
+              serverId: "published",
+              baseUrl: "https://gateway.example.test/",
             },
           },
         ],
@@ -212,8 +212,8 @@ describe("Aria mobile app surface", () => {
           target,
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "mobile",
@@ -249,8 +249,8 @@ describe("Aria mobile app surface", () => {
           target,
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "mobile",
@@ -268,7 +268,7 @@ describe("Aria mobile app surface", () => {
         thread: {
           threadId: "thread-9",
           threadType: "remote_project",
-          notificationLabel: "Push ready via relay",
+          notificationLabel: "Push ready via gateway",
           attachmentLabel: "1 artifact ready",
           reconnectLabel: "Reconnect after sleep",
         },
@@ -288,8 +288,8 @@ describe("Aria mobile app surface", () => {
           target,
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "mobile",
@@ -297,7 +297,7 @@ describe("Aria mobile app surface", () => {
         thread: {
           threadId: "thread-9",
           threadType: "remote_project",
-          notificationLabel: "Push ready via relay",
+          notificationLabel: "Push ready via gateway",
           attachmentLabel: "1 artifact ready",
           reconnectLabel: "Reconnect after sleep",
         },
@@ -659,8 +659,8 @@ describe("Aria mobile app surface", () => {
           target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "mobile",
@@ -789,7 +789,7 @@ describe("Aria mobile app surface", () => {
   test("can switch the mobile app shell to another server", async () => {
     const relayState = {
       connected: true,
-      sessionId: "relay:session-1",
+      sessionId: "published:session-1",
       sessionStatus: "resumed" as const,
       approvalMode: "ask" as const,
       securityMode: "trusted" as const,
@@ -823,17 +823,17 @@ describe("Aria mobile app surface", () => {
         },
       ],
       [
-        "relay",
+        "published",
         {
           state: relayState,
           recent: [
             {
-              sessionId: "relay:live",
+              sessionId: "published:live",
               connectorType: "tui",
-              connectorId: "relay",
+              connectorId: "published",
               archived: true,
-              preview: "Relay",
-              summary: "Relay",
+              preview: "Gateway",
+              summary: "Gateway",
             },
           ],
         },
@@ -864,18 +864,20 @@ describe("Aria mobile app surface", () => {
           target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "mobile",
       createAriaThreadController: factory as any,
     });
 
-    const switched = await switchAriaMobileAppShellServer(shell, "relay");
-    expect(switched.activeServerId).toBe("relay");
-    expect(switched.activeServerLabel).toBe("Relay Mirror");
-    expect(switched.ariaThread.state.sessionId).toBe("relay:session-1");
-    expect(switched.ariaRecentSessions.map((session) => session.sessionId)).toEqual(["relay:live"]);
+    const switched = await switchAriaMobileAppShellServer(shell, "published");
+    expect(switched.activeServerId).toBe("published");
+    expect(switched.activeServerLabel).toBe("Published Gateway");
+    expect(switched.ariaThread.state.sessionId).toBe("published:session-1");
+    expect(switched.ariaRecentSessions.map((session) => session.sessionId)).toEqual([
+      "published:live",
+    ]);
   });
 });

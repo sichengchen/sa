@@ -61,8 +61,8 @@ function normalizeServerRow(row: SqliteRow | null | undefined): ServerRecord | u
   return {
     serverId: asText(row.server_id),
     label: asText(row.label),
-    relayId: asOptionalText(row.relay_id),
-    directBaseUrl: asOptionalText(row.direct_base_url),
+    primaryBaseUrl: asOptionalText(row.primary_base_url),
+    secondaryBaseUrl: asOptionalText(row.secondary_base_url),
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
   };
@@ -368,19 +368,19 @@ export class ProjectsEngineStore {
     this.run(
       `
       INSERT INTO projects_servers (
-        server_id, label, relay_id, direct_base_url, created_at, updated_at
+        server_id, label, primary_base_url, secondary_base_url, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(server_id) DO UPDATE SET
         label = excluded.label,
-        relay_id = excluded.relay_id,
-        direct_base_url = excluded.direct_base_url,
+        primary_base_url = excluded.primary_base_url,
+        secondary_base_url = excluded.secondary_base_url,
         created_at = excluded.created_at,
         updated_at = excluded.updated_at
       `,
       server.serverId,
       server.label,
-      server.relayId ?? null,
-      server.directBaseUrl ?? null,
+      server.primaryBaseUrl ?? null,
+      server.secondaryBaseUrl ?? null,
       server.createdAt,
       server.updatedAt,
     );
@@ -389,7 +389,7 @@ export class ProjectsEngineStore {
   listServers(): ServerRecord[] {
     return this.all<SqliteRow>(
       `
-      SELECT server_id, label, relay_id, direct_base_url, created_at, updated_at
+      SELECT server_id, label, primary_base_url, secondary_base_url, created_at, updated_at
       FROM projects_servers
       ORDER BY updated_at DESC, created_at DESC
       `,
@@ -402,7 +402,7 @@ export class ProjectsEngineStore {
     return normalizeServerRow(
       this.get<SqliteRow>(
         `
-        SELECT server_id, label, relay_id, direct_base_url, created_at, updated_at
+        SELECT server_id, label, primary_base_url, secondary_base_url, created_at, updated_at
         FROM projects_servers
         WHERE server_id = ?
         `,

@@ -72,11 +72,11 @@ function describeToken(value: string): string {
 
 function formatServerSummary(server: ServerRecord): string {
   const metadata: string[] = [];
-  if (server.relayId) {
-    metadata.push(`relay=${server.relayId}`);
+  if (server.primaryBaseUrl) {
+    metadata.push(`primary-url=${server.primaryBaseUrl}`);
   }
-  if (server.directBaseUrl) {
-    metadata.push(`base-url=${server.directBaseUrl}`);
+  if (server.secondaryBaseUrl) {
+    metadata.push(`secondary-url=${server.secondaryBaseUrl}`);
   }
   return metadata.length > 0
     ? `${server.serverId}  ${server.label}  ${metadata.join("  ")}`
@@ -144,8 +144,8 @@ function formatBindingSummary(binding: ThreadEnvironmentBindingRecord): string {
 function parseServerRecordArgs(args: string[]): {
   serverId: string;
   label: string;
-  relayId?: string | null;
-  directBaseUrl?: string | null;
+  primaryBaseUrl?: string | null;
+  secondaryBaseUrl?: string | null;
 } | null {
   const [serverId, ...rest] = args;
   if (!serverId) {
@@ -153,7 +153,7 @@ function parseServerRecordArgs(args: string[]): {
   }
 
   const labelParts: string[] = [];
-  const options: { relayId?: string | null; directBaseUrl?: string | null } = {};
+  const options: { primaryBaseUrl?: string | null; secondaryBaseUrl?: string | null } = {};
   let parsingOptions = false;
 
   for (let index = 0; index < rest.length; index += 1) {
@@ -165,20 +165,20 @@ function parseServerRecordArgs(args: string[]): {
 
     parsingOptions = true;
     switch (arg) {
-      case "--relay": {
+      case "--primary-url": {
         const value = rest[++index];
         if (!value) {
           return null;
         }
-        options.relayId = value;
+        options.primaryBaseUrl = value;
         break;
       }
-      case "--base-url": {
+      case "--secondary-url": {
         const value = rest[++index];
         if (!value) {
           return null;
         }
-        options.directBaseUrl = value;
+        options.secondaryBaseUrl = value;
         break;
       }
       default:
@@ -194,8 +194,8 @@ function parseServerRecordArgs(args: string[]): {
   return {
     serverId,
     label,
-    relayId: options.relayId ?? undefined,
-    directBaseUrl: options.directBaseUrl ?? undefined,
+    primaryBaseUrl: options.primaryBaseUrl ?? undefined,
+    secondaryBaseUrl: options.secondaryBaseUrl ?? undefined,
   };
 }
 
@@ -401,10 +401,10 @@ function printHelp(): void {
   console.log("  project-create <projectId> <slug> <name>  Create or update a tracked project");
   console.log("  servers                List tracked servers");
   console.log(
-    "  server-create <serverId> <label...> [--relay <relayId>] [--base-url <directBaseUrl>]  Create or update a server",
+    "  server-create <serverId> <label...> [--primary-url <url>] [--secondary-url <url>]  Create or update a server",
   );
   console.log(
-    "  server-update <serverId> <label...> [--relay <relayId>] [--base-url <directBaseUrl>]  Create or update a server",
+    "  server-update <serverId> <label...> [--primary-url <url>] [--secondary-url <url>]  Create or update a server",
   );
   console.log("  workspaces [serverId]  List tracked workspaces, optionally filtered by server");
   console.log(
@@ -536,8 +536,8 @@ export async function projectsCommand(args: string[]): Promise<void> {
       repository.upsertServer({
         serverId: parsed.serverId,
         label: parsed.label,
-        relayId: parsed.relayId ?? existing?.relayId ?? null,
-        directBaseUrl: parsed.directBaseUrl ?? existing?.directBaseUrl ?? null,
+        primaryBaseUrl: parsed.primaryBaseUrl ?? existing?.primaryBaseUrl ?? null,
+        secondaryBaseUrl: parsed.secondaryBaseUrl ?? existing?.secondaryBaseUrl ?? null,
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       });

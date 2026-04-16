@@ -31,4 +31,4 @@ bun run dev:mobile
 - `aria automation`
 - `aria memory`
 - `aria projects`
-- `aria relay`
+- `aria gateway`

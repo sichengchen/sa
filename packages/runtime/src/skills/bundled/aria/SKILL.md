@@ -9,9 +9,9 @@ You are Esperta Aria, a local-first agent platform. This skill is a minimal inde
 
 ## Canonical Docs
 
-| Topic                | Doc file                                        | Covers                                                         |
-| -------------------- | ----------------------------------------------- | -------------------------------------------------------------- |
-| Product model        | `docs/product/aria-platform.md`                 | Naming, commitments, compatibility stance, north-star criteria |
+| Topic                | Doc file                                    | Covers                                                         |
+| -------------------- | ------------------------------------------- | -------------------------------------------------------------- |
+| Product model        | `docs/product/aria-platform.md`             | Naming, commitments, compatibility stance, north-star criteria |
 | Runtime model        | `docs/architecture/runtime.md`              | Durable runtime, execution graph, recovery, operational state  |
 | Prompt engine        | `docs/architecture/prompt-engine.md`        | Context assembly, memory layers, compression, caching          |
 | Tool runtime         | `docs/architecture/tool-runtime.md`         | Toolsets, capability policy, MCP integration                   |

@@ -14,7 +14,6 @@ import {
   createAriaDesktopApplicationRoot,
 } from "aria-desktop";
 import { createAriaServerHostBootstrap } from "aria-server";
-import { createAriaRelayServiceBootstrap } from "aria-relay";
 
 let testHome: string;
 
@@ -25,51 +24,22 @@ afterEach(async () => {
 });
 
 describe("E2E smoke test", () => {
-  test("server, relay, desktop, and mobile compose around one architecture", async () => {
+  test("server, desktop, and mobile compose around one architecture", async () => {
     testHome = await mkdtemp(join(tmpdir(), "aria-e2e-smoke-"));
 
     const serverHost = createAriaServerHostBootstrap(testHome);
-    const relay = createAriaRelayServiceBootstrap(join(testHome, "relay-state.json"));
-    await relay.relay.registerServer({
-      serverId: "home",
-      label: "Home Server",
-      registeredAt: 1,
-    });
-    await relay.relay.registerDevice({
-      deviceId: "phone",
-      label: "Phone",
-      pairedAt: 1,
-    });
-    const grant = await relay.relay.issueAccessGrant({
-      serverId: "home",
-      deviceId: "phone",
-      threadId: "thread-1",
-      attachmentKind: "remote_project_thread",
-      transportMode: "relay_tunnel",
-      issuedAt: 1,
-      expiresAt: Date.now() + 10_000,
-    });
-    const attachment = await relay.relay.attachSession({
-      deviceId: "phone",
-      sessionId: "session-1",
-      serverId: "home",
-      threadId: "thread-1",
-      accessGrantToken: grant.grantToken,
-      attachmentKind: "remote_project_thread",
-      transportMode: "relay_tunnel",
-    });
 
     const desktopTarget = {
       serverId: "home",
       baseUrl: "http://127.0.0.1:7420/",
-      directBaseUrl: "http://127.0.0.1:7420/",
-      relayBaseUrl: "https://relay.example.test/home",
+      primaryBaseUrl: "http://127.0.0.1:7420/",
+      secondaryBaseUrl: "https://gateway.example.test/home",
     };
     const mobileTarget = {
-      serverId: "home",
-      baseUrl: "https://relay.example.test/home",
-      relayBaseUrl: "https://relay.example.test/home",
-      preferredTransportMode: "relay_tunnel" as const,
+      serverId: "published",
+      baseUrl: "https://gateway.example.test/home",
+      secondaryBaseUrl: "https://gateway.example.test/home",
+      preferredAccessMode: "secondary" as const,
     };
     const desktop = createAriaDesktopApplicationBootstrap({
       target: desktopTarget,
@@ -129,10 +99,8 @@ describe("E2E smoke test", () => {
 
     expect(serverHost.host.shellPackage).toBe("@aria/server");
     expect(serverHost.discoveryPaths.pidFile).toBe(`${testHome}/engine.pid`);
-    expect(relay.service.planes).toEqual(["control", "data", "push"]);
-    expect(attachment.transportMode).toBe("relay_tunnel");
     expect(desktop.bootstrap.access.httpUrl).toBe("http://127.0.0.1:7420");
-    expect(mobile.bootstrap.access.httpUrl).toBe("https://relay.example.test/home");
+    expect(mobile.bootstrap.access.httpUrl).toBe("https://gateway.example.test/home");
     expect(desktopRoot.type).toBe(AriaDesktopAppShell);
     expect(mobileRoot.type).toBe(AriaMobileApplicationShell);
   });

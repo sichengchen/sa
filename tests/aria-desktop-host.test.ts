@@ -43,8 +43,8 @@ async function seedProjectThread(repository: ProjectsEngineRepository, now: numb
   repository.upsertServer({
     serverId: "server-1",
     label: "Home Server",
-    relayId: null,
-    directBaseUrl: "https://aria.example.test",
+    primaryBaseUrl: "https://aria.example.test",
+    secondaryBaseUrl: null,
     createdAt: now,
     updatedAt: now,
   });
@@ -166,27 +166,27 @@ describe("aria-desktop host scaffold", () => {
 
     expect(
       resolveAriaDesktopRendererTarget({
-        serverId: "relay",
-        baseUrl: "https://relay.example.test/",
+        serverId: "published",
+        baseUrl: "https://gateway.example.test/",
       }),
     ).toEqual({
-      serverId: "relay",
-      baseUrl: "https://relay.example.test/",
+      serverId: "published",
+      baseUrl: "https://gateway.example.test/",
     });
 
     expect(
       resolveHostAccessClientTarget(
-        { serverId: "relay", baseUrl: "https://relay.example.test/" },
+        { serverId: "published", baseUrl: "https://gateway.example.test/" },
         { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
       ),
     ).toEqual({
-      serverId: "relay",
-      baseUrl: "https://relay.example.test/",
+      serverId: "published",
+      baseUrl: "https://gateway.example.test/",
       token: undefined,
-      directBaseUrl: undefined,
-      relayBaseUrl: undefined,
-      directReachable: undefined,
-      preferredTransportMode: undefined,
+      primaryBaseUrl: undefined,
+      secondaryBaseUrl: undefined,
+      primaryReachable: undefined,
+      preferredAccessMode: undefined,
     });
   });
 
@@ -421,7 +421,7 @@ describe("aria-desktop host scaffold", () => {
   test("switches a desktop renderer model to another server", async () => {
     const relayState = {
       connected: true,
-      sessionId: "relay:session-1",
+      sessionId: "published:session-1",
       sessionStatus: "resumed" as const,
       approvalMode: "ask" as const,
       securityMode: "default" as const,
@@ -455,17 +455,17 @@ describe("aria-desktop host scaffold", () => {
         },
       ],
       [
-        "relay",
+        "published",
         {
           state: relayState,
           recent: [
             {
-              sessionId: "relay:live",
+              sessionId: "published:live",
               connectorType: "tui",
-              connectorId: "relay",
+              connectorId: "published",
               archived: true,
-              preview: "Relay",
-              summary: "Relay",
+              preview: "Gateway",
+              summary: "Gateway",
             },
           ],
         },
@@ -496,18 +496,20 @@ describe("aria-desktop host scaffold", () => {
           target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       createAriaThreadController: factory as any,
     });
 
-    const switched = await switchAriaDesktopRendererModel(model, "relay");
-    expect(switched.activeServerId).toBe("relay");
-    expect(switched.activeServerLabel).toBe("Relay Mirror");
-    expect(switched.ariaThread.state.sessionId).toBe("relay:session-1");
-    expect(switched.ariaRecentSessions.map((session) => session.sessionId)).toEqual(["relay:live"]);
+    const switched = await switchAriaDesktopRendererModel(model, "published");
+    expect(switched.activeServerId).toBe("published");
+    expect(switched.activeServerLabel).toBe("Published Gateway");
+    expect(switched.ariaThread.state.sessionId).toBe("published:session-1");
+    expect(switched.ariaRecentSessions.map((session) => session.sessionId)).toEqual([
+      "published:live",
+    ]);
   });
 
   test("exposes a pure desktop renderer controller", async () => {

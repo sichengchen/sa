@@ -23,8 +23,8 @@ describe("store domain model cutover", () => {
     projectsStore.upsertServer({
       serverId: "server-1",
       label: "Home Server",
-      relayId: "relay-1",
-      directBaseUrl: "https://aria.example.test",
+      primaryBaseUrl: "https://aria.example.test",
+      secondaryBaseUrl: "https://gateway.example.test",
       createdAt: 1,
       updatedAt: 2,
     });

@@ -1949,8 +1949,8 @@ export function createAppRouter(runtime: EngineRuntime) {
           };
         }),
 
-      /** Get a pairing code for remote device-flow */
-      code: publicProcedure.query(() => {
+      /** Get a pairing code for remote device-flow. Must be initiated locally/admin-side. */
+      code: adminProcedure.query(() => {
         return { code: runtime.auth.generatePairingCode() };
       }),
     }),

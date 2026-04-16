@@ -61,7 +61,6 @@ Runtime-local state lives under `~/.aria/` by default. Important operator-local 
 - `memory/`
 - `skills/`
 - `automation/`
-- `relay-state.json`
 
 ## Recovery
 
@@ -77,7 +76,7 @@ On startup the runtime should:
 ## Boundary Rules
 
 - frontends attach to runtime state; they do not redefine execution semantics
-- relay owns transport, not runtime state or assistant behavior
+- gateway auth and session attachment live with the server-owned runtime model, not in an external broker layer
 - desktop-local execution may use the same domain model, but it does not become `Aria Agent`
 - runtime should coordinate target packages rather than absorbing their ownership back behind compatibility wrappers
 

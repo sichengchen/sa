@@ -61,7 +61,7 @@ export function ensureAriaDomainModelSchema(db: Database): void {
     "server",
     "projects_servers",
     `
-    SELECT server_id, label, relay_id, direct_base_url, created_at, updated_at
+    SELECT server_id, label, primary_base_url, secondary_base_url, created_at, updated_at
     FROM projects_servers
     `,
   );

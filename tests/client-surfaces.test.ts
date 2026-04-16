@@ -94,8 +94,8 @@ describe("client surfaces", () => {
           target: { serverId: "desktop", baseUrl: "http://127.0.0.1:7420/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "desktop",
@@ -119,8 +119,8 @@ describe("client surfaces", () => {
           target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
         },
         {
-          label: "Relay Mirror",
-          target: { serverId: "relay", baseUrl: "https://relay.example.test/" },
+          label: "Published Gateway",
+          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
         },
       ],
       activeServerId: "mobile",

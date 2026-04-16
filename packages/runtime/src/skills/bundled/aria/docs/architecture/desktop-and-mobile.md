@@ -64,13 +64,13 @@ flowchart LR
 
 ## Desktop Responsibilities
 
-| Component                       | Responsibility                                                                 |
-| ------------------------------- | ------------------------------------------------------------------------------ |
-| `Desktop UI Shell`              | Sidebar, thread views, project pickers, environment selection, approvals UI    |
-| `Access Client`                 | Connects to one or more `Aria Server` deployments directly or through relay    |
-| `Local Workspace Bridge`        | Local filesystem, git, worktree, shell, and environment integration            |
-| `Local Coding Agent Adapters`   | Codex, Claude Code, OpenCode on the current machine                            |
-| `Local Thread Store + UI Cache` | Local project thread state, UI cache, local run history, server metadata cache |
+| Component                       | Responsibility                                                                                                                      |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `Desktop UI Shell`              | Sidebar, thread views, project pickers, environment selection, approvals UI                                                         |
+| `Access Client`                 | Connects to one or more `Aria Server` deployments through the built-in gateway over loopback, LAN, VPN, or a published tunnel/proxy |
+| `Local Workspace Bridge`        | Local filesystem, git, worktree, shell, and environment integration                                                                 |
+| `Local Coding Agent Adapters`   | Codex, Claude Code, OpenCode on the current machine                                                                                 |
+| `Local Thread Store + UI Cache` | Local project thread state, UI cache, local run history, server metadata cache                                                      |
 
 ## Desktop Shell Recommendation
 
@@ -249,7 +249,7 @@ flowchart LR
 - review inbox items
 - answer approvals and questions
 - inspect automation state
-- receive server-owned notifications and relay wakeups
+- receive server-owned notifications and reconnect nudges
 - review attachments and remote artifacts without taking ownership of them
 - view project threads that are attached to remote environments
 - reconnect to ongoing remote jobs
@@ -297,7 +297,7 @@ Mobile may need a native-oriented shell, but the monorepo should still use the s
 Both desktop and mobile should share the same access model:
 
 - direct connection to `Aria Server`
-- optional relay-assisted connection through `Aria Relay`
+- optional operator-managed VPN/tunnel/reverse-proxy path to the same `Aria Server Gateway`
 - support for multiple servers in one client
 - a stable `serverId` as the root identity boundary
 

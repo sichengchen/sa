@@ -135,10 +135,6 @@
       "name": "@aria/protocol",
       "version": "0.0.0",
     },
-    "packages/relay": {
-      "name": "@aria/relay",
-      "version": "0.0.0",
-    },
     "packages/runtime": {
       "name": "@aria/runtime",
       "version": "0.0.0",
@@ -162,9 +158,6 @@
     "packages/workspaces": {
       "name": "@aria/workspaces",
       "version": "0.0.0",
-    },
-    "services/aria-relay": {
-      "name": "aria-relay",
     },
   },
   "packages": {
@@ -213,8 +206,6 @@
     "@aria/prompt": ["@aria/prompt@workspace:packages/prompt"],
 
     "@aria/protocol": ["@aria/protocol@workspace:packages/protocol"],
-
-    "@aria/relay": ["@aria/relay@workspace:packages/relay"],
 
     "@aria/runtime": ["@aria/runtime@workspace:packages/runtime"],
 
@@ -1165,8 +1156,6 @@
     "aria-desktop": ["aria-desktop@workspace:apps/aria-desktop"],
 
     "aria-mobile": ["aria-mobile@workspace:apps/aria-mobile"],
-
-    "aria-relay": ["aria-relay@workspace:services/aria-relay"],
 
     "aria-server": ["aria-server@workspace:apps/aria-server"],
 

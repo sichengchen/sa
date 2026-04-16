@@ -16,7 +16,6 @@ Esperta Aria is a local-first agent platform built around one durable runtime, o
 - `packages/agents-coding` owns shared coding-agent adapter contracts and concrete backend adapters
 - `packages/server` owns the server composition root and daemon/discovery lifecycle helpers
 - `packages/handoff` turns local or runtime-originated work into tracked project work through idempotent submissions
-- `packages/relay` owns paired-device trust, session attachment, and queued remote-control envelopes
 - `packages/console` and `packages/connectors-im` own the console and IM connector surfaces
 
 Legacy compatibility surfaces such as `@aria/runtime` still remain, but the old tracked-work, shared-types, provider, and connector wrapper packages have been removed.
@@ -51,7 +50,7 @@ Core commands:
 - `aria audit`
 - `aria memory`
 - `aria projects`
-- `aria relay`
+- `aria gateway`
 - `aria engine start|stop|status|logs`
 - `aria stop`
 - `aria restart`
@@ -89,7 +88,6 @@ packages/
   policy/
   projects/
   prompt/
-  relay/
   runtime/
   server/
   store/
@@ -100,8 +98,6 @@ apps/
   aria-server/
   aria-desktop/
   aria-mobile/
-services/
-  aria-relay/
 scripts/             build, embedding, migration, release helpers
 tests/               unit, integration, workflow, and live-gated tests
 ```
@@ -140,5 +136,5 @@ Recommended entry points:
 - [docs/architecture/overview.md](./docs/architecture/overview.md)
 - [docs/architecture/server.md](./docs/architecture/server.md)
 - [docs/architecture/packages.md](./docs/architecture/packages.md)
-- [docs/architecture/relay.md](./docs/architecture/relay.md)
+- [docs/architecture/gateway-access.md](./docs/architecture/gateway-access.md)
 - [docs/operator/getting-started.md](./docs/operator/getting-started.md)

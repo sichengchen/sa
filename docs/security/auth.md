@@ -1,8 +1,8 @@
 # Authentication
 
-All tRPC communication between connectors and the engine is authenticated via
-bearer tokens managed by the `AuthManager`. Webhook endpoints use a separate
-but related token mechanism.
+All tRPC communication to `Aria Server Gateway` is authenticated via bearer
+tokens managed by the `AuthManager`. Webhook endpoints use a separate but
+related token mechanism.
 
 ---
 
@@ -24,17 +24,23 @@ await writeFile(this.tokenFilePath, this.masterToken, { mode: 0o600 });
 
 ## Device-Flow Pairing
 
-Remote connectors (Telegram, Discord) that cannot read the local filesystem
-use a pairing code flow:
+Remote connectors and clients that cannot read the local filesystem use a
+pairing code flow:
 
-1. Engine generates a pairing code using charset
+1. A local/admin surface generates a pairing code using charset
    `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (no `0/O/1/I` to avoid confusion).
    Default length: 8 characters.
-2. User provides code to remote connector (e.g., `/pair ABC123XY` in Telegram).
-3. Connector calls `auth.pair` tRPC procedure with the code.
+   Recommended operator surface: `aria gateway pair-code`.
+2. The operator transfers that code out of band to the target device.
+3. The device calls `auth.pair` with the code.
 4. If the code matches and is not expired, the engine issues a session token
    (32 random bytes, hex-encoded).
 5. The pairing code is consumed (one-time use).
+
+Important security rule:
+
+- pairing code generation must not be a public unauthenticated network action
+- only pairing code consumption is exposed to unauthenticated clients
 
 ### Pairing Security
 
@@ -109,8 +115,9 @@ validation.
 Engine start  -->  Generate master token  -->  Write to engine.token
                                                (chmod 600)
 
-Connector     -->  Read engine.token      -->  Call auth.pair(masterToken)
-(local)            or pairing code             -->  Receive session token
+Local admin   -->  Generate pairing code  -->  Hand code to target device
+
+Device        -->  Call auth.pair(code)   -->  Receive session token
 
 Connector     -->  Use session token      -->  Validated on every request
 (any)              as Bearer header

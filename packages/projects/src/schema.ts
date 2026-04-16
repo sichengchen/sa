@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS projects_projects (
 CREATE TABLE IF NOT EXISTS projects_servers (
   server_id TEXT PRIMARY KEY,
   label TEXT NOT NULL,
-  relay_id TEXT,
-  direct_base_url TEXT,
+  primary_base_url TEXT,
+  secondary_base_url TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );

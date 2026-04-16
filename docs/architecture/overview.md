@@ -15,7 +15,6 @@ Everything else follows from that.
 | `Aria Server`  | Hosts `Aria Agent`, remote project jobs, IM connectors, automations, memory, audit, and durable state |
 | `Aria Desktop` | Multi-surface client for Aria chat, remote projects, and local projects                               |
 | `Aria Mobile`  | Thin client for Aria chat, inbox, automations, and remote projects                                    |
-| `Aria Relay`   | Secure access broker and optional hosted-runtime platform                                             |
 | `Aria Console` | Server-local terminal UI for chatting directly with `Aria Agent`                                      |
 
 ## Architectural Principles
@@ -27,7 +26,7 @@ Everything else follows from that.
 5. Remote jobs always run on `Aria Server`.
 6. Clients stay thin relative to durable assistant state.
 7. The same identity model should span chat, jobs, automation, approvals, and audit.
-8. `Aria Relay` is an access and hosting layer, not the owner of assistant behavior.
+8. `Aria Server Gateway` is the secure assistant boundary; VPNs, tunnels, and reverse proxies are operator-managed infrastructure rather than Aria product surfaces.
 
 ## System Landscape
 
@@ -39,7 +38,7 @@ flowchart LR
         Mobile["Aria Mobile"]
     end
 
-    Access["Secure Access<br/>Direct or via Aria Relay"]
+    Access["Gateway Access<br/>Loopback / LAN / VPN / Tunnel"]
 
     subgraph Server["Aria Server"]
         direction TB
@@ -135,11 +134,12 @@ not a generic flat “sessions only” surface.
 - never owns Aria-managed memory or automation
 - never hosts local coding-agent execution
 
-### `Aria Relay`
+### Gateway access
 
-- brokers secure access when direct connectivity is unavailable
-- can host managed server runtimes when needed
-- handles transport and access concerns, not assistant logic
+- `Aria Server` always exposes its built-in `Gateway API + Realtime`
+- operators decide whether that gateway is reachable over loopback, LAN, VPN, or a published tunnel/proxy
+- external network infrastructure handles reachability, TLS termination, and routing
+- assistant behavior, auth, approvals, and runtime state remain on `Aria Server`
 
 ## Hard Boundary Rules
 
