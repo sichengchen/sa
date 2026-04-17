@@ -15,8 +15,8 @@
   --desktop-sidebar-background: #f7f7f7;
   --desktop-center-background: #ffffff;
   --desktop-muted-text: #5c5c5c;
-  --desktop-handle-background: #e5e5e5;
   --desktop-handle-line: #c8c8c8;
+  --desktop-handle-hit-area: 9px;
   --desktop-button-hover: rgba(0, 0, 0, 0.08);
   --desktop-motion-duration: 180ms;
   --desktop-motion-ease: cubic-bezier(0.2, 0, 0, 1);
@@ -228,7 +228,7 @@ button {
 
 .resize-handle {
   position: relative;
-  background: var(--desktop-handle-background);
+  overflow: visible;
   cursor: col-resize;
   transition:
     opacity var(--desktop-motion-duration) var(--desktop-motion-ease),
@@ -240,10 +240,18 @@ button {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
-  width: 1px;
-  transform: translateX(-50%);
+  left: 0;
+  width: 100%;
   background: var(--desktop-handle-line);
+}
+
+.resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc((var(--desktop-handle-hit-area) - 1px) / -2);
+  width: var(--desktop-handle-hit-area);
 }
 
 .resize-handle-horizontal {
@@ -251,13 +259,20 @@ button {
 }
 
 .resize-handle-horizontal::before {
-  top: 50%;
+  top: 0;
   bottom: auto;
   left: 0;
   right: 0;
   width: auto;
   height: 1px;
-  transform: translateY(-50%);
+}
+
+.resize-handle-horizontal::after {
+  top: calc((var(--desktop-handle-hit-area) - 1px) / -2);
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: var(--desktop-handle-hit-area);
 }
 
 .resize-handle.is-collapsed {

@@ -17,7 +17,7 @@ const MIN_RIGHT_WIDTH = 240;
 const MIN_CENTER_WIDTH = 360;
 const MIN_BOTTOM_HEIGHT = 120;
 const MIN_CENTER_HEIGHT = 180;
-const RESIZE_HANDLE_WIDTH = 10;
+const RESIZE_HANDLE_WIDTH = 1;
 
 export type DesktopBaseLayoutToolbarItem = {
   id: string;
