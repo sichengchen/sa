@@ -84,7 +84,9 @@
       "@aria/providers-opencode": ["./packages/providers-opencode/src/index.ts"],
       "@aria/providers-opencode/*": ["./packages/providers-opencode/src/*"],
       "@aria/ui": ["./packages/ui/src/index.ts"],
-      "@aria/ui/*": ["./packages/ui/src/*"]
+      "@aria/ui/*": ["./packages/ui/src/*"],
+      "@aria/desktop-ui": ["./packages/desktop-ui/src/index.ts"],
+      "@aria/desktop-ui/*": ["./packages/desktop-ui/src/*"]
     }
   },
   "include": [

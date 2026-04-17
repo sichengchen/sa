@@ -1,10 +1,10 @@
 import type { ReactElement } from "react";
 import type { CreateAriaDesktopAppShellOptions } from "./shell.js";
 import {
-  AriaDesktopAppShell,
   createAriaDesktopAppShell,
   type AriaDesktopAppShellModel,
 } from "./shell.js";
+import { DesktopShellUI } from "./DesktopShellUI.js";
 
 export interface AriaDesktopApplicationRootProps {
   model: AriaDesktopAppShellModel;
@@ -22,7 +22,7 @@ export interface AriaDesktopApplicationRootProps {
 
 export function AriaDesktopApplicationRoot(props: AriaDesktopApplicationRootProps): ReactElement {
   return (
-    <AriaDesktopAppShell
+    <DesktopShellUI
       model={props.model}
       onSwitchServer={props.onSwitchServer}
       onOpenAriaSession={props.onOpenAriaSession}

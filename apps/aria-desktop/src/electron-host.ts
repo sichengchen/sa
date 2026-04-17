@@ -41,12 +41,12 @@ export function createAriaDesktopElectronHostBootstrap(
   options: AriaDesktopElectronHostOptions,
 ): AriaDesktopElectronHostBootstrap {
   return {
-    preloadPath: join(options.distDir, "electron-preload.cjs"),
+    preloadPath: join(options.distDir, "..", "preload", "index.cjs"),
     rendererEntry: options.devServerUrl
       ? { kind: "url", value: options.devServerUrl }
       : {
           kind: "file",
-          value: join(options.distDir, "renderer", "index.html"),
+          value: join(options.distDir, "..", "renderer", "index.html"),
         },
     window: {
       width: 1440,

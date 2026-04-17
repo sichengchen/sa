@@ -3,22 +3,27 @@
   "private": true,
   "description": "Aria Desktop app assembly and host wrapper over the @aria/desktop shell seam",
   "type": "module",
-  "main": "./dist/electron-main.js",
+  "main": "./dist/main/index.js",
   "scripts": {
-    "dev": "bun ./scripts/dev.ts",
-    "dev:renderer": "vite --config ./vite.config.ts",
-    "dev:host": "bun run build:host && ARIA_DESKTOP_DEV_SERVER_URL=http://127.0.0.1:5173 ./node_modules/.bin/electron ./dist/electron-main.js",
-    "build:renderer": "vite build --config ./vite.config.ts",
-    "build:host": "bun build ./src/electron-main.ts --outfile ./dist/electron-main.js --target node --external electron && bun build ./src/electron-preload.ts --outfile ./dist/electron-preload.cjs --target node --format cjs --external electron",
-    "build": "bun run build:renderer && bun run build:host",
-    "smoke:build": "bun run build && bun -e \"for (const path of ['./dist/electron-main.js', './dist/electron-preload.cjs', './dist/renderer/index.html']) { if (!(await Bun.file(path).exists())) throw new Error('Missing ' + path) }\"",
-    "package:dir": "bun run build && bunx electron-builder --config ./electron-builder.json --dir",
-    "dist:mac": "bun run build && bunx electron-builder --config ./electron-builder.json --mac dmg zip",
-    "dist:linux": "bun run build && bunx electron-builder --config ./electron-builder.json --linux AppImage zip",
-    "dist:win": "bun run build && bunx electron-builder --config ./electron-builder.json --win nsis zip",
-    "start": "bun run build && ./node_modules/.bin/electron ./dist/electron-main.js"
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "package:dir": "bun run build && electron-builder --config ./electron-builder.json --dir",
+    "dist:mac": "bun run build && electron-builder --config ./electron-builder.json --mac dmg zip",
+    "dist:linux": "bun run build && electron-builder --config ./electron-builder.json --linux AppImage zip",
+    "dist:win": "bun run build && electron-builder --config ./electron-builder.json --win nsis zip",
+    "start": "electron ."
   },
   "dependencies": {
-    "electron": "^37.2.0"
+    "electron": "^37.2.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@aria/desktop-ui": "workspace:*",
+    "@tailwindcss/vite": "^4.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "electron-vite": "^3.0.0",
+    "tailwindcss": "^4.0.0",
+    "vite": "^6.0.0"
   }
 }

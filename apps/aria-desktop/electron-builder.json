@@ -5,8 +5,8 @@
     "output": "release"
   },
   "files": [
-    "dist/electron-main.js",
-    "dist/electron-preload.cjs",
+    "dist/main/**/*",
+    "dist/preload/**/*",
     "dist/renderer/**/*",
     "package.json"
   ],
