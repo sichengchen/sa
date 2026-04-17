@@ -15,6 +15,14 @@ import { PROVIDER_OPTIONS } from "../packages/cli/src/shared/ModelPicker.js";
 
 const originalFetch = globalThis.fetch;
 
+function createFetchMock(
+  implementation: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>,
+): typeof fetch {
+  return Object.assign(implementation, {
+    preconnect: originalFetch.preconnect.bind(originalFetch),
+  }) as typeof fetch;
+}
+
 afterEach(() => {
   globalThis.fetch = originalFetch;
 });
@@ -42,7 +50,7 @@ describe("MiniMax CLI provider support", () => {
   test("fetches MiniMax models from the official OpenAI-compatible endpoint", async () => {
     let seenUrl = "";
     let seenAuth = "";
-    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    globalThis.fetch = createFetchMock(async (input: RequestInfo | URL, init?: RequestInit) => {
       seenUrl = String(input);
       seenAuth = String(
         init?.headers instanceof Headers
@@ -58,7 +66,7 @@ describe("MiniMax CLI provider support", () => {
           headers: { "content-type": "application/json" },
         },
       );
-    }) as typeof fetch;
+    });
 
     const models = await fetchModelList("openai-compat", "sk-test", "", MINIMAX_PROVIDER_ID);
 
@@ -69,10 +77,10 @@ describe("MiniMax CLI provider support", () => {
 
   test("uses official preset models for Anthropic-compatible MiniMax providers", async () => {
     let fetchCalled = false;
-    globalThis.fetch = (async () => {
+    globalThis.fetch = createFetchMock(async () => {
       fetchCalled = true;
       throw new Error("unexpected network call");
-    }) as typeof fetch;
+    });
 
     const presetModels = getPresetModelList("anthropic", MINIMAX_ANTHROPIC_PROVIDER_ID);
     const fetchedModels = await fetchModelList(

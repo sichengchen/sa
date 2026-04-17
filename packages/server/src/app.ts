@@ -90,13 +90,14 @@ export async function startAriaServer(
 
   try {
     server = await startServerImpl(runtime, serverOptions);
+    const activeServer = server;
     const connectors = await startConnectorsImpl();
     return {
       runtime,
-      server,
+      server: activeServer,
       async stop(): Promise<void> {
         await connectors.stop();
-        await server.stop();
+        await activeServer.stop();
       },
     };
   } catch (error) {
