@@ -9,7 +9,7 @@ function resolveRuntimeHome() {
   return process.env.ARIA_HOME || join(homedir(), ".aria");
 }
 
-function readTrimmedFile(path) {
+function readTrimmedFile(path: string) {
   return existsSync(path) ? readFileSync(path, "utf-8").trim() : undefined;
 }
 
