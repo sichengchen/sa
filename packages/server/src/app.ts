@@ -1,4 +1,5 @@
 import { startServer, type EngineServer, type EngineServerOptions } from "@aria/gateway/server";
+import { startConfiguredConnectors, type ServerConnectorRuntime } from "./connectors.js";
 import { createRuntime, type EngineRuntime } from "./runtime.js";
 import { CLI_NAME, PRODUCT_NAME, RUNTIME_NAME, getRuntimeHome } from "./brand.js";
 import { getRuntimeDiscoveryPaths, type RuntimeDiscoveryPaths } from "./discovery.js";
@@ -6,6 +7,7 @@ import { getRuntimeDiscoveryPaths, type RuntimeDiscoveryPaths } from "./discover
 export interface AriaServerFactories {
   createRuntime?: () => Promise<EngineRuntime>;
   startServer?: (runtime: EngineRuntime, options?: EngineServerOptions) => Promise<EngineServer>;
+  startConnectors?: () => Promise<ServerConnectorRuntime>;
 }
 
 export interface StartAriaServerOptions extends EngineServerOptions {
@@ -82,19 +84,27 @@ export async function startAriaServer(
   const { factories, ...serverOptions } = options;
   const createRuntimeImpl = factories?.createRuntime ?? createRuntime;
   const startServerImpl = factories?.startServer ?? startServer;
+  const startConnectorsImpl = factories?.startConnectors ?? startConfiguredConnectors;
   const runtime = await createRuntimeImpl();
+  let server: EngineServer | null = null;
 
   try {
-    const server = await startServerImpl(runtime, serverOptions);
+    server = await startServerImpl(runtime, serverOptions);
+    const connectors = await startConnectorsImpl();
     return {
       runtime,
       server,
       async stop(): Promise<void> {
+        await connectors.stop();
         await server.stop();
       },
     };
   } catch (error) {
-    await runtime.close();
+    if (server) {
+      await server.stop();
+    } else {
+      await runtime.close();
+    }
     throw error;
   }
 }

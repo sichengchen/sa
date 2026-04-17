@@ -42,11 +42,13 @@ Current commands include:
 
 ## Connector Commands
 
-The CLI also starts connector surfaces explicitly:
+Configured connectors auto-start with `Aria Server` when their credentials are present.
+The CLI commands below remain useful when you want to run a connector explicitly for debugging
+or as a standalone surface:
 
 - `aria telegram`
 - `aria discord`
-- `aria slack`
+- `aria slack [webhook [port]|socket]`
 - `aria teams`
 - `aria gchat`
 - `aria github`

@@ -77,6 +77,9 @@ async function loadExistingConfig(): Promise<unknown | undefined> {
       pairingCode: secrets?.pairingCode,
       discordToken: secrets?.apiKeys?.DISCORD_TOKEN ?? secrets?.discordToken ?? "",
       discordGuildId: secrets?.apiKeys?.DISCORD_GUILD_ID ?? secrets?.discordGuildId ?? "",
+      slackToken: secrets?.apiKeys?.SLACK_BOT_TOKEN ?? "",
+      slackSigningSecret: secrets?.apiKeys?.SLACK_SIGNING_SECRET ?? "",
+      slackAppToken: secrets?.apiKeys?.SLACK_APP_TOKEN ?? "",
     };
   } catch {
     return undefined;
@@ -119,9 +122,30 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   },
   slack: async (cmdArgs) => {
     await loadConnectorRuntimeEnv(runtimeHome);
-    const port = cmdArgs[0] ? parseInt(cmdArgs[0], 10) : 3420;
     const { startSlackConnector } = await import("@aria/connectors-im/slack");
-    await startSlackConnector(port);
+    const [modeOrPort, maybePort] = cmdArgs;
+
+    if (modeOrPort === "socket" || modeOrPort === "--socket") {
+      await startSlackConnector({ mode: "socket" });
+      return;
+    }
+
+    if (modeOrPort === "webhook") {
+      const port = maybePort ? parseInt(maybePort, 10) : 3420;
+      if (Number.isNaN(port)) {
+        console.error(`Invalid Slack webhook port: ${maybePort}`);
+        process.exit(1);
+      }
+      await startSlackConnector({ mode: "webhook", port });
+      return;
+    }
+
+    const port = modeOrPort ? parseInt(modeOrPort, 10) : 3420;
+    if (modeOrPort && Number.isNaN(port)) {
+      console.error(`Usage: ${CLI_NAME} slack [webhook [port]|socket]`);
+      process.exit(1);
+    }
+    await startSlackConnector({ mode: "webhook", port });
   },
   teams: async (cmdArgs) => {
     await loadConnectorRuntimeEnv(runtimeHome);
@@ -273,7 +297,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
     console.log("  wechat      Link or start the WeChat connector");
     console.log("  telegram    Start the Telegram connector (webhook server on port 3426)");
     console.log("  discord     Start the Discord connector (webhook server on port 3423)");
-    console.log("  slack       Start the Slack connector (webhook server on port 3420)");
+    console.log("  slack       Start the Slack connector (webhook on port 3420 or Socket Mode)");
     console.log("  teams       Start the Teams connector (webhook server on port 3421)");
     console.log("  gchat       Start the Google Chat connector (webhook server on port 3422)");
     console.log("  github      Start the GitHub connector (webhook server on port 3424)");

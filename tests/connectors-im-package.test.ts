@@ -13,6 +13,7 @@ import {
   createTelegramConnector,
   formatToolResult,
   startWeChatConnector,
+  startSlackSocketConnector,
   startWeChatLogin,
 } from "../packages/connectors-im/src/index.js";
 
@@ -25,6 +26,7 @@ describe("@aria/connectors-im package entrypoints", () => {
 
   test("re-exports connector factories from the package root", () => {
     expect(typeof createSlackConnector).toBe("function");
+    expect(typeof startSlackSocketConnector).toBe("function");
     expect(typeof createDiscordConnector).toBe("function");
     expect(typeof createTelegramConnector).toBe("function");
     expect(typeof createTeamsConnector).toBe("function");

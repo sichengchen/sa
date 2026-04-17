@@ -9,10 +9,16 @@ import { Chat } from "chat";
 import { createGitHubAdapter } from "@chat-adapter/github";
 import { createMemoryState } from "@chat-adapter/state-memory";
 import { ChatSDKAdapter } from "../chat-sdk/adapter.js";
+import { installConnectorSignalHandlers, type ConnectorRuntimeHandle } from "../shared/runtime.js";
 import { hasGitHubCredentials, getMissingCredentials } from "./config.js";
 
 export interface GitHubConnectorOptions {
   webhookPort?: number;
+}
+
+export interface StartGitHubConnectorOptions {
+  port?: number;
+  registerSignalHandlers?: boolean;
 }
 
 export function createGitHubConnector(options: GitHubConnectorOptions = {}) {
@@ -45,7 +51,12 @@ export function createGitHubConnector(options: GitHubConnectorOptions = {}) {
   };
 }
 
-export async function startGitHubConnector(port = 3424): Promise<void> {
+export async function startGitHubConnector(
+  options: number | StartGitHubConnectorOptions = {},
+): Promise<ConnectorRuntimeHandle> {
+  const resolved = typeof options === "number" ? { port: options } : options;
+  const port = resolved.port ?? 3424;
+  const registerSignalHandlers = resolved.registerSignalHandlers ?? true;
   const { chat, webhookHandler } = createGitHubConnector();
 
   const server = Bun.serve({
@@ -61,14 +72,21 @@ export async function startGitHubConnector(port = 3424): Promise<void> {
 
   console.log(`GitHub connector listening on http://localhost:${server.port}/api/webhooks/github`);
 
-  const shutdown = async () => {
-    console.log("\nShutting down GitHub connector...");
+  let cleanupSignals = () => {};
+  const stop = async () => {
+    cleanupSignals();
     await chat.shutdown();
     server.stop();
-    process.exit(0);
   };
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
+
+  if (registerSignalHandlers) {
+    cleanupSignals = installConnectorSignalHandlers("GitHub", stop);
+  }
+
+  return {
+    name: "github",
+    stop,
+  };
 }
 
 export { hasGitHubCredentials, getMissingCredentials } from "./config.js";

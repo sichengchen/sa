@@ -9,10 +9,16 @@ import { Chat } from "chat";
 import { createLinearAdapter } from "@chat-adapter/linear";
 import { createMemoryState } from "@chat-adapter/state-memory";
 import { ChatSDKAdapter } from "../chat-sdk/adapter.js";
+import { installConnectorSignalHandlers, type ConnectorRuntimeHandle } from "../shared/runtime.js";
 import { hasLinearCredentials, getMissingCredentials } from "./config.js";
 
 export interface LinearConnectorOptions {
   webhookPort?: number;
+}
+
+export interface StartLinearConnectorOptions {
+  port?: number;
+  registerSignalHandlers?: boolean;
 }
 
 export function createLinearConnector(options: LinearConnectorOptions = {}) {
@@ -45,7 +51,12 @@ export function createLinearConnector(options: LinearConnectorOptions = {}) {
   };
 }
 
-export async function startLinearConnector(port = 3425): Promise<void> {
+export async function startLinearConnector(
+  options: number | StartLinearConnectorOptions = {},
+): Promise<ConnectorRuntimeHandle> {
+  const resolved = typeof options === "number" ? { port: options } : options;
+  const port = resolved.port ?? 3425;
+  const registerSignalHandlers = resolved.registerSignalHandlers ?? true;
   const { chat, webhookHandler } = createLinearConnector();
 
   const server = Bun.serve({
@@ -61,14 +72,21 @@ export async function startLinearConnector(port = 3425): Promise<void> {
 
   console.log(`Linear connector listening on http://localhost:${server.port}/api/webhooks/linear`);
 
-  const shutdown = async () => {
-    console.log("\nShutting down Linear connector...");
+  let cleanupSignals = () => {};
+  const stop = async () => {
+    cleanupSignals();
     await chat.shutdown();
     server.stop();
-    process.exit(0);
   };
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
+
+  if (registerSignalHandlers) {
+    cleanupSignals = installConnectorSignalHandlers("Linear", stop);
+  }
+
+  return {
+    name: "linear",
+    stop,
+  };
 }
 
 export { hasLinearCredentials, getMissingCredentials } from "./config.js";

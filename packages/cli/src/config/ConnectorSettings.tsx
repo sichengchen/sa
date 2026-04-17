@@ -11,6 +11,7 @@ type Substep =
   | "edit-discord-guild"
   | "edit-slack-token"
   | "edit-slack-secret"
+  | "edit-slack-app-token"
   | "edit-teams-id"
   | "edit-teams-password"
   | "edit-gchat-key"
@@ -40,6 +41,7 @@ const MENU_ITEMS = [
   { key: "discord-guild", label: "Discord guild ID" },
   { key: "slack-token", label: "Slack bot token" },
   { key: "slack-secret", label: "Slack signing secret" },
+  { key: "slack-app-token", label: "Slack app token (Socket Mode)" },
   { key: "teams-id", label: "Teams bot ID" },
   { key: "teams-password", label: "Teams bot password" },
   { key: "gchat-key", label: "Google Chat service account key" },
@@ -86,6 +88,7 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
   const rawGuild = secrets?.apiKeys?.DISCORD_GUILD_ID ?? secrets?.discordGuildId;
   const rawSlackToken = secrets?.apiKeys?.SLACK_BOT_TOKEN;
   const rawSlackSecret = secrets?.apiKeys?.SLACK_SIGNING_SECRET;
+  const rawSlackAppToken = secrets?.apiKeys?.SLACK_APP_TOKEN;
   const rawTeamsId = secrets?.apiKeys?.TEAMS_BOT_ID;
   const rawTeamsPassword = secrets?.apiKeys?.TEAMS_BOT_PASSWORD;
   const rawGchatKey = secrets?.apiKeys?.GOOGLE_CHAT_SERVICE_ACCOUNT_KEY;
@@ -134,6 +137,9 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
         } else if (item.key === "slack-secret") {
           setEditValue(rawSlackSecret ?? "");
           setSubstep("edit-slack-secret");
+        } else if (item.key === "slack-app-token") {
+          setEditValue(rawSlackAppToken ?? "");
+          setSubstep("edit-slack-app-token");
         } else if (item.key === "teams-id") {
           setEditValue(rawTeamsId ?? "");
           setSubstep("edit-teams-id");
@@ -243,6 +249,13 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
         } else {
           delete updated.apiKeys.SLACK_SIGNING_SECRET;
         }
+      } else if (substep === "edit-slack-app-token") {
+        const val = editValue.trim();
+        if (val) {
+          updated.apiKeys.SLACK_APP_TOKEN = val;
+        } else {
+          delete updated.apiKeys.SLACK_APP_TOKEN;
+        }
       } else if (substep === "edit-teams-id") {
         const val = editValue.trim();
         if (val) {
@@ -334,6 +347,7 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
             else if (item.key === "discord-guild") detail = ` ${discordGuild}`;
             else if (item.key === "slack-token") detail = ` ${mask(rawSlackToken)}`;
             else if (item.key === "slack-secret") detail = ` ${mask(rawSlackSecret)}`;
+            else if (item.key === "slack-app-token") detail = ` ${mask(rawSlackAppToken)}`;
             else if (item.key === "teams-id") detail = ` ${rawTeamsId || "(not set)"}`;
             else if (item.key === "teams-password") detail = ` ${mask(rawTeamsPassword)}`;
             else if (item.key === "gchat-key") detail = ` ${mask(rawGchatKey)}`;
@@ -470,6 +484,26 @@ export function ConnectorSettings({ config, homeDir, onSave, onBack }: Connector
           <Box>
             <Text color="blue" bold>
               Secret:{" "}
+            </Text>
+            <Text>{editValue}</Text>
+            <Text color="blue">▊</Text>
+          </Box>
+          <Text />
+          <Text dimColor>Enter to save | Esc cancel</Text>
+        </>
+      )}
+
+      {substep === "edit-slack-app-token" && (
+        <>
+          <Text bold>Slack App Token</Text>
+          <Text dimColor>
+            Leave empty to clear. Required only for Socket Mode. Create an app-level token with the
+            `connections:write` scope in Slack App settings → Basic Information.
+          </Text>
+          <Text />
+          <Box>
+            <Text color="blue" bold>
+              App Token:{" "}
             </Text>
             <Text>{editValue}</Text>
             <Text color="blue">▊</Text>

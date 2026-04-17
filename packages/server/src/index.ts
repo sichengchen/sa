@@ -2,6 +2,7 @@ export { ariaServerApp, createAriaServerBootstrap, startAriaServer } from "./app
 export * from "./audio.js";
 export * from "./checkpoints.js";
 export * from "./config.js";
+export * from "./connectors.js";
 export * from "./brand.js";
 export * from "./mcp.js";
 export * from "./runtime.js";

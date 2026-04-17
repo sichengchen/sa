@@ -23,6 +23,7 @@ describe("server host surface", () => {
   test("starts and stops the server shell through the public package boundary", async () => {
     const calls: string[] = [];
     let stopCalls = 0;
+    let connectorStopCalls = 0;
 
     const runtime = {
       close: async () => {
@@ -50,14 +51,24 @@ describe("server host surface", () => {
           expect(receivedRuntime).toBe(runtime);
           return server;
         },
+        async startConnectors() {
+          calls.push("startConnectors");
+          return {
+            handles: [],
+            async stop() {
+              connectorStopCalls += 1;
+            },
+          };
+        },
       },
     });
 
     expect(app.runtime).toBe(runtime);
     expect(app.server).toBe(server);
-    expect(calls).toEqual(["createRuntime", "startServer:0.0.0.0:9001"]);
+    expect(calls).toEqual(["createRuntime", "startServer:0.0.0.0:9001", "startConnectors"]);
 
     await app.stop();
+    expect(connectorStopCalls).toBe(1);
     expect(stopCalls).toBe(1);
   });
 
@@ -86,6 +97,12 @@ describe("server host surface", () => {
         },
         async startServer() {
           return server;
+        },
+        async startConnectors() {
+          return {
+            handles: [],
+            async stop() {},
+          };
         },
       },
     });
@@ -117,6 +134,12 @@ describe("server host surface", () => {
           expect(options?.port).toBe(8123);
           return server;
         },
+        async startConnectors() {
+          return {
+            handles: [],
+            async stop() {},
+          };
+        },
       },
     });
 
@@ -130,6 +153,43 @@ describe("server host surface", () => {
     expect(bootstrap.hiddenCommand).toBe(ARIA_SERVER_DAEMON_COMMAND);
     expect(bootstrap.discoveryPaths).toEqual(getRuntimeDiscoveryPaths("/tmp/aria-server-app"));
     expect(typeof runAriaServerDaemonHost).toBe("function");
+  });
+
+  test("stops the server if connector auto-start fails after gateway boot", async () => {
+    let serverStopCalls = 0;
+    let runtimeCloseCalls = 0;
+
+    const runtime = {
+      close: async () => {
+        runtimeCloseCalls += 1;
+      },
+    } as EngineRuntime;
+
+    const server = {
+      port: 7420,
+      stop: async () => {
+        serverStopCalls += 1;
+      },
+    } satisfies EngineServer;
+
+    await expect(
+      startAriaServer({
+        factories: {
+          async createRuntime() {
+            return runtime;
+          },
+          async startServer() {
+            return server;
+          },
+          async startConnectors() {
+            throw new Error("connector boom");
+          },
+        },
+      }),
+    ).rejects.toThrow("connector boom");
+
+    expect(serverStopCalls).toBe(1);
+    expect(runtimeCloseCalls).toBe(0);
   });
 
   test("resolves an app-owned daemon process spec before falling back to the CLI host command", () => {

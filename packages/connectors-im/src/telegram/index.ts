@@ -12,6 +12,7 @@ import { Chat, Card, CardText, Actions, Button } from "chat";
 import { createTelegramAdapter } from "@chat-adapter/telegram";
 import { createMemoryState } from "@chat-adapter/state-memory";
 import { ChatSDKAdapter } from "../chat-sdk/adapter.js";
+import { installConnectorSignalHandlers, type ConnectorRuntimeHandle } from "../shared/runtime.js";
 import { hasTelegramCredentials, getMissingCredentials } from "./config.js";
 
 export interface TelegramConnectorOptions {
@@ -20,6 +21,11 @@ export interface TelegramConnectorOptions {
   allowedChatId?: string;
   /** Pairing code for /pair command */
   pairingCode?: string;
+}
+
+export interface StartTelegramConnectorOptions {
+  port?: number;
+  registerSignalHandlers?: boolean;
 }
 
 export function createTelegramConnector(options: TelegramConnectorOptions = {}) {
@@ -117,7 +123,12 @@ export function createTelegramConnector(options: TelegramConnectorOptions = {}) 
   };
 }
 
-export async function startTelegramConnector(port = 3426): Promise<void> {
+export async function startTelegramConnector(
+  options: number | StartTelegramConnectorOptions = {},
+): Promise<ConnectorRuntimeHandle> {
+  const resolved = typeof options === "number" ? { port: options } : options;
+  const port = resolved.port ?? 3426;
+  const registerSignalHandlers = resolved.registerSignalHandlers ?? true;
   const { chat, webhookHandler } = createTelegramConnector();
 
   const server = Bun.serve({
@@ -135,14 +146,21 @@ export async function startTelegramConnector(port = 3426): Promise<void> {
     `Telegram connector listening on http://localhost:${server.port}/api/webhooks/telegram`,
   );
 
-  const shutdown = async () => {
-    console.log("\nShutting down Telegram connector...");
+  let cleanupSignals = () => {};
+  const stop = async () => {
+    cleanupSignals();
     await chat.shutdown();
     server.stop();
-    process.exit(0);
   };
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
+
+  if (registerSignalHandlers) {
+    cleanupSignals = installConnectorSignalHandlers("Telegram", stop);
+  }
+
+  return {
+    name: "telegram",
+    stop,
+  };
 }
 
 export { hasTelegramCredentials, getMissingCredentials } from "./config.js";

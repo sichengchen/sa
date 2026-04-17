@@ -67,6 +67,12 @@ Connector and integration surfaces:
 - `aria linear`
 - `aria wechat`
 
+Configured connectors now auto-start with `Aria Server` when their credentials are present.
+The connector commands remain available for standalone/debug runs.
+
+`aria slack` supports either webhook mode (`aria slack [port]`) or Slack Socket Mode
+(`aria slack socket`) when `SLACK_APP_TOKEN` is configured.
+
 ## Repo Layout
 
 ```text

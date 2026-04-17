@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { createChatSDKClient } from "../chat-sdk/client.js";
 import { formatToolResult, splitMessage } from "../chat-sdk/formatter.js";
+import { installConnectorSignalHandlers, type ConnectorRuntimeHandle } from "../shared/runtime.js";
 import { getRuntimeHome } from "@aria/server/brand";
 import type { WeChatAccountSecret } from "@aria/server/config";
 import { DEFAULT_WECHAT_API_BASE_URL, loadWeChatAccounts, upsertWeChatAccount } from "./config.js";
@@ -566,7 +567,12 @@ export async function startWeChatLogin(
   throw new Error("Timed out waiting for WeChat QR login confirmation");
 }
 
-export async function startWeChatConnector(options: { homeDir?: string } = {}): Promise<void> {
+export async function startWeChatConnector(
+  options: {
+    homeDir?: string;
+    registerSignalHandlers?: boolean;
+  } = {},
+): Promise<ConnectorRuntimeHandle> {
   const homeDir = options.homeDir ?? getRuntimeHome();
   const accounts = await loadWeChatAccounts(homeDir);
 
@@ -578,18 +584,29 @@ export async function startWeChatConnector(options: { homeDir?: string } = {}): 
 
   const controller = new AbortController();
   const runners = accounts.map((account) => new WeChatAccountRunner(account, homeDir));
+  const runPromise = Promise.all(runners.map((runner) => runner.run(controller.signal))).catch(
+    (error) => {
+      if (!controller.signal.aborted) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`WeChat connector stopped unexpectedly: ${message}`);
+      }
+    },
+  );
+  const registerSignalHandlers = options.registerSignalHandlers ?? true;
 
-  const shutdown = () => {
+  let cleanupSignals = () => {};
+  const stop = async () => {
+    cleanupSignals();
     controller.abort();
+    await runPromise.catch(() => {});
   };
 
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
-
-  try {
-    await Promise.all(runners.map((runner) => runner.run(controller.signal)));
-  } finally {
-    process.off("SIGINT", shutdown);
-    process.off("SIGTERM", shutdown);
+  if (registerSignalHandlers) {
+    cleanupSignals = installConnectorSignalHandlers("WeChat", stop);
   }
+
+  return {
+    name: "wechat",
+    stop,
+  };
 }

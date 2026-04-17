@@ -25,6 +25,7 @@ export interface WizardData {
   discordGuildId?: string;
   slackToken?: string;
   slackSigningSecret?: string;
+  slackAppToken?: string;
   teamsBotId?: string;
   teamsBotPassword?: string;
   gchatServiceAccountKey?: string;
@@ -107,6 +108,7 @@ export function Confirm({ data, onConfirm, onBack }: ConfirmProps) {
       <Text />
       <Text bold>Slack:</Text>
       <Text> {data.slackToken ? "Configured" : "Skipped"}</Text>
+      {data.slackAppToken && <Text> Socket Mode app token: configured</Text>}
       <Text />
       <Text bold>Teams:</Text>
       <Text> {data.teamsBotId ? "Configured" : "Skipped"}</Text>

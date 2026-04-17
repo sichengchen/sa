@@ -6,10 +6,16 @@ import { Chat } from "chat";
 import { createGoogleChatAdapter } from "@chat-adapter/gchat";
 import { createMemoryState } from "@chat-adapter/state-memory";
 import { ChatSDKAdapter } from "../chat-sdk/adapter.js";
+import { installConnectorSignalHandlers, type ConnectorRuntimeHandle } from "../shared/runtime.js";
 import { hasGChatCredentials, getMissingCredentials } from "./config.js";
 
 export interface GChatConnectorOptions {
   webhookPort?: number;
+}
+
+export interface StartGChatConnectorOptions {
+  port?: number;
+  registerSignalHandlers?: boolean;
 }
 
 export function createGChatConnector(options: GChatConnectorOptions = {}) {
@@ -43,7 +49,12 @@ export function createGChatConnector(options: GChatConnectorOptions = {}) {
   };
 }
 
-export async function startGChatConnector(port = 3422): Promise<void> {
+export async function startGChatConnector(
+  options: number | StartGChatConnectorOptions = {},
+): Promise<ConnectorRuntimeHandle> {
+  const resolved = typeof options === "number" ? { port: options } : options;
+  const port = resolved.port ?? 3422;
+  const registerSignalHandlers = resolved.registerSignalHandlers ?? true;
   const { chat, webhookHandler } = createGChatConnector();
 
   const server = Bun.serve({
@@ -61,14 +72,21 @@ export async function startGChatConnector(port = 3422): Promise<void> {
     `Google Chat connector listening on http://localhost:${server.port}/api/webhooks/gchat`,
   );
 
-  const shutdown = async () => {
-    console.log("\nShutting down Google Chat connector...");
+  let cleanupSignals = () => {};
+  const stop = async () => {
+    cleanupSignals();
     await chat.shutdown();
     server.stop();
-    process.exit(0);
   };
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
+
+  if (registerSignalHandlers) {
+    cleanupSignals = installConnectorSignalHandlers("Google Chat", stop);
+  }
+
+  return {
+    name: "gchat",
+    stop,
+  };
 }
 
 export { hasGChatCredentials, getMissingCredentials } from "./config.js";

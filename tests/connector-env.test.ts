@@ -15,6 +15,8 @@ afterEach(async () => {
   delete process.env.ARIA_LOG_LEVEL;
   delete process.env.TELEGRAM_BOT_TOKEN;
   delete process.env.SLACK_BOT_TOKEN;
+  delete process.env.SLACK_SIGNING_SECRET;
+  delete process.env.SLACK_APP_TOKEN;
   delete process.env.ARIA_TELEGRAM_PAIRING_CODE;
   await rm(testHome, { recursive: true, force: true });
 });
@@ -43,6 +45,8 @@ describe("loadConnectorRuntimeEnv", () => {
       apiKeys: {
         TELEGRAM_BOT_TOKEN: "telegram-secret",
         SLACK_BOT_TOKEN: "slack-secret",
+        SLACK_SIGNING_SECRET: "slack-signing-secret",
+        SLACK_APP_TOKEN: "slack-app-secret",
       },
       pairingCode: "PAIRCODE1",
     });
@@ -52,12 +56,15 @@ describe("loadConnectorRuntimeEnv", () => {
     expect(process.env.ARIA_LOG_LEVEL).toBe("debug");
     expect(process.env.TELEGRAM_BOT_TOKEN).toBe("telegram-secret");
     expect(process.env.SLACK_BOT_TOKEN).toBe("slack-secret");
+    expect(process.env.SLACK_SIGNING_SECRET).toBe("slack-signing-secret");
+    expect(process.env.SLACK_APP_TOKEN).toBe("slack-app-secret");
     expect(process.env.ARIA_TELEGRAM_PAIRING_CODE).toBe("PAIRCODE1");
   });
 
   test("preserves explicit process env values over runtime config and secrets", async () => {
     process.env.ARIA_LOG_LEVEL = "warn";
     process.env.TELEGRAM_BOT_TOKEN = "from-shell";
+    process.env.SLACK_APP_TOKEN = "from-shell-app-token";
     process.env.ARIA_TELEGRAM_PAIRING_CODE = "FROMENV99";
 
     await writeFile(
@@ -81,6 +88,7 @@ describe("loadConnectorRuntimeEnv", () => {
     await saveSecrets(testHome, {
       apiKeys: {
         TELEGRAM_BOT_TOKEN: "telegram-secret",
+        SLACK_APP_TOKEN: "slack-app-secret",
       },
       pairingCode: "PAIRCODE1",
     });
@@ -89,6 +97,7 @@ describe("loadConnectorRuntimeEnv", () => {
 
     expect(process.env.ARIA_LOG_LEVEL).toBe("warn");
     expect(process.env.TELEGRAM_BOT_TOKEN).toBe("from-shell");
+    expect(process.env.SLACK_APP_TOKEN).toBe("from-shell-app-token");
     expect(process.env.ARIA_TELEGRAM_PAIRING_CODE).toBe("FROMENV99");
   });
 

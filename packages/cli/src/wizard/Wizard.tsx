@@ -67,6 +67,7 @@ export function Wizard({ homeDir, onComplete, existingConfig }: WizardProps) {
           discordGuildId: "",
           slackToken: "",
           slackSigningSecret: "",
+          slackAppToken: "",
           teamsBotId: "",
           teamsBotPassword: "",
           gchatServiceAccountKey: "",
@@ -205,6 +206,7 @@ ${recurringContext}
       if (data.discordGuildId) apiKeys.DISCORD_GUILD_ID = data.discordGuildId;
       if (data.slackToken) apiKeys.SLACK_BOT_TOKEN = data.slackToken;
       if (data.slackSigningSecret) apiKeys.SLACK_SIGNING_SECRET = data.slackSigningSecret;
+      if (data.slackAppToken) apiKeys.SLACK_APP_TOKEN = data.slackAppToken;
       if (data.teamsBotId) apiKeys.TEAMS_BOT_ID = data.teamsBotId;
       if (data.teamsBotPassword) apiKeys.TEAMS_BOT_PASSWORD = data.teamsBotPassword;
       if (data.gchatServiceAccountKey)
@@ -355,6 +357,7 @@ ${recurringContext}
               ? {
                   slackToken: data.slackToken ?? "",
                   slackSigningSecret: data.slackSigningSecret ?? "",
+                  slackAppToken: data.slackAppToken ?? "",
                 }
               : undefined
           }

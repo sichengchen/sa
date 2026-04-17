@@ -13,10 +13,16 @@ import { Chat } from "chat";
 import { createDiscordAdapter } from "@chat-adapter/discord";
 import { createMemoryState } from "@chat-adapter/state-memory";
 import { ChatSDKAdapter } from "../chat-sdk/adapter.js";
+import { installConnectorSignalHandlers, type ConnectorRuntimeHandle } from "../shared/runtime.js";
 import { hasDiscordCredentials, getMissingCredentials } from "./config.js";
 
 export interface DiscordConnectorOptions {
   webhookPort?: number;
+}
+
+export interface StartDiscordConnectorOptions {
+  port?: number;
+  registerSignalHandlers?: boolean;
 }
 
 export function createDiscordConnector(options: DiscordConnectorOptions = {}) {
@@ -50,7 +56,12 @@ export function createDiscordConnector(options: DiscordConnectorOptions = {}) {
   };
 }
 
-export async function startDiscordConnector(port = 3423): Promise<void> {
+export async function startDiscordConnector(
+  options: number | StartDiscordConnectorOptions = {},
+): Promise<ConnectorRuntimeHandle> {
+  const resolved = typeof options === "number" ? { port: options } : options;
+  const port = resolved.port ?? 3423;
+  const registerSignalHandlers = resolved.registerSignalHandlers ?? true;
   const { chat, webhookHandler } = createDiscordConnector();
 
   const server = Bun.serve({
@@ -68,14 +79,21 @@ export async function startDiscordConnector(port = 3423): Promise<void> {
     `Discord connector listening on http://localhost:${server.port}/api/webhooks/discord`,
   );
 
-  const shutdown = async () => {
-    console.log("\nShutting down Discord connector...");
+  let cleanupSignals = () => {};
+  const stop = async () => {
+    cleanupSignals();
     await chat.shutdown();
     server.stop();
-    process.exit(0);
   };
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
+
+  if (registerSignalHandlers) {
+    cleanupSignals = installConnectorSignalHandlers("Discord", stop);
+  }
+
+  return {
+    name: "discord",
+    stop,
+  };
 }
 
 export { hasDiscordCredentials, getMissingCredentials } from "./config.js";
