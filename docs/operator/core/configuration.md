@@ -66,6 +66,8 @@ Resolution order remains:
 - cron task definitions
 - webhook task definitions
 
+The Anthropic-compatible MiniMax presets surface the official MiniMax text models directly in CLI setup flows instead of requiring manual model ID entry.
+
 Runtime and jobs resolve execution backends through the shared coding-agent registry in `@aria/agents-coding` rather than hard-coding provider-specific execution paths.
 
 ## Approval Configuration

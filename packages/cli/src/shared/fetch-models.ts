@@ -12,6 +12,15 @@ export const MINIMAX_ANTHROPIC_PROVIDER_ID = "minimax-anthropic";
 export const MINIMAX_ANTHROPIC_BASE_URL = "https://api.minimaxi.com/anthropic";
 export const MINIMAX_INTL_ANTHROPIC_PROVIDER_ID = "minimax-intl-anthropic";
 export const MINIMAX_INTL_ANTHROPIC_BASE_URL = "https://api.minimax.io/anthropic";
+export const MINIMAX_ANTHROPIC_PRESET_MODELS = [
+  "MiniMax-M2.7",
+  "MiniMax-M2.7-highspeed",
+  "MiniMax-M2.5",
+  "MiniMax-M2.5-highspeed",
+  "MiniMax-M2.1",
+  "MiniMax-M2.1-highspeed",
+  "MiniMax-M2",
+] as const;
 const MINIMAX_MODEL_MAX_OUTPUT_TOKENS = 196_608;
 const MINIMAX_MODEL_PREFIX = "MiniMax-";
 
@@ -27,9 +36,17 @@ function isMiniMaxAnthropicProvider(providerId?: string): boolean {
 }
 
 function isMiniMaxProvider(providerId?: string): boolean {
-  return (
-    isMiniMaxOpenAICompatibleProvider(providerId) || isMiniMaxAnthropicProvider(providerId)
-  );
+  return isMiniMaxOpenAICompatibleProvider(providerId) || isMiniMaxAnthropicProvider(providerId);
+}
+
+export function getPresetModelList(
+  providerType: ProviderType,
+  providerId?: string,
+): string[] | null {
+  if (providerType === "anthropic" && isMiniMaxAnthropicProvider(providerId)) {
+    return [...MINIMAX_ANTHROPIC_PRESET_MODELS];
+  }
+  return null;
 }
 
 /** Fetch available model IDs from a provider's API. */
@@ -39,10 +56,11 @@ export async function fetchModelList(
   baseUrl: string,
   providerId?: string,
 ): Promise<string[]> {
+  const presetModels = getPresetModelList(providerType, providerId);
+  if (presetModels) {
+    return presetModels;
+  }
   if (providerType === "anthropic") {
-    if (isMiniMaxAnthropicProvider(providerId)) {
-      return [];
-    }
     const url = (baseUrl || "https://api.anthropic.com").replace(/\/$/, "");
     const res = await fetch(`${url.endsWith("/v1") ? url : `${url}/v1`}/models`, {
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01" },

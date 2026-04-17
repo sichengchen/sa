@@ -4,7 +4,7 @@ import type { AriaConfigFile } from "@aria/server/config";
 import { loadSecrets } from "@aria/server/config/secrets";
 import type { ModelTier } from "@aria/gateway/router/task-types";
 import type { ModelConfig, ProviderConfig } from "@aria/gateway/router/types";
-import { fetchModelList, lookupModelMeta } from "../shared/fetch-models.js";
+import { fetchModelList, getPresetModelList, lookupModelMeta } from "../shared/fetch-models.js";
 
 type Screen =
   | "categories"
@@ -70,6 +70,20 @@ export function ModelManager({ config, homeDir, onSave, onBack }: ModelManagerPr
 
     (async () => {
       try {
+        const presetModels = getPresetModelList(
+          provider.type as "anthropic" | "openai" | "google" | "openrouter" | "openai-compat",
+          provider.id,
+        );
+        if (presetModels) {
+          setFetchedModels(presetModels);
+          setFetchError(null);
+          setSelectedModelIdx(0);
+          setScrollOffset(0);
+          setManualModel("");
+          setScreen("select-model");
+          return;
+        }
+
         let apiKey = process.env[provider.apiKeyEnvVar] ?? "";
         if (!apiKey) {
           const secrets = await loadSecrets(homeDir);
