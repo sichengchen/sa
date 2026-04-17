@@ -1,4 +1,4 @@
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useState, useEffect } from "react";
 import {
   AppFrame,
   AppFrameHeader,
@@ -16,6 +16,7 @@ import {
   TabList,
   Tab,
   TabPanel,
+  TabBar,
   Sidebar,
   SidebarHeader,
   SidebarContent,
@@ -45,6 +46,8 @@ export function DesktopShellUI(props: DesktopShellUIProps): ReactElement {
   const { model } = props;
   const [activeSpaceId, setActiveSpaceId] = useState<string>(model.activeSpaceId);
   const [activeContextPanelId, setActiveContextPanelId] = useState<string>(model.activeContextPanelId);
+  const [openWorkspaceTabs, setOpenWorkspaceTabs] = useState<string[]>(["projects-root"]);
+  const [activeWorkspaceTabId, setActiveWorkspaceTabId] = useState<string>("projects-root");
 
   const activeThreadScreen = model.shell.activeThreadScreen;
   const currentThreadId = activeThreadScreen?.header.threadId;
@@ -61,6 +64,39 @@ export function DesktopShellUI(props: DesktopShellUIProps): ReactElement {
       threadTypeLabel: thread.threadTypeLabel,
     })),
   );
+
+  // Sync workspace tabs when active thread changes
+  useEffect(() => {
+    if (activeThreadScreen?.header.threadId) {
+      const threadId = activeThreadScreen.header.threadId;
+      if (!openWorkspaceTabs.includes(threadId)) {
+        setOpenWorkspaceTabs((prev) => [...prev, threadId]);
+      }
+      setActiveWorkspaceTabId(threadId);
+    }
+  }, [activeThreadScreen?.header.threadId]);
+
+  // Build tab items for TabBar
+  const workspaceTabItems = openWorkspaceTabs.map((tabId) => ({
+    id: tabId,
+    label: tabId === "projects-root" ? "Projects" : (workspaceThreads.find((t) => t.id === tabId)?.title ?? tabId),
+    closable: tabId !== "projects-root",
+  }));
+
+  const handleWorkspaceTabSelect = (tabId: string) => {
+    setActiveWorkspaceTabId(tabId);
+    if (tabId !== "projects-root") {
+      props.onSelectProjectThread?.(tabId);
+    }
+  };
+
+  const handleWorkspaceTabClose = (tabId: string) => {
+    setOpenWorkspaceTabs((prev) => prev.filter((id) => id !== tabId));
+    if (activeWorkspaceTabId === tabId) {
+      const remaining = openWorkspaceTabs.filter((id) => id !== tabId);
+      setActiveWorkspaceTabId(remaining.length > 0 ? remaining[remaining.length - 1] : "projects-root");
+    }
+  };
 
   return (
     <AppFrame>
@@ -156,10 +192,12 @@ export function DesktopShellUI(props: DesktopShellUIProps): ReactElement {
               <div className="mb-2 text-sm font-semibold">
                 {activeThreadScreen?.header.title ?? "No active thread"}
               </div>
-              <TabList aria-label="Workspace tabs">
-                <Tab value="projects-root">Projects</Tab>
-                {activeThreadScreen && <Tab value={activeThreadScreen.header.threadId}>{activeThreadScreen.header.title}</Tab>}
-              </TabList>
+              <TabBar
+                tabs={workspaceTabItems}
+                activeTabId={activeWorkspaceTabId}
+                onTabSelect={handleWorkspaceTabSelect}
+                onTabClose={handleWorkspaceTabClose}
+              />
             </div>
 
             <TabPanel value={model.activeScreenId}>
