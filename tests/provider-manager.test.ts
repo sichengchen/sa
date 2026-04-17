@@ -6,4 +6,8 @@ describe("ProviderManager presets", () => {
     const ids = PROVIDER_TYPES.map((provider) => provider.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  test("do not expose openai-compatible providers in the add menu", () => {
+    expect(PROVIDER_TYPES.some((provider) => provider.type === "openai-compat")).toBe(false);
+  });
 });

@@ -463,27 +463,4 @@ export const PROVIDER_OPTIONS: ProviderOption[] = [
     apiKeyEnvVar: MINIMAX_API_KEY_ENV_VAR,
     baseUrl: MINIMAX_INTL_ANTHROPIC_BASE_URL,
   },
-  {
-    id: MINIMAX_PROVIDER_ID,
-    type: "openai-compat",
-    label: "MiniMax CN (OpenAI-compatible)",
-    apiKeyEnvVar: MINIMAX_API_KEY_ENV_VAR,
-    baseUrl: MINIMAX_BASE_URL,
-    compatMode: "preset",
-  },
-  {
-    id: MINIMAX_INTL_PROVIDER_ID,
-    type: "openai-compat",
-    label: "MiniMax Intl (OpenAI-compatible)",
-    apiKeyEnvVar: MINIMAX_API_KEY_ENV_VAR,
-    baseUrl: MINIMAX_INTL_BASE_URL,
-    compatMode: "preset",
-  },
-  {
-    id: "openai-compat",
-    type: "openai-compat",
-    label: "Custom OpenAI-compatible",
-    apiKeyEnvVar: "",
-    compatMode: "custom",
-  },
 ];
