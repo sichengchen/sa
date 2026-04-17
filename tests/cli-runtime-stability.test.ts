@@ -117,7 +117,7 @@ describe("cli and runtime stability", () => {
     expect(rootPackage.bin?.aria).toBe("dist/index.mjs");
     expect(rootPackage.scripts?.dev).toBe("bun run dev:server");
     expect(rootPackage.scripts?.["dev:server"]).toBe("cd apps/aria-server && bun run dev");
-    expect(rootPackage.scripts?.["dev:desktop"]).toBeUndefined();
+    expect(rootPackage.scripts?.["dev:desktop"]).toBe("cd apps/aria-desktop && bun run dev");
     expect(rootPackage.scripts?.["dev:mobile"]).toBe("cd apps/aria-mobile && bun run dev");
     expect(rootPackage.scripts?.build).toBe("vp run repo:build");
   });

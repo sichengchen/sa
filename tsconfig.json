@@ -25,6 +25,8 @@
       "@aria/runtime/*": ["./packages/runtime/src/*"],
       "aria-server": ["./apps/aria-server/src/index.ts"],
       "aria-server/*": ["./apps/aria-server/src/*"],
+      "aria-desktop": ["./apps/aria-desktop/src/index.ts"],
+      "aria-desktop/*": ["./apps/aria-desktop/src/*"],
       "aria-mobile": ["./apps/aria-mobile/src/index.ts"],
       "aria-mobile/*": ["./apps/aria-mobile/src/*"],
       "@aria/server": ["./packages/server/src/index.ts"],

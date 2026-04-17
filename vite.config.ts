@@ -9,7 +9,14 @@ const tsconfig = JSON.parse(readFileSync(new URL("./tsconfig.json", import.meta.
     paths?: Record<string, string[]>;
   };
 };
-const ignoredPaths = [".agents/**", ".codex/**", "dist/**", "node_modules/**", "**/*.generated.ts"];
+const ignoredPaths = [
+  ".agents/**",
+  ".codex/**",
+  "dist/**",
+  "out/**",
+  "node_modules/**",
+  "**/*.generated.ts",
+];
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
