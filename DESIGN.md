@@ -120,3 +120,11 @@ Scope: Desktop, Mobile
 All layout-level collapse and expand actions must use smooth motion.
 
 Resize dragging should remain direct and should not be slowed by transition effects.
+
+### 013. Desktop Pane Boundaries Use Single-Pixel Dividers
+
+Scope: Desktop
+
+Boundaries between desktop panes must read as a single-pixel divider.
+
+Do not use wide gutter bands, transition strips, or oversized separator fills between adjacent panes.
