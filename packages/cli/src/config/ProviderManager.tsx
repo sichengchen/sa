@@ -19,7 +19,7 @@ type Substep = "list" | "add-type" | "add-apikey" | "add-fields" | "confirm-remo
 type ProviderType = "anthropic" | "openai" | "google" | "openrouter" | "nvidia" | "openai-compat";
 type CompatField = "id" | "baseUrl" | "apiKey";
 
-const PROVIDER_TYPES: {
+export const PROVIDER_TYPES: {
   id: string;
   type: ProviderType;
   label: string;
@@ -363,7 +363,7 @@ export function ProviderManager({ config, homeDir, onSave, onBack }: ProviderMan
         <>
           <Text>Select provider type:</Text>
           {PROVIDER_TYPES.map((pt, i) => (
-            <Text key={pt.type}>
+            <Text key={pt.id}>
               {i === typeIdx ? <Text color="green">{"● "}</Text> : <Text>{"○ "}</Text>}
               {pt.label}
             </Text>
