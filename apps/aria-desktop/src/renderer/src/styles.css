@@ -9,12 +9,16 @@
   --desktop-toolbar-button-size: 24px;
   --desktop-panel-padding: 12px;
   --desktop-title-size: 12px;
+  --desktop-sidebar-group-size: 12px;
+  --desktop-sidebar-item-size: 11px;
+  --desktop-sidebar-meta-size: 11px;
   --desktop-background: #f3f3f3;
   --desktop-topbar-background: #ebebeb;
   --desktop-workbench-background: #efefef;
   --desktop-sidebar-background: #f7f7f7;
   --desktop-center-background: #ffffff;
   --desktop-muted-text: #5c5c5c;
+  --desktop-border: #d0d0d0;
   --desktop-handle-line: #c8c8c8;
   --desktop-handle-hit-area: 9px;
   --desktop-button-hover: rgba(0, 0, 0, 0.08);
@@ -100,11 +104,11 @@ button {
   transition: grid-template-rows var(--desktop-motion-duration) var(--desktop-motion-ease);
 }
 
-.desktop-base-layout-shared-left-toolbar {
+.desktop-base-layout-floating-left-toolbar {
   position: absolute;
   top: 0;
   left: var(--desktop-panel-padding);
-  z-index: 2;
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: var(--desktop-toolbar-gap);
@@ -136,7 +140,6 @@ button {
   align-items: center;
   gap: var(--desktop-toolbar-gap);
   min-width: 0;
-  transition: padding-left var(--desktop-motion-duration) var(--desktop-motion-ease);
 }
 
 .desktop-base-layout-title {
@@ -196,13 +199,7 @@ button {
   color: var(--desktop-muted-text);
 }
 
-.pane.is-collapsed {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.layout-toggle-icon-button {
+.desktop-icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -215,15 +212,21 @@ button {
   cursor: pointer;
 }
 
-.layout-toggle-icon-button svg {
+.desktop-icon-button svg {
   width: 14px;
   height: 14px;
   stroke-width: 1.9;
 }
 
-.layout-toggle-icon-button:hover,
-.layout-toggle-icon-button.is-active {
+.desktop-icon-button:hover,
+.desktop-icon-button.is-active {
   background: var(--desktop-button-hover);
+}
+
+.pane.is-collapsed {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .resize-handle {
@@ -284,17 +287,197 @@ button {
 body.is-resizing .desktop-base-layout-shell,
 body.is-resizing .desktop-base-layout-content,
 body.is-resizing .desktop-base-layout-center-stack,
-body.is-resizing .desktop-base-layout-main-left-content,
 body.is-resizing .pane,
 body.is-resizing .resize-handle {
   transition: none;
+}
+
+.desktop-toolbar-context {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--desktop-toolbar-button-size);
+  color: #111111;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.desktop-collapsible-section {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows var(--desktop-motion-duration) var(--desktop-motion-ease),
+    opacity var(--desktop-motion-duration) var(--desktop-motion-ease);
+}
+
+.desktop-collapsible-section.is-collapsed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.desktop-collapsible-section-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.desktop-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  gap: var(--desktop-panel-padding);
+}
+
+.desktop-sidebar-primary {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.desktop-sidebar-footer {
+  padding-top: var(--desktop-panel-padding);
+  border-top: 1px solid var(--desktop-border);
+}
+
+.desktop-sidebar-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.desktop-sidebar-button:hover,
+.desktop-sidebar-button.is-active {
+  background: var(--desktop-button-hover);
+}
+
+.desktop-sidebar-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.desktop-sidebar-button-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.9;
+}
+
+.desktop-sidebar-button-label {
+  font-size: var(--desktop-sidebar-group-size);
+  font-weight: 600;
+}
+
+.project-group + .project-group {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--desktop-border);
+}
+
+.project-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+}
+
+.project-group-name {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: var(--desktop-sidebar-group-size);
+  font-weight: 600;
+}
+
+.project-group-name.is-active {
+  color: #000000;
+}
+
+.project-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  margin-left: 14px;
+  transform: translateY(0);
+  transition: transform var(--desktop-motion-duration) var(--desktop-motion-ease);
+}
+
+.thread-list-disclosure.is-collapsed .thread-list {
+  transform: translateY(-4px);
+}
+
+.thread-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--desktop-muted-text);
+  cursor: pointer;
+  text-align: left;
+  font-size: var(--desktop-sidebar-item-size);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.thread-list-item:hover,
+.thread-list-item.is-active {
+  background: var(--desktop-button-hover);
+  color: #111111;
+}
+
+.thread-list-item-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-list-item-meta {
+  flex-shrink: 0;
+  font-size: var(--desktop-sidebar-meta-size);
+  color: var(--desktop-muted-text);
+}
+
+.thread-design-canvas,
+.settings-design-canvas,
+.thread-inspector-surface,
+.thread-terminal-surface {
+  min-height: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .desktop-base-layout-shell,
   .desktop-base-layout-content,
   .desktop-base-layout-center-stack,
-  .desktop-base-layout-main-left-content,
+  .desktop-collapsible-section,
+  .thread-list,
   .pane,
   .resize-handle {
     transition: none;

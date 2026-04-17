@@ -128,3 +128,64 @@ Scope: Desktop
 Boundaries between desktop panes must read as a single-pixel divider.
 
 Do not use wide gutter bands, transition strips, or oversized separator fills between adjacent panes.
+
+### 014. Desktop Sidebar Uses A Split Navigation Stack
+
+Scope: Desktop
+
+The left sidebar is split into a scrollable primary navigation region and a fixed footer action region.
+
+Persistent shell actions such as settings belong in the fixed footer, not mixed into the project/thread list.
+
+### 015. Settings Occupies The Main Workspace Without Secondary Chrome
+
+Scope: Desktop
+
+When desktop settings is active, it occupies the full main workspace to the right of the left sidebar.
+
+Hide the main topbar, right inspector, and bottom utility bar on settings pages.
+
+### 016. Project Header Rows Own Thread Actions
+
+Scope: Desktop
+
+Each project header row owns thread disclosure and thread creation through icon-only buttons aligned on the right.
+
+Threads render directly beneath their project header and do not duplicate those group-level actions elsewhere.
+
+### 017. Desktop Sidebar Typography Uses A Fixed Navigation Scale
+
+Scope: Desktop
+
+Sidebar typography must use a fixed scale instead of inheriting document text sizes.
+
+Fixed metrics:
+
+- project header label size: `12px`, weight `600`
+- sidebar footer action label size: `12px`, weight `600`
+- thread row label size: `11px`, weight `500`
+- thread row metadata size: `11px`
+
+### 018. Sidebar Tree Disclosure Uses Animated Height Transitions
+
+Scope: Desktop
+
+Project thread groups in the left sidebar must collapse and expand with smooth height and opacity transitions.
+
+Do not mount and unmount the thread list instantly when the operator toggles a project group.
+
+### 019. Icon-Variant Disclosure Controls Do Not Repeat State With Active Fill
+
+Scope: Desktop, Mobile
+
+When a disclosure or toggle control already changes to a distinct semantic icon between states, do not also add an active background or pressed-style fill just to restate that same state.
+
+Keep hover treatment for affordance, but use one state signal, not two.
+
+### 020. Desktop Main Topbar Shows Project Identity On The Left And Thread Identity In The Title
+
+Scope: Desktop
+
+In project-thread views, the main topbar's left context shows the active project identity using the repo or directory name.
+
+The centered main title shows the active thread title.

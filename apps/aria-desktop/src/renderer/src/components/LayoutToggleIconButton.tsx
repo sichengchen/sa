@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { DesktopIconButton } from "./DesktopIconButton.js";
 
 export type LayoutToggleIconButtonProps = {
   active?: boolean;
@@ -16,14 +17,13 @@ export function LayoutToggleIconButton({
   onClick,
 }: LayoutToggleIconButtonProps) {
   return (
-    <button
-      type="button"
-      className={`layout-toggle-icon-button${active ? " is-active" : ""}${className ? ` ${className}` : ""}`}
-      aria-label={label}
-      aria-pressed={active}
+    <DesktopIconButton
+      active={active}
+      className={className}
+      icon={icon}
+      label={label}
       onClick={onClick}
-    >
-      {icon}
-    </button>
+      pressed={active}
+    />
   );
 }
