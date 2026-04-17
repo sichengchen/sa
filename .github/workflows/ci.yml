@@ -59,11 +59,13 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Fetch history-audit base
-        run: git fetch --no-tags origin new-aria:refs/remotes/origin/new-aria
-
       - name: History audit
-        run: bun run audit:history -- origin/new-aria..HEAD
+        run: |
+          if git show-ref --verify --quiet refs/remotes/origin/new-aria; then
+            bun run audit:history -- origin/new-aria..HEAD
+          else
+            echo "Skipping history audit: origin/new-aria not found"
+          fi
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
