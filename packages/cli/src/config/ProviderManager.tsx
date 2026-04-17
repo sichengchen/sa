@@ -7,12 +7,8 @@ import {
   MINIMAX_API_KEY_ENV_VAR,
   MINIMAX_ANTHROPIC_BASE_URL,
   MINIMAX_ANTHROPIC_PROVIDER_ID,
-  MINIMAX_BASE_URL,
   MINIMAX_INTL_ANTHROPIC_BASE_URL,
   MINIMAX_INTL_ANTHROPIC_PROVIDER_ID,
-  MINIMAX_PROVIDER_ID,
-  MINIMAX_INTL_PROVIDER_ID,
-  MINIMAX_INTL_BASE_URL,
 } from "../shared/fetch-models.js";
 
 type Substep = "list" | "add-type" | "add-apikey" | "add-fields" | "confirm-remove";
@@ -70,27 +66,6 @@ export const PROVIDER_TYPES: {
     label: "MiniMax Intl (Anthropic-compatible)",
     defaultEnvVar: MINIMAX_API_KEY_ENV_VAR,
     baseUrl: MINIMAX_INTL_ANTHROPIC_BASE_URL,
-  },
-  {
-    id: MINIMAX_PROVIDER_ID,
-    type: "openai-compat",
-    label: "MiniMax CN (OpenAI-compatible)",
-    defaultEnvVar: MINIMAX_API_KEY_ENV_VAR,
-    baseUrl: MINIMAX_BASE_URL,
-  },
-  {
-    id: MINIMAX_INTL_PROVIDER_ID,
-    type: "openai-compat",
-    label: "MiniMax Intl (OpenAI-compatible)",
-    defaultEnvVar: MINIMAX_API_KEY_ENV_VAR,
-    baseUrl: MINIMAX_INTL_BASE_URL,
-  },
-  {
-    id: "openai-compat",
-    type: "openai-compat",
-    label: "Custom OpenAI-compatible",
-    defaultEnvVar: "",
-    compatMode: "custom",
   },
 ];
 

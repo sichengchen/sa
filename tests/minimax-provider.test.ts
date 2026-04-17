@@ -6,6 +6,7 @@ import {
   MINIMAX_ANTHROPIC_BASE_URL,
   MINIMAX_ANTHROPIC_PROVIDER_ID,
   MINIMAX_BASE_URL,
+  MINIMAX_INTL_PROVIDER_ID,
   MINIMAX_PROVIDER_ID,
 } from "../packages/cli/src/shared/fetch-models.js";
 import { PROVIDER_OPTIONS } from "../packages/cli/src/shared/ModelPicker.js";
@@ -17,12 +18,12 @@ afterEach(() => {
 });
 
 describe("MiniMax CLI provider support", () => {
-  test("exposes a first-class MiniMax preset in provider options", () => {
+  test("exposes only the Anthropic-compatible MiniMax presets in setup options", () => {
     const minimax = PROVIDER_OPTIONS.find((provider) => provider.id === MINIMAX_PROVIDER_ID);
+    const minimaxIntl = PROVIDER_OPTIONS.find((provider) => provider.id === MINIMAX_INTL_PROVIDER_ID);
     const minimaxAnthropic = PROVIDER_OPTIONS.find(
       (provider) => provider.id === MINIMAX_ANTHROPIC_PROVIDER_ID,
     );
-    expect(minimax).toBeDefined();
     expect(minimaxAnthropic).toBeDefined();
     expect(minimaxAnthropic).toMatchObject({
       id: MINIMAX_ANTHROPIC_PROVIDER_ID,
@@ -30,13 +31,8 @@ describe("MiniMax CLI provider support", () => {
       apiKeyEnvVar: MINIMAX_API_KEY_ENV_VAR,
       baseUrl: MINIMAX_ANTHROPIC_BASE_URL,
     });
-    expect(minimax).toMatchObject({
-      id: MINIMAX_PROVIDER_ID,
-      type: "openai-compat",
-      apiKeyEnvVar: MINIMAX_API_KEY_ENV_VAR,
-      baseUrl: MINIMAX_BASE_URL,
-      compatMode: "preset",
-    });
+    expect(minimax).toBeUndefined();
+    expect(minimaxIntl).toBeUndefined();
   });
 
   test("fetches MiniMax models from the official OpenAI-compatible endpoint", async () => {
