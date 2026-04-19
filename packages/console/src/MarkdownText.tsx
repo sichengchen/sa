@@ -1,6 +1,6 @@
 import React from "react";
 import { Text } from "ink";
-import { parseInlineMarkdown } from "@aria/ui/markdown";
+import { parseInlineMarkdown } from "./markdown.js";
 
 interface MarkdownTextProps {
   children: string;

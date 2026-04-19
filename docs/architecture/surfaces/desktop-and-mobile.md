@@ -308,13 +308,11 @@ Both desktop and mobile should share the same access model:
 | Responsibility              | Package                                                   |
 | --------------------------- | --------------------------------------------------------- |
 | Desktop shell               | `@aria/desktop`                                           |
-| Mobile shell                | `@aria/mobile`                                            |
 | Shared access client        | `@aria/access-client`                                     |
 | Shared project client state | `@aria/projects` or a dedicated client-facing slice of it |
 | Desktop local bridge        | `@aria/desktop-bridge`                                    |
 | Local git integration       | `@aria/desktop-git`                                       |
 | Local coding agent adapters | `@aria/agents-coding` or `@aria/desktop-agents`           |
-| Shared UI primitives        | `@aria/ui`                                                |
 
 ## Current Repo Note
 

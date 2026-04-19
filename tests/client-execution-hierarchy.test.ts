@@ -4,7 +4,7 @@ import {
   buildAccessClientTargetRoster,
   buildClientExecutionHierarchySummary,
 } from "@aria/access-client";
-import { createProjectEnvironmentListItem, createProjectServerRoster } from "@aria/ui";
+import { createProjectEnvironmentListItem, createProjectServerRoster } from "@aria/projects/client";
 
 describe("client execution hierarchy seams", () => {
   test("@aria/access-client summarizes server, workspace, and environment hierarchy for clients", () => {
@@ -40,7 +40,7 @@ describe("client execution hierarchy seams", () => {
     });
   });
 
-  test("@aria/ui formats project environment options for shell selectors", () => {
+  test("@aria/projects formats project environment options for shell selectors", () => {
     expect(
       createProjectEnvironmentListItem(
         {
@@ -65,7 +65,7 @@ describe("client execution hierarchy seams", () => {
     });
   });
 
-  test("@aria/access-client and @aria/ui keep active server selection stable for clients", () => {
+  test("@aria/access-client and @aria/projects keep active server selection stable for clients", () => {
     const roster = buildAccessClientTargetRoster(
       [
         { serverId: "primary", baseUrl: "https://primary.aria.test/" },

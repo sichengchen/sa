@@ -1,11 +1,13 @@
 import { app, BrowserWindow } from "electron";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { DesktopAriaService } from "./desktop-aria-service.js";
 import { DesktopProjectsService } from "./desktop-projects-service.js";
 import { registerDesktopIpc } from "./ipc.js";
 import { getDesktopPreloadPath, getDesktopRendererHtmlPath } from "./desktop-main-paths.js";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
+const desktopAriaService = new DesktopAriaService();
 const desktopProjectsService = new DesktopProjectsService();
 let mainWindow: BrowserWindow | null = null;
 
@@ -49,7 +51,7 @@ app.setName("Aria Desktop");
 
 app.whenReady().then(async () => {
   desktopProjectsService.init();
-  registerDesktopIpc(desktopProjectsService);
+  registerDesktopIpc(desktopProjectsService, desktopAriaService);
   mainWindow = await createMainWindow();
 
   app.on("activate", async () => {

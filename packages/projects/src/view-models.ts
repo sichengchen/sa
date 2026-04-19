@@ -1,23 +1,14 @@
-import {
-  type EnvironmentRecord,
-  type ServerRecord,
-  type WorkspaceRecord,
-  describeThreadType,
-  resolveThreadType,
-  type ProjectRecord,
-  type TaskStatus,
-  type ThreadRecord,
-  type ThreadStatus,
-  type ThreadType,
-} from "@aria/projects/client";
-
-export type {
+import type {
+  EnvironmentRecord,
   ProjectRecord,
-  TaskRecord,
+  ServerRecord,
   TaskStatus,
   ThreadRecord,
   ThreadStatus,
-} from "@aria/projects/client";
+  ThreadType,
+  WorkspaceRecord,
+} from "./types.js";
+import { describeThreadType, resolveThreadType } from "./types.js";
 
 export interface ProjectThreadListItem {
   id: string;

@@ -45,6 +45,7 @@ type DragState = {
 };
 
 export type DesktopBaseLayoutProps = {
+  autoExpandBottomBar?: boolean;
   bottomBar?: ReactNode;
   bottomBarTitle?: ReactNode;
   center: ReactNode;
@@ -184,6 +185,7 @@ function LayoutTopbar({ leftSlot, rightSlot, title, className }: LayoutTopbarPro
 }
 
 export function DesktopBaseLayout({
+  autoExpandBottomBar = false,
   bottomBar,
   bottomBarTitle,
   center,
@@ -273,6 +275,21 @@ export function DesktopBaseLayout({
       normalizeLayout(currentLayout, shellWidth, contentHeight, hasBottomBar, hasRightSidebar),
     );
   }, [contentHeight, hasBottomBar, hasRightSidebar, shellWidth]);
+
+  useEffect(() => {
+    if (!autoExpandBottomBar || !hasBottomBar) {
+      return;
+    }
+
+    setLayout((currentLayout) =>
+      currentLayout.bottomCollapsed
+        ? {
+            ...currentLayout,
+            bottomCollapsed: false,
+          }
+        : currentLayout,
+    );
+  }, [autoExpandBottomBar, hasBottomBar]);
 
   useEffect(() => {
     if (!layout.leftCollapsed) {

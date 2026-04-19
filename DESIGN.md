@@ -199,3 +199,34 @@ When a desktop work surface is empty, it must show the shortest clear action tha
 If that action is already semantically obvious, do not add explanatory title or helper copy around it.
 
 For the `Projects` center pane with no imported project, that action is project import.
+
+### 022. Desktop Space Switching Uses Compact Topbar Tabs
+
+Scope: Desktop
+
+The primary switch between `Projects` and `Aria` belongs in the left sidebar topbar and must render as a compact tab control.
+
+Those tabs must drive a real workspace change rather than acting as decorative labels.
+
+### 023. Desktop Aria Sidebar Mixes Static Tools With Chat Threads
+
+Scope: Desktop
+
+In the `Aria` space, the left sidebar may combine fixed destination buttons and a thread list in one navigation stack.
+
+The order is fixed:
+
+- static tool screens first
+- a divider
+- the `Chat` thread section
+- the footer settings action last
+
+### 024. Desktop Aria Chat Uses A Centered Assistant Lane And Right-Aligned User Bubbles
+
+Scope: Desktop
+
+In desktop `Aria > Chat`, assistant messages render in a wide centered lane without bubbles.
+
+User messages render in compact right-aligned bubbles.
+
+When a selected chat thread has no messages yet, the center pane shows only the centered composer with the send action.

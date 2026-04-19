@@ -16,7 +16,6 @@
     "dev": "bun run dev:server",
     "dev:server": "cd apps/aria-server && bun run dev",
     "dev:desktop": "cd apps/aria-desktop && bun run dev",
-    "dev:mobile": "cd apps/aria-mobile && bun run dev",
     "prepare:skills": "vp run repo:prepare-skills",
     "build": "vp run repo:build",
     "check": "vp run repo:check",

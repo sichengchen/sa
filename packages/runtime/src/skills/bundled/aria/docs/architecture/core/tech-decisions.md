@@ -137,8 +137,6 @@ while explicitly selecting `bun` as the package manager and runtime for Aria.
 This decision applies most strongly to:
 
 - `@aria/desktop`
-- `@aria/mobile`
-- `@aria/ui`
 - `@aria/access-client`
 - client-facing slices of `@aria/projects`
 
@@ -197,11 +195,6 @@ The workspace graph should still come from the monorepo’s actual package relat
 - Electron shell
 - React renderer
 - Vite+/Vite-based renderer tooling
-
-### Mobile
-
-- Expo-managed React Native shell
-- shared client packages with desktop where practical
 
 ### Server
 

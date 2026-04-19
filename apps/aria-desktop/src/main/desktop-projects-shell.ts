@@ -4,7 +4,7 @@ import type {
   RepoRecord,
   ThreadRecord,
 } from "../../../../packages/projects/src/types.js";
-import { createProjectThreadListItem } from "../../../../packages/ui/src/projects.js";
+import { createProjectThreadListItem } from "../../../../packages/projects/src/view-models.js";
 import type {
   AriaDesktopProjectGroup,
   AriaDesktopProjectShellState,

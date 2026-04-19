@@ -14,10 +14,7 @@ import {
   createProjectServerRoster,
   createProjectThreadListItem,
   createStatusBadgeLabel,
-  describeUiEngineEvent,
-} from "@aria/ui";
-
-import { ariaMobileApplication, createAriaMobileApplicationBootstrap } from "aria-mobile";
+} from "@aria/projects/client";
 
 describe("client surfaces", () => {
   test("normalizes multi-server access and project thread summaries", () => {
@@ -65,7 +62,6 @@ describe("client surfaces", () => {
       threadTypeLabel: "Aria",
     });
     expect(createStatusBadgeLabel("in_progress")).toBe("In Progress");
-    expect(describeUiEngineEvent({ type: "tool_approval_request" })).toBe("Approval requested");
 
     const roster = buildAccessClientTargetRoster(
       [
@@ -82,42 +78,6 @@ describe("client surfaces", () => {
         isSelected: true,
       },
     });
-  });
-
-  test("keeps mobile as a thin product shell over shared client seams", () => {
-    const mobile = createAriaMobileApplicationBootstrap({
-      target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
-      servers: [
-        {
-          label: "Home Server",
-          target: { serverId: "mobile", baseUrl: "https://aria.example.test/" },
-        },
-        {
-          label: "Published Gateway",
-          target: { serverId: "published", baseUrl: "https://gateway.example.test/" },
-        },
-      ],
-      activeServerId: "mobile",
-      initialThread: {
-        project: { name: "Aria" },
-        thread: {
-          threadId: "thread-2",
-          title: "Remote review",
-          status: "idle",
-          threadType: "remote_project",
-          agentId: "codex",
-        },
-      },
-    });
-
-    expect(ariaMobileApplication.shellPackage).toBe("@aria/mobile");
-    expect(mobile.bootstrap.access).toMatchObject({
-      serverId: "mobile",
-      httpUrl: "https://aria.example.test",
-      wsUrl: "wss://aria.example.test",
-    });
-    expect(mobile.bootstrap.activeServerLabel).toBe("Home Server");
-    expect(mobile.bootstrap.initialThread?.threadType).toBe("remote_project");
   });
 
   test("builds local access client options from discovery and token files", async () => {

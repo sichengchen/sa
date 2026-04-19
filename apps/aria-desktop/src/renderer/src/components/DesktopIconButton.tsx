@@ -4,6 +4,7 @@ export type DesktopIconButtonProps = {
   active?: boolean;
   className?: string;
   controlsId?: string;
+  disabled?: boolean;
   expanded?: boolean;
   icon: ReactNode;
   label: string;
@@ -15,6 +16,7 @@ export function DesktopIconButton({
   active = false,
   className,
   controlsId,
+  disabled = false,
   expanded,
   icon,
   label,
@@ -24,11 +26,12 @@ export function DesktopIconButton({
   return (
     <button
       type="button"
-      className={`desktop-icon-button${active ? " is-active" : ""}${className ? ` ${className}` : ""}`}
+      className={`desktop-icon-button${active ? " is-active" : ""}${disabled ? " is-disabled" : ""}${className ? ` ${className}` : ""}`}
       aria-controls={controlsId}
       aria-label={label}
       aria-expanded={expanded}
       aria-pressed={pressed}
+      disabled={disabled}
       onClick={onClick}
     >
       {icon}

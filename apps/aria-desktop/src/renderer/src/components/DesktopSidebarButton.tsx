@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 export type DesktopSidebarButtonProps = {
   active?: boolean;
   className?: string;
+  disabled?: boolean;
   icon: ReactNode;
   label: string;
   onClick: () => void;
@@ -11,6 +12,7 @@ export type DesktopSidebarButtonProps = {
 export function DesktopSidebarButton({
   active = false,
   className,
+  disabled = false,
   icon,
   label,
   onClick,
@@ -18,7 +20,8 @@ export function DesktopSidebarButton({
   return (
     <button
       type="button"
-      className={`desktop-sidebar-button${active ? " is-active" : ""}${className ? ` ${className}` : ""}`}
+      className={`desktop-sidebar-button${active ? " is-active" : ""}${disabled ? " is-disabled" : ""}${className ? ` ${className}` : ""}`}
+      disabled={disabled}
       onClick={onClick}
     >
       <span className="desktop-sidebar-button-icon" aria-hidden="true">

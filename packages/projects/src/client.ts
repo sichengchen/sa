@@ -11,3 +11,15 @@ export {
   type ThreadType,
   type WorkspaceRecord,
 } from "./types.js";
+export {
+  createProjectEnvironmentListItem,
+  createProjectServerListItem,
+  createProjectServerRoster,
+  createProjectThreadListItem,
+  createStatusBadgeLabel,
+  type ProjectEnvironmentListItem,
+  type ProjectServerListItem,
+  type ProjectServerRoster,
+  type ProjectServerSummary,
+  type ProjectThreadListItem,
+} from "./view-models.js";

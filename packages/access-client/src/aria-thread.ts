@@ -1,3 +1,4 @@
+import { buildLocalAccessClientOptions, createLocalAccessClient } from "./local.js";
 import { createAccessClient, type AccessClientTarget } from "./transport.js";
 
 export type AriaChatMessageRole = "user" | "assistant" | "tool" | "error";
@@ -213,6 +214,12 @@ function extractMessageContent(content: unknown): string {
   return "";
 }
 
+function stripHiddenContextEnvelope(content: string): string {
+  return content
+    .replace(/^<memory_context>\n[\s\S]*?\n<\/memory_context>\n\n/, "")
+    .trim();
+}
+
 function normalizeHistoryMessages(messages: unknown[]): AriaChatMessage[] {
   return messages.flatMap((message) => {
     const record = message as {
@@ -220,7 +227,7 @@ function normalizeHistoryMessages(messages: unknown[]): AriaChatMessage[] {
       content?: unknown;
       toolName?: string;
     };
-    const content = extractMessageContent(record.content).trim();
+    const content = stripHiddenContextEnvelope(extractMessageContent(record.content));
     if (!content) return [];
 
     const role: AriaChatMessageRole =
@@ -262,8 +269,8 @@ function normalizeArchivedSession(entry: {
     connectorId: entry.connectorId,
     archived: true,
     lastActiveAt: entry.lastActiveAt,
-    preview: entry.preview,
-    summary: entry.summary,
+    preview: stripHiddenContextEnvelope(entry.preview),
+    summary: stripHiddenContextEnvelope(entry.summary),
     score: entry.score,
   };
 }
@@ -566,8 +573,16 @@ export function createTargetAriaChatController(
   options: Omit<AriaChatControllerOptions, "onUpdate"> &
     Pick<AriaChatControllerOptions, "onUpdate">,
 ): AriaChatController {
+  const local = buildLocalAccessClientOptions();
+  const isLocalLoopbackTarget =
+    target.baseUrl === local.httpUrl ||
+    target.baseUrl === "http://127.0.0.1:7420" ||
+    target.baseUrl === "http://localhost:7420";
+
   return createAriaChatController(
-    createAccessClient(target).client as unknown as AriaChatClient,
+    (isLocalLoopbackTarget
+      ? createLocalAccessClient()
+      : createAccessClient(target).client) as unknown as AriaChatClient,
     options,
   );
 }
