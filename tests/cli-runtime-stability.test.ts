@@ -111,7 +111,7 @@ describe("cli and runtime stability", () => {
     const viteConfig = readRepoFile("vite.config.ts");
 
     expect(viteConfig).toContain(
-      'command:\n          "vp run repo:prepare-skills && vp pack && bun run --cwd apps/aria-desktop build"',
+      'command: "vp run repo:prepare-skills && vp pack && bun run --cwd apps/aria-desktop build"',
     );
   });
 
