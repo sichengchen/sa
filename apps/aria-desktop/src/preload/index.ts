@@ -58,6 +58,8 @@ const ariaDesktopApi: AriaDesktopApi = {
     ipcRenderer.invoke(ariaDesktopChannels.setProjectThreadPinned, threadId, pinned),
   sendProjectThreadMessage: (threadId, message) =>
     ipcRenderer.invoke(ariaDesktopChannels.sendProjectThreadMessage, threadId, message),
+  createProjectThreadBranch: (threadId, branchName) =>
+    ipcRenderer.invoke(ariaDesktopChannels.createProjectThreadBranch, threadId, branchName),
   switchProjectThreadEnvironment: (threadId, environmentId) =>
     ipcRenderer.invoke(ariaDesktopChannels.switchProjectThreadEnvironment, threadId, environmentId),
   selectAriaChatSession: (sessionId) =>

@@ -16,6 +16,7 @@ export const ariaDesktopChannels = {
   archiveProjectThread: "aria-desktop:archive-project-thread",
   setProjectThreadPinned: "aria-desktop:set-project-thread-pinned",
   sendProjectThreadMessage: "aria-desktop:send-project-thread-message",
+  createProjectThreadBranch: "aria-desktop:create-project-thread-branch",
   switchProjectThreadEnvironment: "aria-desktop:switch-project-thread-environment",
   setProjectThreadModel: "aria-desktop:set-project-thread-model",
   selectAriaChatSession: "aria-desktop:select-aria-chat-session",
@@ -265,6 +266,10 @@ export interface AriaDesktopApi {
   sendProjectThreadMessage: (
     threadId: string,
     message: string,
+  ) => Promise<AriaDesktopProjectShellState>;
+  createProjectThreadBranch: (
+    threadId: string,
+    branchName: string,
   ) => Promise<AriaDesktopProjectShellState>;
   setProjectThreadModel: (
     threadId: string,

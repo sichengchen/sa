@@ -208,8 +208,8 @@ Rules:
 Recommended operator path:
 
 1. create or open a project thread
-2. create a workspace from the desktop shell
-3. create an environment attached to that workspace
+2. create a workspace from the desktop shell when a new workspace is needed
+3. create an environment attached to that workspace, or launch a dedicated create-branch popover from the thread environment switcher
 4. switch the active thread onto that environment
 
 The desktop may use desktop-local persistence for workspace and environment drafts,
@@ -240,6 +240,7 @@ Shows:
 
 The `Projects > Active Thread` conversation surface reuses the same centered transcript lane and composer treatment as `Aria > Chat`.
 Thread-specific project metadata stays in the compact thread header and inspector rather than introducing a second chat layout.
+The environment switcher may also open a dedicated create-branch popover and immediately select the resulting local branch when the operator needs a fresh local worktree.
 
 ### `Aria > Chat`
 

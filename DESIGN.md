@@ -293,3 +293,28 @@ Scope: Desktop
 In desktop `Aria > Chat`, tool and system activity inside the transcript render as compact inline process rows with a small leading icon and subdued copy.
 
 Routine tool activity must not use boxed card containers unless the interaction requires direct user action.
+
+### 032. Desktop Project Branch Menus Use A Dedicated Create-Branch Popover
+
+Scope: Desktop
+
+In desktop `Projects > Active Thread`, the branch/environment composer control may create and immediately switch to a new local branch without leaving the active thread.
+
+That creation affordance starts from the branch dropdown but opens a dedicated popover instead of embedding a free-text form inline inside the branch list.
+
+The branch dropdown itself must avoid repeating information the trigger already shows. List branch names once, and do not restate the selected environment label inside each branch row.
+
+The branch dropdown uses one outer shell only. Do not render nested boxed rows or boxed footer actions inside that shell.
+
+The popover owns the branch name field, one close affordance, and the primary `Create and checkout` action.
+
+Fixed desktop create-branch popover metrics:
+
+- max width: `560px`
+- outer padding: `16px`
+- section gap: `16px`
+- title size: `16px`
+- input height: `36px`
+- action button height: `36px`
+
+Creating a branch from this control must produce a dedicated local worktree environment rather than mutating the shared main checkout in place.

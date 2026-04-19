@@ -1,8 +1,8 @@
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { realpath } from "node:fs/promises";
-import { basename, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import type { BrowserWindow } from "electron";
 import {
@@ -298,6 +298,14 @@ function buildOpenCodeRuntimePaths(root: string, threadId: string): OpenCodeRunt
 
 function ensureDirectory(path: string): void {
   mkdirSync(path, { recursive: true });
+}
+
+async function assertValidBranchName(branchName: string, workingDirectory: string): Promise<void> {
+  await execFileAsync("git", ["-C", workingDirectory, "check-ref-format", "--branch", branchName]);
+}
+
+function buildBranchEnvironmentLabel(branchName: string): string {
+  return `${DESKTOP_LOCAL_WORKSPACE_LABEL} / ${branchName}`;
 }
 
 function toggleId(ids: string[], id: string, enabled: boolean): string[] {
@@ -615,6 +623,85 @@ export class DesktopProjectsService {
       this.refreshThreadModelOptions(threadId);
 
       return this.emitSnapshot();
+    } catch (error) {
+      return this.recordThreadFailure(
+        thread,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  async createProjectThreadBranch(
+    threadId: string,
+    branchName: string,
+  ): Promise<AriaDesktopProjectShellState> {
+    const thread = this.store.getThread(threadId);
+    if (!thread) {
+      return this.getProjectShellState();
+    }
+
+    if (this.runningExecutions.has(threadId)) {
+      return this.recordThreadFailure(
+        thread,
+        "Stop the current local agent run before creating a branch.",
+      );
+    }
+
+    const trimmedBranchName = branchName.trim();
+    if (!trimmedBranchName) {
+      return this.recordThreadFailure(thread, "Enter a branch name before creating it.");
+    }
+
+    const environment = this.getThreadEnvironment(thread);
+    if (!environment) {
+      return this.recordThreadFailure(thread, "This thread does not have an active environment.");
+    }
+
+    if (environment.mode !== "local") {
+      return this.recordThreadFailure(
+        thread,
+        "Create-and-checkout branch is only available for local project environments.",
+      );
+    }
+
+    if (!this.store.getProject(thread.projectId)) {
+      return this.recordThreadFailure(thread, "Project not found for the selected thread.");
+    }
+
+    try {
+      await assertValidBranchName(trimmedBranchName, environment.locator);
+      const baseEnvironment = this.getDefaultEnvironment(thread.projectId);
+      const branchEnvironmentPath = this.resolveBranchEnvironmentPath(
+        baseEnvironment.locator,
+        trimmedBranchName,
+      );
+
+      await execFileAsync("git", [
+        "-C",
+        environment.locator,
+        "worktree",
+        "add",
+        "-b",
+        trimmedBranchName,
+        branchEnvironmentPath,
+      ]);
+
+      const normalizedBranchPath = await normalizeDirectoryPath(branchEnvironmentPath);
+      const now = this.now();
+      const branchEnvironment: EnvironmentRecord = {
+        createdAt: now,
+        environmentId: randomUUID(),
+        kind: "worktree",
+        label: buildBranchEnvironmentLabel(trimmedBranchName),
+        locator: normalizedBranchPath,
+        mode: "local",
+        projectId: thread.projectId,
+        updatedAt: now,
+        workspaceId: DESKTOP_LOCAL_WORKSPACE_ID,
+      };
+
+      this.store.upsertEnvironment(branchEnvironment);
+      return this.switchProjectThreadEnvironment(thread.threadId, branchEnvironment.environmentId);
     } catch (error) {
       return this.recordThreadFailure(
         thread,
@@ -1181,6 +1268,21 @@ export class DesktopProjectsService {
     }
 
     return preferredEnvironment;
+  }
+
+  private resolveBranchEnvironmentPath(baseLocator: string, branchName: string): string {
+    const baseDirectory = dirname(baseLocator);
+    const baseName = basename(baseLocator);
+    const branchSlug = slugify(branchName);
+    let candidatePath = join(baseDirectory, `${baseName}-${branchSlug}`);
+    let suffix = 2;
+
+    while (existsSync(candidatePath)) {
+      candidatePath = join(baseDirectory, `${baseName}-${branchSlug}-${suffix}`);
+      suffix += 1;
+    }
+
+    return candidatePath;
   }
 
   private openProjectAfterImport(projectId: string): AriaDesktopProjectShellState {

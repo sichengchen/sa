@@ -10,10 +10,20 @@ import {
   MessageSquarePlus,
   Pin,
   Plug2,
+  Plus,
+  Search,
   Settings2,
   Sparkles,
+  X,
 } from "lucide-react";
-import { startTransition, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  startTransition,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import type {
   AriaDesktopAriaShellState,
   AriaDesktopAriaScreen,
@@ -92,6 +102,8 @@ const EMPTY_ARIA_STATE: AriaDesktopAriaShellState = {
   selectedAriaSessionId: null,
   serverLabel: "Local Server",
 };
+
+const DEFAULT_BRANCH_PREFIX = "aria/";
 
 function formatRelativeUpdatedAt(updatedAt?: number | null): string | null {
   if (!updatedAt) {
@@ -305,7 +317,275 @@ function ComposerContextMenu({
   );
 }
 
+function BranchComposerMenu({
+  activeLabel,
+  onCreateBranch,
+  onSelect,
+  options,
+}: {
+  activeLabel: string;
+  onCreateBranch: (branchName: string) => void;
+  onSelect: (environmentId: string) => void;
+  options: Array<{
+    description?: string | null;
+    id: string;
+    label: string;
+    selected: boolean;
+  }>;
+}) {
+  const [branchName, setBranchName] = useState("");
+  const [branchQuery, setBranchQuery] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [openDirection, setOpenDirection] = useState<"down" | "up">("down");
+  const [maxMenuHeight, setMaxMenuHeight] = useState<number | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const rootElement = rootRef.current;
+    if (rootElement) {
+      const rect = rootElement.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom - 16;
+      const spaceAbove = rect.top - 16;
+      const shouldOpenUp = spaceBelow < 360 && spaceAbove > spaceBelow;
+      const sixRowMenuHeight = 6 * 58;
+      const availableHeight = shouldOpenUp ? spaceAbove - 136 : spaceBelow - 136;
+
+      setOpenDirection(shouldOpenUp ? "up" : "down");
+      setMaxMenuHeight(Math.max(120, Math.min(sixRowMenuHeight, availableHeight)));
+    }
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen && !popoverOpen) {
+      setBranchName("");
+      setBranchQuery("");
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent): void {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+        setPopoverOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent): void {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        setPopoverOpen(false);
+      }
+    }
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [menuOpen, popoverOpen]);
+
+  useEffect(() => {
+    if (!popoverOpen) {
+      return;
+    }
+
+    setBranchName((current) => current || DEFAULT_BRANCH_PREFIX);
+    inputRef.current?.focus();
+  }, [popoverOpen]);
+
+  function openBranchPopover(): void {
+    setMenuOpen(false);
+    setPopoverOpen(true);
+  }
+
+  function closeBranchPopover(): void {
+    setPopoverOpen(false);
+  }
+
+  function applyDefaultPrefix(): void {
+    setBranchName((current) => {
+      const trimmed = current.trim();
+      if (!trimmed) {
+        return DEFAULT_BRANCH_PREFIX;
+      }
+
+      if (trimmed.startsWith(DEFAULT_BRANCH_PREFIX)) {
+        return trimmed;
+      }
+
+      return `${DEFAULT_BRANCH_PREFIX}${trimmed.replace(/^\/+/, "")}`;
+    });
+    inputRef.current?.focus();
+  }
+
+  function submitBranch(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    const trimmedBranchName = branchName.trim();
+    if (!trimmedBranchName) {
+      return;
+    }
+
+    setPopoverOpen(false);
+    setBranchName("");
+    onCreateBranch(trimmedBranchName);
+  }
+
+  const filteredOptions = options.filter((option) =>
+    option.label.toLowerCase().includes(branchQuery.trim().toLowerCase()),
+  );
+
+  return (
+    <div
+      ref={rootRef}
+      className={`project-thread-composer-menu${menuOpen ? " is-open" : ""}${
+        openDirection === "up" ? " opens-up" : ""
+      }`}
+    >
+      <button
+        type="button"
+        className="project-thread-composer-trigger"
+        aria-expanded={menuOpen}
+        aria-haspopup="menu"
+        aria-label={`Branch: ${activeLabel}`}
+        onClick={() => setMenuOpen((current) => !current)}
+      >
+        <GitBranch aria-hidden="true" />
+        <span className="project-thread-composer-trigger-label">{activeLabel}</span>
+        <ChevronDown aria-hidden="true" />
+      </button>
+      {menuOpen ? (
+        <div className="project-thread-composer-dropdown" role="menu" aria-label="Branch">
+          <div className="project-thread-composer-branch-search">
+            <Search aria-hidden="true" />
+            <input
+              className="project-thread-composer-branch-search-input"
+              type="text"
+              value={branchQuery}
+              placeholder="Search branches"
+              aria-label="Search branches"
+              onChange={(event) => setBranchQuery(event.target.value)}
+            />
+          </div>
+          <div className="project-thread-composer-dropdown-section-label">Branches</div>
+          <div
+            className="project-thread-composer-dropdown-options desktop-scroll-region"
+            style={maxMenuHeight ? { maxHeight: `${maxMenuHeight}px` } : undefined}
+          >
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={`project-thread-composer-option${option.selected ? " is-selected" : ""}`}
+                  role="menuitemradio"
+                  aria-checked={option.selected}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    if (!option.selected) {
+                      onSelect(option.id);
+                    }
+                  }}
+                >
+                  <span className="project-thread-composer-option-copy">
+                    <span className="project-thread-composer-option-leading">
+                      <GitBranch aria-hidden="true" />
+                    </span>
+                    <span className="project-thread-composer-option-label">{option.label}</span>
+                  </span>
+                  {option.selected ? (
+                    <span className="project-thread-composer-option-check">
+                      <Check aria-hidden="true" />
+                    </span>
+                  ) : null}
+                </button>
+              ))
+            ) : (
+              <div className="project-thread-composer-empty">No matching branches</div>
+            )}
+          </div>
+          <div className="project-thread-composer-dropdown-footer">
+            <button
+              type="button"
+              className="project-thread-composer-create-branch"
+              onClick={openBranchPopover}
+            >
+              <Plus aria-hidden="true" />
+              <span>Create and checkout new branch...</span>
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {popoverOpen ? (
+        <div className="project-thread-branch-popover-backdrop">
+          <form
+            className="project-thread-branch-popover"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="project-thread-branch-popover-title"
+            onSubmit={submitBranch}
+          >
+            <div className="project-thread-branch-popover-header">
+              <h2 id="project-thread-branch-popover-title">Create and checkout branch</h2>
+              <button
+                type="button"
+                className="project-thread-branch-popover-close"
+                aria-label="Close branch popover"
+                onClick={closeBranchPopover}
+              >
+                <X aria-hidden="true" />
+              </button>
+            </div>
+            <div className="project-thread-branch-popover-body">
+              <div className="project-thread-branch-popover-label-row">
+                <label
+                  className="project-thread-branch-popover-label"
+                  htmlFor="project-thread-branch-name"
+                >
+                  Branch name
+                </label>
+                <button
+                  type="button"
+                  className="project-thread-branch-popover-prefix"
+                  onClick={applyDefaultPrefix}
+                >
+                  Set prefix
+                </button>
+              </div>
+              <input
+                id="project-thread-branch-name"
+                ref={inputRef}
+                className="project-thread-branch-popover-input"
+                type="text"
+                value={branchName}
+                placeholder={`${DEFAULT_BRANCH_PREFIX}create-and-checkout-branch`}
+                onChange={(event) => setBranchName(event.target.value)}
+              />
+            </div>
+            <div className="project-thread-branch-popover-actions">
+              <button
+                type="submit"
+                className="project-thread-branch-popover-button is-primary"
+                disabled={branchName.trim().length === 0}
+              >
+                Create and checkout
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 type ThreadViewProps = {
+  onCreateBranch: (threadId: string, branchName: string) => void;
   onImportProject: () => void;
   onSetModel: (threadId: string, modelId: string | null) => void;
   onSendMessage: (threadId: string, message: string) => void;
@@ -315,6 +595,7 @@ type ThreadViewProps = {
 };
 
 export function ThreadView({
+  onCreateBranch,
   onImportProject,
   onSetModel,
   onSendMessage,
@@ -378,15 +659,15 @@ export function ThreadView({
         }
         composerFooterStart={
           selectedBranch ? (
-            <ComposerContextMenu
+            <BranchComposerMenu
               activeLabel={selectedBranch.value}
-              icon={<GitBranch aria-hidden="true" />}
-              menuLabel="Branch"
+              onCreateBranch={(branchName) =>
+                onCreateBranch(selectedThreadState.threadId, branchName)
+              }
               onSelect={(environmentId) =>
                 onSwitchEnvironment(selectedThreadState.threadId, environmentId)
               }
               options={selectedThreadState.availableBranches.map((option) => ({
-                description: option.label,
                 id: option.environmentId,
                 label: option.value,
                 selected: option.selected,
@@ -552,9 +833,7 @@ export function ProjectSidebar({
                             className="thread-list-item-action"
                             icon={<Pin aria-hidden="true" />}
                             label={thread.pinned ? `Unpin ${thread.title}` : `Pin ${thread.title}`}
-                            onClick={() =>
-                              onTogglePinnedThread(thread.threadId, !Boolean(thread.pinned))
-                            }
+                            onClick={() => onTogglePinnedThread(thread.threadId, !thread.pinned)}
                           />
                           <DesktopIconButton
                             className="thread-list-item-action"
@@ -1278,6 +1557,19 @@ export function DesktopWorkbenchApp() {
       });
   }
 
+  function createProjectThreadBranch(threadId: string, branchName: string): void {
+    void window.ariaDesktop
+      .createProjectThreadBranch(threadId, branchName)
+      .then((nextShellState) => {
+        startTransition(() => {
+          setShellState(nextShellState);
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
   function switchProjectThreadEnvironment(threadId: string, environmentId: string): void {
     void window.ariaDesktop
       .switchProjectThreadEnvironment(threadId, environmentId)
@@ -1364,6 +1656,7 @@ export function DesktopWorkbenchApp() {
           <SettingsView />
         ) : activeSpace === "projects" ? (
           <ThreadView
+            onCreateBranch={createProjectThreadBranch}
             onImportProject={importProject}
             onSetModel={setProjectThreadModel}
             onSendMessage={sendProjectThreadMessage}

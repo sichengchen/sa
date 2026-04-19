@@ -1,5 +1,6 @@
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdtemp, mkdir, realpath, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Database } from "bun:sqlite";
@@ -12,6 +13,25 @@ let testDir = "";
 async function createProjectDirectory(relativePath: string): Promise<string> {
   const directoryPath = join(testDir, relativePath);
   await mkdir(directoryPath, { recursive: true });
+  return directoryPath;
+}
+
+async function createGitProjectDirectory(relativePath: string): Promise<string> {
+  const directoryPath = await createProjectDirectory(relativePath);
+  await writeFile(join(directoryPath, "README.md"), "# Test project\n");
+  execFileSync("git", ["init", "-b", "main", directoryPath]);
+  execFileSync("git", ["-C", directoryPath, "config", "user.email", "tests@example.com"]);
+  execFileSync("git", ["-C", directoryPath, "config", "user.name", "Aria Tests"]);
+  execFileSync("git", ["-C", directoryPath, "add", "README.md"]);
+  execFileSync("git", [
+    "-C",
+    directoryPath,
+    "-c",
+    "commit.gpgSign=false",
+    "commit",
+    "-m",
+    "Initial commit",
+  ]);
   return directoryPath;
 }
 
@@ -504,6 +524,82 @@ describe("DesktopProjectsService", () => {
       ]),
     );
 
+    service.close();
+  });
+
+  test("creates and checks out a new branch as a local worktree environment", async () => {
+    const { DesktopProjectsService } =
+      await import("../apps/aria-desktop/src/main/desktop-projects-service.js");
+    const dbPath = join(testDir, "desktop", "aria-desktop.db");
+    const projectPath = await createGitProjectDirectory("projects/create-branch-project");
+    const service = new DesktopProjectsService({
+      dbPath,
+      now: () => 11_000,
+    });
+
+    service.init();
+    const imported = await service.importLocalProjectFromPath(projectPath);
+    const threadId = imported.selectedThreadId!;
+
+    const createdBranch = await service.createProjectThreadBranch(
+      threadId,
+      "feature-inline-branch",
+    );
+
+    expect(createdBranch.selectedThreadState).toMatchObject({
+      environmentLabel: "This Device / feature-inline-branch",
+    });
+    expect(createdBranch.selectedThreadState?.availableBranches).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          selected: true,
+          value: "feature-inline-branch",
+        }),
+      ]),
+    );
+
+    const createdEnvironment = createdBranch.selectedThreadState?.availableBranches.find(
+      (option) => option.value === "feature-inline-branch",
+    );
+    expect(createdEnvironment?.environmentId).toBeTruthy();
+    expect(createdEnvironment?.locator).toBeTruthy();
+    const createdEnvironmentId = createdEnvironment?.environmentId;
+    const createdEnvironmentLocator = createdEnvironment?.locator;
+
+    if (!createdEnvironmentId || !createdEnvironmentLocator) {
+      throw new Error("Expected the created branch environment to be available.");
+    }
+
+    expect(existsSync(createdEnvironmentLocator)).toBe(true);
+
+    const checkedOutBranch = execFileSync(
+      "git",
+      ["-C", createdEnvironmentLocator, "branch", "--show-current"],
+      { encoding: "utf8" },
+    ).trim();
+    expect(checkedOutBranch).toBe("feature-inline-branch");
+
+    const db = new Database(dbPath, { readonly: true });
+    const environment = db
+      .prepare(
+        `
+          SELECT kind, mode, locator, label
+          FROM projects_environments
+          WHERE environment_id = ?
+        `,
+      )
+      .get(createdEnvironmentId) as
+      | { kind: string; label: string; locator: string; mode: string }
+      | undefined;
+
+    expect(environment).toMatchObject({
+      kind: "worktree",
+      label: "This Device / feature-inline-branch",
+      mode: "local",
+    });
+    expect(environment?.locator).toBe(createdEnvironmentLocator);
+
+    db.close();
     service.close();
   });
 

@@ -1354,8 +1354,44 @@ body.is-resizing .resize-handle {
   bottom: calc(100% + 8px);
 }
 
-.project-thread-composer-dropdown-title {
-  padding: 4px 8px 8px;
+.project-thread-composer-branch-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 4px 12px;
+  color: #8a8a8a;
+}
+
+.project-thread-composer-branch-search svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  stroke-width: 1.9;
+}
+
+.project-thread-composer-branch-search-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #202020;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.project-thread-composer-branch-search-input::placeholder {
+  color: #8a8a8a;
+}
+
+.project-thread-composer-branch-search-input:focus {
+  outline: none;
+}
+
+.project-thread-composer-dropdown-section-label {
+  padding: 0 4px 10px;
   color: #8a8a8a;
   font-size: 12px;
   font-weight: 500;
@@ -1366,7 +1402,7 @@ body.is-resizing .resize-handle {
   display: flex;
   max-height: min(320px, 45vh);
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -1378,9 +1414,9 @@ body.is-resizing .resize-handle {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 8px 10px;
+  padding: 10px 4px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 0;
   background: transparent;
   color: #202020;
   cursor: pointer;
@@ -1388,36 +1424,46 @@ body.is-resizing .resize-handle {
   text-align: left;
 }
 
-.project-thread-composer-option:hover,
-.project-thread-composer-option.is-selected {
-  background: #f3f3f3;
+.project-thread-composer-option:hover {
+  color: #111111;
 }
 
 .project-thread-composer-option-copy {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
   flex: 1 1 auto;
-  flex-direction: column;
-  gap: 1px;
+}
+
+.project-thread-composer-option-leading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: #5f5f5f;
+  flex: 0 0 auto;
+}
+
+.project-thread-composer-option-leading svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.9;
 }
 
 .project-thread-composer-option-label {
   min-width: 0;
   color: #2b2b2b;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
-  line-height: 1.35;
+  line-height: 1.3;
   white-space: normal;
   word-break: break-word;
 }
 
-.project-thread-composer-option-secondary {
-  color: #8a8a8a;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.3;
-  white-space: normal;
-  word-break: break-word;
+.project-thread-composer-option.is-selected .project-thread-composer-option-label {
+  font-weight: 600;
 }
 
 .project-thread-composer-option-check {
@@ -1432,6 +1478,225 @@ body.is-resizing .resize-handle {
   width: 16px;
   height: 16px;
   stroke-width: 2.1;
+}
+
+.project-thread-composer-dropdown-footer {
+  margin-top: 12px;
+  padding: 14px 4px 0;
+  border-top: 1px solid #e5e5e5;
+}
+
+.project-thread-composer-create-branch {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #202020;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.project-thread-composer-create-branch:hover {
+  color: #111111;
+}
+
+.project-thread-composer-create-branch svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  stroke-width: 1.9;
+}
+
+.project-thread-composer-empty {
+  padding: 10px 4px;
+  color: #8a8a8a;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.project-thread-branch-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.project-thread-branch-popover {
+  width: min(560px, calc(100vw - 40px));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #d5d5d5;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.1);
+}
+
+.project-thread-branch-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.project-thread-branch-popover-header h2 {
+  margin: 0;
+  color: #202020;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+
+.project-thread-branch-popover-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #5f5f5f;
+  cursor: pointer;
+}
+
+.project-thread-branch-popover-close:hover {
+  background: #f3f3f3;
+  color: #202020;
+}
+
+.project-thread-branch-popover-close svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.9;
+}
+
+.project-thread-branch-popover-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-thread-branch-popover-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.project-thread-branch-popover-label {
+  color: #202020;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.project-thread-branch-popover-prefix {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8a8a8a;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.project-thread-branch-popover-prefix:hover {
+  color: #444444;
+}
+
+.project-thread-branch-popover-input {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #e1e1e1;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #202020;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.project-thread-branch-popover-input::placeholder {
+  color: #9a9a9a;
+}
+
+.project-thread-branch-popover-input:focus {
+  outline: 1px solid #1f1f1f;
+  outline-offset: 0;
+}
+
+.project-thread-branch-popover-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.project-thread-branch-popover-button {
+  min-width: 96px;
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.project-thread-branch-popover-button.is-primary {
+  background: #1f1f1f;
+  color: #ffffff;
+}
+
+.project-thread-branch-popover-button.is-primary:hover {
+  background: #2b2b2b;
+}
+
+.project-thread-branch-popover-button:disabled {
+  background: #bcbcbc;
+  color: #ffffff;
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  .project-thread-branch-popover {
+    width: min(100vw - 24px, 480px);
+    padding: 14px;
+    gap: 14px;
+    border-radius: 16px;
+  }
+
+  .project-thread-branch-popover-header h2 {
+    font-size: 15px;
+  }
+
+  .project-thread-branch-popover-actions {
+    justify-content: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .project-thread-branch-popover-button {
+    width: 100%;
+  }
 }
 
 .thread-empty-state {

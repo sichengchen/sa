@@ -351,6 +351,7 @@ describe("desktop aria renderer", () => {
   test("renders project threads with the reused chat interface and thread metadata", () => {
     const html = renderToStaticMarkup(
       React.createElement(ThreadView, {
+        onCreateBranch: () => {},
         onImportProject: () => {},
         onSetModel: () => {},
         onSendMessage: () => {},

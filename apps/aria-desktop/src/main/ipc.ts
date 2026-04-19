@@ -75,6 +75,11 @@ export function registerDesktopIpc(
       projectsService.sendProjectThreadMessage(threadId, message),
   );
   ipcMain.handle(
+    ariaDesktopChannels.createProjectThreadBranch,
+    (_event, threadId: string, branchName: string) =>
+      projectsService.createProjectThreadBranch(threadId, branchName),
+  );
+  ipcMain.handle(
     ariaDesktopChannels.switchProjectThreadEnvironment,
     (_event, threadId: string, environmentId: string) =>
       projectsService.switchProjectThreadEnvironment(threadId, environmentId),
