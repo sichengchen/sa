@@ -143,11 +143,38 @@ button {
 }
 
 .desktop-base-layout-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
   font-size: var(--desktop-title-size);
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
+}
+
+.desktop-space-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.desktop-space-tab {
+  min-height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--desktop-title-size);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.desktop-space-tab:hover,
+.desktop-space-tab.is-active {
+  background: var(--desktop-button-hover);
 }
 
 .pane {
@@ -335,6 +362,12 @@ body.is-resizing .resize-handle {
   overflow: auto;
 }
 
+.desktop-sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .desktop-sidebar-footer {
   padding-top: var(--desktop-panel-padding);
   border-top: 1px solid var(--desktop-border);
@@ -466,6 +499,7 @@ body.is-resizing .resize-handle {
 }
 
 .thread-design-canvas,
+.aria-design-canvas,
 .settings-design-canvas,
 .thread-inspector-surface,
 .thread-terminal-surface {

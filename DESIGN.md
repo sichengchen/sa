@@ -199,3 +199,11 @@ When a desktop work surface is empty, it must show the shortest clear action tha
 If that action is already semantically obvious, do not add explanatory title or helper copy around it.
 
 For the `Projects` center pane with no imported project, that action is project import.
+
+### 022. Desktop Space Switching Uses Compact Topbar Tabs
+
+Scope: Desktop
+
+The primary switch between `Projects` and `Aria` belongs in the left sidebar topbar and must render as a compact tab control.
+
+Those tabs must drive a real workspace change rather than acting as decorative labels.

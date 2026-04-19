@@ -119,10 +119,15 @@ export default defineConfig({
         cache: false,
       },
       "repo:build": {
-        command: "vp run repo:prepare-skills && vp pack",
+        command:
+          "vp run repo:prepare-skills && vp pack && bun run --cwd apps/aria-desktop build",
         input: [
           { auto: true },
+          { pattern: "apps/aria-desktop/**", base: "workspace" },
+          { pattern: "packages/**", base: "workspace" },
           { pattern: "docs/**", base: "workspace" },
+          { pattern: "bun.lock", base: "workspace" },
+          { pattern: "package.json", base: "workspace" },
           { pattern: "scripts/**", base: "workspace" },
           { pattern: "vite.config.ts", base: "workspace" },
           { pattern: "tsconfig.json", base: "workspace" },
