@@ -15,5 +15,8 @@
     "./opencode": "./src/opencode.ts",
     "./registry": "./src/registry.ts",
     "./subprocess": "./src/subprocess.ts"
+  },
+  "dependencies": {
+    "@opencode-ai/sdk": "^0.8.0"
   }
 }

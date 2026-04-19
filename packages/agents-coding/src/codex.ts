@@ -48,14 +48,15 @@ export class CodexRuntimeBackendAdapter extends SubprocessRuntimeBackendAdapter 
   }
 
   protected buildCommand(request: RuntimeBackendExecutionRequest): string[] {
-    return [
-      "codex",
-      "exec",
-      "--json",
-      "-s",
-      this.resolveSandbox(request.approvalMode),
-      request.prompt,
-    ];
+    const command = ["codex", "exec", "--json", "-s", this.resolveSandbox(request.approvalMode)];
+
+    if (request.modelId) {
+      command.push("-m", request.modelId);
+    }
+
+    command.push(request.prompt);
+
+    return command;
   }
 
   protected parseExecutionResult(input: {

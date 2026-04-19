@@ -1,3 +1,5 @@
+import { spawn, spawnSync, type ChildProcessByStdio } from "node:child_process";
+import type { Readable } from "node:stream";
 import type {
   RuntimeBackendAdapter,
   RuntimeBackendAvailability,
@@ -21,9 +23,11 @@ export type {
 } from "./contracts.js";
 
 interface RunningProcess {
-  proc: Bun.Subprocess<"ignore", "pipe", "pipe">;
+  proc: ChildProcessByStdio<null, Readable, Readable>;
   timedOut: boolean;
   cancelled: boolean;
+  stdout: string;
+  stderr: string;
 }
 
 export abstract class SubprocessRuntimeBackendAdapter implements RuntimeBackendAdapter {
@@ -74,20 +78,27 @@ export abstract class SubprocessRuntimeBackendAdapter implements RuntimeBackendA
     await this.beforeExecute(request);
 
     const [command, ...args] = this.buildCommand(request);
-    const proc = Bun.spawn([command, ...args], {
+    const proc = spawn(command, args, {
       cwd: request.workingDirectory,
       env: this.buildEnv(request),
-      stdout: "pipe",
-      stderr: "pipe",
-      stdin: "ignore",
+      stdio: ["ignore", "pipe", "pipe"],
     });
 
     const running: RunningProcess = {
       proc,
       timedOut: false,
       cancelled: false,
+      stderr: "",
+      stdout: "",
     };
     this.running.set(request.executionId, running);
+
+    proc.stdout.on("data", (chunk) => {
+      running.stdout += chunk.toString();
+    });
+    proc.stderr.on("data", (chunk) => {
+      running.stderr += chunk.toString();
+    });
 
     await observer?.onEvent?.({
       type: "execution.started",
@@ -103,11 +114,16 @@ export abstract class SubprocessRuntimeBackendAdapter implements RuntimeBackendA
     }, request.timeoutMs);
 
     try {
-      const exitCode = await proc.exited;
+      const exitCode = await new Promise<number | null>((resolve, reject) => {
+        proc.once("error", reject);
+        proc.once("close", (code) => {
+          resolve(code);
+        });
+      });
       clearTimeout(timeoutId);
 
-      const stdout = await new Response(proc.stdout).text();
-      const stderr = await new Response(proc.stderr).text();
+      const stdout = running.stdout;
+      const stderr = running.stderr;
       const filesChanged = this.collectChangedFiles(request.workingDirectory);
 
       if (stdout.length > 0) {
@@ -193,16 +209,13 @@ export abstract class SubprocessRuntimeBackendAdapter implements RuntimeBackendA
     available: boolean;
     detectedVersion?: string | null;
   } {
-    const result = Bun.spawnSync([command, versionArg], {
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    if (result.exitCode !== 0) {
+    const result = spawnSync(command, [versionArg], { encoding: "utf8" });
+    if (result.status !== 0) {
       return { available: false, detectedVersion: null };
     }
 
-    const stdout = result.stdout.toString().trim();
-    const stderr = result.stderr.toString().trim();
+    const stdout = result.stdout?.trim() ?? "";
+    const stderr = result.stderr?.trim() ?? "";
     return {
       available: true,
       detectedVersion: stdout || stderr || null,
@@ -213,32 +226,30 @@ export abstract class SubprocessRuntimeBackendAdapter implements RuntimeBackendA
     command: string[],
     env?: Record<string, string>,
   ): { exitCode: number; stdout: string; stderr: string } {
-    const result = Bun.spawnSync(command, {
-      stdout: "pipe",
-      stderr: "pipe",
+    const [bin, ...args] = command;
+    const result = spawnSync(bin, args, {
+      encoding: "utf8",
       env: env ? { ...process.env, ...env } : process.env,
     });
 
     return {
-      exitCode: result.exitCode,
-      stdout: result.stdout.toString(),
-      stderr: result.stderr.toString(),
+      exitCode: result.status ?? -1,
+      stdout: result.stdout ?? "",
+      stderr: result.stderr ?? "",
     };
   }
 
   private collectChangedFiles(workingDirectory: string): string[] {
-    const result = Bun.spawnSync(["git", "diff", "--name-only", "HEAD"], {
+    const result = spawnSync("git", ["diff", "--name-only", "HEAD"], {
       cwd: workingDirectory,
-      stdout: "pipe",
-      stderr: "pipe",
+      encoding: "utf8",
     });
 
-    if (result.exitCode !== 0) {
+    if (result.status !== 0) {
       return [];
     }
 
-    return result.stdout
-      .toString()
+    return (result.stdout ?? "")
       .split("\n")
       .map((value) => value.trim())
       .filter(Boolean);

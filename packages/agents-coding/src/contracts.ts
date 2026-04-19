@@ -39,6 +39,7 @@ export interface RuntimeBackendExecutionRequest {
   prompt: string;
   workingDirectory: string;
   timeoutMs: number;
+  modelId?: string | null;
   maxTurns?: number | null;
   approvalMode: RuntimeBackendApprovalMode;
   env?: Record<string, string>;
