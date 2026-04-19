@@ -119,8 +119,7 @@ export default defineConfig({
         cache: false,
       },
       "repo:build": {
-        command:
-          "vp run repo:prepare-skills && vp pack && bun run --cwd apps/aria-desktop build",
+        command: "vp run repo:prepare-skills && vp pack && bun run --cwd apps/aria-desktop build",
         input: [
           { auto: true },
           { pattern: "apps/aria-desktop/**", base: "workspace" },

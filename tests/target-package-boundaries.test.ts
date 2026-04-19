@@ -12,17 +12,15 @@ const TARGET_ENTRYPOINT_PACKAGE_DIRS = [
   "packages/handoff/src",
   "packages/jobs/src",
   "packages/memory/src",
-  "packages/mobile/src",
   "packages/automation/src",
   "packages/policy/src",
   "packages/prompt/src",
   "packages/projects/src",
   "packages/protocol/src",
   "packages/server/src",
-  "packages/ui/src",
   "packages/workspaces/src",
 ] as const;
-const THIN_SHELL_DIRS = ["apps/aria-mobile/src", "apps/aria-server/src"] as const;
+const THIN_SHELL_DIRS = ["apps/aria-server/src"] as const;
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs", ".cjs"]);
 const SIBLING_PACKAGE_SRC_IMPORT = /\.\.\/\.\.\/[^/]+\/src\//;
 

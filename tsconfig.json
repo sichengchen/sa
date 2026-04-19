@@ -27,12 +27,8 @@
       "aria-server/*": ["./apps/aria-server/src/*"],
       "aria-desktop": ["./apps/aria-desktop/src/index.ts"],
       "aria-desktop/*": ["./apps/aria-desktop/src/*"],
-      "aria-mobile": ["./apps/aria-mobile/src/index.ts"],
-      "aria-mobile/*": ["./apps/aria-mobile/src/*"],
       "@aria/server": ["./packages/server/src/index.ts"],
       "@aria/server/*": ["./packages/server/src/*"],
-      "@aria/mobile": ["./packages/mobile/src/index.ts"],
-      "@aria/mobile/*": ["./packages/mobile/src/*"],
       "@aria/access-client": ["./packages/access-client/src/index.ts"],
       "@aria/access-client/*": ["./packages/access-client/src/*"],
       "@aria/agents-coding": ["./packages/agents-coding/src/index.ts"],
@@ -76,9 +72,7 @@
       "@aria/providers-claude-code": ["./packages/providers-claude-code/src/index.ts"],
       "@aria/providers-claude-code/*": ["./packages/providers-claude-code/src/*"],
       "@aria/providers-opencode": ["./packages/providers-opencode/src/index.ts"],
-      "@aria/providers-opencode/*": ["./packages/providers-opencode/src/*"],
-      "@aria/ui": ["./packages/ui/src/index.ts"],
-      "@aria/ui/*": ["./packages/ui/src/*"]
+      "@aria/providers-opencode/*": ["./packages/providers-opencode/src/*"]
     }
   },
   "include": [

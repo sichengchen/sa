@@ -90,7 +90,6 @@ packages/
   handoff/
   jobs/
   memory/
-  mobile/
   policy/
   projects/
   prompt/
@@ -103,7 +102,6 @@ packages/
 apps/
   aria-server/
   aria-desktop/
-  aria-mobile/
 scripts/             build, embedding, migration, release helpers
 tests/               unit, integration, workflow, and live-gated tests
 ```
@@ -124,7 +122,6 @@ Convenience wrappers are also available:
 ```bash
 bun run dev:server
 bun run dev:desktop
-bun run dev:mobile
 bun run check
 bun run test
 bun run build

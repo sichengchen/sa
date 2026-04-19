@@ -43,7 +43,6 @@ Use `@aria/*`.
 apps/
   aria-server/
   aria-desktop/
-  aria-mobile/
 
 packages/
   runtime/
@@ -114,7 +113,6 @@ For the concrete app-shell decisions and Bun-runtime clarification, see [tech-de
 | ---------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `@aria/server`         | Server app bootstrap, composition root, deployment runtime for `Aria Server`                                   |
 | `@aria/desktop`        | Desktop app shell, navigation, thread views, project surfaces                                                  |
-| `@aria/mobile`         | Mobile app shell and mobile-specific UI                                                                        |
 | `@aria/runtime`        | Shared runtime kernel for threads, runs, policy, and orchestration                                             |
 | `@aria/protocol`       | Shared request, event, identity, and streaming contracts                                                       |
 | `@aria/gateway`        | Authenticated API surface and realtime transport handling                                                      |
@@ -135,7 +133,6 @@ For the concrete app-shell decisions and Bun-runtime clarification, see [tech-de
 | `@aria/access-client`  | Shared client transport for desktop and mobile                                                                 |
 | `@aria/desktop-bridge` | Local desktop execution bridge for local project mode                                                          |
 | `@aria/desktop-git`    | Local git and worktree integration helpers                                                                     |
-| `@aria/ui`             | Shared UI primitives and cross-app presentation components                                                     |
 
 ## Current Repo State
 
@@ -148,8 +145,6 @@ The repo is package-first. The package names on this page are the live ownership
 These packages should align with the VoidZero stack first:
 
 - `@aria/desktop`
-- `@aria/mobile`
-- `@aria/ui`
 - `@aria/access-client`
 - client-facing slices of `@aria/projects`
 
@@ -196,7 +191,6 @@ The package graph should stay layered.
 
 - `@aria/server`
 - `@aria/desktop`
-- `@aria/mobile`
 - `@aria/console`
 
 ### Desktop-only local layers
@@ -238,8 +232,7 @@ This package should be desktop-only. It should not be reused for server-hosted r
 | App / service  | Depends on                                                                                                                       |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `aria-server`  | runtime, gateway, projects, agent-aria, memory, automation, connectors-im, jobs, workspaces, store, audit, prompt, tools, policy |
-| `aria-desktop` | access-client, projects, desktop-bridge, agents-coding, ui, protocol                                                             |
-| `aria-mobile`  | access-client, ui, protocol                                                                                                      |
+| `aria-desktop` | access-client, projects, desktop-bridge, agents-coding, protocol                                                                 |
 | `aria` console | console, access-client or a server-local transport shim, protocol                                                                |
 
 ## Official References
