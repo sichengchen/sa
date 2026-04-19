@@ -122,6 +122,14 @@ describe("cli and runtime stability", () => {
     expect(rootPackage.scripts?.build).toBe("vp run repo:build");
   });
 
+  test("keeps the repo build pipeline building the desktop app", () => {
+    const viteConfig = readRepoFile("vite.config.ts");
+
+    expect(viteConfig).toContain(
+      'command:\n          "vp run repo:prepare-skills && vp pack && bun run --cwd apps/aria-desktop build"',
+    );
+  });
+
   test("keeps the mobile app seam client-facing", () => {
     const mobileSource = readRepoFile("apps/aria-mobile/src/index.ts");
 

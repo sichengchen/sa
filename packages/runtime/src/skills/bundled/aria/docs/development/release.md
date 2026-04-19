@@ -29,4 +29,7 @@ Tagged releases build the Bun bundle, publish GitHub artifacts, and update the H
 
 ## Artifacts
 
-The current build publishes the CLI bundle under `dist/`.
+The current build publishes:
+
+- the CLI bundle under `dist/`
+- the desktop Electron build under `apps/aria-desktop/dist/`
