@@ -1,7 +1,8 @@
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { realpath } from "node:fs/promises";
+import { homedir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import type { BrowserWindow } from "electron";
@@ -13,6 +14,8 @@ import type {
   RuntimeBackendAdapter,
   RuntimeBackendExecutionResult,
 } from "../../../../packages/agents-coding/src/contracts.js";
+import { parseFrontmatter } from "../../../../packages/memory/src/skills/loader.js";
+import { preprocessContextReferences } from "../../../../packages/prompt/src/context-references.js";
 import { getRuntimeHome } from "../../../../packages/server/src/brand.js";
 import { ProjectsThreadEnvironmentService } from "../../../../packages/projects/src/thread-environments.js";
 import type { ProjectsEngineRepository } from "../../../../packages/projects/src/repository.js";
@@ -44,6 +47,22 @@ const DEFAULT_THREAD_AGENT_ID = "opencode";
 const LOCAL_AGENT_TIMEOUT_MS = 20 * 60_000;
 const DEFAULT_LOCAL_AGENT_TURNS = 8;
 const DEFAULT_MODEL_OPTION_LABEL = "Default";
+const OPEN_CODE_SKILL_REFERENCE_PATTERN = /(?<![\w/])\$([a-z][a-z0-9._-]*)\b/g;
+const OPEN_CODE_AT_REFERENCE_PATTERN = /(?<![\w/])@([^\s@]+)/g;
+const TRAILING_REFERENCE_PUNCTUATION_PATTERN = /[),.;!?]+$/;
+const MAX_PROJECT_PROMPT_FILES = 250;
+const PROJECT_PROMPT_IGNORED_DIRECTORIES = new Set([
+  ".git",
+  ".next",
+  ".turbo",
+  ".venv",
+  "build",
+  "coverage",
+  "dist",
+  "node_modules",
+  "out",
+  "target",
+]);
 
 type GitMetadata = {
   defaultBranch: string;
@@ -56,6 +75,13 @@ type RunningThreadExecution = {
   executionId: string;
 };
 
+type OpenCodeSkillRecord = {
+  content: string;
+  description: string;
+  filePath: string;
+  name: string;
+};
+
 type DesktopProjectsServiceOptions = {
   backendRegistry?: Map<string, RuntimeBackendAdapter>;
   dbPath?: string;
@@ -63,6 +89,7 @@ type DesktopProjectsServiceOptions = {
   now?: () => number;
   pickDirectory?: (ownerWindow?: BrowserWindow | null) => Promise<string | null>;
   readGitMetadata?: (directoryPath: string) => Promise<GitMetadata | null>;
+  runtimeHome?: string;
 };
 
 type OpenCodeRuntimePaths = {
@@ -312,6 +339,258 @@ function toggleId(ids: string[], id: string, enabled: boolean): string[] {
   return enabled ? Array.from(new Set([...ids, id])) : ids.filter((entry) => entry !== id);
 }
 
+function stripReferencePunctuation(value: string): string {
+  return value.replace(TRAILING_REFERENCE_PUNCTUATION_PATTERN, "");
+}
+
+function parseReferenceLineRange(target: string): { lineSuffix: string; path: string } {
+  const match = target.match(/^(.*?)(:\d+(?:-\d+)?)$/);
+  if (!match) {
+    return {
+      lineSuffix: "",
+      path: target,
+    };
+  }
+
+  return {
+    lineSuffix: match[2] ?? "",
+    path: match[1] ?? target,
+  };
+}
+
+function normalizeOpenCodeContextMentions(message: string, cwd: string): string {
+  return message.replace(OPEN_CODE_AT_REFERENCE_PATTERN, (raw, tokenValue: string) => {
+    if (
+      tokenValue === "diff" ||
+      tokenValue === "staged" ||
+      tokenValue.startsWith("file:") ||
+      tokenValue.startsWith("folder:") ||
+      tokenValue.startsWith("url:")
+    ) {
+      return raw;
+    }
+
+    const normalizedValue = stripReferencePunctuation(tokenValue);
+    if (!normalizedValue) {
+      return raw;
+    }
+
+    const suffix = tokenValue.slice(normalizedValue.length);
+    const parsedTarget = parseReferenceLineRange(normalizedValue);
+    const resolvedPath = normalizedValue.startsWith("/")
+      ? resolve(parsedTarget.path)
+      : resolve(cwd, parsedTarget.path);
+
+    if (!existsSync(resolvedPath)) {
+      return raw;
+    }
+
+    try {
+      const stat = statSync(resolvedPath);
+      if (stat.isFile()) {
+        return `@file:${parsedTarget.path}${parsedTarget.lineSuffix}${suffix}`;
+      }
+      if (stat.isDirectory()) {
+        return `@folder:${parsedTarget.path}${suffix}`;
+      }
+    } catch {
+      return raw;
+    }
+
+    return raw;
+  });
+}
+
+async function resolveOpenCodeSkillAttachments(
+  message: string,
+  skillCatalog: Map<string, OpenCodeSkillRecord>,
+): Promise<{ message: string; skillSection: string | null }> {
+  const referencedSkillNames = Array.from(
+    new Set(Array.from(message.matchAll(OPEN_CODE_SKILL_REFERENCE_PATTERN), (match) => match[1])),
+  );
+
+  if (referencedSkillNames.length === 0) {
+    return {
+      message,
+      skillSection: null,
+    };
+  }
+
+  const resolvedSkillNames = new Set<string>();
+  const skillWarnings: string[] = [];
+  const skillBlocks: string[] = [];
+
+  for (const skillName of referencedSkillNames) {
+    const skill = skillCatalog.get(skillName);
+    if (!skill) {
+      skillWarnings.push(`$${skillName}: no installed skill named "${skillName}".`);
+      continue;
+    }
+
+    resolvedSkillNames.add(skillName);
+    skillBlocks.push(`<skill name="${skillName}">\n${skill.content.trim()}\n</skill>`);
+  }
+
+  const strippedMessage = message
+    .replace(OPEN_CODE_SKILL_REFERENCE_PATTERN, (raw, skillName: string) =>
+      resolvedSkillNames.has(skillName) ? "" : raw,
+    )
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (skillBlocks.length === 0 && skillWarnings.length === 0) {
+    return {
+      message,
+      skillSection: null,
+    };
+  }
+
+  const sections: string[] = [];
+  if (skillWarnings.length > 0) {
+    sections.push(
+      `<skill_warnings>\n${skillWarnings.map((warning) => `- ${warning}`).join("\n")}\n</skill_warnings>`,
+    );
+  }
+  if (skillBlocks.length > 0) {
+    sections.push(
+      [
+        "<attached_skills>",
+        "Treat these skills as reusable operating instructions for this request.",
+        "",
+        skillBlocks.join("\n\n"),
+        "</attached_skills>",
+      ].join("\n"),
+    );
+  }
+
+  return {
+    message: strippedMessage,
+    skillSection: sections.join("\n\n"),
+  };
+}
+
+function walkOpenCodeSkillFiles(rootDirectory: string): string[] {
+  const stack = [rootDirectory];
+  const skillFiles: string[] = [];
+
+  while (stack.length > 0) {
+    const currentDirectory = stack.pop();
+    if (!currentDirectory || !existsSync(currentDirectory)) {
+      continue;
+    }
+
+    let entries;
+    try {
+      entries = readdirSync(currentDirectory, {
+        encoding: "utf8",
+        withFileTypes: true,
+      }).sort((left, right) => left.name.localeCompare(right.name));
+    } catch {
+      continue;
+    }
+
+    for (const entry of entries) {
+      const fullPath = join(currentDirectory, entry.name);
+      if (entry.isDirectory()) {
+        if (!PROJECT_PROMPT_IGNORED_DIRECTORIES.has(entry.name)) {
+          stack.push(fullPath);
+        }
+        continue;
+      }
+
+      if (entry.isFile() && entry.name === "SKILL.md") {
+        skillFiles.push(fullPath);
+      }
+    }
+  }
+
+  return skillFiles.sort((left, right) => left.localeCompare(right));
+}
+
+function buildOpenCodeSkillSearchRoots(workingDirectory: string): string[] {
+  return [
+    join(workingDirectory, ".agents", "skills"),
+    join(workingDirectory, ".codex", "skills"),
+    join(homedir(), ".codex", "skills"),
+    join(homedir(), ".agents", "skills"),
+  ];
+}
+
+function collectOpenCodeSkills(workingDirectory: string): Map<string, OpenCodeSkillRecord> {
+  const catalog = new Map<string, OpenCodeSkillRecord>();
+
+  for (const rootDirectory of buildOpenCodeSkillSearchRoots(workingDirectory)) {
+    for (const skillFile of walkOpenCodeSkillFiles(rootDirectory)) {
+      try {
+        const rawContent = readFileSync(skillFile, "utf8");
+        const { body, meta } = parseFrontmatter(rawContent);
+        if (!meta.name || !meta.description || catalog.has(meta.name)) {
+          continue;
+        }
+
+        catalog.set(meta.name, {
+          content: body.trim(),
+          description: meta.description,
+          filePath: skillFile,
+          name: meta.name,
+        });
+      } catch {
+        // Ignore unreadable skill files and continue with the remaining OpenCode skill roots.
+      }
+    }
+  }
+
+  return catalog;
+}
+
+function listProjectPromptFiles(rootDirectory: string): string[] {
+  const results: string[] = [];
+  const queue = [rootDirectory];
+
+  while (queue.length > 0 && results.length < MAX_PROJECT_PROMPT_FILES) {
+    const currentDirectory = queue.shift();
+    if (!currentDirectory) {
+      continue;
+    }
+
+    let entries;
+    try {
+      entries = readdirSync(currentDirectory, {
+        encoding: "utf8",
+        withFileTypes: true,
+      }).sort((left, right) => left.name.localeCompare(right.name));
+    } catch {
+      continue;
+    }
+
+    for (const entry of entries) {
+      if (results.length >= MAX_PROJECT_PROMPT_FILES) {
+        break;
+      }
+
+      const fullPath = join(currentDirectory, entry.name);
+      const relativePath = fullPath.startsWith(`${rootDirectory}/`)
+        ? fullPath.slice(rootDirectory.length + 1)
+        : entry.name;
+
+      if (entry.isDirectory()) {
+        if (!PROJECT_PROMPT_IGNORED_DIRECTORIES.has(entry.name)) {
+          queue.push(fullPath);
+        }
+        continue;
+      }
+
+      if (!entry.isFile()) {
+        continue;
+      }
+
+      results.push(relativePath);
+    }
+  }
+
+  return results;
+}
+
 export class DesktopProjectsService {
   private readonly store: DesktopProjectsStore;
   private readonly now: () => number;
@@ -319,15 +598,19 @@ export class DesktopProjectsService {
   private readonly readGitMetadata: (directoryPath: string) => Promise<GitMetadata | null>;
   private readonly threadEnvironmentService: ProjectsThreadEnvironmentService;
   private readonly backendRegistry: Map<string, RuntimeBackendAdapter>;
+  private readonly runtimeHome: string;
   private readonly localAgentRuntimeRoot: string;
+  private readonly promptFileCache = new Map<string, string[]>();
+  private readonly promptSkillCache = new Map<string, OpenCodeSkillRecord[]>();
   private readonly modelOptionsCache = new Map<string, OpenCodeModelOption[]>();
   private readonly pendingModelOptionRefreshes = new Set<string>();
   private readonly listeners = new Set<(state: AriaDesktopProjectShellState) => void>();
   private readonly runningExecutions = new Map<string, RunningThreadExecution>();
 
   constructor(options: DesktopProjectsServiceOptions = {}) {
+    this.runtimeHome = options.runtimeHome ?? getRuntimeHome();
     this.store = new DesktopProjectsStore(
-      options.dbPath ?? join(getRuntimeHome(), "desktop", "aria-desktop.db"),
+      options.dbPath ?? join(this.runtimeHome, "desktop", "aria-desktop.db"),
     );
     this.now = options.now ?? (() => Date.now());
     this.pickDirectory = options.pickDirectory ?? defaultPickDirectory;
@@ -336,7 +619,7 @@ export class DesktopProjectsService {
       options.backendRegistry ??
       new Map<string, RuntimeBackendAdapter>([["opencode", createOpenCodeRuntimeBackendAdapter()]]);
     this.localAgentRuntimeRoot =
-      options.localAgentRuntimeRoot ?? join(getRuntimeHome(), "desktop", "opencode");
+      options.localAgentRuntimeRoot ?? join(this.runtimeHome, "desktop", "opencode");
     this.threadEnvironmentService = new ProjectsThreadEnvironmentService(
       this.createRepositoryAdapter() as unknown as ProjectsEngineRepository,
     );
@@ -822,6 +1105,10 @@ export class DesktopProjectsService {
       backendId === "opencode" ? this.buildOpenCodeRequestEnv(thread.threadId) : undefined;
 
     try {
+      const prompt =
+        backendId === "opencode"
+          ? await this.buildOpenCodePrompt(trimmedMessage, environment.locator)
+          : trimmedMessage;
       const result = await backend.execute({
         approvalMode: "auto",
         env: requestEnv,
@@ -832,7 +1119,7 @@ export class DesktopProjectsService {
           threadId: thread.threadId,
         },
         modelId: existingState?.selectedModelId ?? null,
-        prompt: trimmedMessage,
+        prompt,
         sessionId: existingState?.backendSessionId ?? null,
         timeoutMs: LOCAL_AGENT_TIMEOUT_MS,
         workingDirectory: environment.locator,
@@ -931,6 +1218,8 @@ export class DesktopProjectsService {
         updatedAt: failedAt,
       });
     } finally {
+      this.promptFileCache.delete(environment.locator);
+      this.promptSkillCache.delete(environment.locator);
       this.runningExecutions.delete(thread.threadId);
       this.notify();
     }
@@ -973,6 +1262,8 @@ export class DesktopProjectsService {
     const projectEnvironments = this.store.listEnvironments(project.projectId);
     const selectedModelId = storedState?.selectedModelId ?? null;
     const cachedModelOptions = this.getThreadModelOptions(thread);
+    const promptFiles = environment ? this.getProjectPromptFiles(environment.locator) : [];
+    const promptSkills = environment ? this.getPromptSkillSuggestions(environment.locator) : [];
     const selectedModelOption =
       cachedModelOptions.find((option) => option.modelId === selectedModelId) ??
       (selectedModelId
@@ -1030,6 +1321,18 @@ export class DesktopProjectsService {
       environmentLocator: environment?.locator ?? null,
       modelId: selectedModelId,
       modelLabel: selectedModelParts.modelLabel,
+      promptSuggestions: {
+        files: promptFiles.map((filePath) => ({
+          detail: environment?.label ?? null,
+          label: filePath,
+          value: filePath,
+        })),
+        skills: promptSkills.map((skill) => ({
+          description: skill.description,
+          label: skill.name,
+          value: skill.name,
+        })),
+      },
       projectId: project.projectId,
       projectName: project.name,
       status: thread.status,
@@ -1113,6 +1416,38 @@ export class DesktopProjectsService {
 
     this.refreshThreadModelOptions(thread.threadId);
     return getAvailableModelOptions(thread.agentId ?? DEFAULT_THREAD_AGENT_ID);
+  }
+
+  private getPromptSkillSuggestions(
+    workingDirectory: string,
+  ): Array<{ description: string; name: string }> {
+    const cachedSkills = this.promptSkillCache.get(workingDirectory);
+    if (cachedSkills) {
+      return cachedSkills.map((skill) => ({
+        description: skill.description,
+        name: skill.name,
+      }));
+    }
+
+    const skills = Array.from(collectOpenCodeSkills(workingDirectory).values()).sort(
+      (left, right) => left.name.localeCompare(right.name),
+    );
+    this.promptSkillCache.set(workingDirectory, skills);
+    return skills.map((skill) => ({
+      description: skill.description,
+      name: skill.name,
+    }));
+  }
+
+  private getProjectPromptFiles(environmentLocator: string): string[] {
+    const cachedFiles = this.promptFileCache.get(environmentLocator);
+    if (cachedFiles) {
+      return cachedFiles;
+    }
+
+    const files = listProjectPromptFiles(environmentLocator);
+    this.promptFileCache.set(environmentLocator, files);
+    return files;
   }
 
   private refreshThreadModelOptions(threadId: string): void {
@@ -1203,6 +1538,25 @@ export class DesktopProjectsService {
       XDG_CACHE_HOME: runtimePaths.cacheHome,
       XDG_STATE_HOME: runtimePaths.stateHome,
     };
+  }
+
+  private async buildOpenCodePrompt(message: string, workingDirectory: string): Promise<string> {
+    const skillCatalog = collectOpenCodeSkills(workingDirectory);
+    const skillAttachments = await resolveOpenCodeSkillAttachments(message, skillCatalog);
+    const normalizedMessage = normalizeOpenCodeContextMentions(
+      skillAttachments.message,
+      workingDirectory,
+    );
+    const contextReferences = await preprocessContextReferences(normalizedMessage, {
+      allowedRoot: workingDirectory,
+      cwd: workingDirectory,
+    });
+
+    const sections = [skillAttachments.skillSection, contextReferences.message]
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value));
+
+    return sections.join("\n\n").trim() || message;
   }
 
   private createRepositoryAdapter() {

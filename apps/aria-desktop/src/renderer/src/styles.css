@@ -792,6 +792,61 @@ body.is-resizing .resize-handle {
   color: #6d6d6d;
 }
 
+.aria-chat-composer-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.aria-chat-composer-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 26px;
+  padding: 3px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.aria-chat-composer-suggestion:hover,
+.aria-chat-composer-suggestion.is-active {
+  background: var(--desktop-button-hover);
+}
+
+.aria-chat-composer-suggestion-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--desktop-muted-text);
+}
+
+.aria-chat-composer-suggestion-icon svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+}
+
+.aria-chat-composer-suggestion-label {
+  min-width: 0;
+  flex: 1;
+  color: var(--desktop-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .aria-chat-composer-footer {
   display: flex;
   align-items: center;

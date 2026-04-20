@@ -8,6 +8,11 @@ import {
   ProjectSidebar,
   ThreadView,
 } from "../apps/aria-desktop/src/renderer/src/components/DesktopWorkbenchApp.js";
+import {
+  applyComposerPromptSuggestion,
+  buildComposerPromptSuggestions,
+  resolveComposerPromptQuery,
+} from "../apps/aria-desktop/src/renderer/src/components/AriaChatComposer.js";
 import { AriaMessageItem } from "../apps/aria-desktop/src/renderer/src/components/AriaMessageItem.js";
 
 const SAMPLE_ARIA_STATE: AriaDesktopAriaShellState = {
@@ -165,6 +170,27 @@ const SAMPLE_PROJECT_THREAD_STATE = {
   ],
   modelId: "openai/gpt-5",
   modelLabel: "GPT-5",
+  promptSuggestions: {
+    files: [
+      {
+        detail: "This Device / main",
+        label: "README.md",
+        value: "README.md",
+      },
+      {
+        detail: "This Device / main",
+        label: "src/desktop.tsx",
+        value: "src/desktop.tsx",
+      },
+    ],
+    skills: [
+      {
+        description: "Keep desktop chrome compact.",
+        label: "desktop-ux",
+        value: "desktop-ux",
+      },
+    ],
+  },
   projectId: "project-1",
   projectName: "desktop-shell",
   status: "dirty" as const,
@@ -249,6 +275,34 @@ describe("desktop aria renderer", () => {
 
     expect(html).toContain("aria-chat-composer is-centered");
     expect(html).toContain("Send");
+  });
+
+  test("resolves and applies inline project prompt references for skills and files", () => {
+    const skillQuery = resolveComposerPromptQuery("Use $desk", "Use $desk".length);
+    const fileQuery = resolveComposerPromptQuery("Check @src/des", "Check @src/des".length);
+
+    const skillSuggestions = buildComposerPromptSuggestions(
+      SAMPLE_PROJECT_THREAD_STATE.promptSuggestions,
+      skillQuery,
+    );
+    const fileSuggestions = buildComposerPromptSuggestions(
+      SAMPLE_PROJECT_THREAD_STATE.promptSuggestions,
+      fileQuery,
+    );
+
+    expect(skillSuggestions[0]?.replacement).toBe("$desktop-ux");
+    expect(fileSuggestions[0]?.replacement).toBe("@src/desktop.tsx");
+
+    expect(applyComposerPromptSuggestion("Use $desk", skillQuery!, skillSuggestions[0]!)).toEqual({
+      nextCursor: "Use $desktop-ux ".length,
+      nextValue: "Use $desktop-ux ",
+    });
+    expect(
+      applyComposerPromptSuggestion("Check @src/des next", fileQuery!, fileSuggestions[0]!),
+    ).toEqual({
+      nextCursor: "Check @src/desktop.tsx ".length,
+      nextValue: "Check @src/desktop.tsx next",
+    });
   });
 
   test("renders assistant messages centered and user messages in bubbles", () => {

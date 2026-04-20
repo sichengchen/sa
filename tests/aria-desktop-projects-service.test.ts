@@ -16,6 +16,16 @@ async function createProjectDirectory(relativePath: string): Promise<string> {
   return directoryPath;
 }
 
+async function createProjectSkill(
+  projectRoot: string,
+  skillName: string,
+  content: string,
+): Promise<void> {
+  const skillDirectory = join(projectRoot, ".agents", "skills", skillName);
+  await mkdir(skillDirectory, { recursive: true });
+  await writeFile(join(skillDirectory, "SKILL.md"), content);
+}
+
 async function createGitProjectDirectory(relativePath: string): Promise<string> {
   const directoryPath = await createProjectDirectory(relativePath);
   await writeFile(join(directoryPath, "README.md"), "# Test project\n");
@@ -440,6 +450,80 @@ describe("DesktopProjectsService", () => {
     ]);
 
     reopened.close();
+  });
+
+  test("expands OpenCode $skills and @files before dispatching a project-thread prompt", async () => {
+    const { DesktopProjectsService } =
+      await import("../apps/aria-desktop/src/main/desktop-projects-service.js");
+    const dbPath = join(testDir, "desktop", "aria-desktop.db");
+    const projectPath = await createProjectDirectory("projects/prompt-context-project");
+    const backend = createFakeOpenCodeBackend();
+
+    await writeFile(
+      join(projectPath, "README.md"),
+      "# Prompt Context Project\n\nKeep the desktop workbench compact.\n",
+    );
+    await writeFile(
+      join(projectPath, "src.ts"),
+      "export function formatTitle(value: string) {\n  return value.trim();\n}\n",
+    );
+    await createProjectSkill(
+      projectPath,
+      "desktop-ux",
+      [
+        "---",
+        "name: desktop-ux",
+        "description: Keep desktop UI compact and workbench-oriented.",
+        "---",
+        "",
+        "# Desktop UX",
+        "",
+        "- Keep the desktop chrome compact.",
+        "- Favor workbench density over explanatory prose.",
+      ].join("\n"),
+    );
+
+    const service = new DesktopProjectsService({
+      backendRegistry: new Map([["opencode", backend.adapter]]),
+      dbPath,
+      localAgentRuntimeRoot: join(testDir, "opencode-runtime"),
+      readGitMetadata: async () => null,
+    });
+
+    service.init();
+    const imported = await service.importLocalProjectFromPath(projectPath);
+    const threadId = imported.selectedThreadId!;
+    await waitFor(() =>
+      service
+        .getProjectShellState()
+        .selectedThreadState?.promptSuggestions.skills.find(
+          (suggestion) => suggestion.value === "desktop-ux",
+        ),
+    );
+
+    await service.sendProjectThreadMessage(
+      threadId,
+      "Follow $desktop-ux and update @README.md plus @src.ts:1-2.",
+    );
+
+    expect(backend.requests).toHaveLength(1);
+    expect(service.getProjectShellState().selectedThreadState?.promptSuggestions).toMatchObject({
+      files: expect.arrayContaining([
+        expect.objectContaining({ value: "README.md" }),
+        expect.objectContaining({ value: "src.ts" }),
+      ]),
+      skills: expect.arrayContaining([expect.objectContaining({ value: "desktop-ux" })]),
+    });
+    expect(backend.requests[0]?.prompt).toContain("<attached_skills>");
+    expect(backend.requests[0]?.prompt).toContain('<skill name="desktop-ux">');
+    expect(backend.requests[0]?.prompt).toContain("# Desktop UX");
+    expect(backend.requests[0]?.prompt).not.toContain("$desktop-ux");
+    expect(backend.requests[0]?.prompt).toContain("📄 @file:README.md");
+    expect(backend.requests[0]?.prompt).toContain("# Prompt Context Project");
+    expect(backend.requests[0]?.prompt).toContain("📄 @file:src.ts:1-2");
+    expect(backend.requests[0]?.prompt).toContain("export function formatTitle");
+
+    service.close();
   });
 
   test("switches the active project thread branch and model through desktop transitions", async () => {

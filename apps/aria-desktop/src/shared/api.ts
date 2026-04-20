@@ -95,6 +95,7 @@ export interface AriaDesktopProjectThreadState {
   chat: AriaDesktopChatState;
   availableBranches: AriaDesktopProjectThreadBranchOption[];
   availableModels: AriaDesktopProjectThreadModelOption[];
+  promptSuggestions: AriaDesktopProjectPromptSuggestions;
 }
 
 export interface AriaDesktopProjectThreadBranchOption {
@@ -111,6 +112,23 @@ export interface AriaDesktopProjectThreadModelOption {
   modelLabel?: string | null;
   providerLabel?: string | null;
   selected: boolean;
+}
+
+export interface AriaDesktopProjectPromptSkillSuggestion {
+  description?: string | null;
+  label: string;
+  value: string;
+}
+
+export interface AriaDesktopProjectPromptFileSuggestion {
+  detail?: string | null;
+  label: string;
+  value: string;
+}
+
+export interface AriaDesktopProjectPromptSuggestions {
+  files: AriaDesktopProjectPromptFileSuggestion[];
+  skills: AriaDesktopProjectPromptSkillSuggestion[];
 }
 
 export interface AriaDesktopProjectShellState {

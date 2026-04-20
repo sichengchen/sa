@@ -259,6 +259,16 @@ Scope: Desktop
 
 In desktop `Aria > Chat`, pending `ask_user` prompts must render immediately above the composer instead of inside the transcript stream.
 
+### 033. Desktop Prompt Reference Suggestions Stay Inline And Compact
+
+Scope: Desktop
+
+Prompt reference suggestions such as `$skills` and `@files` must open adjacent to the composer, not inside the input box.
+
+Use one compact flat list treatment with minimal padding.
+
+Do not introduce nested boxes, repeated metadata, or decorative sub-panels just to resolve prompt references.
+
 ### 029. Desktop Project Threads Reuse The Aria Conversation Lane
 
 Scope: Desktop

@@ -679,6 +679,7 @@ export function ThreadView({
         onAcceptForSession={() => {}}
         onAnswerQuestion={() => {}}
         onApproveToolCall={() => {}}
+        promptSuggestions={selectedThreadState.promptSuggestions}
         onSendMessage={(message) => onSendMessage(selectedThreadState.threadId, message)}
       />
     </div>
@@ -1100,6 +1101,7 @@ export function AriaChatView({
   onAcceptForSession,
   onAnswerQuestion,
   onApproveToolCall,
+  promptSuggestions = null,
   onSendMessage,
 }: {
   chat: AriaDesktopAriaShellState["chat"];
@@ -1110,6 +1112,7 @@ export function AriaChatView({
   onAcceptForSession: (toolCallId: string) => void;
   onAnswerQuestion: (questionId: string, answer: string) => void;
   onApproveToolCall: (toolCallId: string, approved: boolean) => void;
+  promptSuggestions?: AriaDesktopProjectThreadState["promptSuggestions"] | null;
   onSendMessage: (message: string) => void;
 }) {
   const [optimisticMessages, setOptimisticMessages] = useState<
@@ -1148,6 +1151,7 @@ export function AriaChatView({
           footerStart={composerFooterStart}
           onSend={handleSendMessage}
           placeholder={emptyPlaceholder}
+          promptSuggestions={promptSuggestions}
           title="What should we work on?"
         />
       </div>
@@ -1178,6 +1182,7 @@ export function AriaChatView({
           footerStart={composerFooterStart}
           onSend={handleSendMessage}
           placeholder={emptyPlaceholder}
+          promptSuggestions={promptSuggestions}
         />
       )}
     </div>
