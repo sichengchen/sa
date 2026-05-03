@@ -259,6 +259,18 @@ Shows:
 - pending questions
 - action items
 
+### `Settings`
+
+Shows:
+
+- a compact settings navigation column
+- the selected settings panel
+- row-level controls for operator-local preferences, runtime defaults, model behavior, tools, automations, connectors, and product identity
+- sheet-launched step wizards for adding providers, adding models, and configuring connector credentials or policy
+
+When `Settings` is active, it replaces the center work area and hides the main
+topbar, right inspector, and bottom utility bar.
+
 ### `Chat > Automations`
 
 Shows:

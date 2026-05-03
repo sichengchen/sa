@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { ensureEngine } from "@aria/server/daemon";
 import { DesktopAriaService } from "./desktop-aria-service.js";
 import { DesktopProjectsService } from "./desktop-projects-service.js";
+import { DesktopSettingsService } from "./desktop-settings-service.js";
 import { registerDesktopIpc } from "./ipc.js";
 import { getDesktopPreloadPath, getDesktopRendererHtmlPath } from "./desktop-main-paths.js";
 
@@ -53,8 +54,9 @@ app.setName("Aria Desktop");
 app.whenReady().then(async () => {
   await ensureEngine();
   desktopAriaService = new DesktopAriaService();
+  const desktopSettingsService = new DesktopSettingsService();
   desktopProjectsService.init();
-  registerDesktopIpc(desktopProjectsService, desktopAriaService);
+  registerDesktopIpc(desktopProjectsService, desktopAriaService, desktopSettingsService);
   mainWindow = await createMainWindow();
 
   app.on("activate", async () => {

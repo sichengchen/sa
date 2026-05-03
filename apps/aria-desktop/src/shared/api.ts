@@ -5,8 +5,10 @@ export const ariaDesktopChannels = {
   getRuntimeInfo: "aria-desktop:get-runtime-info",
   getProjectShellState: "aria-desktop:get-project-shell-state",
   getAriaShellState: "aria-desktop:get-aria-shell-state",
+  getSettingsState: "aria-desktop:get-settings-state",
   ariaShellStateChanged: "aria-desktop:aria-shell-state-changed",
   projectShellStateChanged: "aria-desktop:project-shell-state-changed",
+  settingsStateChanged: "aria-desktop:settings-state-changed",
   importLocalProjectFromDialog: "aria-desktop:import-local-project-from-dialog",
   createThread: "aria-desktop:create-thread",
   createAriaChatSession: "aria-desktop:create-aria-chat-session",
@@ -37,6 +39,7 @@ export const ariaDesktopChannels = {
   approveConnectorToolCall: "aria-desktop:approve-connector-tool-call",
   acceptConnectorToolCallForSession: "aria-desktop:accept-connector-tool-call-for-session",
   answerConnectorQuestion: "aria-desktop:answer-connector-question",
+  updateSettings: "aria-desktop:update-settings",
 } as const;
 
 export interface AriaDesktopRuntimeInfo {
@@ -46,6 +49,198 @@ export interface AriaDesktopRuntimeInfo {
     chrome: string;
     electron: string;
     node: string;
+  };
+}
+
+export type AriaDesktopSettingsTheme = "system" | "light" | "dark";
+export type AriaDesktopSettingsDefaultSpace = "projects" | "chat";
+export type AriaDesktopSettingsApprovalMode = "ask" | "never" | "always";
+export type AriaDesktopSettingsSecurityMode = "default" | "trusted" | "unrestricted";
+export type AriaDesktopSettingsVerbosity = "silent" | "minimal" | "verbose";
+export type AriaDesktopSettingsProviderType =
+  | "anthropic"
+  | "openai"
+  | "google"
+  | "openrouter"
+  | "nvidia"
+  | "openai-compat";
+export type AriaDesktopSettingsModelTier = "performance" | "normal" | "eco";
+export type AriaDesktopSettingsConnectorType =
+  | "tui"
+  | "telegram"
+  | "discord"
+  | "slack"
+  | "teams"
+  | "gchat"
+  | "github"
+  | "linear"
+  | "wechat"
+  | "webhook";
+
+export interface AriaDesktopSettingsProviderPreset {
+  apiKeyEnvVar: string;
+  baseUrl?: string;
+  id: string;
+  label: string;
+  type: AriaDesktopSettingsProviderType;
+}
+
+export interface AriaDesktopSettingsProviderConfig {
+  apiKeyConfigured: boolean;
+  apiKeyEnvVar: string;
+  baseUrl?: string;
+  id: string;
+  label: string;
+  modelCount: number;
+  type: AriaDesktopSettingsProviderType;
+}
+
+export interface AriaDesktopSettingsModelOption {
+  fallback?: string | null;
+  label: string;
+  maxTokens?: number | null;
+  model: string;
+  name: string;
+  provider: string;
+  temperature?: number | null;
+  type: "chat" | "embedding";
+  selected: boolean;
+  tiers: AriaDesktopSettingsModelTier[];
+}
+
+export interface AriaDesktopSettingsConnectorSecret {
+  configured: boolean;
+  key: string;
+  label: string;
+  maskedValue: string | null;
+}
+
+export interface AriaDesktopSettingsConnectorStatus {
+  approval: AriaDesktopSettingsApprovalMode;
+  configured: boolean;
+  label: string;
+  name: string;
+  secrets: AriaDesktopSettingsConnectorSecret[];
+  webhookEnabled?: boolean;
+}
+
+export interface AriaDesktopSettingsState {
+  desktop: {
+    compactMode: boolean;
+    defaultSpace: AriaDesktopSettingsDefaultSpace;
+    settingsPath: string;
+    startAtLogin: boolean;
+    theme: AriaDesktopSettingsTheme;
+  };
+  runtime: {
+    activeModel: string;
+    checkpointMaxSnapshots: number;
+    checkpointsEnabled: boolean;
+    connectorApproval: AriaDesktopSettingsApprovalMode;
+    connectorVerbosity: AriaDesktopSettingsVerbosity;
+    contextFilesEnabled: boolean;
+    cronTaskCount: number;
+    defaultModel: string;
+    heartbeatEnabled: boolean;
+    heartbeatIntervalMinutes: number;
+    homeDir: string;
+    journalEnabled: boolean;
+    mcpServerCount: number;
+    memoryDirectory: string;
+    memoryEnabled: boolean;
+    modelTiers: Partial<Record<AriaDesktopSettingsModelTier, string>>;
+    models: AriaDesktopSettingsModelOption[];
+    providerPresets: AriaDesktopSettingsProviderPreset[];
+    providers: AriaDesktopSettingsProviderConfig[];
+    providerCount: number;
+    securityMode: AriaDesktopSettingsSecurityMode;
+    tuiApproval: AriaDesktopSettingsApprovalMode;
+    tuiVerbosity: AriaDesktopSettingsVerbosity;
+    webhookApproval: AriaDesktopSettingsApprovalMode;
+    webhookEnabled: boolean;
+    webhookTaskCount: number;
+  };
+  connectors: AriaDesktopSettingsConnectorStatus[];
+  about: {
+    channel: string;
+    cliName: string;
+    productName: string;
+    runtimeName: string;
+  };
+  lastError: string | null;
+}
+
+export interface AriaDesktopSettingsPatch {
+  desktop?: Partial<
+    Pick<
+      AriaDesktopSettingsState["desktop"],
+      "compactMode" | "defaultSpace" | "startAtLogin" | "theme"
+    >
+  >;
+  runtime?: Partial<
+    Pick<
+      AriaDesktopSettingsState["runtime"],
+      | "activeModel"
+      | "checkpointMaxSnapshots"
+      | "checkpointsEnabled"
+      | "connectorApproval"
+      | "connectorVerbosity"
+      | "contextFilesEnabled"
+      | "heartbeatEnabled"
+      | "heartbeatIntervalMinutes"
+      | "journalEnabled"
+      | "memoryEnabled"
+      | "securityMode"
+      | "tuiApproval"
+      | "tuiVerbosity"
+      | "webhookApproval"
+      | "webhookEnabled"
+    >
+  >;
+  provider?: {
+    add?: {
+      apiKey?: string;
+      apiKeyEnvVar: string;
+      baseUrl?: string;
+      id: string;
+      type: AriaDesktopSettingsProviderType;
+    };
+    deleteId?: string;
+    updateApiKey?: {
+      envVar: string;
+      value: string | null;
+    };
+  };
+  model?: {
+    add?: {
+      maxTokens?: number | null;
+      model: string;
+      name: string;
+      provider: string;
+      temperature?: number | null;
+      type?: "chat" | "embedding";
+    };
+    deleteName?: string;
+    setDefault?: string;
+    setTier?: {
+      modelName: string | null;
+      tier: AriaDesktopSettingsModelTier;
+    };
+  };
+  connector?: {
+    setApproval?: {
+      connector: AriaDesktopSettingsConnectorType;
+      mode: AriaDesktopSettingsApprovalMode;
+    };
+    updateSecret?: {
+      key: string;
+      value: string | null;
+    };
+    updateSecrets?: Array<{
+      key: string;
+      value: string | null;
+    }>;
+    webhookEnabled?: boolean;
   };
 }
 
@@ -265,11 +460,13 @@ export interface AriaDesktopApi {
   getRuntimeInfo: () => Promise<AriaDesktopRuntimeInfo>;
   getAriaShellState: () => Promise<AriaDesktopAriaShellState>;
   getProjectShellState: () => Promise<AriaDesktopProjectShellState>;
+  getSettingsState: () => Promise<AriaDesktopSettingsState>;
   importLocalProjectFromDialog: () => Promise<AriaDesktopProjectShellState>;
   onAriaShellStateChanged: (listener: (state: AriaDesktopAriaShellState) => void) => () => void;
   onProjectShellStateChanged: (
     listener: (state: AriaDesktopProjectShellState) => void,
   ) => () => void;
+  onSettingsStateChanged: (listener: (state: AriaDesktopSettingsState) => void) => () => void;
   createThread: (projectId: string) => Promise<AriaDesktopProjectShellState>;
   archiveProjectThread: (threadId: string) => Promise<AriaDesktopProjectShellState>;
   refreshAutomations: () => Promise<AriaDesktopAriaShellState>;
@@ -309,4 +506,5 @@ export interface AriaDesktopApi {
   ) => Promise<AriaDesktopProjectShellState>;
   stopAriaChatSession: () => Promise<AriaDesktopAriaShellState>;
   stopConnectorSession: () => Promise<AriaDesktopAriaShellState>;
+  updateSettings: (patch: AriaDesktopSettingsPatch) => Promise<AriaDesktopSettingsState>;
 }

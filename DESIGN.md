@@ -269,6 +269,57 @@ Desktop has exactly two primary work tabs: `Projects` and `Chat`.
 
 `Projects` is for project threads with an attached workspace, repository, worktree, or execution environment.
 
+### 035. Desktop Settings Uses A Two-Column In-Workspace Navigator
+
+Scope: Desktop
+
+Desktop settings must render as a two-column surface inside the main workspace:
+a compact settings navigation column on the left and the selected settings panel
+on the right.
+
+Settings rows use the shared neutral palette, compact typography, thin
+separators, icon-led section navigation, switches for binary values, and
+segmented controls for short mutually exclusive choices.
+
+Rows with dense record controls, such as provider secrets or model actions,
+must keep the record title readable first and wrap controls onto the following
+line instead of truncating the primary label.
+
+Rows that show filesystem paths or other long identifiers must wrap the value
+within the row control instead of overflowing, overlapping the label, or
+requiring a wide desktop window to remain legible.
+
+Primary section actions, such as adding providers, adding models, or configuring
+connectors, belong in the settings panel header. Do not place them in an empty
+row or separator band.
+
+Settings panels with mixed concepts must use plain section headings to separate
+them. Model defaults and tier routing are configuration; saved model entries
+are inventory and must appear under a separate model list section.
+
+Connector inventory must render as normal settings rows. Do not summarize
+configured connectors as a wrapping group of pill chips.
+
+Connector setup actions belong on the connector row they affect. Do not split
+connector configuration into a detached global button when the action applies
+to individual connector inventory.
+
+### 036. Desktop Settings Add Flows Use Sheet Wizards
+
+Scope: Desktop
+
+Provider, model, and connector add or setup flows in desktop settings must use
+a sheet wizard launched from the selected settings panel.
+
+Do not append long inline forms to settings lists. The sheet keeps the selected
+settings panel visible underneath a neutral scrim, shows a compact step rail,
+keeps only the current step's fields visible, and ends with a review step before
+committing configuration.
+
+The sheet owns the flow title. Step wizards inside sheets must avoid repeating
+that title, give form controls the full available sheet width, and keep wizard
+actions anchored at the bottom while sheet content scrolls.
+
 ### 033. Desktop Prompt Reference Suggestions Stay Inline And Compact
 
 Scope: Desktop

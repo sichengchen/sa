@@ -1,18 +1,25 @@
 import {
   Archive,
   ArrowUp,
+  Bot,
+  Brain,
   Check,
   ChevronDown,
   ChevronRight,
   Clock3,
+  Database,
   FolderPlus,
   GitBranch,
+  HardDrive,
+  LockKeyhole,
   MessageSquarePlus,
   Pin,
   Plug2,
   Plus,
   Search,
+  Server,
   Settings2,
+  SlidersHorizontal,
   Sparkles,
   X,
 } from "lucide-react";
@@ -27,6 +34,11 @@ import {
 import type {
   AriaDesktopAriaShellState,
   AriaDesktopAriaScreen,
+  AriaDesktopSettingsApprovalMode,
+  AriaDesktopSettingsConnectorType,
+  AriaDesktopSettingsPatch,
+  AriaDesktopSettingsProviderType,
+  AriaDesktopSettingsState,
   AriaDesktopProjectGroup,
   AriaDesktopProjectShellState,
   AriaDesktopProjectThreadItem,
@@ -103,6 +115,52 @@ const EMPTY_ARIA_STATE: AriaDesktopAriaShellState = {
   serverLabel: "Local Server",
 };
 
+const EMPTY_SETTINGS_STATE: AriaDesktopSettingsState = {
+  about: {
+    channel: "Desktop",
+    cliName: "aria",
+    productName: "Esperta Aria",
+    runtimeName: "Aria Runtime",
+  },
+  connectors: [],
+  desktop: {
+    compactMode: true,
+    defaultSpace: "projects",
+    settingsPath: "",
+    startAtLogin: false,
+    theme: "system",
+  },
+  lastError: null,
+  runtime: {
+    activeModel: "sonnet",
+    checkpointMaxSnapshots: 50,
+    checkpointsEnabled: true,
+    connectorApproval: "ask",
+    connectorVerbosity: "silent",
+    contextFilesEnabled: true,
+    cronTaskCount: 0,
+    defaultModel: "sonnet",
+    heartbeatEnabled: true,
+    heartbeatIntervalMinutes: 30,
+    homeDir: "~/.aria",
+    journalEnabled: true,
+    mcpServerCount: 0,
+    memoryDirectory: "memory",
+    memoryEnabled: true,
+    modelTiers: {},
+    models: [],
+    providerPresets: [],
+    providers: [],
+    providerCount: 0,
+    securityMode: "default",
+    tuiApproval: "never",
+    tuiVerbosity: "minimal",
+    webhookApproval: "never",
+    webhookEnabled: false,
+    webhookTaskCount: 0,
+  },
+};
+
 const DEFAULT_BRANCH_PREFIX = "aria/";
 
 function formatRelativeUpdatedAt(updatedAt?: number | null): string | null {
@@ -153,7 +211,11 @@ function getActiveAriaSessionTitle(
 
 function summarizeConnectorStatuses(
   sessions: AriaDesktopAriaShellState["connectorSessions"],
-): Array<{ connectorType: string; count: number; lastActiveAt: number | null }> {
+): Array<{
+  connectorType: string;
+  count: number;
+  lastActiveAt: number | null;
+}> {
   const byType = new Map<
     string,
     { connectorType: string; count: number; lastActiveAt: number | null }
@@ -686,8 +748,1430 @@ export function ThreadView({
   );
 }
 
-function SettingsView() {
-  return <div className="settings-design-canvas" />;
+type SettingsSectionId =
+  | "general"
+  | "providers"
+  | "models"
+  | "security"
+  | "runtime"
+  | "memory"
+  | "automation"
+  | "connectors"
+  | "data"
+  | "about";
+
+const SETTINGS_SECTIONS: Array<{
+  icon: ReactNode;
+  id: SettingsSectionId;
+  label: string;
+}> = [
+  {
+    icon: <SlidersHorizontal aria-hidden="true" />,
+    id: "general",
+    label: "General",
+  },
+  { icon: <Server aria-hidden="true" />, id: "runtime", label: "Runtime" },
+  { icon: <Plug2 aria-hidden="true" />, id: "providers", label: "Providers" },
+  { icon: <Bot aria-hidden="true" />, id: "models", label: "Models" },
+  {
+    icon: <LockKeyhole aria-hidden="true" />,
+    id: "security",
+    label: "Security",
+  },
+  {
+    icon: <Brain aria-hidden="true" />,
+    id: "memory",
+    label: "Memory & Skills",
+  },
+  {
+    icon: <Clock3 aria-hidden="true" />,
+    id: "automation",
+    label: "Automations",
+  },
+  { icon: <Plug2 aria-hidden="true" />, id: "connectors", label: "Connectors" },
+  { icon: <HardDrive aria-hidden="true" />, id: "data", label: "Data" },
+  { icon: <Database aria-hidden="true" />, id: "about", label: "About" },
+];
+
+type SettingsUpdateHandler = (patch: AriaDesktopSettingsPatch) => Promise<void> | void;
+
+function SettingsToggle({
+  checked,
+  label,
+  onChange,
+}: {
+  checked: boolean;
+  label: string;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={checked}
+      aria-label={label}
+      className={`settings-toggle${checked ? " is-on" : ""}`}
+      onClick={() => onChange(!checked)}
+    >
+      <span className="settings-toggle-knob" />
+    </button>
+  );
+}
+
+function SettingsSegment({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  options: Array<{ label: string; value: string }>;
+  value: string;
+}) {
+  return (
+    <div className="settings-segment" aria-label={label} role="group">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          className={`settings-segment-option${option.value === value ? " is-active" : ""}`}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SettingsSelect({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  options: Array<{ label: string; value: string }>;
+  value: string;
+}) {
+  return (
+    <select
+      aria-label={label}
+      className="settings-select"
+      disabled={options.length === 0}
+      onChange={(event) => onChange(event.target.value)}
+      value={value}
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function SettingsNumberInput({
+  label,
+  min = 1,
+  onChange,
+  value,
+}: {
+  label: string;
+  min?: number;
+  onChange: (value: number) => void;
+  value: number;
+}) {
+  return (
+    <input
+      aria-label={label}
+      className="settings-number-input"
+      min={min}
+      onChange={(event) => onChange(Number(event.target.value))}
+      type="number"
+      value={value}
+    />
+  );
+}
+
+function SettingsTextInput({
+  label,
+  onChange,
+  placeholder,
+  type = "text",
+  value,
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: "password" | "text";
+  value: string;
+}) {
+  return (
+    <input
+      aria-label={label}
+      className="settings-text-input"
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      type={type}
+      value={value}
+    />
+  );
+}
+
+function SettingsActionButton({
+  children,
+  disabled = false,
+  icon,
+  onClick,
+}: {
+  children: ReactNode;
+  disabled?: boolean;
+  icon?: ReactNode;
+  onClick: () => Promise<void> | void;
+}) {
+  return (
+    <button className="settings-action-button" disabled={disabled} onClick={onClick} type="button">
+      {icon ? <span className="settings-action-button-icon">{icon}</span> : null}
+      {children}
+    </button>
+  );
+}
+
+function SettingsInlineControls({ children }: { children: ReactNode }) {
+  return <div className="settings-inline-controls">{children}</div>;
+}
+
+function SettingsRow({
+  children,
+  label,
+  value,
+}: {
+  children?: ReactNode;
+  label: string;
+  value?: ReactNode;
+}) {
+  return (
+    <div className="settings-row">
+      <div className="settings-row-main">
+        <span className="settings-row-label">{label}</span>
+      </div>
+      <div className="settings-row-control">{children ?? value}</div>
+    </div>
+  );
+}
+
+function SettingsPanel({
+  action,
+  children,
+  section,
+}: {
+  action?: ReactNode;
+  children: ReactNode;
+  section: (typeof SETTINGS_SECTIONS)[number];
+}) {
+  return (
+    <section className="settings-panel" aria-labelledby={`settings-panel-${section.id}`}>
+      <div className="settings-panel-header">
+        <div className="settings-panel-title">
+          <span className="settings-panel-icon">{section.icon}</span>
+          <h1 id={`settings-panel-${section.id}`}>{section.label}</h1>
+        </div>
+        {action ? <div className="settings-panel-actions">{action}</div> : null}
+      </div>
+      <div className="settings-panel-body">{children}</div>
+    </section>
+  );
+}
+
+function SettingsSectionHeading({ children }: { children: ReactNode }) {
+  return <div className="settings-section-heading">{children}</div>;
+}
+
+function SettingsSheet({
+  children,
+  onClose,
+  title,
+}: {
+  children: ReactNode;
+  onClose: () => void;
+  title: string;
+}) {
+  return (
+    <div className="settings-sheet-backdrop" role="presentation" onMouseDown={onClose}>
+      <aside
+        aria-labelledby="settings-sheet-title"
+        aria-modal="true"
+        className="settings-sheet"
+        role="dialog"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="settings-sheet-header">
+          <h2 id="settings-sheet-title">{title}</h2>
+          <DesktopIconButton
+            icon={<X aria-hidden="true" />}
+            label="Close sheet"
+            onClick={onClose}
+          />
+        </div>
+        <div className="settings-sheet-body">{children}</div>
+      </aside>
+    </div>
+  );
+}
+
+const SETTINGS_THEME_OPTIONS = [
+  { label: "System", value: "system" },
+  { label: "Light", value: "light" },
+  { label: "Dark", value: "dark" },
+];
+const SETTINGS_SPACE_OPTIONS = [
+  { label: "Projects", value: "projects" },
+  { label: "Chat", value: "chat" },
+];
+const SETTINGS_APPROVAL_OPTIONS = [
+  { label: "Ask", value: "ask" },
+  { label: "Never", value: "never" },
+  { label: "Always", value: "always" },
+];
+const SETTINGS_SECURITY_OPTIONS = [
+  { label: "Default", value: "default" },
+  { label: "Trusted", value: "trusted" },
+  { label: "Unrestricted", value: "unrestricted" },
+];
+const SETTINGS_VERBOSITY_OPTIONS = [
+  { label: "Silent", value: "silent" },
+  { label: "Minimal", value: "minimal" },
+  { label: "Verbose", value: "verbose" },
+];
+const SETTINGS_MODEL_TIER_OPTIONS = [
+  { label: "Performance", value: "performance" },
+  { label: "Normal", value: "normal" },
+  { label: "Eco", value: "eco" },
+];
+const SETTINGS_MODEL_TYPE_OPTIONS = [
+  { label: "Chat", value: "chat" },
+  { label: "Embedding", value: "embedding" },
+];
+const SETTINGS_PROVIDER_TYPE_OPTIONS: Array<{
+  label: string;
+  value: AriaDesktopSettingsProviderType;
+}> = [
+  { label: "Anthropic", value: "anthropic" },
+  { label: "OpenAI", value: "openai" },
+  { label: "Google", value: "google" },
+  { label: "OpenRouter", value: "openrouter" },
+  { label: "Nvidia", value: "nvidia" },
+  { label: "OpenAI Compatible", value: "openai-compat" },
+];
+
+function SettingsSecretEditor({
+  maskedValue,
+  onSave,
+  secretLabel,
+}: {
+  maskedValue: string | null;
+  onSave: (value: string | null) => void;
+  secretLabel: string;
+}) {
+  const [value, setValue] = useState("");
+
+  return (
+    <SettingsInlineControls>
+      <span className="settings-secret-status">{maskedValue ?? "Not set"}</span>
+      <SettingsTextInput
+        label={secretLabel}
+        onChange={setValue}
+        placeholder="New value"
+        type="password"
+        value={value}
+      />
+      <SettingsActionButton
+        disabled={value.trim() === ""}
+        onClick={() => {
+          onSave(value);
+          setValue("");
+        }}
+      >
+        Save
+      </SettingsActionButton>
+      <SettingsActionButton onClick={() => onSave(null)}>Clear</SettingsActionButton>
+    </SettingsInlineControls>
+  );
+}
+
+function SettingsWizard({
+  activeStepIndex,
+  canContinue,
+  children,
+  finishDisabled,
+  finishLabel,
+  onBack,
+  onCancel,
+  onFinish,
+  onNext,
+  steps,
+  title,
+}: {
+  activeStepIndex: number;
+  canContinue: boolean;
+  children: ReactNode;
+  finishDisabled: boolean;
+  finishLabel: string;
+  onBack: () => void;
+  onCancel: () => void;
+  onFinish: () => Promise<void> | void;
+  onNext: () => void;
+  steps: string[];
+  title: string;
+}) {
+  const isLastStep = activeStepIndex === steps.length - 1;
+
+  return (
+    <div className="settings-wizard">
+      <div className="settings-wizard-header">
+        <span className="settings-wizard-title">{title}</span>
+        <div className="settings-wizard-steps" aria-label={`${title} steps`}>
+          {steps.map((step, index) => (
+            <span
+              key={step}
+              className={`settings-wizard-step${index === activeStepIndex ? " is-active" : ""}${index < activeStepIndex ? " is-complete" : ""}`}
+            >
+              <span className="settings-wizard-step-index">{index + 1}</span>
+              <span className="settings-wizard-step-label">{step}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="settings-wizard-stage">{children}</div>
+      <div className="settings-wizard-footer">
+        <SettingsActionButton onClick={onCancel}>Reset</SettingsActionButton>
+        <SettingsActionButton disabled={activeStepIndex === 0} onClick={onBack}>
+          Back
+        </SettingsActionButton>
+        {isLastStep ? (
+          <SettingsActionButton disabled={finishDisabled} onClick={onFinish}>
+            {finishLabel}
+          </SettingsActionButton>
+        ) : (
+          <SettingsActionButton disabled={!canContinue} onClick={onNext}>
+            Next
+          </SettingsActionButton>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SettingsReviewRows({ items }: { items: Array<{ label: string; value: ReactNode }> }) {
+  return (
+    <div className="settings-review-list">
+      {items.map((item) => (
+        <div key={item.label} className="settings-review-row">
+          <span>{item.label}</span>
+          <strong>{item.value}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function getInitialProviderPresetId(settingsState: AriaDesktopSettingsState): string {
+  const configuredProviderIds = new Set(
+    settingsState.runtime.providers.map((provider) => provider.id),
+  );
+  return (
+    settingsState.runtime.providerPresets.find((preset) => !configuredProviderIds.has(preset.id))
+      ?.id ?? "custom"
+  );
+}
+
+function ProviderSetupWizard({
+  onUpdate,
+  settingsState,
+}: {
+  onUpdate: SettingsUpdateHandler;
+  settingsState: AriaDesktopSettingsState;
+}) {
+  const initialPresetId = getInitialProviderPresetId(settingsState);
+  const [step, setStep] = useState(0);
+  const [presetId, setPresetId] = useState(initialPresetId);
+  const selectedPreset =
+    settingsState.runtime.providerPresets.find((preset) => preset.id === presetId) ?? null;
+  const [customId, setCustomId] = useState("");
+  const [customType, setCustomType] = useState<AriaDesktopSettingsProviderType>("openai-compat");
+  const [customEnvVar, setCustomEnvVar] = useState("");
+  const [customBaseUrl, setCustomBaseUrl] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const id = selectedPreset?.id ?? customId.trim();
+  const apiKeyEnvVar = selectedPreset?.apiKeyEnvVar ?? customEnvVar.trim();
+  const type = selectedPreset?.type ?? customType;
+  const baseUrl = selectedPreset?.baseUrl ?? customBaseUrl.trim();
+  const alreadyExists = settingsState.runtime.providers.some((provider) => provider.id === id);
+  const steps = ["Provider", "Credentials", "Review"];
+  const canContinue =
+    step === 0 ? Boolean(id && type && !alreadyExists) : step === 1 ? Boolean(apiKeyEnvVar) : true;
+
+  useEffect(() => {
+    if (selectedPreset && alreadyExists && initialPresetId !== presetId) {
+      setPresetId(initialPresetId);
+    }
+  }, [alreadyExists, initialPresetId, presetId, selectedPreset]);
+
+  function resetProviderWizard(): void {
+    setStep(0);
+    setPresetId(initialPresetId);
+    setCustomId("");
+    setCustomType("openai-compat");
+    setCustomEnvVar("");
+    setCustomBaseUrl("");
+    setApiKey("");
+  }
+
+  async function addProvider(): Promise<void> {
+    await onUpdate({
+      provider: {
+        add: {
+          apiKey,
+          apiKeyEnvVar,
+          baseUrl,
+          id,
+          type,
+        },
+      },
+    });
+    resetProviderWizard();
+  }
+
+  return (
+    <SettingsWizard
+      activeStepIndex={step}
+      canContinue={canContinue}
+      finishDisabled={!id || !apiKeyEnvVar || alreadyExists}
+      finishLabel="Add Provider"
+      onBack={() => setStep((current) => Math.max(0, current - 1))}
+      onCancel={resetProviderWizard}
+      onFinish={addProvider}
+      onNext={() => setStep((current) => Math.min(steps.length - 1, current + 1))}
+      steps={steps}
+      title="Add Provider"
+    >
+      {step === 0 ? (
+        <>
+          <SettingsRow label="Preset">
+            <SettingsSelect
+              label="Provider Preset"
+              onChange={setPresetId}
+              options={[
+                ...settingsState.runtime.providerPresets.map((preset) => ({
+                  label: preset.label,
+                  value: preset.id,
+                })),
+                { label: "Custom", value: "custom" },
+              ]}
+              value={presetId}
+            />
+          </SettingsRow>
+          {!selectedPreset ? (
+            <>
+              <SettingsRow label="Provider ID">
+                <SettingsTextInput label="Provider ID" onChange={setCustomId} value={customId} />
+              </SettingsRow>
+              <SettingsRow label="Provider Type">
+                <SettingsSelect
+                  label="Provider Type"
+                  onChange={(value) => setCustomType(value as AriaDesktopSettingsProviderType)}
+                  options={SETTINGS_PROVIDER_TYPE_OPTIONS}
+                  value={customType}
+                />
+              </SettingsRow>
+            </>
+          ) : null}
+          <SettingsRow label="Status" value={alreadyExists ? "Already Exists" : "Available"} />
+        </>
+      ) : null}
+      {step === 1 ? (
+        <>
+          {!selectedPreset ? (
+            <>
+              <SettingsRow label="API Key Env Var">
+                <SettingsTextInput
+                  label="API Key Env Var"
+                  onChange={setCustomEnvVar}
+                  value={customEnvVar}
+                />
+              </SettingsRow>
+              <SettingsRow label="Base URL">
+                <SettingsTextInput
+                  label="Base URL"
+                  onChange={setCustomBaseUrl}
+                  value={customBaseUrl}
+                />
+              </SettingsRow>
+            </>
+          ) : null}
+          {selectedPreset?.baseUrl ? (
+            <SettingsRow label="Base URL" value={selectedPreset.baseUrl} />
+          ) : null}
+          <SettingsRow label="API Key">
+            <SettingsTextInput
+              label="Provider API Key"
+              onChange={setApiKey}
+              placeholder="Optional"
+              type="password"
+              value={apiKey}
+            />
+          </SettingsRow>
+        </>
+      ) : null}
+      {step === 2 ? (
+        <SettingsReviewRows
+          items={[
+            { label: "Provider", value: id || "Missing" },
+            { label: "Type", value: type },
+            { label: "API Key Env Var", value: apiKeyEnvVar || "Missing" },
+            { label: "Base URL", value: baseUrl || "Default" },
+            { label: "Secret", value: apiKey.trim() ? "Set" : "Skip" },
+          ]}
+        />
+      ) : null}
+    </SettingsWizard>
+  );
+}
+
+function ModelSetupWizard({
+  onUpdate,
+  settingsState,
+}: {
+  onUpdate: SettingsUpdateHandler;
+  settingsState: AriaDesktopSettingsState;
+}) {
+  const firstProviderId = settingsState.runtime.providers[0]?.id ?? "";
+  const [step, setStep] = useState(0);
+  const [name, setName] = useState("");
+  const [provider, setProvider] = useState(firstProviderId);
+  const [model, setModel] = useState("");
+  const [type, setType] = useState<"chat" | "embedding">("chat");
+  const [temperature, setTemperature] = useState("0.7");
+  const [maxTokens, setMaxTokens] = useState("8192");
+  const nameExists = settingsState.runtime.models.some((entry) => entry.name === name.trim());
+  const steps = ["Type", "Model", "Tuning", "Review"];
+  const canContinue =
+    step === 0
+      ? Boolean(type)
+      : step === 1
+        ? Boolean(name.trim() && provider && model.trim() && !nameExists)
+        : true;
+
+  useEffect(() => {
+    if (!provider && firstProviderId) {
+      setProvider(firstProviderId);
+    }
+  }, [firstProviderId, provider]);
+
+  function resetModelWizard(): void {
+    setStep(0);
+    setName("");
+    setProvider(firstProviderId);
+    setModel("");
+    setType("chat");
+    setTemperature("0.7");
+    setMaxTokens("8192");
+  }
+
+  async function addModel(): Promise<void> {
+    await onUpdate({
+      model: {
+        add: {
+          maxTokens: type === "chat" ? Number(maxTokens) : null,
+          model,
+          name,
+          provider,
+          temperature: type === "chat" ? Number(temperature) : null,
+          type,
+        },
+      },
+    });
+    resetModelWizard();
+  }
+
+  return (
+    <SettingsWizard
+      activeStepIndex={step}
+      canContinue={canContinue}
+      finishDisabled={!name.trim() || !provider || !model.trim() || nameExists}
+      finishLabel="Add Model"
+      onBack={() => setStep((current) => Math.max(0, current - 1))}
+      onCancel={resetModelWizard}
+      onFinish={addModel}
+      onNext={() => setStep((current) => Math.min(steps.length - 1, current + 1))}
+      steps={steps}
+      title="Add Model"
+    >
+      {step === 0 ? (
+        <SettingsRow label="Model Type">
+          <SettingsSegment
+            label="Model Type"
+            onChange={(value) => setType(value as "chat" | "embedding")}
+            options={SETTINGS_MODEL_TYPE_OPTIONS}
+            value={type}
+          />
+        </SettingsRow>
+      ) : null}
+      {step === 1 ? (
+        <>
+          <SettingsRow label="Name">
+            <SettingsTextInput label="Model Name" onChange={setName} value={name} />
+          </SettingsRow>
+          <SettingsRow label="Provider">
+            <SettingsSelect
+              label="Provider"
+              onChange={setProvider}
+              options={settingsState.runtime.providers.map((entry) => ({
+                label: entry.id,
+                value: entry.id,
+              }))}
+              value={provider}
+            />
+          </SettingsRow>
+          <SettingsRow label="Model ID">
+            <SettingsTextInput label="Model ID" onChange={setModel} value={model} />
+          </SettingsRow>
+          <SettingsRow label="Status" value={nameExists ? "Already Exists" : "Available"} />
+        </>
+      ) : null}
+      {step === 2 ? (
+        <>
+          {type === "chat" ? (
+            <>
+              <SettingsRow label="Temperature">
+                <SettingsTextInput
+                  label="Temperature"
+                  onChange={setTemperature}
+                  value={temperature}
+                />
+              </SettingsRow>
+              <SettingsRow label="Max Tokens">
+                <SettingsTextInput label="Max Tokens" onChange={setMaxTokens} value={maxTokens} />
+              </SettingsRow>
+            </>
+          ) : (
+            <SettingsRow label="Tuning" value="Default" />
+          )}
+        </>
+      ) : null}
+      {step === 3 ? (
+        <SettingsReviewRows
+          items={[
+            { label: "Name", value: name.trim() || "Missing" },
+            { label: "Type", value: type },
+            { label: "Provider", value: provider || "Missing" },
+            { label: "Model ID", value: model.trim() || "Missing" },
+            {
+              label: "Temperature",
+              value: type === "chat" ? temperature : "Default",
+            },
+            {
+              label: "Max Tokens",
+              value: type === "chat" ? maxTokens : "Default",
+            },
+          ]}
+        />
+      ) : null}
+    </SettingsWizard>
+  );
+}
+
+function ConnectorSetupWizard({
+  initialConnectorName,
+  onUpdate,
+  settingsState,
+}: {
+  initialConnectorName?: AriaDesktopSettingsConnectorType | null;
+  onUpdate: SettingsUpdateHandler;
+  settingsState: AriaDesktopSettingsState;
+}) {
+  const firstConnector = settingsState.connectors[0];
+  const initialConnector = initialConnectorName ?? firstConnector?.name ?? "";
+  const [step, setStep] = useState(0);
+  const [connectorName, setConnectorName] = useState(initialConnector);
+  const selectedConnector =
+    settingsState.connectors.find((connector) => connector.name === connectorName) ??
+    firstConnector ??
+    null;
+  const [approval, setApproval] = useState<AriaDesktopSettingsApprovalMode>(
+    selectedConnector?.approval ?? "ask",
+  );
+  const [webhookEnabled, setWebhookEnabled] = useState(selectedConnector?.webhookEnabled ?? false);
+  const [secretDrafts, setSecretDrafts] = useState<Record<string, string | null | undefined>>({});
+  const steps = ["Connector", "Policy", "Credentials", "Review"];
+
+  useEffect(() => {
+    if (!connectorName && firstConnector) {
+      setConnectorName(initialConnector);
+    }
+  }, [connectorName, firstConnector, initialConnector]);
+
+  useEffect(() => {
+    if (selectedConnector) {
+      setApproval(selectedConnector.approval);
+      setWebhookEnabled(selectedConnector.webhookEnabled ?? false);
+      setSecretDrafts({});
+    }
+  }, [selectedConnector?.name, selectedConnector?.approval, selectedConnector?.webhookEnabled]);
+
+  function resetConnectorWizard(): void {
+    setStep(0);
+    const resetConnector =
+      settingsState.connectors.find((connector) => connector.name === initialConnector) ??
+      firstConnector ??
+      null;
+    setConnectorName(resetConnector?.name ?? "");
+    setApproval(resetConnector?.approval ?? "ask");
+    setWebhookEnabled(resetConnector?.webhookEnabled ?? false);
+    setSecretDrafts({});
+  }
+
+  async function saveConnector(): Promise<void> {
+    if (!selectedConnector) {
+      return;
+    }
+    await onUpdate({
+      connector: {
+        setApproval: {
+          connector: selectedConnector.name as AriaDesktopSettingsConnectorType,
+          mode: approval,
+        },
+        updateSecrets: Object.entries(secretDrafts)
+          .filter(([, value]) => value !== undefined)
+          .map(([key, value]) => ({ key, value: value ?? null })),
+        ...(typeof selectedConnector.webhookEnabled === "boolean" ? { webhookEnabled } : {}),
+      },
+    });
+    resetConnectorWizard();
+  }
+
+  const secretSummary = selectedConnector?.secrets.length
+    ? selectedConnector.secrets
+        .map((secret) => {
+          const draft = secretDrafts[secret.key];
+          if (draft === null) {
+            return `${secret.label}: Clear`;
+          }
+          if (typeof draft === "string" && draft.trim()) {
+            return `${secret.label}: Set`;
+          }
+          return `${secret.label}: Keep`;
+        })
+        .join(", ")
+    : "None";
+
+  return (
+    <SettingsWizard
+      activeStepIndex={step}
+      canContinue={Boolean(selectedConnector)}
+      finishDisabled={!selectedConnector}
+      finishLabel="Save Connector"
+      onBack={() => setStep((current) => Math.max(0, current - 1))}
+      onCancel={resetConnectorWizard}
+      onFinish={saveConnector}
+      onNext={() => setStep((current) => Math.min(steps.length - 1, current + 1))}
+      steps={steps}
+      title="Configure Connector"
+    >
+      {step === 0 ? (
+        <>
+          <SettingsRow label="Connector">
+            <SettingsSelect
+              label="Connector"
+              onChange={setConnectorName}
+              options={settingsState.connectors.map((connector) => ({
+                label: connector.label,
+                value: connector.name,
+              }))}
+              value={selectedConnector?.name ?? ""}
+            />
+          </SettingsRow>
+          <SettingsRow
+            label="Status"
+            value={selectedConnector?.configured ? "Configured" : "Not Set"}
+          />
+        </>
+      ) : null}
+      {step === 1 ? (
+        <>
+          <SettingsRow label="Approval">
+            <SettingsSegment
+              label="Connector Approval"
+              onChange={(mode) => setApproval(mode as AriaDesktopSettingsApprovalMode)}
+              options={SETTINGS_APPROVAL_OPTIONS}
+              value={approval}
+            />
+          </SettingsRow>
+          {typeof selectedConnector?.webhookEnabled === "boolean" ? (
+            <SettingsRow label="Webhook Enabled">
+              <SettingsToggle
+                checked={webhookEnabled}
+                label="Toggle webhook connector"
+                onChange={setWebhookEnabled}
+              />
+            </SettingsRow>
+          ) : null}
+        </>
+      ) : null}
+      {step === 2 ? (
+        <>
+          {selectedConnector?.secrets.length ? (
+            selectedConnector.secrets.map((secret) => (
+              <SettingsRow key={secret.key} label={secret.label}>
+                <SettingsInlineControls>
+                  <span className="settings-secret-status">{secret.maskedValue ?? "Not set"}</span>
+                  <SettingsTextInput
+                    label={`${selectedConnector.label} ${secret.label}`}
+                    onChange={(value) =>
+                      setSecretDrafts((current) => ({
+                        ...current,
+                        [secret.key]: value,
+                      }))
+                    }
+                    placeholder="New value"
+                    type="password"
+                    value={secretDrafts[secret.key] ?? ""}
+                  />
+                  <SettingsActionButton
+                    onClick={() =>
+                      setSecretDrafts((current) => ({
+                        ...current,
+                        [secret.key]: null,
+                      }))
+                    }
+                  >
+                    Clear
+                  </SettingsActionButton>
+                </SettingsInlineControls>
+              </SettingsRow>
+            ))
+          ) : (
+            <SettingsRow label="Credentials" value="None" />
+          )}
+        </>
+      ) : null}
+      {step === 3 ? (
+        <SettingsReviewRows
+          items={[
+            {
+              label: "Connector",
+              value: selectedConnector?.label ?? "Missing",
+            },
+            { label: "Approval", value: approval },
+            {
+              label: "Webhook",
+              value:
+                typeof selectedConnector?.webhookEnabled === "boolean"
+                  ? webhookEnabled
+                    ? "Enabled"
+                    : "Disabled"
+                  : "Default",
+            },
+            { label: "Credentials", value: secretSummary },
+          ]}
+        />
+      ) : null}
+    </SettingsWizard>
+  );
+}
+
+export function SettingsView({
+  initialSectionId = "general",
+  onUpdate,
+  settingsState,
+}: {
+  initialSectionId?: SettingsSectionId;
+  onUpdate: SettingsUpdateHandler;
+  settingsState: AriaDesktopSettingsState;
+}) {
+  const [activeSectionId, setActiveSectionId] = useState<SettingsSectionId>(initialSectionId);
+  const [settingsSheet, setSettingsSheet] = useState<"connector" | "model" | "provider" | null>(
+    null,
+  );
+  const [connectorSetupName, setConnectorSetupName] =
+    useState<AriaDesktopSettingsConnectorType | null>(null);
+
+  const activeSection =
+    SETTINGS_SECTIONS.find((section) => section.id === activeSectionId) ?? SETTINGS_SECTIONS[0];
+  const chatModels = settingsState.runtime.models.filter((model) => model.type !== "embedding");
+  const modelOptions = chatModels.map((model) => ({
+    label: model.label,
+    value: model.name,
+  }));
+  const connectorSetup =
+    settingsState.connectors.find((connector) => connector.name === connectorSetupName) ?? null;
+  const sectionAction =
+    activeSectionId === "providers" ? (
+      <SettingsActionButton
+        icon={<Plus aria-hidden="true" />}
+        onClick={() => setSettingsSheet("provider")}
+      >
+        Add Provider
+      </SettingsActionButton>
+    ) : activeSectionId === "models" ? (
+      <SettingsActionButton
+        icon={<Plus aria-hidden="true" />}
+        onClick={() => setSettingsSheet("model")}
+      >
+        Add Model
+      </SettingsActionButton>
+    ) : null;
+
+  return (
+    <div className="settings-design-canvas">
+      <nav className="settings-sidebar" aria-label="Settings">
+        <div className="settings-sidebar-title">Settings</div>
+        <div className="settings-sidebar-items">
+          {SETTINGS_SECTIONS.map((section) => (
+            <button
+              key={section.id}
+              type="button"
+              className={`settings-sidebar-item${section.id === activeSectionId ? " is-active" : ""}`}
+              onClick={() => setActiveSectionId(section.id)}
+            >
+              <span className="settings-sidebar-item-icon">{section.icon}</span>
+              <span className="settings-sidebar-item-label">{section.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+      <main className="settings-content">
+        <SettingsPanel action={sectionAction} section={activeSection}>
+          {activeSectionId === "general" ? (
+            <>
+              <SettingsRow label="Theme">
+                <SettingsSegment
+                  label="Theme"
+                  onChange={(theme) =>
+                    onUpdate({
+                      desktop: {
+                        theme: theme as AriaDesktopSettingsState["desktop"]["theme"],
+                      },
+                    })
+                  }
+                  options={SETTINGS_THEME_OPTIONS}
+                  value={settingsState.desktop.theme}
+                />
+              </SettingsRow>
+              <SettingsRow label="Default Space">
+                <SettingsSegment
+                  label="Default Space"
+                  onChange={(defaultSpace) =>
+                    onUpdate({
+                      desktop: {
+                        defaultSpace:
+                          defaultSpace as AriaDesktopSettingsState["desktop"]["defaultSpace"],
+                      },
+                    })
+                  }
+                  options={SETTINGS_SPACE_OPTIONS}
+                  value={settingsState.desktop.defaultSpace}
+                />
+              </SettingsRow>
+              <SettingsRow label="Compact Mode">
+                <SettingsToggle
+                  checked={settingsState.desktop.compactMode}
+                  label="Toggle compact mode"
+                  onChange={(compactMode) => onUpdate({ desktop: { compactMode } })}
+                />
+              </SettingsRow>
+              <SettingsRow label="Start At Login">
+                <SettingsToggle
+                  checked={settingsState.desktop.startAtLogin}
+                  label="Toggle start at login"
+                  onChange={(startAtLogin) => onUpdate({ desktop: { startAtLogin } })}
+                />
+              </SettingsRow>
+            </>
+          ) : null}
+
+          {activeSectionId === "runtime" ? (
+            <>
+              <SettingsRow label="Current Node" value="This Mac" />
+              <SettingsRow
+                label="Runtime Home"
+                value={<code>{settingsState.runtime.homeDir}</code>}
+              />
+              <SettingsRow label="Providers" value={settingsState.runtime.providerCount} />
+              <SettingsRow label="MCP Servers" value={settingsState.runtime.mcpServerCount} />
+              <SettingsRow label="Context Files">
+                <SettingsToggle
+                  checked={settingsState.runtime.contextFilesEnabled}
+                  label="Toggle context files"
+                  onChange={(contextFilesEnabled) => onUpdate({ runtime: { contextFilesEnabled } })}
+                />
+              </SettingsRow>
+            </>
+          ) : null}
+
+          {activeSectionId === "providers" ? (
+            <>
+              {settingsState.runtime.providers.map((provider) => (
+                <SettingsRow
+                  key={provider.id}
+                  label={`${provider.label} (${provider.type})`}
+                  value={
+                    <SettingsInlineControls>
+                      <span>{provider.apiKeyConfigured ? provider.apiKeyEnvVar : "No key"}</span>
+                      <span>{provider.modelCount} models</span>
+                      <SettingsSecretEditor
+                        maskedValue={provider.apiKeyConfigured ? "Configured" : null}
+                        onSave={(value) =>
+                          onUpdate({
+                            provider: {
+                              updateApiKey: {
+                                envVar: provider.apiKeyEnvVar,
+                                value,
+                              },
+                            },
+                          })
+                        }
+                        secretLabel={`${provider.id} API key`}
+                      />
+                      <SettingsActionButton
+                        disabled={provider.modelCount > 0}
+                        onClick={() => onUpdate({ provider: { deleteId: provider.id } })}
+                      >
+                        Delete
+                      </SettingsActionButton>
+                    </SettingsInlineControls>
+                  }
+                />
+              ))}
+            </>
+          ) : null}
+
+          {activeSectionId === "models" ? (
+            <>
+              <SettingsSectionHeading>Model Configuration</SettingsSectionHeading>
+              <SettingsRow label="Default Model">
+                <SettingsSelect
+                  label="Default Model"
+                  onChange={(setDefault) => onUpdate({ model: { setDefault } })}
+                  options={modelOptions}
+                  value={settingsState.runtime.activeModel}
+                />
+              </SettingsRow>
+              <SettingsRow label="Config Default" value={settingsState.runtime.defaultModel} />
+              {SETTINGS_MODEL_TIER_OPTIONS.map((tier) => (
+                <SettingsRow key={tier.value} label={`${tier.label} Tier`}>
+                  <SettingsSelect
+                    label={`${tier.label} Tier`}
+                    onChange={(modelName) =>
+                      onUpdate({
+                        model: {
+                          setTier: {
+                            modelName: modelName || null,
+                            tier: tier.value as AriaDesktopSettingsState["runtime"]["models"][number]["tiers"][number],
+                          },
+                        },
+                      })
+                    }
+                    options={[{ label: "Default", value: "" }, ...modelOptions]}
+                    value={
+                      settingsState.runtime.modelTiers[
+                        tier.value as keyof typeof settingsState.runtime.modelTiers
+                      ] ?? ""
+                    }
+                  />
+                </SettingsRow>
+              ))}
+              <SettingsSectionHeading>Model List</SettingsSectionHeading>
+              {settingsState.runtime.models.map((model) => (
+                <SettingsRow
+                  key={model.name}
+                  label={`${model.name}${model.selected ? " *" : ""}`}
+                  value={
+                    <SettingsInlineControls>
+                      <span>{model.type}</span>
+                      <span>{model.provider}</span>
+                      <span>{model.model}</span>
+                      {model.tiers.length > 0 ? <span>{model.tiers.join(", ")}</span> : null}
+                      <SettingsActionButton
+                        disabled={model.selected}
+                        onClick={() => onUpdate({ model: { deleteName: model.name } })}
+                      >
+                        Delete
+                      </SettingsActionButton>
+                    </SettingsInlineControls>
+                  }
+                />
+              ))}
+            </>
+          ) : null}
+
+          {activeSectionId === "security" ? (
+            <>
+              <SettingsRow label="Desktop Tool Approval">
+                <SettingsSegment
+                  label="Desktop Tool Approval"
+                  onChange={(tuiApproval) =>
+                    onUpdate({
+                      runtime: {
+                        tuiApproval:
+                          tuiApproval as AriaDesktopSettingsState["runtime"]["tuiApproval"],
+                      },
+                    })
+                  }
+                  options={SETTINGS_APPROVAL_OPTIONS}
+                  value={settingsState.runtime.tuiApproval}
+                />
+              </SettingsRow>
+              <SettingsRow label="Connector Approval">
+                <SettingsSegment
+                  label="Connector Approval"
+                  onChange={(connectorApproval) =>
+                    onUpdate({
+                      runtime: {
+                        connectorApproval:
+                          connectorApproval as AriaDesktopSettingsState["runtime"]["connectorApproval"],
+                      },
+                    })
+                  }
+                  options={SETTINGS_APPROVAL_OPTIONS}
+                  value={settingsState.runtime.connectorApproval}
+                />
+              </SettingsRow>
+              <SettingsRow label="Webhook Approval">
+                <SettingsSegment
+                  label="Webhook Approval"
+                  onChange={(webhookApproval) =>
+                    onUpdate({
+                      runtime: {
+                        webhookApproval:
+                          webhookApproval as AriaDesktopSettingsState["runtime"]["webhookApproval"],
+                      },
+                    })
+                  }
+                  options={SETTINGS_APPROVAL_OPTIONS}
+                  value={settingsState.runtime.webhookApproval}
+                />
+              </SettingsRow>
+              <SettingsRow label="Security Mode">
+                <SettingsSegment
+                  label="Security Mode"
+                  onChange={(securityMode) =>
+                    onUpdate({
+                      runtime: {
+                        securityMode:
+                          securityMode as AriaDesktopSettingsState["runtime"]["securityMode"],
+                      },
+                    })
+                  }
+                  options={SETTINGS_SECURITY_OPTIONS}
+                  value={settingsState.runtime.securityMode}
+                />
+              </SettingsRow>
+            </>
+          ) : null}
+
+          {activeSectionId === "memory" ? (
+            <>
+              <SettingsRow label="Memory">
+                <SettingsToggle
+                  checked={settingsState.runtime.memoryEnabled}
+                  label="Toggle memory"
+                  onChange={(memoryEnabled) => onUpdate({ runtime: { memoryEnabled } })}
+                />
+              </SettingsRow>
+              <SettingsRow label="Journal">
+                <SettingsToggle
+                  checked={settingsState.runtime.journalEnabled}
+                  label="Toggle journal"
+                  onChange={(journalEnabled) => onUpdate({ runtime: { journalEnabled } })}
+                />
+              </SettingsRow>
+              <SettingsRow
+                label="Memory Directory"
+                value={<code>{settingsState.runtime.memoryDirectory}</code>}
+              />
+              <SettingsRow
+                label="Skill Directory"
+                value={<code>{`${settingsState.runtime.homeDir}/skills`}</code>}
+              />
+            </>
+          ) : null}
+
+          {activeSectionId === "automation" ? (
+            <>
+              <SettingsRow label="Heartbeats">
+                <SettingsToggle
+                  checked={settingsState.runtime.heartbeatEnabled}
+                  label="Toggle heartbeats"
+                  onChange={(heartbeatEnabled) => onUpdate({ runtime: { heartbeatEnabled } })}
+                />
+              </SettingsRow>
+              <SettingsRow label="Heartbeat Minutes">
+                <SettingsNumberInput
+                  label="Heartbeat Minutes"
+                  min={1}
+                  onChange={(heartbeatIntervalMinutes) =>
+                    onUpdate({ runtime: { heartbeatIntervalMinutes } })
+                  }
+                  value={settingsState.runtime.heartbeatIntervalMinutes}
+                />
+              </SettingsRow>
+              <SettingsRow label="Webhook Connector">
+                <SettingsToggle
+                  checked={settingsState.runtime.webhookEnabled}
+                  label="Toggle webhook connector"
+                  onChange={(webhookEnabled) => onUpdate({ runtime: { webhookEnabled } })}
+                />
+              </SettingsRow>
+              <SettingsRow label="Cron Tasks" value={settingsState.runtime.cronTaskCount} />
+              <SettingsRow label="Webhook Tasks" value={settingsState.runtime.webhookTaskCount} />
+            </>
+          ) : null}
+
+          {activeSectionId === "connectors" ? (
+            <>
+              <SettingsRow label="Connector Sessions" value="Node-owned" />
+              <SettingsSectionHeading>Connector List</SettingsSectionHeading>
+              {settingsState.connectors.map((connector) => (
+                <SettingsRow
+                  key={connector.name}
+                  label={connector.label}
+                  value={
+                    <div className="settings-row-action-control">
+                      <span>{connector.configured ? "Configured" : "Not Configured"}</span>
+                      <SettingsActionButton
+                        onClick={() => {
+                          setConnectorSetupName(connector.name as AriaDesktopSettingsConnectorType);
+                          setSettingsSheet("connector");
+                        }}
+                      >
+                        Configure
+                      </SettingsActionButton>
+                    </div>
+                  }
+                />
+              ))}
+              <SettingsSectionHeading>Connector Preferences</SettingsSectionHeading>
+              <SettingsRow label="Connector Verbosity">
+                <SettingsSegment
+                  label="Connector Verbosity"
+                  onChange={(connectorVerbosity) =>
+                    onUpdate({
+                      runtime: {
+                        connectorVerbosity:
+                          connectorVerbosity as AriaDesktopSettingsState["runtime"]["connectorVerbosity"],
+                      },
+                    })
+                  }
+                  options={SETTINGS_VERBOSITY_OPTIONS}
+                  value={settingsState.runtime.connectorVerbosity}
+                />
+              </SettingsRow>
+              <SettingsRow label="Desktop Verbosity">
+                <SettingsSegment
+                  label="Desktop Verbosity"
+                  onChange={(tuiVerbosity) =>
+                    onUpdate({
+                      runtime: {
+                        tuiVerbosity:
+                          tuiVerbosity as AriaDesktopSettingsState["runtime"]["tuiVerbosity"],
+                      },
+                    })
+                  }
+                  options={SETTINGS_VERBOSITY_OPTIONS}
+                  value={settingsState.runtime.tuiVerbosity}
+                />
+              </SettingsRow>
+            </>
+          ) : null}
+
+          {activeSectionId === "data" ? (
+            <>
+              <SettingsRow
+                label="Runtime Storage"
+                value={<code>{settingsState.runtime.homeDir}</code>}
+              />
+              <SettingsRow
+                label="Desktop Settings"
+                value={<code>{settingsState.desktop.settingsPath}</code>}
+              />
+              <SettingsRow label="Checkpoints">
+                <SettingsToggle
+                  checked={settingsState.runtime.checkpointsEnabled}
+                  label="Toggle checkpoints"
+                  onChange={(checkpointsEnabled) => onUpdate({ runtime: { checkpointsEnabled } })}
+                />
+              </SettingsRow>
+              <SettingsRow label="Checkpoint Limit">
+                <SettingsNumberInput
+                  label="Checkpoint Limit"
+                  min={1}
+                  onChange={(checkpointMaxSnapshots) =>
+                    onUpdate({ runtime: { checkpointMaxSnapshots } })
+                  }
+                  value={settingsState.runtime.checkpointMaxSnapshots}
+                />
+              </SettingsRow>
+            </>
+          ) : null}
+
+          {activeSectionId === "about" ? (
+            <>
+              <SettingsRow label="Product" value={settingsState.about.productName} />
+              <SettingsRow label="Runtime" value={settingsState.about.runtimeName} />
+              <SettingsRow label="CLI" value={<code>{settingsState.about.cliName}</code>} />
+              <SettingsRow label="Channel" value={settingsState.about.channel} />
+            </>
+          ) : null}
+
+          {settingsState.lastError ? (
+            <div className="settings-error" role="status">
+              {settingsState.lastError}
+            </div>
+          ) : null}
+        </SettingsPanel>
+      </main>
+      {settingsSheet === "provider" ? (
+        <SettingsSheet title="Add Provider" onClose={() => setSettingsSheet(null)}>
+          <ProviderSetupWizard
+            onUpdate={async (patch) => {
+              await onUpdate(patch);
+              setSettingsSheet(null);
+            }}
+            settingsState={settingsState}
+          />
+        </SettingsSheet>
+      ) : null}
+      {settingsSheet === "model" ? (
+        <SettingsSheet title="Add Model" onClose={() => setSettingsSheet(null)}>
+          <ModelSetupWizard
+            onUpdate={async (patch) => {
+              await onUpdate(patch);
+              setSettingsSheet(null);
+            }}
+            settingsState={settingsState}
+          />
+        </SettingsSheet>
+      ) : null}
+      {settingsSheet === "connector" ? (
+        <SettingsSheet
+          title={`Configure ${connectorSetup?.label ?? "Connector"}`}
+          onClose={() => setSettingsSheet(null)}
+        >
+          <ConnectorSetupWizard
+            initialConnectorName={connectorSetupName}
+            onUpdate={async (patch) => {
+              await onUpdate(patch);
+              setSettingsSheet(null);
+            }}
+            settingsState={settingsState}
+          />
+        </SettingsSheet>
+      ) : null}
+    </div>
+  );
 }
 
 function ThreadInspectorSurface({ thread }: { thread: AriaDesktopProjectThreadState }) {
@@ -759,6 +2243,8 @@ export function ProjectSidebar({
 }: ProjectSidebarProps) {
   const { onScroll, scrollRef } = useTransientScrollbar<HTMLDivElement>();
   const collapsedProjectIdSet = new Set(collapsedProjectIds);
+  const visibleSelectedProjectId = settingsActive ? null : selectedProjectId;
+  const visibleSelectedThreadId = settingsActive ? null : selectedThreadId;
 
   return (
     <div className="desktop-sidebar">
@@ -769,7 +2255,7 @@ export function ProjectSidebar({
       >
         {projects.map((project, index) => {
           const isCollapsed = collapsedProjectIdSet.has(project.projectId);
-          const isSelectedProject = project.projectId === selectedProjectId;
+          const isSelectedProject = project.projectId === visibleSelectedProjectId;
           const threadListId = `project-thread-list-${project.projectId}`;
 
           return (
@@ -824,7 +2310,7 @@ export function ProjectSidebar({
                   {project.threads.map((thread) => (
                     <DesktopThreadListItem
                       key={thread.threadId}
-                      active={thread.threadId === selectedThreadId}
+                      active={thread.threadId === visibleSelectedThreadId}
                       meta={formatRelativeUpdatedAt(thread.updatedAt)}
                       onSelect={() => onSelectThread(project.projectId, thread.threadId)}
                       trailingAction={
@@ -906,14 +2392,14 @@ export function AriaSidebar({
       >
         <div className="desktop-sidebar-section">
           <DesktopSidebarButton
-            active={ariaState.selectedAriaScreen === "automations"}
+            active={!settingsActive && ariaState.selectedAriaScreen === "automations"}
             disabled={!ariaServerConnected}
             icon={<Clock3 aria-hidden="true" />}
             label="Automations"
             onClick={() => onSelectScreen("automations")}
           />
           <DesktopSidebarButton
-            active={ariaState.selectedAriaScreen === "connectors"}
+            active={!settingsActive && ariaState.selectedAriaScreen === "connectors"}
             disabled={!ariaServerConnected}
             icon={<Plug2 aria-hidden="true" />}
             label="Connectors"
@@ -931,7 +2417,7 @@ export function AriaSidebar({
           onCreateChat={onCreateChat}
           onSelectSession={onSelectChatSession}
           onTogglePinnedSession={onTogglePinnedChatSession}
-          selectedSessionId={ariaState.selectedAriaSessionId}
+          selectedSessionId={settingsActive ? null : ariaState.selectedAriaSessionId}
           sessions={ariaState.chatSessions
             .filter((session) => !session.archived)
             .map((session) => ({
@@ -1343,6 +2829,8 @@ export function DesktopWorkbenchApp() {
   const [ariaState, setAriaState] = useState<AriaDesktopAriaShellState>(EMPTY_ARIA_STATE);
   const [pinnedAriaSessionIds, setPinnedAriaSessionIds] = useState<string[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsState, setSettingsState] =
+    useState<AriaDesktopSettingsState>(EMPTY_SETTINGS_STATE);
   const [shellState, setShellState] = useState<AriaDesktopProjectShellState>(EMPTY_SHELL_STATE);
 
   const selectedProject = getSelectedProject(shellState);
@@ -1356,9 +2844,10 @@ export function DesktopWorkbenchApp() {
         return;
       }
 
-      const [nextShellState, nextAriaState] = await Promise.all([
+      const [nextShellState, nextAriaState, nextSettingsState] = await Promise.all([
         window.ariaDesktop.getProjectShellState(),
         window.ariaDesktop.getAriaShellState(),
+        window.ariaDesktop.getSettingsState(),
       ]);
 
       if (isDisposed) {
@@ -1366,7 +2855,9 @@ export function DesktopWorkbenchApp() {
       }
 
       startTransition(() => {
+        setActiveSpace(nextSettingsState.desktop.defaultSpace === "chat" ? "aria" : "projects");
         setAriaState(nextAriaState);
+        setSettingsState(nextSettingsState);
         setShellState(nextShellState);
       });
     }
@@ -1389,6 +2880,28 @@ export function DesktopWorkbenchApp() {
       });
     });
   }, []);
+
+  useEffect(() => {
+    if (!window.ariaDesktop) {
+      return;
+    }
+
+    return window.ariaDesktop.onSettingsStateChanged((nextSettingsState) => {
+      startTransition(() => {
+        setSettingsState(nextSettingsState);
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    document.body.dataset.desktopTheme = settingsState.desktop.theme;
+    document.body.classList.toggle("desktop-compact", settingsState.desktop.compactMode);
+
+    return () => {
+      delete document.body.dataset.desktopTheme;
+      document.body.classList.remove("desktop-compact");
+    };
+  }, [settingsState.desktop.compactMode, settingsState.desktop.theme]);
 
   useEffect(() => {
     if (!window.ariaDesktop) {
@@ -1444,6 +2957,23 @@ export function DesktopWorkbenchApp() {
     startTransition(() => {
       setSettingsOpen(true);
     });
+  }
+
+  function updateSettings(patch: AriaDesktopSettingsPatch): Promise<void> {
+    if (!window.ariaDesktop) {
+      return Promise.resolve();
+    }
+
+    return window.ariaDesktop
+      .updateSettings(patch)
+      .then((nextSettingsState) => {
+        startTransition(() => {
+          setSettingsState(nextSettingsState);
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   function selectSpace(space: DesktopSpace): void {
@@ -1658,7 +3188,7 @@ export function DesktopWorkbenchApp() {
     <DesktopBaseLayout
       center={
         settingsOpen ? (
-          <SettingsView />
+          <SettingsView onUpdate={updateSettings} settingsState={settingsState} />
         ) : activeSpace === "projects" ? (
           <ThreadView
             onCreateBranch={createProjectThreadBranch}
@@ -1743,18 +3273,20 @@ export function DesktopWorkbenchApp() {
       leftSidebarTitle={<DesktopSpaceTabs activeSpace={activeSpace} onSelectSpace={selectSpace} />}
       leftSidebarToolbarItems={leftSidebarToolbarItems}
       rightSidebar={
-        activeSpace === "projects" && selectedThreadState ? (
+        settingsOpen ? undefined : activeSpace === "projects" && selectedThreadState ? (
           <ThreadInspectorSurface thread={selectedThreadState} />
         ) : showAriaChat ? (
           <AriaInspectorSurface chat={ariaState.chat} serverLabel={ariaState.serverLabel} />
         ) : undefined
       }
       rightSidebarTitle={
-        activeSpace === "projects" && selectedThreadState
-          ? selectedThreadState.title
-          : showAriaChat
-            ? "Session"
-            : undefined
+        settingsOpen
+          ? undefined
+          : activeSpace === "projects" && selectedThreadState
+            ? selectedThreadState.title
+            : showAriaChat
+              ? "Session"
+              : undefined
       }
       showMainTopbar={!settingsOpen}
       title={

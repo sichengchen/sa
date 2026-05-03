@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import { DesktopAriaService } from "./desktop-aria-service.js";
 import { DesktopProjectsService } from "./desktop-projects-service.js";
+import { DesktopSettingsService } from "./desktop-settings-service.js";
 import { ariaDesktopChannels, type AriaDesktopRuntimeInfo } from "../shared/api.js";
 import { importLocalProjectThroughDesktopService } from "./desktop-ipc-handlers.js";
 
@@ -21,6 +22,7 @@ function getRuntimeInfo(): AriaDesktopRuntimeInfo {
 export function registerDesktopIpc(
   projectsService: DesktopProjectsService,
   ariaService: DesktopAriaService,
+  settingsService: DesktopSettingsService,
 ): void {
   if (registered) {
     return;
@@ -36,6 +38,11 @@ export function registerDesktopIpc(
       window.webContents.send(ariaDesktopChannels.projectShellStateChanged, state);
     }
   });
+  settingsService.subscribe((state) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send(ariaDesktopChannels.settingsStateChanged, state);
+    }
+  });
 
   ipcMain.handle(ariaDesktopChannels.ping, () => "pong");
   ipcMain.handle(ariaDesktopChannels.getRuntimeInfo, () => getRuntimeInfo());
@@ -43,6 +50,7 @@ export function registerDesktopIpc(
     projectsService.getProjectShellState(),
   );
   ipcMain.handle(ariaDesktopChannels.getAriaShellState, () => ariaService.getAriaShellState());
+  ipcMain.handle(ariaDesktopChannels.getSettingsState, () => settingsService.getSettingsState());
   ipcMain.handle(ariaDesktopChannels.importLocalProjectFromDialog, () =>
     importLocalProjectThroughDesktopService(projectsService, BrowserWindow),
   );
@@ -150,6 +158,9 @@ export function registerDesktopIpc(
     ariaDesktopChannels.answerConnectorQuestion,
     (_event, questionId: string, answer: string) =>
       ariaService.answerConnectorQuestion(questionId, answer),
+  );
+  ipcMain.handle(ariaDesktopChannels.updateSettings, (_event, patch) =>
+    settingsService.updateSettings(patch),
   );
 
   registered = true;

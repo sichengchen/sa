@@ -24,6 +24,7 @@ const ariaDesktopApi: AriaDesktopApi = {
     ipcRenderer.invoke(ariaDesktopChannels.setProjectThreadModel, threadId, modelId),
   getAriaShellState: () => ipcRenderer.invoke(ariaDesktopChannels.getAriaShellState),
   getProjectShellState: () => ipcRenderer.invoke(ariaDesktopChannels.getProjectShellState),
+  getSettingsState: () => ipcRenderer.invoke(ariaDesktopChannels.getSettingsState),
   ping: () => ipcRenderer.invoke(ariaDesktopChannels.ping),
   getRuntimeInfo: () => ipcRenderer.invoke(ariaDesktopChannels.getRuntimeInfo),
   importLocalProjectFromDialog: () =>
@@ -44,6 +45,15 @@ const ariaDesktopApi: AriaDesktopApi = {
     ipcRenderer.on(ariaDesktopChannels.projectShellStateChanged, wrapped);
     return () => {
       ipcRenderer.removeListener(ariaDesktopChannels.projectShellStateChanged, wrapped);
+    };
+  },
+  onSettingsStateChanged: (listener) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, state: any) => {
+      listener(state);
+    };
+    ipcRenderer.on(ariaDesktopChannels.settingsStateChanged, wrapped);
+    return () => {
+      ipcRenderer.removeListener(ariaDesktopChannels.settingsStateChanged, wrapped);
     };
   },
   refreshAutomations: () => ipcRenderer.invoke(ariaDesktopChannels.refreshAutomations),
@@ -77,6 +87,7 @@ const ariaDesktopApi: AriaDesktopApi = {
     ipcRenderer.invoke(ariaDesktopChannels.setProjectCollapsed, projectId, collapsed),
   stopAriaChatSession: () => ipcRenderer.invoke(ariaDesktopChannels.stopAriaChatSession),
   stopConnectorSession: () => ipcRenderer.invoke(ariaDesktopChannels.stopConnectorSession),
+  updateSettings: (patch) => ipcRenderer.invoke(ariaDesktopChannels.updateSettings, patch),
 };
 
 contextBridge.exposeInMainWorld("ariaDesktop", ariaDesktopApi);

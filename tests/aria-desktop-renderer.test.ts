@@ -1,11 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import type { AriaDesktopAriaShellState } from "../apps/aria-desktop/src/shared/api.js";
+import type {
+  AriaDesktopAriaShellState,
+  AriaDesktopSettingsState,
+} from "../apps/aria-desktop/src/shared/api.js";
 import {
   AriaChatView,
   AriaSidebar,
   ProjectSidebar,
+  SettingsView,
   ThreadView,
 } from "../apps/aria-desktop/src/renderer/src/components/DesktopWorkbenchApp.js";
 import {
@@ -83,6 +87,97 @@ const SAMPLE_ARIA_STATE: AriaDesktopAriaShellState = {
   selectedAriaScreen: null,
   selectedAriaSessionId: "chat-1",
   serverLabel: "Local Server",
+};
+
+const SAMPLE_SETTINGS_STATE: AriaDesktopSettingsState = {
+  about: {
+    channel: "Desktop",
+    cliName: "aria",
+    productName: "Esperta Aria",
+    runtimeName: "Aria Runtime",
+  },
+  connectors: [
+    {
+      approval: "ask",
+      configured: true,
+      label: "Slack",
+      name: "slack",
+      secrets: [
+        { configured: true, key: "SLACK_BOT_TOKEN", label: "Bot Token", maskedValue: "****1234" },
+      ],
+    },
+    {
+      approval: "ask",
+      configured: false,
+      label: "Discord",
+      name: "discord",
+      secrets: [],
+    },
+  ],
+  desktop: {
+    compactMode: true,
+    defaultSpace: "projects",
+    settingsPath: "/tmp/aria-desktop-settings.json",
+    startAtLogin: false,
+    theme: "system",
+  },
+  lastError: null,
+  runtime: {
+    activeModel: "sonnet",
+    checkpointMaxSnapshots: 50,
+    checkpointsEnabled: true,
+    connectorApproval: "ask",
+    connectorVerbosity: "silent",
+    contextFilesEnabled: true,
+    cronTaskCount: 1,
+    defaultModel: "sonnet",
+    heartbeatEnabled: true,
+    heartbeatIntervalMinutes: 30,
+    homeDir: "/tmp/.aria",
+    journalEnabled: true,
+    mcpServerCount: 2,
+    memoryDirectory: "memory",
+    memoryEnabled: true,
+    modelTiers: {
+      performance: "sonnet",
+    },
+    models: [
+      {
+        label: "sonnet (anthropic/claude-sonnet)",
+        model: "claude-sonnet",
+        name: "sonnet",
+        provider: "anthropic",
+        selected: true,
+        tiers: ["performance"],
+        type: "chat",
+      },
+    ],
+    providerPresets: [
+      {
+        apiKeyEnvVar: "ANTHROPIC_API_KEY",
+        id: "anthropic",
+        label: "Anthropic",
+        type: "anthropic",
+      },
+    ],
+    providers: [
+      {
+        apiKeyConfigured: true,
+        apiKeyEnvVar: "ANTHROPIC_API_KEY",
+        id: "anthropic",
+        label: "Anthropic",
+        modelCount: 1,
+        type: "anthropic",
+      },
+    ],
+    providerCount: 1,
+    securityMode: "default",
+    tuiApproval: "never",
+    tuiVerbosity: "minimal",
+    webhookApproval: "never",
+    webhookEnabled: false,
+    webhookTaskCount: 0,
+  },
 };
 
 const SAMPLE_PROJECT = {
@@ -267,6 +362,61 @@ describe("desktop aria renderer", () => {
 
     expect(html).toContain("Unpin Desktop Projects Aria");
     expect(html).toContain("Archive Desktop Projects Aria");
+  });
+
+  test("renders desktop settings from durable settings state", () => {
+    const html = renderToStaticMarkup(
+      React.createElement(SettingsView, {
+        onUpdate: () => {},
+        settingsState: SAMPLE_SETTINGS_STATE,
+      }),
+    );
+
+    expect(html).toContain("settings-design-canvas");
+    expect(html).toContain("Default Space");
+    expect(html).toContain("Start At Login");
+    expect(html).toContain("Runtime");
+    expect(html).toContain("Models");
+    expect(html).toContain("Security");
+    expect(html).toContain("Providers");
+    expect(html).toContain("Connectors");
+    expect(html).toContain("Memory &amp; Skills");
+  });
+
+  test("renders settings add flows with sheet launchers", () => {
+    const providerHtml = renderToStaticMarkup(
+      React.createElement(SettingsView, {
+        initialSectionId: "providers",
+        onUpdate: () => {},
+        settingsState: SAMPLE_SETTINGS_STATE,
+      }),
+    );
+    const modelHtml = renderToStaticMarkup(
+      React.createElement(SettingsView, {
+        initialSectionId: "models",
+        onUpdate: () => {},
+        settingsState: SAMPLE_SETTINGS_STATE,
+      }),
+    );
+    const connectorHtml = renderToStaticMarkup(
+      React.createElement(SettingsView, {
+        initialSectionId: "connectors",
+        onUpdate: () => {},
+        settingsState: SAMPLE_SETTINGS_STATE,
+      }),
+    );
+
+    expect(providerHtml).toContain("Add Provider");
+    expect(providerHtml).not.toContain("Provider Credentials Review");
+    expect(modelHtml).toContain("Add Model");
+    expect(modelHtml).toContain("Model Configuration");
+    expect(modelHtml).toContain("Model List");
+    expect(modelHtml).not.toContain("Type Model Tuning Review");
+    expect(connectorHtml).toContain("Configure");
+    expect(connectorHtml).toContain("Connector List");
+    expect(connectorHtml).toContain("Connector Preferences");
+    expect(connectorHtml).not.toContain("Connector Policy Credentials Review");
+    expect(connectorHtml).toContain("Connector Verbosity");
   });
 
   test("renders the empty chat state as a centered composer with send button", () => {
