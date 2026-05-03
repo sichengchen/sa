@@ -1,7 +1,8 @@
 # Exec Tool
 
-Execute shell commands with hybrid danger classification, environment
-sanitization, and resource limits.
+Compatibility shell command execution routed through the Aria harness shell
+environments, with hybrid danger classification, environment sanitization, and
+resource limits.
 
 ## Parameters
 
@@ -13,7 +14,18 @@ sanitization, and resource limits.
 | env        | object  | no       | {}      | Additional environment variables |
 | background | boolean | no       | false   | Run in background, return handle |
 | yieldMs    | number  | no       | —       | Yield after N ms (streaming)     |
-| timeout    | number  | no       | 300000  | Timeout in ms (foreground)       |
+| timeout    | number  | no       | 300     | Timeout in seconds (foreground)  |
+
+## Harness Routing
+
+`exec` is a compatibility alias. Agent-facing shell execution should use the
+harness-generated `bash` tool.
+
+- default execution uses just-bash
+- project execution uses just-bash `OverlayFs`, so writes are virtual
+- host execution is explicit and approval-gated
+- external sandbox execution must use a configured adapter
+- default and external execution must not silently fall back to host
 
 ---
 
@@ -135,8 +147,11 @@ TUI `/rollback` commands.
 
 ## Sandbox
 
-On supported platforms, exec runs commands inside an OS-level sandbox
-(macOS Seatbelt) that restricts filesystem and network access beyond the
-working directory fence.
+The legacy OS sandbox wrapper has been removed. Compatibility `exec` now routes
+through harness shell environments and must not silently fall back to host
+execution.
 
-Full details: `docs/security/execution/sandbox.md`.
+Full details:
+
+- `docs/security/execution/bash-environments.md`
+- `docs/security/execution/sandbox.md`

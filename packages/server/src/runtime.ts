@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { Agent, type AskUserCallback, type ToolApprovalCallback, type ToolImpl } from "@aria/agent";
+import type { AgentEvent, AskUserCallback, ToolApprovalCallback, ToolImpl } from "@aria/agent";
+import type { Message } from "@mariozechner/pi-ai";
 import { Orchestrator } from "@aria/agent/orchestrator";
 import { AuditLogger } from "@aria/audit";
 import {
@@ -12,11 +13,18 @@ import {
 } from "@aria/automation";
 import { AuthManager } from "@aria/gateway/auth";
 import { HandoffService, HandoffStore } from "@aria/handoff";
+import {
+  createAriaHarnessContext,
+  type AriaHarnessHost,
+  type AriaHarnessSession,
+  type HarnessSessionData,
+} from "@aria/harness";
 import { ModelRouter } from "@aria/gateway/router";
 import type { RuntimeBackendAdapter } from "@aria/jobs/runtime-backend";
 import { MemoryManager } from "@aria/memory";
 import { SkillRegistry } from "@aria/memory/skills";
 import { SecurityModeManager } from "@aria/policy";
+import { toolIntentRequiresApproval, type ToolIntent } from "@aria/policy";
 import { PromptEngine } from "@aria/prompt";
 import { OperationalStore } from "@aria/persistence";
 import { ProjectsEngineRepository, ProjectsEngineStore } from "@aria/work";
@@ -35,9 +43,9 @@ import {
   createSetEnvVariableTool,
   createSkillManageTool,
   createWebFetchTool,
+  createSessionToolEnvironment,
   getBuiltinTools,
 } from "@aria/tools";
-import { configureSandbox } from "@aria/tools/exec";
 import { MCPManager } from "./mcp.js";
 import { createTranscriber, type Transcriber } from "./audio.js";
 import { CLI_NAME, getRuntimeHome } from "./brand.js";
@@ -46,6 +54,14 @@ import { ConfigManager, DEFAULT_HEARTBEAT_MD } from "./config.js";
 import { createProjectsControlTool } from "./projects-control-tool.js";
 import { SessionArchiveManager } from "./session-archive.js";
 import { SessionManager } from "./sessions.js";
+
+export interface RuntimeAgentSession {
+  readonly isRunning: boolean;
+  abort(): boolean;
+  chat(userText: string): AsyncGenerator<AgentEvent>;
+  getMessages(): readonly Message[];
+  hydrateHistory(messages: readonly Message[]): void;
+}
 
 export interface EngineRuntime {
   config: ConfigManager;
@@ -75,7 +91,7 @@ export interface EngineRuntime {
     modelOverride?: string,
     allowedTools?: string[],
     onAskUser?: AskUserCallback,
-  ): Agent;
+  ): RuntimeAgentSession;
   refreshSystemPrompt(): Promise<string>;
   close(): Promise<void>;
 }
@@ -281,12 +297,163 @@ export async function createRuntime(): Promise<EngineRuntime> {
   const audit = new AuditLogger(runtimeHome);
   const securityMode = new SecurityModeManager(ariaConfig.runtime.security);
 
-  const execSecurity = ariaConfig.runtime.security?.exec;
-  if (execSecurity) {
-    configureSandbox({
-      fence: execSecurity.fence ?? [],
-      deny: execSecurity.alwaysDeny ?? [],
+  function createRuntimeHarnessHost(
+    sessionId: string,
+  ): AriaHarnessHost & { rememberApprovedIntent(intent: ToolIntent): void } {
+    const preapprovedToolIntents = new Set<string>();
+    const approvalKey = (intent: ToolIntent) =>
+      JSON.stringify({
+        toolName: intent.toolName,
+        environment: intent.environment,
+        filesystemEffect: intent.filesystemEffect,
+        network: intent.network,
+        command: intent.command,
+      });
+    const host: AriaHarnessHost & { rememberApprovedIntent(intent: ToolIntent): void } = {
+      rememberApprovedIntent(intent) {
+        if (toolIntentRequiresApproval(intent)) {
+          preapprovedToolIntents.add(approvalKey(intent));
+        }
+      },
+      resolveModel(input) {
+        return router.getModel(input.model);
+      },
+      async requestToolDecision(intent) {
+        if (preapprovedToolIntents.delete(approvalKey(intent))) {
+          return { status: "allow" };
+        }
+        if (toolIntentRequiresApproval(intent)) {
+          return { status: "escalate", reason: "Runtime approval required for tool intent" };
+        }
+        return { status: "allow" };
+      },
+      async recordAudit(event) {
+        audit.log({
+          session: event.sessionId ?? sessionId,
+          connector: "engine",
+          event: "tool_call",
+          run: event.runId,
+          tool: event.toolName,
+          summary: event.message,
+          environment: event.intent?.environment,
+          command: event.intent?.command,
+          cwd: event.intent?.cwd,
+          leases: event.intent?.leases,
+        });
+      },
+      async appendRunEvent() {},
+      async loadHarnessSession(id) {
+        const cached = store.getPromptCache(`harness-session:${id}`);
+        return cached ? (JSON.parse(cached.content) as HarnessSessionData) : null;
+      },
+      async saveHarnessSession(id, data) {
+        store.putPromptCache({
+          cacheKey: `harness-session:${id}`,
+          scope: "harness_session",
+          content: JSON.stringify(data),
+          metadata: { sessionId: id },
+          updatedAt: data.updatedAt,
+        });
+      },
+      async resolveSecrets() {
+        return {};
+      },
+    };
+    return host;
+  }
+
+  function getRuntimeToolIntent(toolName: string, args: Record<string, unknown>): ToolIntent {
+    return {
+      toolName,
+      environment: "default",
+      filesystemEffect:
+        toolName === "write" || toolName === "edit" || toolName === "exec" || toolName === "bash"
+          ? "virtual"
+          : "none",
+      network: toolName === "web_fetch" || toolName === "web_search" ? "allowlist" : "none",
+      leases: Array.isArray(args.leases) ? args.leases.map(String) : [],
+      command: typeof args.command === "string" ? args.command : undefined,
+      cwd:
+        typeof args.cwd === "string"
+          ? args.cwd
+          : typeof args.workdir === "string"
+            ? args.workdir
+            : undefined,
+    };
+  }
+
+  function createHarnessRuntimeAgent(options: {
+    sessionId: string;
+    tools: ToolImpl[];
+    getSystemPrompt: () => string;
+    modelOverride?: string;
+    onToolApproval?: ToolApprovalCallback;
+    onAskUser?: AskUserCallback;
+  }): RuntimeAgentSession {
+    let hydratedMessages: readonly Message[] = [];
+    let harnessSession: AriaHarnessSession | null = null;
+    const harnessHost = createRuntimeHarnessHost(options.sessionId);
+    const toolEnvironment = createSessionToolEnvironment({
+      baseTools: options.tools,
+      workingDir: process.env.TERMINAL_CWD ?? process.cwd(),
+      harnessBuiltins: true,
+      harnessHost,
     });
+    const harnessSessionPromise = (async () => {
+      const ctx = createAriaHarnessContext({
+        id: options.sessionId,
+        host: harnessHost,
+        cwd: toolEnvironment.workingDir,
+        projectRoot: toolEnvironment.projectRoot,
+      });
+      const agent = await ctx.init({
+        id: options.sessionId,
+        model: options.modelOverride,
+        environment: "default",
+      });
+      const session = await agent.session(options.sessionId);
+      if (hydratedMessages.length > 0) {
+        session.hydrateHistory(hydratedMessages);
+      }
+      harnessSession = session;
+      return session;
+    })();
+
+    return {
+      get isRunning() {
+        return harnessSession?.isRunning ?? false;
+      },
+      abort() {
+        return harnessSession?.abort() ?? false;
+      },
+      async *chat(userText: string) {
+        const session = await harnessSessionPromise;
+        toolEnvironment.newTurn();
+        yield* session.chat(userText, {
+          router,
+          tools: toolEnvironment.tools,
+          getSystemPrompt: options.getSystemPrompt,
+          modelOverride: options.modelOverride,
+          onToolApproval: options.onToolApproval
+            ? async (toolName, toolCallId, args) => {
+                const approved = await options.onToolApproval!(toolName, toolCallId, args);
+                if (approved) {
+                  harnessHost.rememberApprovedIntent(getRuntimeToolIntent(toolName, args));
+                }
+                return approved;
+              }
+            : undefined,
+          onAskUser: options.onAskUser,
+        });
+      },
+      getMessages() {
+        return harnessSession?.getMessages() ?? hydratedMessages;
+      },
+      hydrateHistory(messages: readonly Message[]) {
+        hydratedMessages = Array.from(messages);
+        harnessSession?.hydrateHistory(messages);
+      },
+    };
   }
 
   let mainSession = sessions.getLatest("main");
@@ -294,8 +461,8 @@ export async function createRuntime(): Promise<EngineRuntime> {
     mainSession = sessions.create("main", "engine");
   }
 
-  const mainAgent = new Agent({
-    router,
+  const mainAgent = createHarnessRuntimeAgent({
+    sessionId: mainSession.id,
     tools,
     getSystemPrompt: () => systemPrompt,
   });
@@ -374,12 +541,12 @@ export async function createRuntime(): Promise<EngineRuntime> {
       modelOverride?: string,
       allowedTools?: string[],
       onAskUser?: AskUserCallback,
-    ): Agent {
+    ): RuntimeAgentSession {
       const agentTools = allowedTools
         ? tools.filter((tool) => allowedTools.includes(tool.name))
         : tools;
-      return new Agent({
-        router,
+      return createHarnessRuntimeAgent({
+        sessionId: `runtime-agent:${crypto.randomUUID()}`,
         tools: agentTools,
         getSystemPrompt: () => runtime.systemPrompt,
         onToolApproval,

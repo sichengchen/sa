@@ -12,7 +12,6 @@
     "./delegate-status": "./src/delegate-status.ts",
     "./exec": "./src/exec.ts",
     "./exec-background": "./src/exec-background.ts",
-    "./bash": "./src/bash.ts",
     "./skill-manage": "./src/skill-manage.ts",
     "./read-skill": "./src/read-skill.ts",
     "./set-api-key": "./src/set-api-key.ts",
@@ -29,6 +28,7 @@
     "./read": "./src/read.ts",
     "./reaction": "./src/reaction.ts",
     "./session-tool-environment": "./src/session-tool-environment.ts",
-    "./toolsets": "./src/toolsets.ts"
+    "./toolsets": "./src/toolsets.ts",
+    "./harness": "../harness/src/index.ts"
   }
 }

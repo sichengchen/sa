@@ -4,7 +4,7 @@ import { writeTool } from "./write.js";
 import { editTool } from "./edit.js";
 import { execTool } from "./exec.js";
 import { execStatusTool, execKillTool } from "./exec-background.js";
-import { webFetchTool, createWebFetchTool } from "./web-fetch.js";
+import { createWebFetchTool } from "./web-fetch.js";
 import { webSearchTool } from "./web-search.js";
 import { reactionTool } from "./reaction.js";
 
@@ -12,15 +12,8 @@ export { readTool } from "./read.js";
 export { writeTool } from "./write.js";
 export { editTool } from "./edit.js";
 export { execTool } from "./exec.js";
-export {
-  execStatusTool,
-  execKillTool,
-  generateHandle,
-  registerBackground,
-} from "./exec-background.js";
-/** @deprecated Use execTool instead */
-export { bashTool } from "./bash.js";
-export { webFetchTool, createWebFetchTool } from "./web-fetch.js";
+export { execStatusTool, execKillTool, generateHandle } from "./exec-background.js";
+export { createWebFetchTool } from "./web-fetch.js";
 export { webSearchTool } from "./web-search.js";
 export { reactionTool } from "./reaction.js";
 export {
@@ -61,3 +54,17 @@ export function formatToolsSection(tools: ToolImpl[]): string {
 export * from "./toolsets.js";
 
 export * from "./session-tool-environment.js";
+
+export {
+  createHarnessTools,
+  createReadTool as createHarnessReadTool,
+  createWriteTool as createHarnessWriteTool,
+  createEditTool as createHarnessEditTool,
+  createBashTool as createHarnessBashTool,
+  createGrepTool as createHarnessGrepTool,
+  createGlobTool as createHarnessGlobTool,
+  createLegacyExecTool,
+  createDefaultAriaSessionEnv,
+  createHostAriaSessionEnv,
+  createExternalAriaSessionEnv,
+} from "@aria/harness";

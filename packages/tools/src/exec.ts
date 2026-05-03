@@ -1,37 +1,18 @@
 /**
- * exec tool — shell command execution
- *
- * Security model:
- * - Commands run as the Aria Runtime process user (no privilege isolation)
- * - Approval is enforced by the 3-tier danger classification + exec classifier
- * - Sensitive env vars (API keys, tokens, secrets) are stripped by default
- * - Output is capped at 1MB to prevent OOM from chatty commands
- * - Foreground timeout: 300s (5min); background timeout: 1800s (30min)
- * - The user is ultimately responsible for what commands the agent runs
+ * exec tool — compatibility shell command execution routed through harness environments.
  */
 
 import { Type } from "@mariozechner/pi-ai";
+import { dirname, relative } from "node:path";
 import type { ToolImpl } from "@aria/agent";
 import { frameAsData, sanitizeContent } from "@aria/agent/content-frame";
-import { generateHandle, registerBackground } from "./exec-background.js";
-import { detectSandbox, type Sandbox, type SandboxOptions } from "./sandbox.js";
+import { generateHandle, registerBackgroundTask } from "./exec-background.js";
+import { createDefaultAriaSessionEnv, createLegacyExecTool } from "@aria/harness";
 
 const DEFAULT_TIMEOUT_S = 300;
 const BACKGROUND_TIMEOUT_S = 1800;
 const DEFAULT_YIELD_MS = 10_000;
 const MAX_OUTPUT_BYTES = 1_048_576;
-
-let _sandbox: Sandbox | null = null;
-function getSandbox(): Sandbox {
-  if (!_sandbox) _sandbox = detectSandbox();
-  return _sandbox;
-}
-
-let _sandboxOpts: SandboxOptions = { fence: [], deny: [] };
-
-export function configureSandbox(opts: SandboxOptions): void {
-  _sandboxOpts = opts;
-}
 
 const SENSITIVE_ENV_PATTERNS = [
   /_KEY$/,
@@ -116,33 +97,11 @@ export const execTool: ToolImpl = {
     const mergedEnv = sanitizeEnv(process.env, env);
 
     try {
-      let spawnCmd: string[] = ["sh", "-c", command];
-      const sandbox = getSandbox();
-      if (sandbox.available() && (_sandboxOpts.fence.length > 0 || _sandboxOpts.deny.length > 0)) {
-        spawnCmd = sandbox.wrap(spawnCmd, _sandboxOpts);
-      }
-
-      const proc = Bun.spawn(spawnCmd, {
-        cwd: workdir,
-        env: mergedEnv,
-        stdout: "pipe",
-        stderr: "pipe",
-      });
-
-      const timeoutMs = timeoutS * 1000;
-      const killTimer = setTimeout(() => {
-        proc.kill();
-      }, timeoutMs);
+      const execTask = runHarnessExec(command, workdir, mergedEnv, timeoutS);
 
       if (background) {
-        clearTimeout(killTimer);
         const handle = generateHandle();
-        registerBackground(handle, command, proc);
-        setTimeout(() => {
-          try {
-            proc.kill();
-          } catch {}
-        }, timeoutMs);
+        registerBackgroundTask(handle, command, execTask);
         return {
           content: JSON.stringify({ handle, status: "running" }),
           isError: false,
@@ -150,22 +109,17 @@ export const execTool: ToolImpl = {
       }
 
       const effectiveYield = yieldMs ?? DEFAULT_YIELD_MS;
-
+      let result: { stdout: string; stderr: string; exitCode: number };
       if (effectiveYield > 0) {
-        const finished = await Promise.race([
-          proc.exited.then(() => true as const),
-          new Promise<false>((resolve) => setTimeout(() => resolve(false), effectiveYield)),
+        const settled = await Promise.race([
+          execTask.then((value) => ({ status: "done" as const, value })),
+          new Promise<{ status: "pending" }>((resolve) =>
+            setTimeout(() => resolve({ status: "pending" }), effectiveYield),
+          ),
         ]);
-
-        if (!finished) {
-          clearTimeout(killTimer);
+        if (settled.status === "pending") {
           const handle = generateHandle();
-          registerBackground(handle, command, proc);
-          setTimeout(() => {
-            try {
-              proc.kill();
-            } catch {}
-          }, timeoutMs);
+          registerBackgroundTask(handle, command, execTask);
           return {
             content: JSON.stringify({
               handle,
@@ -175,26 +129,17 @@ export const execTool: ToolImpl = {
             isError: false,
           };
         }
+        result = settled.value;
+      } else {
+        result = await execTask;
       }
-
-      const stdout = await new Response(proc.stdout).text();
-      const stderr = await new Response(proc.stderr).text();
-      const exitCode = await proc.exited;
-      clearTimeout(killTimer);
-
-      let output = "";
-      if (stdout) output += stdout;
-      if (stderr) output += (output ? "\n" : "") + `stderr: ${stderr}`;
-      if (exitCode !== 0) {
-        output += (output ? "\n" : "") + `exit code: ${exitCode}`;
-      }
-
-      if (sandbox.cleanup) sandbox.cleanup();
-
+      const output = [result.stdout, result.stderr ? `stderr: ${result.stderr}` : ""]
+        .filter(Boolean)
+        .join("\n");
       const sanitized = sanitizeContent(capOutput(output) || "(no output)");
       return {
         content: frameAsData(sanitized, "exec"),
-        isError: exitCode !== 0,
+        isError: result.exitCode !== 0,
       };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -205,3 +150,60 @@ export const execTool: ToolImpl = {
     }
   },
 };
+
+async function runHarnessExec(
+  command: string,
+  workdir: string | undefined,
+  env: Record<string, string | undefined>,
+  timeoutS: number,
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const routed = routeCompatibilityCommand(command, workdir);
+  const sessionEnv = await createDefaultAriaSessionEnv({
+    cwd: routed.projectRoot,
+    projectRoot: routed.projectRoot,
+  });
+  try {
+    const result = await createLegacyExecTool(sessionEnv).execute({
+      command: routed.command,
+      workdir: "/workspace",
+      env: env as Record<string, string>,
+      timeout: timeoutS,
+    });
+    return {
+      stdout: result.content,
+      stderr: "",
+      exitCode: result.isError ? 1 : 0,
+    };
+  } finally {
+    await sessionEnv.cleanup();
+  }
+}
+
+function routeCompatibilityCommand(
+  command: string,
+  workdir: string | undefined,
+): { command: string; projectRoot: string } {
+  if (workdir) {
+    return { command, projectRoot: workdir };
+  }
+
+  const quotedAbsolutePath = command.match(/(["'])(\/[^"']+)\1/);
+  if (!quotedAbsolutePath?.[2]) {
+    const projectRoot = process.env.TERMINAL_CWD ?? process.cwd();
+    return { command, projectRoot };
+  }
+
+  const absolutePath = quotedAbsolutePath[2];
+  const projectRoot = dirname(absolutePath);
+  const routedCommand = command.replace(
+    /(["'])(\/[^"']+)\1/g,
+    (match, quote: string, path: string) => {
+      if (path === projectRoot) return `${quote}/workspace${quote}`;
+      if (path.startsWith(`${projectRoot}/`)) {
+        return `${quote}/workspace/${relative(projectRoot, path)}${quote}`;
+      }
+      return match;
+    },
+  );
+  return { command: routedCommand, projectRoot };
+}

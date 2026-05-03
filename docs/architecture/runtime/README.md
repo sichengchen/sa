@@ -7,6 +7,7 @@ Read these pages when you need execution semantics, prompt assembly, tool runtim
 ## Documents
 
 - [runtime.md](./runtime.md)
+- [harness.md](./harness.md)
 - [prompt-engine.md](./prompt-engine.md)
 - [tool-runtime.md](./tool-runtime.md)
 - [automation.md](./automation.md)

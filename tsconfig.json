@@ -36,6 +36,8 @@
       "@aria/work/*": ["./packages/work/src/*"],
       "@aria/handoff": ["./packages/handoff/src/index.ts"],
       "@aria/handoff/*": ["./packages/handoff/src/*"],
+      "@aria/harness": ["./packages/harness/src/index.ts"],
+      "@aria/harness/*": ["./packages/harness/src/*"],
       "@aria/agent": ["./packages/agent/src/index.ts"],
       "@aria/agent/*": ["./packages/agent/src/*"],
       "@aria/automation": ["./packages/automation/src/index.ts"],

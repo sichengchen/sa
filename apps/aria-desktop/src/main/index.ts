@@ -8,9 +8,9 @@ import { registerDesktopIpc } from "./ipc.js";
 import { getDesktopPreloadPath, getDesktopRendererHtmlPath } from "./desktop-main-paths.js";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
-const desktopAriaService = new DesktopAriaService();
 const desktopProjectsService = new DesktopProjectsService();
 let mainWindow: BrowserWindow | null = null;
+let desktopAriaService: DesktopAriaService | null = null;
 
 async function createMainWindow(): Promise<BrowserWindow> {
   const window = new BrowserWindow({
@@ -52,6 +52,7 @@ app.setName("Aria Desktop");
 
 app.whenReady().then(async () => {
   await ensureEngine();
+  desktopAriaService = new DesktopAriaService();
   desktopProjectsService.init();
   registerDesktopIpc(desktopProjectsService, desktopAriaService);
   mainWindow = await createMainWindow();

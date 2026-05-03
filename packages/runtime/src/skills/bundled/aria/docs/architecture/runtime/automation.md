@@ -32,11 +32,12 @@ Desktop and mobile may view and manage automations as clients, but they must not
 Trigger
   -> Automation spec
   -> Aria Runtime
-  -> Aria Agent or project-control dispatch
+  -> Aria Agent through @aria/harness or project-control dispatch
   -> approvals, audit, inbox, and optional connector delivery
 ```
 
 Automation is not a bolt-on path. It should use the same runtime orchestration, policy, and persistence model as normal work.
+Automation-created agent work uses harness sessions and the same `ToolIntent` approval model as operator-created work.
 
 ## Durable Records
 

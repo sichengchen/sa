@@ -1,9 +1,19 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { bashTool, editTool, getBuiltinTools, readTool, writeTool } from "@aria/tools";
+import {
+  editTool,
+  execKillTool,
+  execStatusTool,
+  execTool,
+  createSessionToolEnvironment,
+  getBuiltinTools,
+  readTool,
+  writeTool,
+} from "@aria/tools";
+import { InMemoryHarnessHost } from "@aria/harness";
 import { writeFile, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const testDir = join(tmpdir(), "aria-test-tools-" + Date.now());
 
@@ -126,42 +136,88 @@ describe("Edit tool", () => {
   });
 });
 
-describe("Bash tool", () => {
-  test("executes simple command", async () => {
-    const result = await bashTool.execute({ command: "echo hello" });
-    expect(result.content.trim()).toBe("hello");
+describe("Exec tool", () => {
+  test("moves long-running harness exec to background after yieldMs", async () => {
+    const result = await execTool.execute({
+      command: "sleep 1 && echo done",
+      yieldMs: 1,
+      timeout: 5,
+    });
     expect(result.isError).toBe(false);
-  });
+    const payload = JSON.parse(result.content);
+    expect(payload.status).toBe("running");
+    expect(payload.handle).toMatch(/^bg-/);
 
-  test("captures stderr", async () => {
-    const result = await bashTool.execute({
-      command: "echo err >&2",
+    const status = await execStatusTool.execute({ handle: payload.handle });
+    expect(status.content).toContain(`handle: ${payload.handle}`);
+    await execKillTool.execute({ handle: payload.handle });
+  });
+});
+
+describe("Session tool environment", () => {
+  test("passes harness host into generated builtins", async () => {
+    const host = new InMemoryHarnessHost();
+    const environment = createSessionToolEnvironment({
+      baseTools: [],
+      workingDir: testDir,
+      harnessBuiltins: true,
+      harnessHost: host,
     });
-    expect(result.content).toContain("stderr");
-    expect(result.content).toContain("err");
-  });
+    const bash = environment.tools.find((tool) => tool.name === "bash");
+    expect(bash).toBeDefined();
 
-  test("returns exit code on failure", async () => {
-    const result = await bashTool.execute({ command: "exit 42" });
-    expect(result.isError).toBe(true);
-    expect(result.content).toContain("42");
-  });
-
-  test("respects cwd", async () => {
-    const result = await bashTool.execute({
-      command: "pwd",
-      cwd: testDir,
+    const result = await bash!.execute({ command: "echo env-host" });
+    expect(result.isError).toBeFalsy();
+    const intent = host.audit.find((event) => event.type === "tool_intent")?.intent;
+    expect(intent).toMatchObject({
+      toolName: "bash",
+      environment: "default",
+      command: "echo env-host",
     });
-    expect(result.content.trim()).toContain(testDir);
   });
 
-  test("handles timeout", async () => {
-    const result = await bashTool.execute({
-      command: "sleep 10",
-      timeout: 100,
+  test("uses in-memory just-bash when no project root is bound", async () => {
+    const hostPath = join(testDir, "host.txt");
+    const virtualPath = join(testDir, "virtual.txt");
+    await writeFile(hostPath, "real");
+    const environment = createSessionToolEnvironment({
+      baseTools: [],
+      workingDir: testDir,
+      harnessBuiltins: true,
     });
-    expect(result.isError).toBe(true);
-    expect(result.content).toContain("timed out");
+    const read = environment.tools.find((tool) => tool.name === "read")!;
+    const write = environment.tools.find((tool) => tool.name === "write")!;
+
+    const readResult = await read.execute({ path: "host.txt" });
+    expect(readResult.isError).toBe(true);
+
+    const writeResult = await write.execute({ path: "virtual.txt", content: "virtual" });
+    expect(writeResult.isError).toBeFalsy();
+    expect(existsSync(virtualPath)).toBe(false);
+    expect(readFileSync(hostPath, "utf8")).toBe("real");
+    expect(environment.projectRoot).toBeUndefined();
+  });
+
+  test("uses project OverlayFS only when project root is bound", async () => {
+    const hostPath = join(testDir, "host.txt");
+    const virtualPath = join(testDir, "virtual.txt");
+    await writeFile(hostPath, "real");
+    const environment = createSessionToolEnvironment({
+      baseTools: [],
+      workingDir: testDir,
+      projectRoot: testDir,
+      harnessBuiltins: true,
+    });
+    const read = environment.tools.find((tool) => tool.name === "read")!;
+    const write = environment.tools.find((tool) => tool.name === "write")!;
+
+    const readResult = await read.execute({ path: "host.txt" });
+    expect(readResult.content).toBe("real");
+
+    const writeResult = await write.execute({ path: "virtual.txt", content: "virtual" });
+    expect(writeResult.isError).toBeFalsy();
+    expect(existsSync(virtualPath)).toBe(false);
+    expect(environment.projectRoot).toBe(testDir);
   });
 });
 

@@ -145,6 +145,3 @@ export function createWebFetchTool(urlPolicy?: UrlPolicyConfig): ToolImpl {
     },
   };
 }
-
-/** @deprecated Use createWebFetchTool() instead */
-export const webFetchTool: ToolImpl = createWebFetchTool();

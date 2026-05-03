@@ -217,4 +217,50 @@ describe("server host surface", () => {
       mode: "cli_hidden_command",
     });
   });
+
+  test("uses an explicit server main entry from the environment before CLI fallback", () => {
+    expect(
+      resolveAriaServerDaemonProcessSpec({
+        execPath: "/Applications/Aria Desktop.app/Contents/MacOS/Electron",
+        cliEntrypoint: "/tmp/aria-cli.mjs",
+        env: {
+          ARIA_SERVER_MAIN_ENTRY:
+            "/Users/sichengchen/src/esperta-aria/apps/aria-server/src/main.ts",
+          npm_execpath: "/opt/homebrew/bin/bun",
+        },
+      }),
+    ).toEqual({
+      executable: "/opt/homebrew/bin/bun",
+      args: ["/Users/sichengchen/src/esperta-aria/apps/aria-server/src/main.ts"],
+      mode: "app_entry",
+    });
+  });
+
+  test("does not use Electron as the server daemon executable", () => {
+    expect(
+      resolveAriaServerDaemonProcessSpec({
+        execPath: "/Applications/Aria Desktop.app/Contents/MacOS/Electron",
+        cliEntrypoint: "/tmp/aria-cli.mjs",
+        appEntrypoint: "/Users/sichengchen/src/esperta-aria/apps/aria-server/src/main.ts",
+        env: { npm_execpath: "/opt/homebrew/bin/bun" },
+      }),
+    ).toEqual({
+      executable: "/opt/homebrew/bin/bun",
+      args: ["/Users/sichengchen/src/esperta-aria/apps/aria-server/src/main.ts"],
+      mode: "app_entry",
+    });
+
+    expect(
+      resolveAriaServerDaemonProcessSpec({
+        execPath: "/Applications/Aria Desktop.app/Contents/MacOS/Electron",
+        cliEntrypoint: "/tmp/aria-cli.mjs",
+        appEntrypoint: "/tmp/missing-aria-server-main.ts",
+        env: { npm_execpath: "/opt/homebrew/bin/bun" },
+      }),
+    ).toEqual({
+      executable: "/opt/homebrew/bin/bun",
+      args: ["/tmp/aria-cli.mjs", ARIA_SERVER_DAEMON_COMMAND],
+      mode: "cli_hidden_command",
+    });
+  });
 });

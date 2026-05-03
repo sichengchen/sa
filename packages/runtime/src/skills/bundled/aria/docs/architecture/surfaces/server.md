@@ -81,6 +81,7 @@ flowchart LR
 | `Inbox + Approvals`        | Pending approvals, notifications, operator action items, and result surfacing                                                |
 | `Project Job Orchestrator` | Launches, tracks, cancels, and resumes project jobs executed by Aria                                                         |
 | `Workspace Manager`        | Repos, worktrees, sandbox lifecycle, and environment selection                                                               |
+| `Aria Harness`             | Agent-facing sessions, shell/file environments, roles, skills, tasks, command leases, and typed results                      |
 | `Aria Tool Runtime`        | Native file, terminal, git, web, MCP, and coding tool execution under policy                                                 |
 | `Operational Store`        | Durable threads, runs, approvals, automation state, audit, checkpoints, summaries                                            |
 
@@ -124,6 +125,13 @@ Prompt assembly for `Aria Agent` and runtime-managed execution is defined in
 - cross-cutting policy enforcement
 - approval routing
 - audit hooks
+
+### `Aria Harness` owns
+
+- generated built-in agent tools from `AriaSessionEnv`
+- default, host, and external shell environment routing
+- harness-local session history, tasks, roles, skills, and typed result ergonomics
+- command lease ergonomics without owning secret storage or approval decisions
 
 ## Critical Constraint
 
@@ -228,7 +236,8 @@ remaining compatibility surface is the `@aria/runtime` shell.
 | Durable persistence             | `@aria/persistence` |
 | Audit services                  | `@aria/audit`       |
 | Prompt assembly                 | `@aria/prompt`      |
-| Tool runtime                    | `@aria/tools`       |
+| Agent harness                   | `@aria/harness`     |
+| Tool compatibility exports      | `@aria/tools`       |
 | Policy and approvals            | `@aria/policy`      |
 | Node-local console              | `@aria/console`     |
 

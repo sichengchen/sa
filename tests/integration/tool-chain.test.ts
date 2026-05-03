@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { bashTool, editTool, readTool, writeTool } from "@aria/tools";
+import { createSessionToolEnvironment, editTool, readTool, writeTool } from "@aria/tools";
+import { existsSync } from "node:fs";
 import { rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -15,6 +16,31 @@ afterEach(async () => {
 });
 
 describe("Tool chain integration", () => {
+  function createHarnessEnvironment() {
+    return createSessionToolEnvironment({
+      baseTools: [],
+      workingDir: testDir,
+      projectRoot: testDir,
+      harnessBuiltins: true,
+    });
+  }
+
+  function getHarnessTool(name: string) {
+    const environment = createHarnessEnvironment();
+    const tool = environment.tools.find((candidate) => candidate.name === name);
+    if (!tool) throw new Error(`Missing harness tool: ${name}`);
+    return tool;
+  }
+
+  function getHarnessToolFromEnvironment(
+    environment: ReturnType<typeof createSessionToolEnvironment>,
+    name: string,
+  ) {
+    const tool = environment.tools.find((candidate) => candidate.name === name);
+    if (!tool) throw new Error(`Missing harness tool: ${name}`);
+    return tool;
+  }
+
   test("Write → Read → Edit → Read flow", async () => {
     const filePath = join(testDir, "chain.txt");
 
@@ -42,29 +68,32 @@ describe("Tool chain integration", () => {
     expect(r2.content).toBe("hello universe");
   });
 
-  test("Bash creates file → Read verifies it", async () => {
+  test("Bash writes stay virtual", async () => {
     const filePath = join(testDir, "bash-created.txt");
+    const environment = createHarnessEnvironment();
+    const bash = getHarnessToolFromEnvironment(environment, "bash");
+    const read = getHarnessToolFromEnvironment(environment, "read");
 
-    // Bash creates a file
-    const b = await bashTool.execute({
-      command: `echo "from bash" > "${filePath}"`,
+    const b = await bash.execute({
+      command: `echo "from bash" > bash-created.txt`,
     });
-    expect(b.isError).toBe(false);
+    expect(b.isError).toBeFalsy();
 
-    // Read verifies
-    const r = await readTool.execute({ file_path: filePath });
-    expect(r.content.trim()).toBe("from bash");
+    expect(existsSync(filePath)).toBe(false);
+    const r = await read.execute({ path: "bash-created.txt" });
+    expect(r.content).toBe("from bash\n");
   });
 
   test("Write nested → Bash lists → Read content", async () => {
     const nested = join(testDir, "deep", "nested", "file.txt");
+    const bash = getHarnessTool("bash");
 
     // Write creates nested dirs
     await writeTool.execute({ file_path: nested, content: "nested content" });
 
     // Bash lists the dir
-    const ls = await bashTool.execute({
-      command: `ls "${join(testDir, "deep", "nested")}"`,
+    const ls = await bash.execute({
+      command: "ls deep/nested",
     });
     expect(ls.content).toContain("file.txt");
 

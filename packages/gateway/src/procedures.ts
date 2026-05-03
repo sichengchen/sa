@@ -8,8 +8,12 @@ import { getRuntimeSessionCoordinator } from "@aria/server/session-coordinator";
 import { HandoffService, HandoffStore } from "@aria/handoff";
 import { ProjectsEngineRepository, ProjectsEngineStore } from "@aria/work";
 import type { RuntimeBackendAdapter } from "@aria/jobs/runtime-backend";
-import { Agent } from "@aria/agent";
-import type { AgentEvent, DangerLevel } from "@aria/agent";
+import type { AgentEvent, AskUserCallback, DangerLevel } from "@aria/agent";
+import {
+  createAriaHarnessContext,
+  type AriaHarnessHost,
+  type HarnessSessionData,
+} from "@aria/harness";
 import { classifyExecCommand } from "@aria/policy/exec-classifier";
 import { ToolPolicyManager, type ToolEventContext } from "@aria/policy/policy";
 import { ConnectorTypeSchema, createEngineEventEnvelope } from "@aria/protocol";
@@ -40,7 +44,9 @@ import {
   buildToolCapabilityCatalog,
   describeModeEffects,
   resolveCapabilityPolicyDecision,
+  toolIntentRequiresApproval,
 } from "@aria/policy";
+import type { ToolIntent } from "@aria/policy";
 import { createSessionTitleTool } from "@aria/tools";
 import { createSessionToolEnvironment } from "@aria/tools/session-tool-environment";
 import { preprocessContextReferences } from "@aria/prompt/context-references";
@@ -162,6 +168,7 @@ export function createAppRouter(runtime: EngineRuntime) {
   } = coordinator;
   let projectsRepositoryPromise: Promise<ProjectsEngineRepository> | null = null;
   let handoffServicePromise: Promise<HandoffService> | null = null;
+  const preapprovedToolIntents = new Set<string>();
 
   async function getProjectsRepository(): Promise<ProjectsEngineRepository> {
     const attachedRuntime = runtime as EngineRuntime & {
@@ -251,6 +258,117 @@ export function createAppRouter(runtime: EngineRuntime) {
       level = classifyExecCommand(args.command, agentDeclared);
     }
     return level;
+  }
+
+  function getToolIntent(toolName: string, args: Record<string, unknown>): ToolIntent {
+    const requestedEnvironment =
+      args.environment === "host" ||
+      args.environment === "external" ||
+      args.environment === "default"
+        ? args.environment
+        : "default";
+    const filesystemEffect =
+      requestedEnvironment === "host"
+        ? toolName === "read"
+          ? "host_read"
+          : "host_write"
+        : toolName === "write" || toolName === "edit" || toolName === "exec" || toolName === "bash"
+          ? "virtual"
+          : "none";
+    const network =
+      requestedEnvironment === "host"
+        ? "full"
+        : toolName === "web_fetch" || toolName === "web_search"
+          ? "allowlist"
+          : "none";
+    return {
+      toolName,
+      environment: requestedEnvironment,
+      filesystemEffect,
+      network,
+      leases: Array.isArray(args.leases) ? args.leases.map(String) : [],
+      command:
+        typeof args.command === "string"
+          ? args.command
+          : typeof args.query === "string"
+            ? args.query
+            : undefined,
+      cwd:
+        typeof args.cwd === "string"
+          ? args.cwd
+          : typeof args.workdir === "string"
+            ? args.workdir
+            : undefined,
+    };
+  }
+
+  function toolIntentApprovalKey(sessionId: string, intent: ToolIntent): string {
+    return JSON.stringify({
+      sessionId,
+      toolName: intent.toolName,
+      environment: intent.environment,
+      filesystemEffect: intent.filesystemEffect,
+      network: intent.network,
+      command: intent.command,
+    });
+  }
+
+  function rememberApprovedToolIntent(sessionId: string, intent?: ToolIntent): void {
+    if (!intent || !toolIntentRequiresApproval(intent)) return;
+    preapprovedToolIntents.add(toolIntentApprovalKey(sessionId, intent));
+  }
+
+  function createGatewayHarnessHost(sessionId: string): AriaHarnessHost {
+    return {
+      resolveModel(input) {
+        return runtime.router.getModel(input.model);
+      },
+      async requestToolDecision(intent) {
+        const approvalKey = toolIntentApprovalKey(sessionId, intent);
+        if (preapprovedToolIntents.delete(approvalKey)) {
+          return { status: "allow" };
+        }
+        if (toolIntentRequiresApproval(intent)) {
+          return { status: "escalate", reason: "Runtime approval required for tool intent" };
+        }
+        return { status: "allow" };
+      },
+      async recordAudit(event) {
+        auditLog(runtime, {
+          session: event.sessionId ?? sessionId,
+          connector: "engine",
+          event: "tool_call",
+          run: event.runId,
+          tool: event.toolName,
+          summary: event.message,
+          environment: event.intent?.environment,
+          command: event.intent?.command,
+          cwd: event.intent?.cwd,
+          leases: event.intent?.leases,
+        });
+      },
+      async appendRunEvent(event) {
+        if (event.runId) return;
+        // Run identity remains owned by the gateway/runtime path; harness-local
+        // events are persisted through saveHarnessSession below.
+      },
+      async loadHarnessSession(id) {
+        const cached = runtime.store.getPromptCache(`harness-session:${id}`);
+        return cached ? (JSON.parse(cached.content) as HarnessSessionData) : null;
+      },
+      async saveHarnessSession(id, data) {
+        runtime.store.putPromptCache({
+          cacheKey: `harness-session:${id}`,
+          scope: "harness_session",
+          content: JSON.stringify(data),
+          metadata: { sessionId: id },
+          updatedAt: data.updatedAt,
+        });
+      },
+      async resolveSecrets() {
+        return {};
+      },
+    };
   }
 
   /** Auth middleware — validates bearer token via AuthManager */
@@ -580,11 +698,16 @@ export function createAppRouter(runtime: EngineRuntime) {
     return state;
   }
 
-  function ensureSessionToolEnvironment(sessionId: string, workingDir?: string) {
+  function ensureSessionToolEnvironment(
+    sessionId: string,
+    binding?: string | { workingDir?: string; projectRoot?: string | null },
+  ) {
     const existing = sessionToolEnvironments.get(sessionId);
     if (existing) {
       return existing;
     }
+    const workingDir = typeof binding === "string" ? binding : binding?.workingDir;
+    const projectRoot = typeof binding === "string" ? binding : binding?.projectRoot;
 
     const sessionBaseTools = runtime.mcp
       .filterToolsForSession(runtime.tools, sessionId)
@@ -607,12 +730,16 @@ export function createAppRouter(runtime: EngineRuntime) {
             })
           : tool,
       );
+    const harnessHost = createGatewayHarnessHost(sessionId);
     const toolEnvironment = createSessionToolEnvironment({
       baseTools: sessionBaseTools,
       checkpointManager: runtime.checkpoints,
       maxContextHintChars: runtime.config.getConfigFile().runtime.contextFiles?.maxHintChars,
       delegation: buildDelegationOptions(runtime),
       workingDir,
+      projectRoot,
+      harnessBuiltins: true,
+      harnessHost,
     });
     sessionToolEnvironments.set(sessionId, toolEnvironment);
     return toolEnvironment;
@@ -647,78 +774,19 @@ export function createAppRouter(runtime: EngineRuntime) {
     return promptState.value;
   }
 
-  /** Get or create an Agent for a session */
-  function getSessionAgent(sessionId: string): Agent {
+  /** Get or create a harness session for a runtime session */
+  async function getSessionAgent(sessionId: string) {
     let agent = sessionAgents.get(sessionId);
     if (!agent) {
-      const promptState = getSessionPrompt(sessionId);
       const toolEnvironment = ensureSessionToolEnvironment(sessionId);
-
-      const onAskUser = async (
-        id: string,
-        question: string,
-        options?: string[],
-      ): Promise<string> => {
-        return new Promise<string>((resolve, reject) => {
-          pendingQuestions.set(id, { resolve, reject, sessionId });
-          // 10-minute timeout — questions may need thought
-          setTimeout(
-            () => {
-              if (pendingQuestions.has(id)) {
-                pendingQuestions.delete(id);
-                reject(new Error("Question timed out after 10 minutes"));
-              }
-            },
-            10 * 60 * 1000,
-          );
-        });
-      };
-
-      agent = new Agent({
-        router: runtime.router,
-        tools: toolEnvironment.tools,
-        getSystemPrompt: () => promptState.value,
-        onAskUser,
-        onToolApproval: async (toolName, toolCallId, args) => {
-          const mode = getApprovalMode(sessionId);
-          const level = getEffectiveDangerLevel(toolName, args);
-          const decision = resolveCapabilityPolicyDecision(getCapability(toolName), level, mode);
-          const overrides = sessionToolOverrides.get(sessionId);
-
-          if (level === "safe") {
-            pendingApprovalMeta.delete(toolCallId);
-            runtime.store.resolveApproval(toolCallId, "approved");
-            return true;
-          }
-
-          if (overrides?.has(toolName)) {
-            pendingApprovalMeta.delete(toolCallId);
-            runtime.store.resolveApproval(toolCallId, "allow_session");
-            return true;
-          }
-
-          if (decision.approvalRequired) {
-            return new Promise<boolean>((resolve) => {
-              pendingApprovals.set(toolCallId, resolve);
-              setTimeout(
-                () => {
-                  if (pendingApprovals.has(toolCallId)) {
-                    pendingApprovals.delete(toolCallId);
-                    pendingApprovalMeta.delete(toolCallId);
-                    runtime.store.resolveApproval(toolCallId, "denied");
-                    resolve(false);
-                  }
-                },
-                5 * 60 * 1000,
-              );
-            });
-          }
-
-          pendingApprovalMeta.delete(toolCallId);
-          runtime.store.resolveApproval(toolCallId, "approved");
-          return true;
-        },
+      const harnessContext = createAriaHarnessContext({
+        id: sessionId,
+        host: createGatewayHarnessHost(sessionId),
+        cwd: toolEnvironment.workingDir,
+        projectRoot: toolEnvironment.projectRoot,
       });
+      const harnessAgent = await harnessContext.init({ id: sessionId, environment: "default" });
+      agent = await harnessAgent.session(sessionId);
       const persistedMessages = runtime.store.getSessionMessages(sessionId);
       if (persistedMessages.length > 0) {
         agent.hydrateHistory(persistedMessages);
@@ -726,6 +794,85 @@ export function createAppRouter(runtime: EngineRuntime) {
       sessionAgents.set(sessionId, agent);
     }
     return agent;
+  }
+
+  function createOnAskUser(sessionId: string): AskUserCallback {
+    return async (id, question, options) => {
+      return new Promise<string>((resolve, reject) => {
+        pendingQuestions.set(id, { resolve, reject, sessionId });
+        // 10-minute timeout — questions may need thought
+        setTimeout(
+          () => {
+            if (pendingQuestions.has(id)) {
+              pendingQuestions.delete(id);
+              reject(new Error("Question timed out after 10 minutes"));
+            }
+          },
+          10 * 60 * 1000,
+        );
+      });
+    };
+  }
+
+  function createHarnessChatOptions(
+    sessionId: string,
+    promptState: { value: string },
+    toolEnvironment: ReturnType<typeof ensureSessionToolEnvironment>,
+    onAskUser: AskUserCallback,
+  ) {
+    return {
+      router: runtime.router,
+      tools: toolEnvironment.tools,
+      getSystemPrompt: () => promptState.value,
+      onAskUser,
+      onToolApproval: async (
+        toolName: string,
+        toolCallId: string,
+        args: Record<string, unknown>,
+      ) => {
+        const mode = getApprovalMode(sessionId);
+        const level = getEffectiveDangerLevel(toolName, args);
+        const decision = resolveCapabilityPolicyDecision(getCapability(toolName), level, mode);
+        const intent = getToolIntent(toolName, args);
+        const overrides = sessionToolOverrides.get(sessionId);
+
+        const intentRequiresApproval = toolIntentRequiresApproval(intent);
+
+        if (level === "safe" && !intentRequiresApproval) {
+          pendingApprovalMeta.delete(toolCallId);
+          runtime.store.resolveApproval(toolCallId, "approved");
+          return true;
+        }
+
+        if (overrides?.has(toolName)) {
+          rememberApprovedToolIntent(sessionId, intent);
+          pendingApprovalMeta.delete(toolCallId);
+          runtime.store.resolveApproval(toolCallId, "allow_session");
+          return true;
+        }
+
+        if (decision.approvalRequired || intentRequiresApproval) {
+          return new Promise<boolean>((resolve) => {
+            pendingApprovals.set(toolCallId, resolve);
+            setTimeout(
+              () => {
+                if (pendingApprovals.has(toolCallId)) {
+                  pendingApprovals.delete(toolCallId);
+                  pendingApprovalMeta.delete(toolCallId);
+                  runtime.store.resolveApproval(toolCallId, "denied");
+                  resolve(false);
+                }
+              },
+              5 * 60 * 1000,
+            );
+          });
+        }
+
+        pendingApprovalMeta.delete(toolCallId);
+        runtime.store.resolveApproval(toolCallId, "approved");
+        return true;
+      },
+    };
   }
 
   /** Shared generator that filters agent events through the policy manager */
@@ -794,6 +941,7 @@ export function createAppRouter(runtime: EngineRuntime) {
           const ctx: ToolEventContext = { toolName: event.name, dangerLevel };
           const capability = getCapability(event.name);
           const decision = resolveCapabilityPolicyDecision(capability, dangerLevel, approvalMode);
+          const intent = getToolIntent(event.name, event.args);
           toolEventMeta.set(event.id, decision);
 
           runtime.store.recordToolCallStart({
@@ -820,9 +968,13 @@ export function createAppRouter(runtime: EngineRuntime) {
             mcpServer: decision.mcpServer,
             mcpTrust: decision.mcpTrust,
             command:
-              event.name === "exec" && typeof event.args.command === "string"
+              (event.name === "exec" || event.name === "bash") &&
+              typeof event.args.command === "string"
                 ? event.args.command
                 : undefined,
+            cwd: intent.cwd,
+            environment: intent.environment,
+            leases: intent.leases,
             url:
               event.name === "web_fetch" && typeof event.args.url === "string"
                 ? event.args.url
@@ -917,11 +1069,13 @@ export function createAppRouter(runtime: EngineRuntime) {
             dangerLevel,
             approvalMode,
           );
+          const intent = getToolIntent(event.name, event.args);
           toolEventMeta.set(event.id, decision);
           pendingApprovalMeta.set(event.id, {
             sessionId: sid,
             toolName: event.name,
             runId,
+            intent,
           });
           runtime.store.recordApprovalPending({
             approvalId: event.id,
@@ -930,6 +1084,19 @@ export function createAppRouter(runtime: EngineRuntime) {
             toolCallId: event.id,
             toolName: event.name,
             args: event.args,
+          });
+          auditLog(runtime, {
+            session: sid,
+            connector: connectorType,
+            event: "tool_approval_intent",
+            run: runId,
+            tool: event.name,
+            danger: dangerLevel,
+            approval: decision.policyDecision,
+            environment: intent.environment,
+            command: intent.command,
+            cwd: intent.cwd,
+            leases: intent.leases,
           });
           const ctx: ToolEventContext = {
             toolName: event.name,
@@ -1040,9 +1207,10 @@ export function createAppRouter(runtime: EngineRuntime) {
             );
             return;
           }
-          const agent = getSessionAgent(input.sessionId);
+          const agent = await getSessionAgent(input.sessionId);
           const connectorType = session.connectorType as ConnectorType;
-          sessionToolEnvironments.get(input.sessionId)?.newTurn();
+          const toolEnvironment = ensureSessionToolEnvironment(input.sessionId);
+          toolEnvironment.newTurn();
 
           // Expand @file / @folder / @diff / @url context references first.
           let chatMessage = input.message;
@@ -1078,6 +1246,7 @@ export function createAppRouter(runtime: EngineRuntime) {
             trigger: "chat",
             connectorType,
           });
+          const promptState = getSessionPrompt(input.sessionId);
           const runId = startRun(input.sessionId, "chat", chatMessage);
           let finalStatus: "completed" | "failed" | "interrupted" = "completed";
           let finalStopReason: string | undefined;
@@ -1085,7 +1254,15 @@ export function createAppRouter(runtime: EngineRuntime) {
 
           try {
             for await (const event of filterAgentEvents(
-              agent.chat(chatMessage),
+              agent.chat(
+                chatMessage,
+                createHarnessChatOptions(
+                  input.sessionId,
+                  promptState,
+                  toolEnvironment,
+                  createOnAskUser(input.sessionId),
+                ),
+              ),
               connectorType,
               getApprovalMode(input.sessionId),
               runId,
@@ -1345,20 +1522,30 @@ export function createAppRouter(runtime: EngineRuntime) {
           };
 
           // Process transcript as a normal chat message
-          const agent = getSessionAgent(input.sessionId);
+          const agent = await getSessionAgent(input.sessionId);
           const connectorType = session.connectorType as ConnectorType;
-          sessionToolEnvironments.get(input.sessionId)?.newTurn();
+          const toolEnvironment = ensureSessionToolEnvironment(input.sessionId);
+          toolEnvironment.newTurn();
           await refreshSessionPrompt(input.sessionId, {
             trigger: "audio_transcription",
             connectorType,
           });
+          const promptState = getSessionPrompt(input.sessionId);
           const runId = startRun(input.sessionId, "audio_transcription", transcript);
           let finalStatus: "completed" | "failed" | "interrupted" = "completed";
           let finalStopReason: string | undefined;
           let finalErrorMessage: string | undefined;
           try {
             for await (const event of filterAgentEvents(
-              agent.chat(transcript),
+              agent.chat(
+                transcript,
+                createHarnessChatOptions(
+                  input.sessionId,
+                  promptState,
+                  toolEnvironment,
+                  createOnAskUser(input.sessionId),
+                ),
+              ),
               connectorType,
               getApprovalMode(input.sessionId),
               runId,
@@ -2047,6 +2234,9 @@ export function createAppRouter(runtime: EngineRuntime) {
           if (meta) {
             requireOwnedSession(ctx, meta.sessionId);
           }
+          if (input.approved && meta) {
+            rememberApprovedToolIntent(meta.sessionId, meta.intent);
+          }
           runtime.store.resolveApproval(input.toolCallId, input.approved ? "approved" : "denied");
           pendingApprovals.delete(input.toolCallId);
           pendingApprovalMeta.delete(input.toolCallId);
@@ -2088,6 +2278,7 @@ export function createAppRouter(runtime: EngineRuntime) {
             sessionToolOverrides.set(meta.sessionId, overrides);
           }
           overrides.add(meta.toolName);
+          rememberApprovedToolIntent(meta.sessionId, meta.intent);
 
           // Approve the current call
           runtime.store.resolveApproval(input.toolCallId, "allow_session");

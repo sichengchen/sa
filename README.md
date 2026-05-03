@@ -12,6 +12,7 @@ Esperta Aria is a local-first agent platform built around one durable runtime, o
 ## Core Architecture
 
 - `packages/runtime` is the compatibility-facing runtime shell over target-owned memory, automation, prompt, tools, policy, audit, store, and gateway surfaces
+- `packages/harness` owns Aria's agent-facing sessions, capabilities, shell/file environments, roles, skills, tasks, and typed results
 - `packages/work`, `packages/workspaces`, and `packages/jobs` own tracked-work coordination, repo/worktree behavior, and remote-job orchestration
 - `packages/agent` owns the user-facing Aria agent, including Aria-native coding execution
 - `packages/server` owns the server composition root and daemon/discovery lifecycle helpers
@@ -87,6 +88,7 @@ packages/
   console/
   gateway/
   handoff/
+  harness/
   jobs/
   memory/
   policy/

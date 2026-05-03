@@ -1,9 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { Agent } from "@aria/agent";
 import type { AgentEvent } from "@aria/agent";
 import type { Message } from "@mariozechner/pi-ai";
 import type { EngineRuntime } from "@aria/server/runtime";
+import { createAriaHarnessContext, type AriaHarnessHost } from "@aria/harness";
+import { toolIntentRequiresApproval } from "@aria/policy";
 import { createSessionToolEnvironment, mergeAllowedTools } from "@aria/tools";
 import type {
   AutomationDeliveryStatus,
@@ -86,6 +87,51 @@ function normalizeRetryPolicy(policy?: RetryPolicy): Required<RetryPolicy> {
   };
 }
 
+function createAutomationHarnessHost(runtime: EngineRuntime, sessionId: string): AriaHarnessHost {
+  return {
+    resolveModel(input) {
+      return runtime.router.getModel(input.model);
+    },
+    async requestToolDecision(intent) {
+      if (toolIntentRequiresApproval(intent)) {
+        return { status: "escalate", reason: "Automation tool intent requires approval" };
+      }
+      return { status: "allow" };
+    },
+    async recordAudit(event) {
+      runtime.audit.log({
+        session: event.sessionId ?? sessionId,
+        connector: "automation",
+        event: "tool_call",
+        run: event.runId,
+        tool: event.toolName,
+        summary: event.message,
+        environment: event.intent?.environment,
+        command: event.intent?.command,
+        cwd: event.intent?.cwd,
+        leases: event.intent?.leases,
+      });
+    },
+    async appendRunEvent() {},
+    async loadHarnessSession(id) {
+      const cached = runtime.store.getPromptCache(`harness-session:${id}`);
+      return cached ? JSON.parse(cached.content) : null;
+    },
+    async saveHarnessSession(id, data) {
+      runtime.store.putPromptCache({
+        cacheKey: `harness-session:${id}`,
+        scope: "harness_session",
+        content: JSON.stringify(data),
+        metadata: { sessionId: id },
+        updatedAt: data.updatedAt,
+      });
+    },
+    async resolveSecrets() {
+      return {};
+    },
+  };
+}
+
 export function buildDelegationOptions(runtime: EngineRuntime) {
   const orchestration = runtime.config.getConfigFile().runtime.orchestration;
   return {
@@ -114,11 +160,14 @@ async function runAutomationAttempt(
       task.allowedTools ?? defaultTools,
       task.allowedToolsets,
     ) ?? defaultTools;
+  const harnessHost = createAutomationHarnessHost(runtime, session.id);
   const toolEnvironment = createSessionToolEnvironment({
     baseTools: sessionScopedTools.filter((tool) => allowedTools.includes(tool.name)),
     checkpointManager: runtime.checkpoints,
     maxContextHintChars: runtime.config.getConfigFile().runtime.contextFiles?.maxHintChars,
     delegation: buildDelegationOptions(runtime),
+    harnessBuiltins: true,
+    harnessHost,
   });
   toolEnvironment.newTurn();
 
@@ -134,6 +183,28 @@ async function runAutomationAttempt(
       "Complete the requested task directly. Assume the operator will review the archived transcript and result summary after completion.",
     ].join("\n"),
   });
+  const harnessContext = createAriaHarnessContext({
+    id: session.id,
+    host: harnessHost,
+    cwd: toolEnvironment.workingDir,
+    projectRoot: toolEnvironment.projectRoot,
+  });
+  const harnessAgent = await harnessContext.init({
+    id: session.id,
+    model: task.model,
+    environment: "default",
+  });
+  const harnessSession = await harnessAgent.session(session.id);
+  const defaultAgent: AutomationAgentLike = {
+    chat: (prompt) =>
+      harnessSession.chat(prompt, {
+        router: runtime.router,
+        tools: toolEnvironment.tools,
+        getSystemPrompt: () => systemPrompt,
+        modelOverride: task.model,
+      }),
+    getMessages: () => harnessSession.getMessages(),
+  };
   const agent =
     task.agentFactory?.({
       runtime,
@@ -147,12 +218,7 @@ async function runAutomationAttempt(
       tools: toolEnvironment.tools,
       systemPrompt,
     }) ??
-    new Agent({
-      router: runtime.router,
-      tools: toolEnvironment.tools,
-      getSystemPrompt: () => systemPrompt,
-      modelOverride: task.model,
-    });
+    defaultAgent;
 
   let responseText = "";
   const toolCalls: Array<{ name: string; content: string }> = [];

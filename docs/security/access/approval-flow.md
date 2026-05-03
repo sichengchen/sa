@@ -1,13 +1,39 @@
 # Approval Flow
 
-3-tier approval matrix combining tool danger levels with connector approval
-modes to decide whether a tool call requires user confirmation.
+Dynamic approval flow combining tool intent, compatibility danger levels, and
+connector approval modes to decide whether a tool call requires user
+confirmation.
 
 ---
 
-## Danger Levels
+## Tool Intent
 
-Every tool declares a `dangerLevel` property that drives the approval flow.
+New harness-governed tools report a `ToolIntent`:
+
+```ts
+{
+  toolName: "bash",
+  environment: "default" | "host" | "external",
+  filesystemEffect: "none" | "virtual" | "host_read" | "host_write",
+  network: "none" | "allowlist" | "full",
+  leases: string[],
+  command?: string,
+  cwd?: string
+}
+```
+
+Approval is required for host execution, host writes, full network, secret
+injection, applying virtual diffs to real files, deploy/publish/push/delete,
+system/process operations, and gated external sandbox creation.
+
+Usually no approval is required for just-bash in-memory commands, project
+`OverlayFs` reads, virtual writes, safe allowlisted network, and non-secret
+leases.
+
+## Compatibility Danger Levels
+
+Legacy and compatibility tools still declare a `dangerLevel` property. It is a
+fallback compatibility signal, not the only approval input.
 
 | Level       | Meaning                                          | Approval behavior                                         |
 | ----------- | ------------------------------------------------ | --------------------------------------------------------- |
@@ -19,26 +45,26 @@ Every tool declares a `dangerLevel` property that drives the approval flow.
 
 ## Built-in Tool Classification
 
-| Tool               | Danger level | Rationale                         |
-| ------------------ | ------------ | --------------------------------- |
-| `read`             | safe         | Read-only file access             |
-| `web_search`       | safe         | Read-only web search              |
-| `web_fetch`        | safe         | Read-only URL fetch               |
-| `read_skill`       | safe         | Read-only skill loading           |
-| `exec_status`      | safe         | Read-only process status check    |
-| `remember`         | safe         | Appends to memory files           |
-| `reaction`         | safe         | Sends emoji reactions             |
-| `set_env_secret`   | safe         | Stores secrets (encrypted)        |
-| `set_env_variable` | safe         | Stores plain config vars          |
-| `notify`           | safe         | Sends notifications to connectors |
-| `ask_user`         | safe         | Asks user a clarifying question   |
-| `write`            | moderate     | Creates or overwrites files       |
-| `edit`             | moderate     | Edits files in place              |
-| `delegate`         | moderate     | Delegates work to a sub-agent     |
-| `exec`             | dangerous    | Arbitrary shell command execution |
-| `exec_kill`        | dangerous    | Kills background processes        |
+| Tool               | Danger level | Rationale                                                       |
+| ------------------ | ------------ | --------------------------------------------------------------- |
+| `read`             | safe         | Read-only file access                                           |
+| `web_search`       | safe         | Read-only web search                                            |
+| `web_fetch`        | safe         | Read-only URL fetch                                             |
+| `read_skill`       | safe         | Read-only skill loading                                         |
+| `exec_status`      | safe         | Read-only process status check                                  |
+| `remember`         | safe         | Appends to memory files                                         |
+| `reaction`         | safe         | Sends emoji reactions                                           |
+| `set_env_secret`   | safe         | Stores secrets (encrypted)                                      |
+| `set_env_variable` | safe         | Stores plain config vars                                        |
+| `notify`           | safe         | Sends notifications to connectors                               |
+| `ask_user`         | safe         | Asks user a clarifying question                                 |
+| `write`            | moderate     | Creates or overwrites files                                     |
+| `edit`             | moderate     | Edits files in place                                            |
+| `delegate`         | moderate     | Delegates work to a sub-agent                                   |
+| `exec`             | dangerous    | Compatibility shell command routed through harness environments |
+| `exec_kill`        | dangerous    | Kills background processes                                      |
 
-Danger levels can be overridden per-tool in `config.json` under
+Compatibility danger levels can be overridden per-tool in `config.json` under
 `runtime.toolPolicy.overrides`.
 
 ---
@@ -56,7 +82,7 @@ Each connector type has an approval mode configured in
 
 ---
 
-## Decision Matrix
+## Compatibility Decision Matrix
 
 | Danger level | `"never"` / `"ask"` | `"always"`      |
 | ------------ | ------------------- | --------------- |
@@ -69,6 +95,8 @@ Key design points:
 - **Safe tools never prompt** -- even under `"always"` mode.
 - **Dangerous tools always prompt** -- even under `"never"` mode.
 - **Moderate tools are the swing tier** -- only prompted in `"always"` mode.
+- `ToolIntent` can still require approval even when the compatibility danger
+  level would otherwise auto-approve.
 
 ---
 

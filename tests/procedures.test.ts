@@ -3,11 +3,12 @@ import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Agent } from "@aria/agent";
-import { Scheduler, createHeartbeatTask } from "@aria/automation";
+import { Scheduler, createHeartbeatTask, runAutomationAgent } from "@aria/automation";
 import { AuditLogger } from "@aria/audit";
 import { createContext } from "@aria/gateway/context";
 import { createAppRouter } from "@aria/gateway/procedures";
 import { ModelRouter } from "@aria/gateway/router";
+import { AriaHarnessSession } from "@aria/harness";
 import { SkillRegistry } from "@aria/memory/skills";
 import { SecurityModeManager } from "@aria/policy";
 import { ConfigManager } from "@aria/server/config";
@@ -20,7 +21,12 @@ import { OperationalStore } from "@aria/persistence/operational-store";
 import { MCPManager } from "@aria/server/mcp";
 import { AuthManager } from "@aria/gateway/auth";
 import { ProjectsEngineRepository, ProjectsEngineStore } from "@aria/work";
-import type { KnownProvider } from "@mariozechner/pi-ai";
+import {
+  fauxAssistantMessage,
+  fauxToolCall,
+  registerFauxProvider,
+  type KnownProvider,
+} from "@mariozechner/pi-ai";
 
 let testDir: string;
 let runtime: EngineRuntime;
@@ -597,6 +603,37 @@ describe("tRPC procedures (non-live)", () => {
       expect(runs[0]!.deliveryStatus).toBe("failed");
       expect(runs[0]!.deliveryError).toContain("telegram offline");
     });
+
+    test("default automation execution uses harness sessions", async () => {
+      const faux = registerFauxProvider({
+        provider: "procedures-automation-harness",
+        models: [{ id: "automation-harness-model" }],
+      });
+      faux.setResponses([fauxAssistantMessage("automation harness ok")]);
+      const originalGetModel = runtime.router.getModel.bind(runtime.router);
+      (runtime.router as unknown as { getModel: typeof runtime.router.getModel }).getModel = () =>
+        faux.getModel() as never;
+
+      try {
+        const result = await runAutomationAgent(runtime, {
+          sessionPrefix: "cron:harness",
+          connectorType: "cron",
+          name: "Harness automation",
+          prompt: "Run through automation harness",
+        });
+
+        expect(result.status).toBe("success");
+        expect(result.responseText).toBe("automation harness ok");
+        expect(result.sessionId).toStartWith("cron:harness:");
+        expect(runtime.store.getPromptCache(`harness-session:${result.sessionId}`)?.scope).toBe(
+          "harness_session",
+        );
+      } finally {
+        (runtime.router as unknown as { getModel: typeof runtime.router.getModel }).getModel =
+          originalGetModel;
+        faux.unregister();
+      }
+    });
   });
 
   describe("memory / approval / audit procedures", () => {
@@ -735,6 +772,105 @@ describe("tRPC procedures (non-live)", () => {
       expect(events[0].runId).toBe(events[1].runId);
     });
 
+    test("creates harness sessions for gateway chat execution", async () => {
+      const faux = registerFauxProvider({
+        provider: "procedures-harness",
+        models: [{ id: "harness-model" }],
+      });
+      faux.setResponses([fauxAssistantMessage("harness ok")]);
+      const originalGetModel = runtime.router.getModel.bind(runtime.router);
+      (runtime.router as unknown as { getModel: typeof runtime.router.getModel }).getModel = () =>
+        faux.getModel() as never;
+
+      try {
+        const caller = createCaller();
+        const { session } = await caller.session.create({
+          connectorType: "engine",
+          prefix: "harness-chat",
+        });
+
+        const events: any[] = [];
+        const gen = await caller.chat.stream({
+          sessionId: session.id,
+          message: "hello harness",
+        });
+        for await (const event of gen) {
+          events.push(event);
+        }
+
+        const coordinator = getRuntimeSessionCoordinator(runtime);
+        expect(coordinator.sessionAgents.get(session.id)).toBeInstanceOf(AriaHarnessSession);
+        expect(coordinator.sessionToolEnvironments.get(session.id)?.projectRoot).toBeUndefined();
+        expect(runtime.store.getPromptCache(`harness-session:${session.id}`)?.scope).toBe(
+          "harness_session",
+        );
+        expect(events.some((event) => event.type === "text_delta" && event.delta)).toBe(true);
+        expect(events.at(-1)).toMatchObject({ type: "done" });
+      } finally {
+        (runtime.router as unknown as { getModel: typeof runtime.router.getModel }).getModel =
+          originalGetModel;
+        faux.unregister();
+      }
+    });
+
+    test("approved ToolIntent-gated harness tools execute after gateway approval", async () => {
+      const faux = registerFauxProvider({
+        provider: "procedures-harness-approval",
+        models: [{ id: "harness-approval-model" }],
+      });
+      faux.setResponses([
+        fauxAssistantMessage([fauxToolCall("bash", { command: "echo push" }, { id: "tc-push" })], {
+          stopReason: "toolUse",
+        }),
+        fauxAssistantMessage("done"),
+      ]);
+      const originalGetModel = runtime.router.getModel.bind(runtime.router);
+      (runtime.router as unknown as { getModel: typeof runtime.router.getModel }).getModel = () =>
+        faux.getModel() as never;
+
+      try {
+        const caller = createCaller();
+        const { session } = await caller.session.create({
+          connectorType: "engine",
+          prefix: "harness-approval",
+        });
+
+        const toolResults: any[] = [];
+        const gen = await caller.chat.stream({
+          sessionId: session.id,
+          message: "run gated virtual command",
+        });
+        const drain = (async () => {
+          for await (const event of gen) {
+            if (event.type === "tool_end") {
+              toolResults.push(event);
+            }
+          }
+        })();
+        const coordinator = getRuntimeSessionCoordinator(runtime);
+        for (let attempt = 0; attempt < 100; attempt++) {
+          if (coordinator.pendingApprovals.has("tc-push")) break;
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+        expect(coordinator.pendingApprovals.has("tc-push")).toBe(true);
+        await caller.tool.approve({ toolCallId: "tc-push", approved: true });
+        await drain;
+
+        expect(toolResults).toContainEqual(
+          expect.objectContaining({
+            name: "bash",
+            content: expect.stringContaining("push"),
+            isError: false,
+          }),
+        );
+        expect(JSON.stringify(toolResults)).not.toContain("Runtime approval required");
+      } finally {
+        (runtime.router as unknown as { getModel: typeof runtime.router.getModel }).getModel =
+          originalGetModel;
+        faux.unregister();
+      }
+    });
+
     test("allows master chat.stream calls to bind a project working directory", async () => {
       const caller = createCaller();
       const { session } = await caller.session.create({
@@ -765,6 +901,7 @@ describe("tRPC procedures (non-live)", () => {
       }
 
       expect(coordinator.sessionToolEnvironments.get(session.id)?.workingDir).toBe(workdir);
+      expect(coordinator.sessionToolEnvironments.get(session.id)?.projectRoot).toBe(workdir);
     });
 
     test("allows project chat.stream calls to suppress Aria memory context", async () => {

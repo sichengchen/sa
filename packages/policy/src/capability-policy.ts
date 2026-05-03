@@ -37,6 +37,36 @@ export interface CapabilityPolicyDecision extends ToolCapabilityDescriptor {
   policyDecision: "auto_approve" | "require_operator_approval";
 }
 
+export interface ToolIntent {
+  toolName: string;
+  environment: "default" | "host" | "external";
+  filesystemEffect: "none" | "virtual" | "host_read" | "host_write";
+  network: "none" | "allowlist" | "full";
+  leases: string[];
+  command?: string;
+  cwd?: string;
+}
+
+export interface ToolDecision {
+  status: "allow" | "deny" | "escalate";
+  reason?: string;
+  approvalId?: string;
+}
+
+export function toolIntentRequiresApproval(intent: ToolIntent): boolean {
+  if (intent.environment === "host") return true;
+  if (intent.filesystemEffect === "host_write") return true;
+  if (intent.network === "full") return true;
+  if (
+    /\b(deploy|publish|push|delete|shutdown|reboot|kill|pkill|launchctl|systemctl)\b/i.test(
+      intent.command ?? "",
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function getMcpStatusMap(
   mcp: Pick<CapabilityMcpRegistry, "listServers">,
 ): Map<string, CapabilityMcpServerStatus> {

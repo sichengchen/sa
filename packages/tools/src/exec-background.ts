@@ -1,20 +1,16 @@
 import { Type } from "@mariozechner/pi-ai";
 import type { ToolImpl } from "@aria/agent";
-import type { Subprocess } from "bun";
 
 export interface BackgroundProcess {
   id: string;
   command: string;
-  proc: Subprocess;
+  abort?: () => void;
   stdout: string;
   stderr: string;
   exitCode: number | null;
   startedAt: number;
   finishedAt: number | null;
 }
-
-/** Maximum collected output per stream (1MB) — prevents OOM from chatty background processes */
-const MAX_BG_OUTPUT_BYTES = 1_048_576;
 
 /** Global store of background processes */
 const backgroundProcesses = new Map<string, BackgroundProcess>();
@@ -25,15 +21,16 @@ export function generateHandle(): string {
   return `bg-${nextId++}`;
 }
 
-export function registerBackground(
+export function registerBackgroundTask(
   handle: string,
   command: string,
-  proc: Subprocess,
+  task: Promise<{ stdout: string; stderr: string; exitCode: number }>,
+  abort?: () => void,
 ): BackgroundProcess {
   const bg: BackgroundProcess = {
     id: handle,
     command,
-    proc,
+    abort,
     stdout: "",
     stderr: "",
     exitCode: null,
@@ -42,44 +39,19 @@ export function registerBackground(
   };
   backgroundProcesses.set(handle, bg);
 
-  // Collect output asynchronously (capped to prevent OOM)
-  (async () => {
-    if (proc.stdout) {
-      const reader = (proc.stdout as ReadableStream).getReader();
-      const decoder = new TextDecoder();
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          if (Buffer.byteLength(bg.stdout) < MAX_BG_OUTPUT_BYTES) {
-            bg.stdout += decoder.decode(value, { stream: true });
-          }
-        }
-      } catch {}
-    }
-  })();
-
-  (async () => {
-    if (proc.stderr) {
-      const reader = (proc.stderr as ReadableStream).getReader();
-      const decoder = new TextDecoder();
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          if (Buffer.byteLength(bg.stderr) < MAX_BG_OUTPUT_BYTES) {
-            bg.stderr += decoder.decode(value, { stream: true });
-          }
-        }
-      } catch {}
-    }
-  })();
-
-  // Track exit
-  proc.exited.then((code) => {
-    bg.exitCode = code;
-    bg.finishedAt = Date.now();
-  });
+  task
+    .then((result) => {
+      bg.stdout = result.stdout;
+      bg.stderr = result.stderr;
+      bg.exitCode = result.exitCode;
+    })
+    .catch((error) => {
+      bg.stderr = error instanceof Error ? error.message : String(error);
+      bg.exitCode = 1;
+    })
+    .finally(() => {
+      bg.finishedAt = Date.now();
+    });
 
   return bg;
 }
@@ -138,9 +110,7 @@ export const execKillTool: ToolImpl = {
     }
 
     if (bg.exitCode === null) {
-      bg.proc.kill();
-      // Wait briefly for cleanup
-      await Promise.race([bg.proc.exited, new Promise((r) => setTimeout(r, 2000))]);
+      bg.abort?.();
     }
 
     const output = [

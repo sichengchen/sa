@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { Agent } from "@aria/agent";
+import type { AgentEvent } from "@aria/agent";
 import type { DeliveryTarget, HeartbeatConfig, RetryPolicy } from "./config.js";
 import { DEFAULT_HEARTBEAT } from "./config.js";
 import { computeNextRunAt, isTaskDue } from "./automation-schedule.js";
@@ -47,8 +47,12 @@ interface RegisteredTask extends ScheduledTask {
 
 interface HeartbeatTaskOptions {
   runtimeHome: string;
-  mainAgent?: Agent | null;
+  mainAgent?: HeartbeatAgentLike | null;
   notify?: (message: string) => Promise<void> | void;
+}
+
+interface HeartbeatAgentLike {
+  chat(prompt: string): AsyncIterable<AgentEvent>;
 }
 
 /** Parse a cron field value (supports wildcards, numbers, and step syntax) */
@@ -318,7 +322,7 @@ async function writeHeartbeatLog(runtimeHome: string, healthData: HeartbeatResul
  */
 export function createHeartbeatTask(
   optionsOrSaHome: string | HeartbeatTaskOptions,
-  mainAgent: Agent | null = null,
+  mainAgent: HeartbeatAgentLike | null = null,
   config?: Partial<HeartbeatConfig>,
 ): ScheduledTask {
   const options =

@@ -13,8 +13,8 @@ The prompt engine assembles model input from structured sources:
 3. project context
 4. session state
 5. relevant memory layers
-6. tool affordances
-7. active skills
+6. harness-generated tool affordances
+7. active skills resolved by the harness
 8. connector, automation, or task overlays
 
 ## Context Inputs
@@ -22,6 +22,7 @@ The prompt engine assembles model input from structured sources:
 ### Identity and Policy
 
 Identity, operator-facing behavior, safety policy, tool narration rules, and capability constraints are injected as structured prompt components.
+Role overlays are applied as `call role > session role > agent role > Aria default identity`; roles are prompt overlays, not persisted fake messages.
 
 ### Project Context
 

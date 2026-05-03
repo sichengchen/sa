@@ -28,7 +28,6 @@ import { ConnectorTypeSchema } from "../packages/protocol/src/index.js";
 import { OperationalStore } from "../packages/persistence/src/index.js";
 import {
   askUserTool,
-  bashTool,
   buildDynamicToolsets,
   createMemoryDeleteTool,
   createMemoryReadTool,
@@ -44,13 +43,13 @@ import {
   editTool,
   execKillTool,
   execStatusTool,
+  execTool,
   formatToolsSection,
   generateHandle,
   getBuiltinTools,
   mergeAllowedTools,
   reactionTool,
   readTool,
-  registerBackground,
   validateEnvVarName,
   webSearchTool,
   writeTool,
@@ -205,8 +204,14 @@ describe("phase-1 extraction package verification", () => {
     const execSource = await import("node:fs/promises").then((fs) =>
       fs.readFile(new URL("../packages/tools/src/exec.ts", import.meta.url), "utf-8"),
     );
-    expect(execSource).toContain("./sandbox.js");
+    expect(execSource).not.toContain("./sandbox.js");
+    expect(execSource).not.toContain("configureSandbox");
     expect(execSource).toContain("@aria/agent/content-frame");
+    const runtimeExecSource = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../packages/runtime/src/tools/exec.ts", import.meta.url), "utf-8"),
+    );
+    expect(runtimeExecSource).toContain("@aria/tools/exec");
+    expect(runtimeExecSource).not.toContain("Bun.spawn");
     const sessionToolEnvironmentSource = await import("node:fs/promises").then((fs) =>
       fs.readFile(
         new URL("../packages/tools/src/session-tool-environment.ts", import.meta.url),
@@ -494,17 +499,17 @@ describe("phase-1 extraction package verification", () => {
     store.close();
   });
 
-  test("@aria/tools exposes package-owned bash and background exec helpers", async () => {
-    await expect(bashTool.execute({ command: "echo hi" } as any)).resolves.toMatchObject({
-      content: "hi\n",
-      isError: false,
-    });
-    const handle = generateHandle();
-    const proc = Bun.spawn(["sh", "-c", "sleep 5"], {
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    registerBackground(handle, "sleep 5", proc);
+  test("@aria/tools exposes package-owned background exec helpers", async () => {
+    const result = await execTool.execute({
+      command: "sleep 1 && echo done",
+      yieldMs: 1,
+      timeout: 5,
+    } as any);
+    expect(result.isError).toBe(false);
+    const { handle } = JSON.parse(result.content) as { handle: string };
+    expect(handle).toMatch(/^bg-/);
+    const manualHandle = generateHandle();
+    expect(manualHandle).toMatch(/^bg-/);
     const status = await execStatusTool.execute({ handle } as any);
     expect(status.content).toContain("status:");
     const killed = await execKillTool.execute({ handle } as any);

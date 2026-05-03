@@ -4,6 +4,13 @@ import { Orchestrator } from "@aria/agent/orchestrator";
 import { SubAgent } from "@aria/agent/sub-agent";
 import { CheckpointManager, checkpointWorkdirForArgs } from "@aria/server/checkpoints";
 import { SubdirectoryContextTracker } from "@aria/prompt/context-files";
+import {
+  createDefaultAriaSessionEnv,
+  createDeferredAriaSessionEnv,
+  createHarnessTools,
+  createLegacyExecTool,
+  type AriaHarnessHost,
+} from "@aria/harness";
 import { createDelegateStatusTool } from "./delegate-status.js";
 import { createDelegateTool } from "./delegate.js";
 
@@ -13,6 +20,7 @@ export interface SessionToolEnvironment {
   checkpointManager?: CheckpointManager;
   orchestrator?: Orchestrator;
   workingDir: string;
+  projectRoot?: string;
   newTurn(): void;
 }
 
@@ -31,6 +39,9 @@ export interface SessionToolEnvironmentOptions {
   checkpointManager?: CheckpointManager;
   maxContextHintChars?: number;
   delegation?: SessionDelegationOptions;
+  harnessBuiltins?: boolean;
+  harnessHost?: AriaHarnessHost;
+  projectRoot?: string | null;
 }
 
 function cloneTool(tool: ToolImpl, execute: ToolImpl["execute"]): ToolImpl {
@@ -41,8 +52,31 @@ export function createSessionToolEnvironment(
   options: SessionToolEnvironmentOptions,
 ): SessionToolEnvironment {
   const workingDir = options.workingDir ?? process.env.TERMINAL_CWD ?? process.cwd();
+  const projectRoot = options.projectRoot ?? undefined;
   const hintTracker = new SubdirectoryContextTracker(workingDir, options.maxContextHintChars);
   const checkpointManager = options.checkpointManager;
+  const harnessTools = options.harnessBuiltins
+    ? (() => {
+        const harnessEnv = createDeferredAriaSessionEnv(
+          "default",
+          projectRoot ? "/workspace" : workingDir,
+          () =>
+            createDefaultAriaSessionEnv({
+              cwd: workingDir,
+              projectRoot,
+              host: options.harnessHost,
+            }),
+        );
+        return [...createHarnessTools(harnessEnv), createLegacyExecTool(harnessEnv)];
+      })()
+    : [];
+  const harnessToolMap = new Map(harnessTools.map((tool) => [tool.name, tool]));
+  const baseTools = [
+    ...options.baseTools.map((tool) => harnessToolMap.get(tool.name) ?? tool),
+    ...harnessTools.filter(
+      (tool) => !options.baseTools.some((baseTool) => baseTool.name === tool.name),
+    ),
+  ];
 
   const wrapTool = (tool: ToolImpl) =>
     cloneTool(tool, async (args) => {
@@ -59,12 +93,10 @@ export function createSessionToolEnvironment(
 
   const hasDelegation =
     Boolean(options.delegation) &&
-    options.baseTools.some((tool) => tool.name === "delegate" || tool.name === "delegate_status");
+    baseTools.some((tool) => tool.name === "delegate" || tool.name === "delegate_status");
   const nonDelegationBaseTools = hasDelegation
-    ? options.baseTools.filter(
-        (tool) => tool.name !== "delegate" && tool.name !== "delegate_status",
-      )
-    : options.baseTools;
+    ? baseTools.filter((tool) => tool.name !== "delegate" && tool.name !== "delegate_status")
+    : baseTools;
   const wrappedTools = nonDelegationBaseTools.map(wrapTool);
 
   let orchestrator: Orchestrator | undefined;
@@ -74,6 +106,7 @@ export function createSessionToolEnvironment(
       const subAgentEnvironment = createSessionToolEnvironment({
         baseTools: nonDelegationBaseTools,
         workingDir,
+        projectRoot,
         checkpointManager,
         maxContextHintChars: options.maxContextHintChars,
       });
@@ -97,7 +130,7 @@ export function createSessionToolEnvironment(
       createSubAgent: createSessionSubAgent,
     });
     const sessionOrchestrator = orchestrator;
-    if (options.baseTools.some((tool) => tool.name === "delegate")) {
+    if (baseTools.some((tool) => tool.name === "delegate")) {
       wrappedTools.push(
         createDelegateTool({
           router: delegation.router,
@@ -109,7 +142,7 @@ export function createSessionToolEnvironment(
         }),
       );
     }
-    if (options.baseTools.some((tool) => tool.name === "delegate_status")) {
+    if (baseTools.some((tool) => tool.name === "delegate_status")) {
       wrappedTools.push(createDelegateStatusTool({ getOrchestrator: () => sessionOrchestrator }));
     }
   }
@@ -120,6 +153,7 @@ export function createSessionToolEnvironment(
     checkpointManager,
     orchestrator,
     workingDir,
+    projectRoot,
     newTurn() {
       checkpointManager?.newTurn();
       orchestrator?.resetTurnCounter();

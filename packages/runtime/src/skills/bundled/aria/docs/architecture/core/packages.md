@@ -117,7 +117,8 @@ For the concrete app-shell decisions and Bun-runtime clarification, see [tech-de
 | `@aria/gateway`       | Authenticated API surface and realtime transport handling                                               |
 | `@aria/work`          | Project registry, project-thread coordination, environment switching, and Aria-native execution routing |
 | `@aria/prompt`        | Prompt assembly pipeline and context overlays                                                           |
-| `@aria/tools`         | Tool runtime, built-in tool definitions, execution adapters                                             |
+| `@aria/harness`       | Agent-facing sessions, capabilities, shell/file environments, roles, skills, tasks, and typed results   |
+| `@aria/tools`         | Temporary compatibility exports for legacy tool imports                                                 |
 | `@aria/policy`        | Capability policy, approvals, execution restrictions, trust rules                                       |
 | `@aria/memory`        | Aria memory layers, skills, context retrieval, assistant knowledge                                      |
 | `@aria/automation`    | Heartbeat, cron, webhook, automation scheduling and execution                                           |
@@ -171,6 +172,7 @@ The package graph should stay layered.
 
 - `@aria/runtime`
 - `@aria/prompt`
+- `@aria/harness`
 - `@aria/tools`
 - `@aria/policy`
 - `@aria/work`

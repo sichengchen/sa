@@ -22,6 +22,7 @@ import type { DangerLevel } from "@aria/agent";
 export type AuditEvent =
   | "tool_call"
   | "tool_result"
+  | "tool_approval_intent"
   | "tool_approval"
   | "tool_denial"
   | "security_block"
@@ -52,6 +53,9 @@ export interface AuditEntry {
   mcpServer?: string;
   mcpTrust?: string;
   command?: string;
+  cwd?: string;
+  environment?: string;
+  leases?: string[];
   url?: string;
   summary?: string;
   escalation?: {
@@ -194,6 +198,9 @@ export class AuditLogger {
     if (input.mcpServer) entry.mcpServer = input.mcpServer;
     if (input.mcpTrust) entry.mcpTrust = input.mcpTrust;
     if (input.command) entry.command = input.command;
+    if (input.cwd) entry.cwd = input.cwd;
+    if (input.environment) entry.environment = input.environment;
+    if (input.leases) entry.leases = input.leases;
     if (input.url) entry.url = input.url;
     if (input.summary) entry.summary = truncateSummary(input.summary);
     if (input.escalation) entry.escalation = input.escalation;
