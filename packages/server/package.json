@@ -18,6 +18,7 @@
     "./config/types": "./src/config/types.ts",
     "./brand": "./src/brand.ts",
     "./mcp": "./src/mcp.ts",
+    "./projects-control-tool": "./src/projects-control-tool.ts",
     "./runtime": "./src/runtime.ts",
     "./session-archive": "./src/session-archive.ts",
     "./session-coordinator": "./src/session-coordinator.ts",

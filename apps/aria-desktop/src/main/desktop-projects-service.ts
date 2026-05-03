@@ -6,6 +6,8 @@ import { homedir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import type { BrowserWindow } from "electron";
+import { createLocalAccessClient } from "../../../../packages/access-client/src/local.js";
+import type { AriaChatClient } from "../../../../packages/access-client/src/aria-thread.js";
 import type {
   RuntimeBackendAdapter,
   RuntimeBackendExecutionResult,
@@ -81,6 +83,7 @@ type ProjectPromptSkillRecord = {
 type DesktopProjectsServiceOptions = {
   backendRegistry?: Map<string, RuntimeBackendAdapter>;
   dbPath?: string;
+  localAriaClient?: () => Pick<AriaChatClient, "chat" | "health" | "session">;
   now?: () => number;
   pickDirectory?: (ownerWindow?: BrowserWindow | null) => Promise<string | null>;
   readGitMetadata?: (directoryPath: string) => Promise<GitMetadata | null>;
@@ -232,6 +235,256 @@ function createProjectChatState(input: {
     streamingText: "",
     streamingPhase: input.isStreaming ? "thinking" : null,
   };
+}
+
+async function listChangedFiles(workingDirectory: string): Promise<string[]> {
+  try {
+    const { stdout } = await execFileAsync("git", [
+      "-C",
+      workingDirectory,
+      "status",
+      "--porcelain=v1",
+    ]);
+
+    return stdout
+      .split("\n")
+      .map((line) => line.trimEnd())
+      .filter(Boolean)
+      .map((line) => {
+        const path = line.length > 3 ? line.slice(3).trim() : line.trim();
+        const renameSeparator = " -> ";
+        const renameIndex = path.indexOf(renameSeparator);
+        return renameIndex >= 0 ? path.slice(renameIndex + renameSeparator.length).trim() : path;
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function createLocalAriaAgentBackend(options: {
+  clientFactory: () => Pick<AriaChatClient, "chat" | "health" | "session">;
+}): RuntimeBackendAdapter {
+  const runningSessions = new Map<
+    string,
+    {
+      client: Pick<AriaChatClient, "chat">;
+      sessionId: string;
+      unsubscribe?: () => void;
+    }
+  >();
+
+  return {
+    backend: "aria",
+    capabilities: {
+      supportsAuthProbe: false,
+      supportsBackgroundExecution: true,
+      supportsCancellation: true,
+      supportsFileEditing: true,
+      supportsStreamingEvents: true,
+      supportsStructuredOutput: true,
+    },
+    displayName: "Aria Agent",
+    async probeAvailability() {
+      try {
+        await options.clientFactory().health.ping.query();
+        return {
+          authState: "unknown" as const,
+          available: true,
+          detectedVersion: null,
+          reason: null,
+        };
+      } catch (error) {
+        return {
+          authState: "unknown" as const,
+          available: false,
+          detectedVersion: null,
+          reason: error instanceof Error ? error.message : String(error),
+        };
+      }
+    },
+    async execute(request, observer) {
+      const client = options.clientFactory();
+      const sessionId =
+        request.sessionId ??
+        (
+          await client.session.create.mutate({
+            connectorType: "engine",
+            prefix: `project:${request.threadId ?? request.metadata?.threadId ?? request.executionId}`,
+          })
+        ).session.id;
+      let stdout = "";
+      let stderr = "";
+      let status: RuntimeBackendExecutionResult["status"] = "succeeded";
+      let summary: string | null = null;
+
+      await observer?.onEvent?.({
+        backend: "aria",
+        executionId: request.executionId,
+        metadata: {
+          ...request.metadata,
+          sessionId,
+        },
+        timestamp: Date.now(),
+        type: "execution.started",
+      });
+
+      return await new Promise<RuntimeBackendExecutionResult>((resolve) => {
+        let settled = false;
+        let timeout: ReturnType<typeof setTimeout> | null = null;
+
+        const finish = async (nextStatus: RuntimeBackendExecutionResult["status"]) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          if (timeout) {
+            clearTimeout(timeout);
+          }
+          const running = runningSessions.get(request.executionId);
+          running?.unsubscribe?.();
+          runningSessions.delete(request.executionId);
+          status = nextStatus;
+          summary = stdout.trim().slice(0, 500) || null;
+          await observer?.onEvent?.({
+            backend: "aria",
+            executionId: request.executionId,
+            metadata: {
+              ...request.metadata,
+              sessionId,
+            },
+            status,
+            summary,
+            timestamp: Date.now(),
+            type: "execution.completed",
+          });
+          resolve({
+            backend: "aria",
+            executionId: request.executionId,
+            exitCode: status === "succeeded" ? 0 : 1,
+            filesChanged: await listChangedFiles(request.workingDirectory),
+            metadata: {
+              ...request.metadata,
+              sessionId,
+            },
+            status,
+            stderr,
+            stdout,
+            summary,
+          });
+        };
+
+        timeout = setTimeout(() => {
+          void finish("timed_out");
+          void client.chat.stop?.mutate({ sessionId });
+        }, request.timeoutMs);
+
+        try {
+          const subscription = client.chat.stream.subscribe(
+            {
+              message: request.prompt,
+              sessionId,
+              workingDirectory: request.workingDirectory,
+              suppressMemoryContext: true,
+            },
+            {
+              onComplete() {
+                void finish(status);
+              },
+              onData(event) {
+                if (event.type === "text_delta") {
+                  stdout += event.delta;
+                  void observer?.onEvent?.({
+                    backend: "aria",
+                    chunk: event.delta,
+                    executionId: request.executionId,
+                    metadata: request.metadata,
+                    timestamp: Date.now(),
+                    type: "execution.stdout",
+                  });
+                } else if (event.type === "tool_approval_request") {
+                  void observer?.onEvent?.({
+                    backend: "aria",
+                    executionId: request.executionId,
+                    metadata: {
+                      ...request.metadata,
+                      toolCallId: event.id,
+                      toolName: event.name,
+                    },
+                    timestamp: Date.now(),
+                    type: "execution.waiting_approval",
+                  });
+                } else if (event.type === "error") {
+                  status = "failed";
+                  stderr += event.message;
+                  void observer?.onEvent?.({
+                    backend: "aria",
+                    chunk: event.message,
+                    executionId: request.executionId,
+                    metadata: request.metadata,
+                    timestamp: Date.now(),
+                    type: "execution.stderr",
+                  });
+                  void finish("failed");
+                } else if (event.type === "done") {
+                  void finish(status);
+                }
+              },
+              onError(error) {
+                status = "failed";
+                stderr += error instanceof Error ? error.message : String(error);
+                void finish("failed");
+              },
+            },
+          );
+
+          runningSessions.set(request.executionId, {
+            client,
+            sessionId,
+            unsubscribe:
+              subscription && "unsubscribe" in subscription
+                ? () => subscription.unsubscribe()
+                : undefined,
+          });
+        } catch (error) {
+          status = "failed";
+          stderr += error instanceof Error ? error.message : String(error);
+          void finish("failed");
+        }
+      });
+    },
+    async cancel(executionId) {
+      const running = runningSessions.get(executionId);
+      if (!running) {
+        return;
+      }
+      running.unsubscribe?.();
+      runningSessions.delete(executionId);
+      await running.client.chat.stop?.mutate({ sessionId: running.sessionId });
+    },
+  };
+}
+
+function createDefaultDesktopBackendRegistry(
+  runtimeHome: string,
+  localAriaClient?: () => Pick<AriaChatClient, "chat" | "health" | "session">,
+): Map<string, RuntimeBackendAdapter> {
+  const createClient =
+    localAriaClient ??
+    (() =>
+      createLocalAccessClient(runtimeHome) as unknown as Pick<
+        AriaChatClient,
+        "chat" | "health" | "session"
+      >);
+
+  return new Map<string, RuntimeBackendAdapter>([
+    [
+      DEFAULT_THREAD_AGENT_ID,
+      createLocalAriaAgentBackend({
+        clientFactory: createClient,
+      }),
+    ],
+  ]);
 }
 
 function resolveThreadStatus(result: RuntimeBackendExecutionResult): ThreadRecord["status"] {
@@ -580,7 +833,9 @@ export class DesktopProjectsService {
     this.now = options.now ?? (() => Date.now());
     this.pickDirectory = options.pickDirectory ?? defaultPickDirectory;
     this.readGitMetadata = options.readGitMetadata ?? defaultReadGitMetadata;
-    this.backendRegistry = options.backendRegistry ?? new Map<string, RuntimeBackendAdapter>();
+    this.backendRegistry =
+      options.backendRegistry ??
+      createDefaultDesktopBackendRegistry(this.runtimeHome, options.localAriaClient);
     this.threadEnvironmentService = new ProjectsThreadEnvironmentService(
       this.createRepositoryAdapter() as unknown as ProjectsEngineRepository,
     );
@@ -1073,6 +1328,7 @@ export class DesktopProjectsService {
         modelId: existingState?.selectedModelId ?? null,
         prompt,
         sessionId: existingState?.backendSessionId ?? null,
+        threadId: thread.threadId,
         timeoutMs: LOCAL_AGENT_TIMEOUT_MS,
         workingDirectory: environment.locator,
       });

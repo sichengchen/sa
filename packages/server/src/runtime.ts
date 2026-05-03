@@ -4,14 +4,22 @@ import { join } from "node:path";
 import { Agent, type AskUserCallback, type ToolApprovalCallback, type ToolImpl } from "@aria/agent";
 import { Orchestrator } from "@aria/agent/orchestrator";
 import { AuditLogger } from "@aria/audit";
-import { AutomationRegistry, Scheduler, createHeartbeatTask } from "@aria/automation";
+import {
+  AutomationRegistry,
+  Scheduler,
+  createHeartbeatTask,
+  type AutomationAgentFactory,
+} from "@aria/automation";
 import { AuthManager } from "@aria/gateway/auth";
+import { HandoffService, HandoffStore } from "@aria/handoff";
 import { ModelRouter } from "@aria/gateway/router";
+import type { RuntimeBackendAdapter } from "@aria/jobs/runtime-backend";
 import { MemoryManager } from "@aria/memory";
 import { SkillRegistry } from "@aria/memory/skills";
 import { SecurityModeManager } from "@aria/policy";
 import { PromptEngine } from "@aria/prompt";
 import { OperationalStore } from "@aria/persistence";
+import { ProjectsEngineRepository, ProjectsEngineStore } from "@aria/work";
 import {
   askUserTool,
   createDelegateStatusTool,
@@ -35,6 +43,7 @@ import { createTranscriber, type Transcriber } from "./audio.js";
 import { CLI_NAME, getRuntimeHome } from "./brand.js";
 import { CheckpointManager } from "./checkpoints.js";
 import { ConfigManager, DEFAULT_HEARTBEAT_MD } from "./config.js";
+import { createProjectsControlTool } from "./projects-control-tool.js";
 import { SessionArchiveManager } from "./session-archive.js";
 import { SessionManager } from "./sessions.js";
 
@@ -53,9 +62,12 @@ export interface EngineRuntime {
   auth: AuthManager;
   skills: SkillRegistry;
   scheduler: Scheduler;
+  automationAgentFactory?: AutomationAgentFactory;
   transcriber: Transcriber;
   audit: AuditLogger;
   securityMode: SecurityModeManager;
+  projects?: ProjectsEngineRepository;
+  handoffs?: HandoffService;
   agentName: string;
   mainSessionId: string;
   createAgent(
@@ -82,6 +94,12 @@ export async function createRuntime(): Promise<EngineRuntime> {
   await archive.init();
   const store = new OperationalStore(config.homeDir);
   await store.init();
+  const projectsStore = new ProjectsEngineStore(join(config.homeDir, "aria.db"));
+  await projectsStore.init();
+  const projects = new ProjectsEngineRepository(projectsStore);
+  const handoffStore = new HandoffStore(join(config.homeDir, "aria.db"));
+  await handoffStore.init();
+  const handoffs = new HandoffService(handoffStore);
 
   const checkpoints = new CheckpointManager(config.homeDir, ariaConfig.runtime.checkpoints);
   const mcp = new MCPManager(
@@ -196,6 +214,19 @@ export async function createRuntime(): Promise<EngineRuntime> {
     createSetEnvVariableTool(config),
     createNotifyTool(secrets),
     createSessionTitleTool(),
+    createProjectsControlTool({
+      getRepository: () => projects,
+      runDispatch: async (repository, dispatchId) => {
+        const { runDispatchExecution } = await import("@aria/jobs/dispatch-runner");
+        return runDispatchExecution(runtime, repository, dispatchId, {
+          backendRegistry: (
+            runtime as EngineRuntime & {
+              runtimeBackendRegistry?: Map<string, RuntimeBackendAdapter>;
+            }
+          ).runtimeBackendRegistry,
+        });
+      },
+    }),
     askUserTool,
     ...mcp.getTools(),
   ];
@@ -319,6 +350,8 @@ export async function createRuntime(): Promise<EngineRuntime> {
     transcriber,
     audit,
     securityMode,
+    projects,
+    handoffs,
     agentName: ariaConfig.identity.name,
     mainSessionId: mainSession.id,
     async refreshSystemPrompt(): Promise<string> {
@@ -329,6 +362,8 @@ export async function createRuntime(): Promise<EngineRuntime> {
     async close(): Promise<void> {
       scheduler.stop();
       await mcp.close();
+      handoffs.close();
+      projects.close();
       archive.close();
       store.close();
       memory.close();

@@ -1,5 +1,7 @@
 import { createAppRouter, createContext } from "@aria/gateway";
 import type { EngineRuntime } from "@aria/server/runtime";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import {
   createAriaRuntimeBackendAdapter,
   type RuntimeBackendAdapter,
@@ -10,11 +12,38 @@ import {
   type RuntimeBackendExecutionResult,
 } from "./runtime-backend.js";
 
+const execFileAsync = promisify(execFile);
+
 export interface RuntimeBackendSummary {
   backend: string;
   displayName: string;
   capabilities: RuntimeBackendCapabilities;
   availability: RuntimeBackendAvailability;
+}
+
+async function listChangedFiles(workingDirectory: string): Promise<string[]> {
+  try {
+    const { stdout } = await execFileAsync("git", [
+      "-C",
+      workingDirectory,
+      "status",
+      "--porcelain=v1",
+    ]);
+
+    return stdout
+      .split("\n")
+      .map((line) => line.trimEnd())
+      .filter(Boolean)
+      .map((line) => {
+        const path = line.length > 3 ? line.slice(3).trim() : line.trim();
+        const renameSeparator = " -> ";
+        const renameIndex = path.indexOf(renameSeparator);
+        return renameIndex >= 0 ? path.slice(renameIndex + renameSeparator.length).trim() : path;
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 async function executeWithAriaRuntime(
@@ -46,6 +75,8 @@ async function executeWithAriaRuntime(
   const stream = await caller.chat.stream({
     sessionId: session.id,
     message: request.prompt,
+    workingDirectory: request.workingDirectory,
+    suppressMemoryContext: true,
   });
 
   for await (const event of stream) {
@@ -105,7 +136,7 @@ async function executeWithAriaRuntime(
     stdout,
     stderr,
     summary,
-    filesChanged: [],
+    filesChanged: await listChangedFiles(request.workingDirectory),
     metadata: request.metadata,
   };
 }

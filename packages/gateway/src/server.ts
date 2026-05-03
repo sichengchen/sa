@@ -11,6 +11,7 @@ import { frameAsData } from "@aria/agent/content-frame";
 import {
   logAutomationResult,
   runAutomationAgent,
+  upsertHeartbeatTaskRecord,
   upsertWebhookTaskRecord,
 } from "@aria/automation/automation";
 import { RUNTIME_NAME, getRuntimeHome } from "@aria/server/brand";
@@ -320,6 +321,20 @@ async function handleWebhookHeartbeat(req: Request, runtime: EngineRuntime): Pro
   // Trigger only the heartbeat task (not all cron jobs)
   try {
     await runtime.scheduler.runTask("heartbeat");
+    const heartbeatTask = runtime.scheduler.list().find((task) => task.name === "heartbeat");
+    upsertHeartbeatTaskRecord(runtime, {
+      enabled: heartbeatState.config.enabled,
+      intervalMinutes: heartbeatState.config.intervalMinutes,
+      nextRunAt: heartbeatTask?.nextRunAt ?? null,
+      lastRunAt: heartbeatTask?.lastRunAt ?? null,
+      lastStatus:
+        heartbeatTask?.lastStatus === "success"
+          ? "success"
+          : heartbeatTask?.lastStatus === "error"
+            ? "error"
+            : null,
+      lastSummary: heartbeatTask?.lastSummary ?? null,
+    });
     return new Response(
       JSON.stringify({ triggered: true, lastResult: heartbeatState.lastResult }),
       { headers: { "content-type": "application/json" } },

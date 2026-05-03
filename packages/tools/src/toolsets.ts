@@ -104,7 +104,7 @@ const BUILTIN_TOOLSET_DEFINITIONS: ToolsetDefinition[] = [
   {
     name: "coding",
     description: "Use Aria-native file, terminal, git, and project tools for implementation work.",
-    tools: ["read", "write", "edit", "exec", "exec_status", "exec_kill"],
+    tools: ["read", "write", "edit", "exec", "exec_status", "exec_kill", "projects_control"],
     capabilityScope: "workspace",
     executionEnvironment: "local",
     isolationBoundary: "workspace",

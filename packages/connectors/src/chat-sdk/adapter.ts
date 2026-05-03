@@ -199,7 +199,7 @@ export class ChatSDKAdapter {
         send: (content) => thread.post(content),
         edit: (msg, content) => msg.edit(content).then(() => {}),
         sendExtra: (content) => thread.post(content).then(() => {}),
-        format: (t) => t.slice(0, maxLen),
+        format: (t) => t,
         split: (t) => splitMessage(t, maxLen),
         sendError: (msg) => thread.post(`Error: ${msg}`).then(() => {}),
       };

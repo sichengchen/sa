@@ -46,12 +46,16 @@ export function createStreamHandler<TMsg>(ops: StreamOps<TMsg>) {
     editLock: Promise.resolve(),
   };
 
+  function firstChunk(text: string): string {
+    return ops.split(ops.format(text))[0] ?? "";
+  }
+
   function handleTextDelta(delta: string): void {
     state.fullText += delta;
     if (Date.now() - state.lastEditTime > EDIT_THROTTLE_MS && state.fullText.length > 0) {
       state.lastEditTime = Date.now();
       state.editLock = state.editLock.then(async () => {
-        const content = ops.format(state.fullText);
+        const content = firstChunk(state.fullText);
         try {
           if (!state.sentMsg) {
             state.sentMsg = await ops.send(content);

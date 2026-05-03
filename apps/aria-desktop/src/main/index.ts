@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from "electron";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { ensureEngine } from "@aria/server/daemon";
 import { DesktopAriaService } from "./desktop-aria-service.js";
 import { DesktopProjectsService } from "./desktop-projects-service.js";
 import { registerDesktopIpc } from "./ipc.js";
@@ -50,6 +51,7 @@ async function createMainWindow(): Promise<BrowserWindow> {
 app.setName("Aria Desktop");
 
 app.whenReady().then(async () => {
+  await ensureEngine();
   desktopProjectsService.init();
   registerDesktopIpc(desktopProjectsService, desktopAriaService);
   mainWindow = await createMainWindow();

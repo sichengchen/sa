@@ -5,6 +5,7 @@ export * from "./config.js";
 export * from "./connectors.js";
 export * from "./brand.js";
 export * from "./mcp.js";
+export * from "./projects-control-tool.js";
 export * from "./runtime.js";
 export * from "./session-archive.js";
 export * from "./sessions.js";

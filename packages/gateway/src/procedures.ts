@@ -5,6 +5,9 @@ import { join } from "node:path";
 import { router, publicProcedure, middleware } from "./trpc.js";
 import type { EngineRuntime } from "@aria/server/runtime";
 import { getRuntimeSessionCoordinator } from "@aria/server/session-coordinator";
+import { HandoffService, HandoffStore } from "@aria/handoff";
+import { ProjectsEngineRepository, ProjectsEngineStore } from "@aria/work";
+import type { RuntimeBackendAdapter } from "@aria/jobs/runtime-backend";
 import { Agent } from "@aria/agent";
 import type { AgentEvent, DangerLevel } from "@aria/agent";
 import { classifyExecCommand } from "@aria/policy/exec-classifier";
@@ -157,6 +160,56 @@ export function createAppRouter(runtime: EngineRuntime) {
     pendingEscalations,
     pendingQuestions,
   } = coordinator;
+  let projectsRepositoryPromise: Promise<ProjectsEngineRepository> | null = null;
+  let handoffServicePromise: Promise<HandoffService> | null = null;
+
+  async function getProjectsRepository(): Promise<ProjectsEngineRepository> {
+    const attachedRuntime = runtime as EngineRuntime & {
+      projects?: ProjectsEngineRepository;
+      __gatewayProjectsRepository?: ProjectsEngineRepository;
+    };
+    if (attachedRuntime.projects) {
+      return attachedRuntime.projects;
+    }
+    if (attachedRuntime.__gatewayProjectsRepository) {
+      return attachedRuntime.__gatewayProjectsRepository;
+    }
+    projectsRepositoryPromise ??= (async () => {
+      const store = new ProjectsEngineStore(join(runtime.config.homeDir, "aria.db"));
+      await store.init();
+      const repository = new ProjectsEngineRepository(store);
+      attachedRuntime.__gatewayProjectsRepository = repository;
+      return repository;
+    })();
+    return projectsRepositoryPromise;
+  }
+
+  function getRuntimeBackendRegistry(): Map<string, RuntimeBackendAdapter> | undefined {
+    return (
+      runtime as EngineRuntime & { runtimeBackendRegistry?: Map<string, RuntimeBackendAdapter> }
+    ).runtimeBackendRegistry;
+  }
+
+  async function getHandoffService(): Promise<HandoffService> {
+    const attachedRuntime = runtime as EngineRuntime & {
+      handoffs?: HandoffService;
+      __gatewayHandoffService?: HandoffService;
+    };
+    if (attachedRuntime.handoffs) {
+      return attachedRuntime.handoffs;
+    }
+    if (attachedRuntime.__gatewayHandoffService) {
+      return attachedRuntime.__gatewayHandoffService;
+    }
+    handoffServicePromise ??= (async () => {
+      const store = new HandoffStore(join(runtime.config.homeDir, "aria.db"));
+      await store.init();
+      const service = new HandoffService(store);
+      attachedRuntime.__gatewayHandoffService = service;
+      return service;
+    })();
+    return handoffServicePromise;
+  }
 
   /** Build the policy manager from config + built-in tool danger levels */
   const builtinLevels = new Map<string, DangerLevel>(
@@ -466,6 +519,50 @@ export function createAppRouter(runtime: EngineRuntime) {
     });
   }
 
+  async function buildProjectThreadGatewayState(threadId: string) {
+    const repository = await getProjectsRepository();
+    const thread = repository.getThread(threadId);
+    if (!thread) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: `Project thread not found: ${threadId}`,
+      });
+    }
+    const project = repository.getProject(thread.projectId);
+    if (!project) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: `Project not found: ${thread.projectId}`,
+      });
+    }
+    const activeBinding = repository.getActiveThreadEnvironmentBinding(thread.threadId);
+    const environment = activeBinding
+      ? repository.getEnvironment(activeBinding.environmentId)
+      : thread.environmentId
+        ? repository.getEnvironment(thread.environmentId)
+        : undefined;
+    const workspace =
+      (activeBinding?.workspaceId
+        ? repository.getWorkspace(activeBinding.workspaceId)
+        : environment?.workspaceId
+          ? repository.getWorkspace(environment.workspaceId)
+          : thread.workspaceId
+            ? repository.getWorkspace(thread.workspaceId)
+            : undefined) ?? null;
+    const server = workspace?.serverId ? repository.getServer(workspace.serverId) : null;
+
+    return {
+      project,
+      thread,
+      activeBinding: activeBinding ?? null,
+      workspace,
+      environment: environment ?? null,
+      server,
+      jobs: repository.listJobs(thread.threadId),
+      dispatches: repository.listDispatches(thread.threadId),
+    };
+  }
+
   function resolveWorkingDir(sessionId?: string, workingDir?: string): string {
     if (workingDir && workingDir.trim()) {
       return workingDir;
@@ -481,6 +578,44 @@ export function createAppRouter(runtime: EngineRuntime) {
       sessionPromptState.set(sessionId, state);
     }
     return state;
+  }
+
+  function ensureSessionToolEnvironment(sessionId: string, workingDir?: string) {
+    const existing = sessionToolEnvironments.get(sessionId);
+    if (existing) {
+      return existing;
+    }
+
+    const sessionBaseTools = runtime.mcp
+      .filterToolsForSession(runtime.tools, sessionId)
+      .map((tool) =>
+        tool.name === "set_session_title"
+          ? createSessionTitleTool({
+              setTitle: async (title) => {
+                const savedTitle = runtime.sessions.setTitle(sessionId, title).title?.trim();
+                const refreshedSession = runtime.sessions.getSession(sessionId);
+                const liveAgent = sessionAgents.get(sessionId);
+                if (refreshedSession && liveAgent) {
+                  runtime.store.syncSessionMessages(refreshedSession.id, liveAgent.getMessages());
+                  await runtime.archive.syncSession(refreshedSession, liveAgent.getMessages());
+                }
+                if (!savedTitle) {
+                  throw new Error("Session title was not saved");
+                }
+                return savedTitle;
+              },
+            })
+          : tool,
+      );
+    const toolEnvironment = createSessionToolEnvironment({
+      baseTools: sessionBaseTools,
+      checkpointManager: runtime.checkpoints,
+      maxContextHintChars: runtime.config.getConfigFile().runtime.contextFiles?.maxHintChars,
+      delegation: buildDelegationOptions(runtime),
+      workingDir,
+    });
+    sessionToolEnvironments.set(sessionId, toolEnvironment);
+    return toolEnvironment;
   }
 
   async function refreshSessionPrompt(
@@ -517,34 +652,7 @@ export function createAppRouter(runtime: EngineRuntime) {
     let agent = sessionAgents.get(sessionId);
     if (!agent) {
       const promptState = getSessionPrompt(sessionId);
-      const sessionBaseTools = runtime.mcp
-        .filterToolsForSession(runtime.tools, sessionId)
-        .map((tool) =>
-          tool.name === "set_session_title"
-            ? createSessionTitleTool({
-                setTitle: async (title) => {
-                  const savedTitle = runtime.sessions.setTitle(sessionId, title).title?.trim();
-                  const refreshedSession = runtime.sessions.getSession(sessionId);
-                  const liveAgent = sessionAgents.get(sessionId);
-                  if (refreshedSession && liveAgent) {
-                    runtime.store.syncSessionMessages(refreshedSession.id, liveAgent.getMessages());
-                    await runtime.archive.syncSession(refreshedSession, liveAgent.getMessages());
-                  }
-                  if (!savedTitle) {
-                    throw new Error("Session title was not saved");
-                  }
-                  return savedTitle;
-                },
-              })
-            : tool,
-        );
-      const toolEnvironment = createSessionToolEnvironment({
-        baseTools: sessionBaseTools,
-        checkpointManager: runtime.checkpoints,
-        maxContextHintChars: runtime.config.getConfigFile().runtime.contextFiles?.maxHintChars,
-        delegation: buildDelegationOptions(runtime),
-      });
-      sessionToolEnvironments.set(sessionId, toolEnvironment);
+      const toolEnvironment = ensureSessionToolEnvironment(sessionId);
 
       const onAskUser = async (
         id: string,
@@ -870,7 +978,14 @@ export function createAppRouter(runtime: EngineRuntime) {
 
       /** Stream AgentEvents for a chat turn */
       stream: protectedProcedure
-        .input(z.object({ sessionId: z.string(), message: z.string() }))
+        .input(
+          z.object({
+            sessionId: z.string(),
+            message: z.string(),
+            workingDirectory: z.string().optional(),
+            suppressMemoryContext: z.boolean().optional(),
+          }),
+        )
         .subscription(async function* ({ ctx, input }): AsyncGenerator<EngineEvent> {
           let session;
           try {
@@ -892,6 +1007,39 @@ export function createAppRouter(runtime: EngineRuntime) {
           }
 
           runtime.sessions.touchSession(input.sessionId);
+          if (input.workingDirectory?.trim()) {
+            if (!isMasterCall(ctx)) {
+              yield withEventMeta(
+                {
+                  type: "error",
+                  message: "workingDirectory overrides require the master token",
+                },
+                {
+                  sessionId: input.sessionId,
+                  connectorType: session.connectorType as ConnectorType,
+                  source: "chat",
+                  actorId: ctx.connectorId,
+                },
+              );
+              return;
+            }
+            ensureSessionToolEnvironment(input.sessionId, input.workingDirectory);
+          }
+          if (input.suppressMemoryContext && !isMasterCall(ctx)) {
+            yield withEventMeta(
+              {
+                type: "error",
+                message: "memory context overrides require the master token",
+              },
+              {
+                sessionId: input.sessionId,
+                connectorType: session.connectorType as ConnectorType,
+                source: "chat",
+                actorId: ctx.connectorId,
+              },
+            );
+            return;
+          }
           const agent = getSessionAgent(input.sessionId);
           const connectorType = session.connectorType as ConnectorType;
           sessionToolEnvironments.get(input.sessionId)?.newTurn();
@@ -914,14 +1062,16 @@ export function createAppRouter(runtime: EngineRuntime) {
             // Reference expansion is best-effort only.
           }
 
-          // Augment message with relevant memory context
-          try {
-            const memContext = await runtime.memory.getMemoryContext(chatMessage);
-            if (memContext) {
-              chatMessage = `<memory_context>\n${memContext}\n</memory_context>\n\n${chatMessage}`;
+          if (!input.suppressMemoryContext) {
+            // Augment message with relevant memory context.
+            try {
+              const memContext = await runtime.memory.getMemoryContext(chatMessage);
+              if (memContext) {
+                chatMessage = `<memory_context>\n${memContext}\n</memory_context>\n\n${chatMessage}`;
+              }
+            } catch {
+              // Memory context fetch failed — continue without it.
             }
-          } catch {
-            // Memory context fetch failed — continue without it
           }
 
           await refreshSessionPrompt(input.sessionId, {
@@ -1337,6 +1487,245 @@ export function createAppRouter(runtime: EngineRuntime) {
             destroyed: runtime.sessions.destroySession(input.sessionId),
           };
         }),
+    }),
+
+    /** Server-owned project workflow state */
+    projects: router({
+      thread: router({
+        open: adminProcedure
+          .input(z.object({ threadId: z.string() }))
+          .query(async ({ input }) => buildProjectThreadGatewayState(input.threadId)),
+
+        reconnect: adminProcedure
+          .input(z.object({ threadId: z.string() }))
+          .query(async ({ input }) => buildProjectThreadGatewayState(input.threadId)),
+      }),
+
+      handoff: router({
+        submit: adminProcedure
+          .input(
+            z.object({
+              handoffId: z.string().optional(),
+              idempotencyKey: z.string(),
+              sourceKind: z.enum([
+                "local_session",
+                "connector_session",
+                "automation",
+                "external_webhook",
+              ]),
+              sourceSessionId: z.string().nullable().optional(),
+              projectId: z.string(),
+              taskId: z.string().nullable().optional(),
+              threadId: z.string().nullable().optional(),
+              payloadJson: z.string().nullable().optional(),
+            }),
+          )
+          .mutation(async ({ input }) => {
+            const repository = await getProjectsRepository();
+            const project = repository.getProject(input.projectId);
+            if (!project) {
+              throw new TRPCError({
+                code: "NOT_FOUND",
+                message: `Project not found: ${input.projectId}`,
+              });
+            }
+            const handoffs = await getHandoffService();
+            const handoff = handoffs.submit(input.handoffId ?? `handoff:${crypto.randomUUID()}`, {
+              idempotencyKey: input.idempotencyKey,
+              sourceKind: input.sourceKind,
+              sourceSessionId: input.sourceSessionId ?? null,
+              projectId: input.projectId,
+              taskId: input.taskId ?? null,
+              threadId: input.threadId ?? null,
+              payloadJson: input.payloadJson ?? null,
+            });
+            return { handoff };
+          }),
+
+        list: adminProcedure
+          .input(z.object({ projectId: z.string().optional() }).optional())
+          .query(async ({ input }) => {
+            const handoffs = await getHandoffService();
+            return { handoffs: handoffs.list(input?.projectId) };
+          }),
+
+        materialize: adminProcedure
+          .input(z.object({ handoffId: z.string() }))
+          .mutation(async ({ input }) => {
+            const repository = await getProjectsRepository();
+            const handoffs = await getHandoffService();
+            let materialized;
+            try {
+              materialized = handoffs.materialize(input.handoffId, repository);
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error);
+              throw new TRPCError({
+                code: message.includes("not found") ? "NOT_FOUND" : "BAD_REQUEST",
+                message,
+              });
+            }
+            const dispatch = repository.getDispatch(materialized.dispatchId);
+            return {
+              ...materialized,
+              dispatch: dispatch ?? null,
+              threadState: await buildProjectThreadGatewayState(materialized.threadId),
+            };
+          }),
+      }),
+
+      dispatch: router({
+        queue: adminProcedure
+          .input(
+            z.object({
+              dispatchId: z.string().optional(),
+              projectId: z.string(),
+              threadId: z.string(),
+              taskId: z.string().nullable().optional(),
+              jobId: z.string().nullable().optional(),
+              repoId: z.string().nullable().optional(),
+              worktreeId: z.string().nullable().optional(),
+            }),
+          )
+          .mutation(async ({ input }) => {
+            const repository = await getProjectsRepository();
+            const project = repository.getProject(input.projectId);
+            if (!project) {
+              throw new TRPCError({
+                code: "NOT_FOUND",
+                message: `Project not found: ${input.projectId}`,
+              });
+            }
+            const thread = repository.getThread(input.threadId);
+            if (!thread || thread.projectId !== input.projectId) {
+              throw new TRPCError({
+                code: "NOT_FOUND",
+                message: `Project thread not found: ${input.threadId}`,
+              });
+            }
+            const now = Date.now();
+            const dispatch = {
+              dispatchId: input.dispatchId ?? `dispatch:${crypto.randomUUID()}`,
+              projectId: input.projectId,
+              taskId: input.taskId ?? thread.taskId ?? null,
+              threadId: input.threadId,
+              jobId: input.jobId ?? null,
+              repoId: input.repoId ?? thread.repoId ?? null,
+              worktreeId: input.worktreeId ?? null,
+              status: "queued" as const,
+              requestedBackend: "aria",
+              requestedModel: null,
+              executionSessionId: null,
+              summary: null,
+              error: null,
+              createdAt: now,
+              acceptedAt: null,
+              completedAt: null,
+            };
+            repository.upsertDispatch(dispatch);
+            return {
+              dispatch,
+              threadState: await buildProjectThreadGatewayState(input.threadId),
+            };
+          }),
+
+        status: adminProcedure
+          .input(z.object({ dispatchId: z.string() }))
+          .query(async ({ input }) => {
+            const repository = await getProjectsRepository();
+            const dispatch = repository.getDispatch(input.dispatchId);
+            if (!dispatch) {
+              throw new TRPCError({
+                code: "NOT_FOUND",
+                message: `Dispatch not found: ${input.dispatchId}`,
+              });
+            }
+            return {
+              dispatch,
+              threadState: await buildProjectThreadGatewayState(dispatch.threadId),
+            };
+          }),
+
+        run: adminProcedure
+          .input(z.object({ dispatchId: z.string() }))
+          .mutation(async ({ input }) => {
+            const repository = await getProjectsRepository();
+            const dispatch = repository.getDispatch(input.dispatchId);
+            if (!dispatch) {
+              throw new TRPCError({
+                code: "NOT_FOUND",
+                message: `Dispatch not found: ${input.dispatchId}`,
+              });
+            }
+            const { runDispatchExecution } = await import("@aria/jobs/dispatch-runner");
+            const result = await runDispatchExecution(runtime, repository, input.dispatchId, {
+              backendRegistry: getRuntimeBackendRegistry(),
+            });
+            const refreshedDispatch = repository.getDispatch(input.dispatchId);
+            if (!refreshedDispatch) {
+              throw new TRPCError({
+                code: "NOT_FOUND",
+                message: `Dispatch not found after execution: ${input.dispatchId}`,
+              });
+            }
+            return {
+              result,
+              dispatch: refreshedDispatch,
+              threadState: await buildProjectThreadGatewayState(dispatch.threadId),
+            };
+          }),
+
+        cancel: adminProcedure
+          .input(z.object({ dispatchId: z.string(), reason: z.string().optional() }))
+          .mutation(async ({ input }) => {
+            const repository = await getProjectsRepository();
+            const dispatch = repository.getDispatch(input.dispatchId);
+            if (!dispatch) {
+              throw new TRPCError({
+                code: "NOT_FOUND",
+                message: `Dispatch not found: ${input.dispatchId}`,
+              });
+            }
+            const cancelledAt = Date.now();
+            const cancelledDispatch = {
+              ...dispatch,
+              status: "cancelled" as const,
+              error: input.reason ?? dispatch.error ?? "Cancelled through Aria Gateway.",
+              completedAt: cancelledAt,
+            };
+            repository.upsertDispatch(cancelledDispatch);
+
+            if (
+              dispatch.executionSessionId &&
+              runtime.sessions.getSession(dispatch.executionSessionId)
+            ) {
+              const backend = getRuntimeBackendRegistry()?.get(dispatch.requestedBackend ?? "aria");
+              if (backend) {
+                try {
+                  await backend.cancel(dispatch.executionSessionId);
+                } catch {
+                  // The session-level abort below is still the durable cancellation path.
+                }
+              }
+              sessionAgents.get(dispatch.executionSessionId)?.abort();
+              cancelActiveRun(
+                dispatch.executionSessionId,
+                input.reason ?? "Project dispatch cancelled",
+              );
+              resolvePendingApprovalsForSession(dispatch.executionSessionId, "denied");
+              resolvePendingEscalationsForSession(dispatch.executionSessionId);
+              rejectPendingQuestionsForSession(
+                dispatch.executionSessionId,
+                input.reason ?? "Project dispatch cancelled",
+              );
+              await persistSessionArchive(dispatch.executionSessionId);
+            }
+
+            return {
+              dispatch: cancelledDispatch,
+              threadState: await buildProjectThreadGatewayState(dispatch.threadId),
+            };
+          }),
+      }),
     }),
 
     /** Filesystem checkpoints */

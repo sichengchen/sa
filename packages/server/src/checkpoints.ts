@@ -152,6 +152,7 @@ export class CheckpointManager {
     }
     this.runGit(["config", "user.email", "aria@local"], shadowRepo, workingDir);
     this.runGit(["config", "user.name", "Aria Checkpoint"], shadowRepo, workingDir);
+    this.runGit(["config", "commit.gpgsign", "false"], shadowRepo, workingDir);
     await mkdir(resolve(shadowRepo, "info"), { recursive: true });
     await writeFile(resolve(shadowRepo, "info", "exclude"), DEFAULT_EXCLUDES.join("\n") + "\n");
     await writeFile(resolve(shadowRepo, "ARIA_WORKDIR"), `${resolve(workingDir)}\n`);

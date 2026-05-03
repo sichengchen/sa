@@ -9,6 +9,7 @@ interface ParsedHandoffPayload {
   repoId?: string | null;
   taskId?: string | null;
   threadId?: string | null;
+  threadType?: "local_project" | "remote_project" | null;
   workspaceId?: string | null;
   environmentId?: string | null;
   agentId?: string | null;
@@ -29,6 +30,10 @@ function parsePayload(payloadJson?: string | null): ParsedHandoffPayload {
       repoId: typeof parsed.repoId === "string" ? parsed.repoId : null,
       taskId: typeof parsed.taskId === "string" ? parsed.taskId : null,
       threadId: typeof parsed.threadId === "string" ? parsed.threadId : null,
+      threadType:
+        parsed.threadType === "local_project" || parsed.threadType === "remote_project"
+          ? parsed.threadType
+          : null,
       workspaceId: typeof parsed.workspaceId === "string" ? parsed.workspaceId : null,
       environmentId: typeof parsed.environmentId === "string" ? parsed.environmentId : null,
       agentId: typeof parsed.agentId === "string" ? parsed.agentId : null,
@@ -44,6 +49,13 @@ function resolveProjectThreadType(
   sourceKind: HandoffSubmission["sourceKind"],
 ): "local_project" | "remote_project" {
   return sourceKind === "local_session" ? "local_project" : "remote_project";
+}
+
+function resolveHandoffThreadType(
+  handoff: HandoffRecord,
+  payload: ParsedHandoffPayload,
+): "local_project" | "remote_project" {
+  return payload.threadType ?? resolveProjectThreadType(handoff.sourceKind);
 }
 
 export class HandoffService {
@@ -132,6 +144,7 @@ export class HandoffService {
     const payload = parsePayload(handoff.payloadJson);
     const threadId = handoff.threadId ?? payload.threadId ?? `thread:${handoff.handoffId}`;
     const taskId = handoff.taskId ?? payload.taskId ?? null;
+    const threadType = resolveHandoffThreadType(handoff, payload);
     const existingThread = repository.getThread(threadId);
     if (!existingThread) {
       repository.upsertThread({
@@ -141,7 +154,7 @@ export class HandoffService {
         repoId: payload.repoId ?? null,
         title: payload.title ?? `Handoff ${handoff.handoffId}`,
         status: "queued",
-        threadType: resolveProjectThreadType(handoff.sourceKind),
+        threadType,
         workspaceId: payload.workspaceId ?? null,
         environmentId: payload.environmentId ?? null,
         environmentBindingId: null,
@@ -201,7 +214,7 @@ export class HandoffService {
         taskId,
         repoId: payload.repoId ?? null,
         title: payload.title ?? `Handoff ${handoff.handoffId}`,
-        threadType: resolveProjectThreadType(handoff.sourceKind),
+        threadType,
         workspaceId: payload.workspaceId ?? null,
         environmentId: payload.environmentId ?? null,
         environmentBindingId: null,
@@ -211,8 +224,7 @@ export class HandoffService {
       title:
         repository.getThread(threadId)?.title ?? payload.title ?? `Handoff ${handoff.handoffId}`,
       status: "queued",
-      threadType:
-        repository.getThread(threadId)?.threadType ?? resolveProjectThreadType(handoff.sourceKind),
+      threadType: repository.getThread(threadId)?.threadType ?? threadType,
       workspaceId: repository.getThread(threadId)?.workspaceId ?? payload.workspaceId ?? null,
       environmentId: repository.getThread(threadId)?.environmentId ?? payload.environmentId ?? null,
       environmentBindingId: repository.getThread(threadId)?.environmentBindingId ?? null,

@@ -1,6 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Agent } from "@aria/agent";
+import type { AgentEvent } from "@aria/agent";
+import type { Message } from "@mariozechner/pi-ai";
 import type { EngineRuntime } from "@aria/server/runtime";
 import { createSessionToolEnvironment, mergeAllowedTools } from "@aria/tools";
 import type {
@@ -25,6 +27,7 @@ export interface AutomationTaskRunInput {
   skills?: string[];
   retryPolicy?: RetryPolicy;
   delivery?: DeliveryTarget;
+  agentFactory?: AutomationAgentFactory;
 }
 
 export interface AutomationTaskRunResult {
@@ -55,6 +58,20 @@ interface AutomationAttemptResult {
   attemptNumber: number;
   maxAttempts: number;
 }
+
+export interface AutomationAgentFactoryInput {
+  runtime: EngineRuntime;
+  task: AutomationTaskRunInput;
+  tools: ReturnType<typeof createSessionToolEnvironment>["tools"];
+  systemPrompt: string;
+}
+
+export interface AutomationAgentLike {
+  chat(prompt: string): AsyncIterable<AgentEvent>;
+  getMessages(): readonly Message[];
+}
+
+export type AutomationAgentFactory = (input: AutomationAgentFactoryInput) => AutomationAgentLike;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -117,12 +134,25 @@ async function runAutomationAttempt(
       "Complete the requested task directly. Assume the operator will review the archived transcript and result summary after completion.",
     ].join("\n"),
   });
-  const agent = new Agent({
-    router: runtime.router,
-    tools: toolEnvironment.tools,
-    getSystemPrompt: () => systemPrompt,
-    modelOverride: task.model,
-  });
+  const agent =
+    task.agentFactory?.({
+      runtime,
+      task,
+      tools: toolEnvironment.tools,
+      systemPrompt,
+    }) ??
+    runtime.automationAgentFactory?.({
+      runtime,
+      task,
+      tools: toolEnvironment.tools,
+      systemPrompt,
+    }) ??
+    new Agent({
+      router: runtime.router,
+      tools: toolEnvironment.tools,
+      getSystemPrompt: () => systemPrompt,
+      modelOverride: task.model,
+    });
 
   let responseText = "";
   const toolCalls: Array<{ name: string; content: string }> = [];

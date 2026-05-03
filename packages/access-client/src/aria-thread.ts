@@ -114,7 +114,12 @@ export interface AriaChatClient {
     };
     stream: {
       subscribe(
-        input: { sessionId: string; message: string },
+        input: {
+          sessionId: string;
+          message: string;
+          workingDirectory?: string;
+          suppressMemoryContext?: boolean;
+        },
         handlers: {
           onData(event: any): void;
           onError(error: unknown): void;

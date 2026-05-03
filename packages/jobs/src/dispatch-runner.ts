@@ -172,6 +172,9 @@ export async function runDispatchExecution(
       },
       {
         onEvent: async (event) => {
+          if (repository.getDispatch(dispatchId)?.status === "cancelled") {
+            return;
+          }
           const mapped = mapBackendEventToDispatchEvent(dispatchId, event);
           if (mapped) {
             dispatchService.applyExecutionEvent(mapped);
@@ -179,6 +182,15 @@ export async function runDispatchExecution(
         },
       },
     );
+
+    const latestDispatch = repository.getDispatch(dispatchId);
+    if (latestDispatch?.status === "cancelled") {
+      return {
+        executionSessionId,
+        status: "cancelled",
+        summary: latestDispatch.summary ?? result.summary ?? null,
+      };
+    }
 
     dispatchService.applyExecutionEvent(
       mapResultToEvent(dispatchId, executionSessionId, {
@@ -188,6 +200,14 @@ export async function runDispatchExecution(
       }),
     );
   } catch (error) {
+    const latestDispatch = repository.getDispatch(dispatchId);
+    if (latestDispatch?.status === "cancelled") {
+      return {
+        executionSessionId,
+        status: "cancelled",
+        summary: latestDispatch.summary,
+      };
+    }
     const message = error instanceof Error ? error.message : String(error);
     dispatchService.applyExecutionEvent({
       type: "execution.failed",
