@@ -9,7 +9,6 @@ export type DesktopIconButtonProps = {
   icon: ReactNode;
   label: string;
   onClick: () => void;
-  pressed?: boolean;
 };
 
 export function DesktopIconButton({
@@ -21,7 +20,6 @@ export function DesktopIconButton({
   icon,
   label,
   onClick,
-  pressed,
 }: DesktopIconButtonProps) {
   return (
     <button
@@ -30,7 +28,6 @@ export function DesktopIconButton({
       aria-controls={controlsId}
       aria-label={label}
       aria-expanded={expanded}
-      aria-pressed={pressed}
       disabled={disabled}
       onClick={onClick}
     >

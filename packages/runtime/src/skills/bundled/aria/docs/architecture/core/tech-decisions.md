@@ -10,6 +10,7 @@ These are architecture decisions, not implementation notes.
 | ------------------------------- | ---------------------------------------- |
 | Desktop app shell               | `Electron + React`                       |
 | Mobile app shell                | `React Native + Expo`                    |
+| Desktop accessible primitives   | `shadcn/ui on Base UI`                   |
 | Repo package manager            | `bun`, managed through `Vite+`           |
 | Default runtime selection       | `bun` where the host allows it           |
 | Client/shared-package toolchain | `Vite+ / Vite / Rolldown / Oxc / Vitest` |
@@ -50,6 +51,7 @@ For Aria, `bun` remains:
 
 - shell: `Electron`
 - renderer UI: `React`
+- accessible stateful renderer primitives: local `shadcn/ui` components using the Base UI family for desktop tabs, menus, dialogs, sheets, selects, switches, toggle groups, and collapsible disclosure
 - renderer/shared-package toolchain: `Vite+`, `Vite`, `Rolldown`, `Oxc`, `Vitest`
 - desktop-local integration layer: Desktop main process plus `@aria/workspaces`
 

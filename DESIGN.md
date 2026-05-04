@@ -389,3 +389,32 @@ Fixed desktop create-branch popover metrics:
 - action button height: `36px`
 
 Creating a branch from this control must produce a dedicated local worktree environment rather than mutating the shared main checkout in place.
+
+### 037. Desktop Stateful Primitives Use shadcn/ui On Base UI
+
+Scope: Desktop
+
+Desktop React controls with stateful accessibility contracts, such as tabs,
+menus, popovers, dialogs, sheets, tooltips, selects, switches, segmented controls, and
+disclosure-style controls, must use local shadcn/ui-style components backed by
+`@base-ui/react` primitives unless the control is only a plain semantic HTML element.
+
+The app-facing API must follow the shadcn/ui copy-owned component pattern:
+import from `components/ui/*`, keep component source editable in this repo,
+expose shadcn-style names such as `DialogContent`, `DropdownMenuContent`,
+`SelectTrigger`, `TabsTrigger`, `Switch`, and `ToggleGroup`, and leave Base UI as
+the primitive implementation detail inside those local files.
+
+The desktop shadcn configuration uses the Base UI family (`base-nova`) with
+semantic CSS theme tokens mapped onto Aria Desktop's neutral palette, compact
+metrics, icon rules, and no-nested-box constraints. Do not adopt pre-styled skins
+or color themes that override the desktop workbench language.
+
+The desktop workbench uses local shadcn/Base UI components for workspace tabs,
+project disclosure sections, composer dropdown menus, branch dialogs, settings
+sheets, settings switches, settings selects, settings toggles, and settings
+segmented controls.
+
+The desktop renderer root must keep portal-friendly stacking isolation so
+shadcn/Base UI popups and dialogs can layer above pane content without broad
+`z-index` overrides.

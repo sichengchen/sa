@@ -56,6 +56,20 @@ import { AriaChatComposer } from "./AriaChatComposer.js";
 import { formatToolDisplayName } from "./AriaMessageItem.js";
 import { AriaMessageStream } from "./AriaMessageStream.js";
 import { useTransientScrollbar } from "./useTransientScrollbar.js";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "./ui/dialog.js";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu.js";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select.js";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet.js";
+import { Switch } from "./ui/switch.js";
+import { Toggle } from "./ui/toggle.js";
+import { ToggleGroup } from "./ui/toggle-group.js";
 
 const EMPTY_SHELL_STATE: AriaDesktopProjectShellState = {
   archivedThreadIds: [],
@@ -273,89 +287,45 @@ function ComposerContextMenu({
     selected: boolean;
   }>;
 }) {
-  const [open, setOpen] = useState(false);
-  const [openDirection, setOpenDirection] = useState<"down" | "up">("down");
-  const [maxMenuHeight, setMaxMenuHeight] = useState<number | null>(null);
-  const rootRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const rootElement = rootRef.current;
-    if (rootElement) {
-      const rect = rootElement.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const spaceBelow = viewportHeight - rect.bottom - 16;
-      const spaceAbove = rect.top - 16;
-      const shouldOpenUp = spaceBelow < 280 && spaceAbove > spaceBelow;
-      const sixRowMenuHeight = 6 * 58;
-      const availableHeight = shouldOpenUp ? spaceAbove - 20 : spaceBelow - 20;
-
-      setOpenDirection(shouldOpenUp ? "up" : "down");
-      setMaxMenuHeight(Math.max(160, Math.min(sixRowMenuHeight, availableHeight)));
-    }
-
-    function handlePointerDown(event: PointerEvent): void {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent): void {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    }
-
-    window.addEventListener("pointerdown", handlePointerDown);
-    window.addEventListener("keydown", handleEscape);
-    return () => {
-      window.removeEventListener("pointerdown", handlePointerDown);
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [open]);
+  const selectedOption = options.find((option) => option.selected);
 
   return (
-    <div
-      ref={rootRef}
-      className={`project-thread-composer-menu is-${align}${open ? " is-open" : ""}${
-        openDirection === "up" ? " opens-up" : ""
-      }`}
-    >
-      <button
-        type="button"
-        className="project-thread-composer-trigger"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={`${menuLabel}: ${activeLabel}`}
-        onClick={() => setOpen((current) => !current)}
-      >
-        {icon}
-        <span className="project-thread-composer-trigger-label">{activeLabel}</span>
-        <ChevronDown aria-hidden="true" />
-      </button>
-      {open ? (
-        <div className="project-thread-composer-dropdown" role="menu" aria-label={menuLabel}>
+    <div className={`project-thread-composer-menu is-${align}`}>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger
+          className="project-thread-composer-trigger"
+          aria-label={`${menuLabel}: ${activeLabel}`}
+        >
+          {icon}
+          <span className="project-thread-composer-trigger-label">{activeLabel}</span>
+          <ChevronDown aria-hidden="true" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align={align}
+          className="project-thread-composer-dropdown"
+          positionerClassName="project-thread-composer-positioner"
+          sideOffset={8}
+          aria-label={menuLabel}
+        >
           <div className="project-thread-composer-dropdown-title">{menuLabel}</div>
-          <div
+          <DropdownMenuRadioGroup
             className="project-thread-composer-dropdown-options desktop-scroll-region"
-            style={maxMenuHeight ? { maxHeight: `${maxMenuHeight}px` } : undefined}
+            value={selectedOption?.id}
+            onValueChange={(value) => {
+              if (typeof value === "string" && value !== selectedOption?.id) {
+                onSelect(value);
+              }
+            }}
           >
             {options.map((option) => (
-              <button
+              <DropdownMenuRadioItem
                 key={option.id}
-                type="button"
-                className={`project-thread-composer-option${option.selected ? " is-selected" : ""}`}
-                role="menuitemradio"
-                aria-checked={option.selected}
-                onClick={() => {
-                  setOpen(false);
-                  if (!option.selected) {
-                    onSelect(option.id);
-                  }
-                }}
+                closeOnClick
+                className={(state) =>
+                  `project-thread-composer-option${state.checked ? " is-selected" : ""}`
+                }
+                label={option.label}
+                value={option.id}
               >
                 <span className="project-thread-composer-option-copy">
                   <span className="project-thread-composer-option-label">{option.label}</span>
@@ -370,11 +340,11 @@ function ComposerContextMenu({
                     <Check aria-hidden="true" />
                   </span>
                 ) : null}
-              </button>
+              </DropdownMenuRadioItem>
             ))}
-          </div>
-        </div>
-      ) : null}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -398,77 +368,29 @@ function BranchComposerMenu({
   const [branchName, setBranchName] = useState("");
   const [branchQuery, setBranchQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [openDirection, setOpenDirection] = useState<"down" | "up">("down");
-  const [maxMenuHeight, setMaxMenuHeight] = useState<number | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!menuOpen) {
+    if (menuOpen || dialogOpen) {
       return;
     }
 
-    const rootElement = rootRef.current;
-    if (rootElement) {
-      const rect = rootElement.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const spaceBelow = viewportHeight - rect.bottom - 16;
-      const spaceAbove = rect.top - 16;
-      const shouldOpenUp = spaceBelow < 360 && spaceAbove > spaceBelow;
-      const sixRowMenuHeight = 6 * 58;
-      const availableHeight = shouldOpenUp ? spaceAbove - 136 : spaceBelow - 136;
-
-      setOpenDirection(shouldOpenUp ? "up" : "down");
-      setMaxMenuHeight(Math.max(120, Math.min(sixRowMenuHeight, availableHeight)));
-    }
-  }, [menuOpen]);
+    setBranchName("");
+    setBranchQuery("");
+  }, [dialogOpen, menuOpen]);
 
   useEffect(() => {
-    if (!menuOpen && !popoverOpen) {
-      setBranchName("");
-      setBranchQuery("");
-      return;
-    }
-
-    function handlePointerDown(event: PointerEvent): void {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setMenuOpen(false);
-        setPopoverOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent): void {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-        setPopoverOpen(false);
-      }
-    }
-
-    window.addEventListener("pointerdown", handlePointerDown);
-    window.addEventListener("keydown", handleEscape);
-    return () => {
-      window.removeEventListener("pointerdown", handlePointerDown);
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [menuOpen, popoverOpen]);
-
-  useEffect(() => {
-    if (!popoverOpen) {
+    if (!dialogOpen) {
       return;
     }
 
     setBranchName((current) => current || DEFAULT_BRANCH_PREFIX);
-    inputRef.current?.focus();
-  }, [popoverOpen]);
+  }, [dialogOpen]);
 
-  function openBranchPopover(): void {
+  function openBranchDialog(): void {
     setMenuOpen(false);
-    setPopoverOpen(true);
-  }
-
-  function closeBranchPopover(): void {
-    setPopoverOpen(false);
+    setDialogOpen(true);
   }
 
   function applyDefaultPrefix(): void {
@@ -494,7 +416,7 @@ function BranchComposerMenu({
       return;
     }
 
-    setPopoverOpen(false);
+    setDialogOpen(false);
     setBranchName("");
     onCreateBranch(trimmedBranchName);
   }
@@ -502,28 +424,25 @@ function BranchComposerMenu({
   const filteredOptions = options.filter((option) =>
     option.label.toLowerCase().includes(branchQuery.trim().toLowerCase()),
   );
+  const selectedOption = options.find((option) => option.selected);
 
   return (
-    <div
-      ref={rootRef}
-      className={`project-thread-composer-menu${menuOpen ? " is-open" : ""}${
-        openDirection === "up" ? " opens-up" : ""
-      }`}
-    >
-      <button
-        type="button"
-        className="project-thread-composer-trigger"
-        aria-expanded={menuOpen}
-        aria-haspopup="menu"
-        aria-label={`Branch: ${activeLabel}`}
-        onClick={() => setMenuOpen((current) => !current)}
-      >
-        <GitBranch aria-hidden="true" />
-        <span className="project-thread-composer-trigger-label">{activeLabel}</span>
-        <ChevronDown aria-hidden="true" />
-      </button>
-      {menuOpen ? (
-        <div className="project-thread-composer-dropdown" role="menu" aria-label="Branch">
+    <div className="project-thread-composer-menu">
+      <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenuTrigger
+          className="project-thread-composer-trigger"
+          aria-label={`Branch: ${activeLabel}`}
+        >
+          <GitBranch aria-hidden="true" />
+          <span className="project-thread-composer-trigger-label">{activeLabel}</span>
+          <ChevronDown aria-hidden="true" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="project-thread-composer-dropdown"
+          positionerClassName="project-thread-composer-positioner"
+          sideOffset={8}
+          aria-label="Branch"
+        >
           <div className="project-thread-composer-branch-search">
             <Search aria-hidden="true" />
             <input
@@ -536,24 +455,26 @@ function BranchComposerMenu({
             />
           </div>
           <div className="project-thread-composer-dropdown-section-label">Branches</div>
-          <div
+          <DropdownMenuRadioGroup
             className="project-thread-composer-dropdown-options desktop-scroll-region"
-            style={maxMenuHeight ? { maxHeight: `${maxMenuHeight}px` } : undefined}
+            value={selectedOption?.id}
+            onValueChange={(value) => {
+              if (typeof value === "string" && value !== selectedOption?.id) {
+                setMenuOpen(false);
+                onSelect(value);
+              }
+            }}
           >
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
-                <button
+                <DropdownMenuRadioItem
                   key={option.id}
-                  type="button"
-                  className={`project-thread-composer-option${option.selected ? " is-selected" : ""}`}
-                  role="menuitemradio"
-                  aria-checked={option.selected}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    if (!option.selected) {
-                      onSelect(option.id);
-                    }
-                  }}
+                  closeOnClick
+                  className={(state) =>
+                    `project-thread-composer-option${state.checked ? " is-selected" : ""}`
+                  }
+                  label={option.label}
+                  value={option.id}
                 >
                   <span className="project-thread-composer-option-copy">
                     <span className="project-thread-composer-option-leading">
@@ -566,43 +487,49 @@ function BranchComposerMenu({
                       <Check aria-hidden="true" />
                     </span>
                   ) : null}
-                </button>
+                </DropdownMenuRadioItem>
               ))
             ) : (
               <div className="project-thread-composer-empty">No matching branches</div>
             )}
-          </div>
+          </DropdownMenuRadioGroup>
           <div className="project-thread-composer-dropdown-footer">
-            <button
-              type="button"
+            <DropdownMenuItem
               className="project-thread-composer-create-branch"
-              onClick={openBranchPopover}
+              onClick={openBranchDialog}
             >
               <Plus aria-hidden="true" />
               <span>Create and checkout new branch...</span>
-            </button>
+            </DropdownMenuItem>
           </div>
-        </div>
-      ) : null}
-      {popoverOpen ? (
-        <div className="project-thread-branch-popover-backdrop">
-          <form
-            className="project-thread-branch-popover"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="project-thread-branch-popover-title"
-            onSubmit={submitBranch}
-          >
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setBranchName("");
+          }
+        }}
+      >
+        <DialogContent
+          className="project-thread-branch-popover"
+          initialFocus={inputRef}
+          overlayClassName="project-thread-branch-popover-backdrop"
+          showCloseButton={false}
+        >
+          <form className="project-thread-branch-popover-form" onSubmit={submitBranch}>
             <div className="project-thread-branch-popover-header">
-              <h2 id="project-thread-branch-popover-title">Create and checkout branch</h2>
-              <button
-                type="button"
+              <DialogTitle className="project-thread-branch-popover-title">
+                Create and checkout branch
+              </DialogTitle>
+              <DialogClose
                 className="project-thread-branch-popover-close"
                 aria-label="Close branch popover"
-                onClick={closeBranchPopover}
               >
                 <X aria-hidden="true" />
-              </button>
+              </DialogClose>
             </div>
             <div className="project-thread-branch-popover-body">
               <div className="project-thread-branch-popover-label-row">
@@ -640,8 +567,8 @@ function BranchComposerMenu({
               </button>
             </div>
           </form>
-        </div>
-      ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -805,15 +732,13 @@ function SettingsToggle({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <button
-      type="button"
-      aria-pressed={checked}
+    <Switch
       aria-label={label}
-      className={`settings-toggle${checked ? " is-on" : ""}`}
-      onClick={() => onChange(!checked)}
-    >
-      <span className="settings-toggle-knob" />
-    </button>
+      checked={checked}
+      className={(state) => `settings-toggle${state.checked ? " is-on" : ""}`}
+      onCheckedChange={onChange}
+      thumbClassName="settings-toggle-knob"
+    />
   );
 }
 
@@ -829,18 +754,27 @@ function SettingsSegment({
   value: string;
 }) {
   return (
-    <div className="settings-segment" aria-label={label} role="group">
+    <ToggleGroup
+      className="settings-segment"
+      aria-label={label}
+      value={[value]}
+      onValueChange={(groupValue) => {
+        const nextValue = groupValue[0];
+        if (nextValue) {
+          onChange(nextValue);
+        }
+      }}
+    >
       {options.map((option) => (
-        <button
+        <Toggle
           key={option.value}
-          type="button"
-          className={`settings-segment-option${option.value === value ? " is-active" : ""}`}
-          onClick={() => onChange(option.value)}
+          className={(state) => `settings-segment-option${state.pressed ? " is-active" : ""}`}
+          value={option.value}
         >
           {option.label}
-        </button>
+        </Toggle>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }
 
@@ -855,20 +789,47 @@ function SettingsSelect({
   options: Array<{ label: string; value: string }>;
   value: string;
 }) {
+  const selectedOption = options.find((option) => option.value === value);
+
   return (
-    <select
-      aria-label={label}
-      className="settings-select"
+    <Select<string>
       disabled={options.length === 0}
-      onChange={(event) => onChange(event.target.value)}
+      items={options}
+      onValueChange={(nextValue) => {
+        if (typeof nextValue === "string") {
+          onChange(nextValue);
+        }
+      }}
       value={value}
     >
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+      <SelectTrigger aria-label={label} className="settings-select">
+        <SelectValue>
+          {(selectedValue: string | null) =>
+            options.find((option) => option.value === selectedValue)?.label ??
+            selectedOption?.label ??
+            ""
+          }
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent
+        align="end"
+        className="settings-select-popup"
+        listClassName="settings-select-list desktop-scroll-region"
+        positionerClassName="settings-select-positioner"
+        sideOffset={6}
+      >
+        {options.map((option) => (
+          <SelectItem
+            key={option.value}
+            className={(state) => `settings-select-option${state.selected ? " is-selected" : ""}`}
+            label={option.label}
+            value={option.value}
+          >
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -999,25 +960,28 @@ function SettingsSheet({
   title: string;
 }) {
   return (
-    <div className="settings-sheet-backdrop" role="presentation" onMouseDown={onClose}>
-      <aside
-        aria-labelledby="settings-sheet-title"
-        aria-modal="true"
+    <Sheet
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+    >
+      <SheetContent
         className="settings-sheet"
-        role="dialog"
-        onMouseDown={(event) => event.stopPropagation()}
+        overlayClassName="settings-sheet-backdrop"
+        showCloseButton={false}
       >
-        <div className="settings-sheet-header">
-          <h2 id="settings-sheet-title">{title}</h2>
-          <DesktopIconButton
-            icon={<X aria-hidden="true" />}
-            label="Close sheet"
-            onClick={onClose}
-          />
-        </div>
+        <SheetHeader className="settings-sheet-header">
+          <SheetTitle>{title}</SheetTitle>
+          <SheetClose className="desktop-icon-button" aria-label="Close sheet">
+            <X aria-hidden="true" />
+          </SheetClose>
+        </SheetHeader>
         <div className="settings-sheet-body">{children}</div>
-      </aside>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 

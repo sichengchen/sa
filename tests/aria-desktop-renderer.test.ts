@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync, readdirSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type {
@@ -19,6 +20,24 @@ import {
 } from "../apps/aria-desktop/src/renderer/src/components/AriaChatComposer.js";
 import { AriaMessageItem } from "../apps/aria-desktop/src/renderer/src/components/AriaMessageItem.js";
 import { DesktopSpaceTabs } from "../apps/aria-desktop/src/renderer/src/components/DesktopSpaceTabs.js";
+
+const DESKTOP_RENDERER_ROOT = new URL("../apps/aria-desktop/src/renderer/src/", import.meta.url);
+
+function readDesktopRendererSource(relativePath: string): string {
+  return readFileSync(new URL(relativePath, DESKTOP_RENDERER_ROOT), "utf8");
+}
+
+function listDesktopRendererSources(directory = DESKTOP_RENDERER_ROOT): URL[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const child = new URL(`${entry.name}${entry.isDirectory() ? "/" : ""}`, directory);
+
+    if (entry.isDirectory()) {
+      return listDesktopRendererSources(child);
+    }
+
+    return entry.name.endsWith(".ts") || entry.name.endsWith(".tsx") ? [child] : [];
+  });
+}
 
 const SAMPLE_ARIA_STATE: AriaDesktopAriaShellState = {
   automations: {
@@ -291,6 +310,80 @@ const SAMPLE_PROJECT_THREAD_STATE = {
 };
 
 describe("desktop aria renderer", () => {
+  test("adopts shadcn/ui Base UI components for desktop stateful primitives", () => {
+    const componentsConfig = JSON.parse(
+      readFileSync(new URL("../apps/aria-desktop/components.json", import.meta.url), "utf8"),
+    ) as {
+      aliases?: Record<string, string>;
+      style?: string;
+      tailwind?: { baseColor?: string; css?: string; cssVariables?: boolean };
+    };
+    const workbenchSource = readDesktopRendererSource("components/DesktopWorkbenchApp.tsx");
+    const collapsibleSource = readDesktopRendererSource("components/DesktopCollapsibleSection.tsx");
+    const tabsSource = readDesktopRendererSource("components/DesktopSpaceTabs.tsx");
+    const layoutToggleSource = readDesktopRendererSource("components/LayoutToggleIconButton.tsx");
+    const iconButtonSource = readDesktopRendererSource("components/DesktopIconButton.tsx");
+    const stylesSource = readDesktopRendererSource("styles.css");
+    const uiSources = [
+      "components/ui/collapsible.tsx",
+      "components/ui/dialog.tsx",
+      "components/ui/dropdown-menu.tsx",
+      "components/ui/select.tsx",
+      "components/ui/sheet.tsx",
+      "components/ui/switch.tsx",
+      "components/ui/tabs.tsx",
+      "components/ui/toggle.tsx",
+      "components/ui/toggle-group.tsx",
+    ].map((path) => readDesktopRendererSource(path));
+
+    expect(componentsConfig.style).toBe("base-nova");
+    expect(componentsConfig.tailwind?.baseColor).toBe("neutral");
+    expect(componentsConfig.tailwind?.css).toBe("src/renderer/src/styles.css");
+    expect(componentsConfig.tailwind?.cssVariables).toBe(true);
+    expect(componentsConfig.aliases?.ui).toBe("src/renderer/src/components/ui");
+
+    expect(tabsSource).toContain("./ui/tabs.js");
+    expect(collapsibleSource).toContain("./ui/collapsible.js");
+    expect(layoutToggleSource).toContain("./ui/toggle.js");
+    expect(workbenchSource).toContain("./ui/dialog.js");
+    expect(workbenchSource).toContain("./ui/dropdown-menu.js");
+    expect(workbenchSource).toContain("./ui/select.js");
+    expect(workbenchSource).toContain("./ui/sheet.js");
+    expect(workbenchSource).toContain("./ui/switch.js");
+    expect(workbenchSource).toContain("./ui/toggle-group.js");
+
+    expect(uiSources.join("\n")).toContain("@base-ui/react/tabs");
+    expect(uiSources.join("\n")).toContain("@base-ui/react/collapsible");
+    expect(uiSources.join("\n")).toContain("@base-ui/react/dialog");
+    expect(uiSources.join("\n")).toContain("@base-ui/react/menu");
+    expect(uiSources.join("\n")).toContain("@base-ui/react/select");
+    expect(uiSources.join("\n")).toContain("@base-ui/react/switch");
+    expect(uiSources.join("\n")).toContain("@base-ui/react/toggle");
+    expect(uiSources.join("\n")).toContain("@base-ui/react/toggle-group");
+    expect(uiSources.join("\n")).toContain('data-slot="dialog-content"');
+    expect(uiSources.join("\n")).toContain('data-slot="dropdown-menu-content"');
+    expect(uiSources.join("\n")).toContain('data-slot="select-trigger"');
+
+    const directPrimitiveImportFiles = listDesktopRendererSources()
+      .filter((fileUrl) => !fileUrl.pathname.includes("/components/ui/"))
+      .filter((fileUrl) => readFileSync(fileUrl, "utf8").includes("@base-ui/react"))
+      .map((fileUrl) => fileUrl.pathname);
+
+    expect(directPrimitiveImportFiles).toEqual([]);
+    expect(stylesSource).toContain("--background: var(--desktop-background)");
+    expect(stylesSource).toContain("--foreground: var(--desktop-text)");
+    expect(stylesSource).toContain("--popover: var(--desktop-center-background)");
+    expect(stylesSource).toContain("--accent: var(--desktop-button-hover)");
+    expect(stylesSource).toContain("--ring: var(--desktop-text)");
+    expect(stylesSource).toContain("--radius: 8px");
+    expect(workbenchSource).not.toContain('role="menu"');
+    expect(workbenchSource).not.toContain('role="dialog"');
+    expect(workbenchSource).not.toContain("aria-haspopup");
+    expect(workbenchSource).not.toContain("aria-modal");
+    expect(workbenchSource).not.toContain("<select");
+    expect(iconButtonSource).not.toContain("aria-pressed");
+  });
+
   test("renders desktop space tabs with operator-facing labels", () => {
     const html = renderToStaticMarkup(
       React.createElement(DesktopSpaceTabs, {

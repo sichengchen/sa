@@ -1,3 +1,5 @@
+import { Tabs, TabsList, TabsTrigger } from "./ui/tabs.js";
+
 export type DesktopSpace = "aria" | "projects";
 
 type DesktopSpaceTabsProps = {
@@ -10,21 +12,32 @@ const SPACES: ReadonlyArray<{ id: DesktopSpace; label: string }> = [
   { id: "projects", label: "Projects" },
 ];
 
+function isDesktopSpace(value: unknown): value is DesktopSpace {
+  return value === "aria" || value === "projects";
+}
+
 export function DesktopSpaceTabs({ activeSpace, onSelectSpace }: DesktopSpaceTabsProps) {
   return (
-    <div className="desktop-space-tabs" role="tablist" aria-label="Workspace space">
-      {SPACES.map((space) => (
-        <button
-          key={space.id}
-          type="button"
-          role="tab"
-          aria-selected={space.id === activeSpace}
-          className={`desktop-space-tab${space.id === activeSpace ? " is-active" : ""}`}
-          onClick={() => onSelectSpace(space.id)}
-        >
-          {space.label}
-        </button>
-      ))}
-    </div>
+    <Tabs
+      className="desktop-space-tabs-root"
+      value={activeSpace}
+      onValueChange={(value) => {
+        if (isDesktopSpace(value)) {
+          onSelectSpace(value);
+        }
+      }}
+    >
+      <TabsList className="desktop-space-tabs" aria-label="Workspace space">
+        {SPACES.map((space) => (
+          <TabsTrigger
+            key={space.id}
+            className={(state) => `desktop-space-tab${state.active ? " is-active" : ""}`}
+            value={space.id}
+          >
+            {space.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }
